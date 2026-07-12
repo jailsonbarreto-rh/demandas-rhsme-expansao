@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Demanda, ComentarioHistorico } from './types';
-import { initialDemandas } from './data/initialDemandas';
+import { Demanda } from './types';
+import { resolveAppConfig } from './config/appConfig';
+import { useAppSession } from './hooks/useAppSession';
+import { useDemandasData } from './hooks/useDemandasData';
+import { createAppServices, type AppServices } from './services/createAppServices';
 import { Header } from './components/Header';
 import { FilterPanel } from './components/FilterPanel';
 import { DemandasTable } from './components/DemandasTable';
@@ -12,9 +15,17 @@ import { AtencaoImediata } from './components/AtencaoImediata';
 import { VisaoGeral } from './components/VisaoGeral';
 import { AdminPanel } from './components/AdminPanel';
 
-export const App: React.FC = () => {
-  // --- Estados de Autenticação (Simulada para rapidez local) ---
-  const [userEmail, setUserEmail] = useState<string>('');
+interface AppProps {
+  services?: AppServices;
+}
+
+export const App: React.FC<AppProps> = ({ services }) => {
+  const [appServices] = useState(() => services ?? createAppServices(resolveAppConfig(import.meta.env)));
+  const session = useAppSession(appServices.auth);
+  const data = useDemandasData(appServices.demandas, session.user, appServices.mode === 'supabase');
+  const userEmail = session.user?.email ?? '';
+
+  // --- Estados do formulário de autenticação ---
   const [loginEmail, setLoginEmail] = useState<string>('');
   const [loginSenha, setLoginSenha] = useState<string>('');
   const [cadEmail, setCadEmail] = useState<string>('');
@@ -31,8 +42,8 @@ export const App: React.FC = () => {
   });
 
   // --- Estados do Aplicativo ---
-  const [demandas, setDemandas] = useState<Demanda[]>([]);
-  const [historico, setHistorico] = useState<ComentarioHistorico[]>([]);
+  const demandas = data.demandas;
+  const historico = data.historico;
   const [setoresDisponiveis, setSetoresDisponiveis] = useState<string[]>([]);
   
   // --- Estados de Filtro ---
@@ -61,63 +72,6 @@ export const App: React.FC = () => {
   const [modalStatusAberto, setModalStatusAberto] = useState<boolean>(false);
   const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);
 
-  // --- Efeitos e Inicialização ---
-  useEffect(() => {
-    // Carregar sessão se existir
-    const loggedUser = localStorage.getItem('demandas_user');
-    if (loggedUser) {
-      setUserEmail(loggedUser);
-    }
-
-    // Carregar demandas de LocalStorage ou usar inicial da planilha demandas.xlsx
-    const storedDemandas = localStorage.getItem('demandas_data');
-    if (storedDemandas) {
-      const parsed = JSON.parse(storedDemandas);
-      if (parsed.length < 20) {
-        setDemandas(initialDemandas);
-        localStorage.setItem('demandas_data', JSON.stringify(initialDemandas));
-      } else {
-        setDemandas(parsed);
-      }
-    } else {
-      setDemandas(initialDemandas);
-      localStorage.setItem('demandas_data', JSON.stringify(initialDemandas));
-    }
-
-    // Carregar histórico de LocalStorage ou criar histórico inicial vazio
-    const storedHistorico = localStorage.getItem('demandas_history');
-    if (storedHistorico) {
-      const parsedHist = JSON.parse(storedHistorico);
-      if (parsedHist.length < 20) {
-        const hojeStr = new Date().toLocaleString('pt-BR');
-        const mockHistorico: ComentarioHistorico[] = initialDemandas.map(d => ({
-          id: d.id,
-          demandaId: d.id,
-          data_hora: hojeStr,
-          status_novo: d.status,
-          setor: d.setor || 'SME',
-          comentario: 'Demanda importada da planilha inicial.'
-        }));
-        setHistorico(mockHistorico);
-        localStorage.setItem('demandas_history', JSON.stringify(mockHistorico));
-      } else {
-        setHistorico(parsedHist);
-      }
-    } else {
-      const hojeStr = new Date().toLocaleString('pt-BR');
-      const mockHistorico: ComentarioHistorico[] = initialDemandas.map(d => ({
-        id: d.id,
-        demandaId: d.id,
-        data_hora: hojeStr,
-        status_novo: d.status,
-        setor: d.setor || 'SME',
-        comentario: 'Demanda importada da planilha inicial.'
-      }));
-      setHistorico(mockHistorico);
-      localStorage.setItem('demandas_history', JSON.stringify(mockHistorico));
-    }
-  }, []);
-
   // Recalcular lista de setores únicos a partir de todas as demandas cadastradas
   useEffect(() => {
     const setoresUnicos = Array.from(
@@ -129,18 +83,6 @@ export const App: React.FC = () => {
     ).sort();
     setSetoresDisponiveis(setoresUnicos);
   }, [demandas]);
-
-  // Salvar demandas em LocalStorage
-  const saveDemandas = (newDemandas: Demanda[]) => {
-    setDemandas(newDemandas);
-    localStorage.setItem('demandas_data', JSON.stringify(newDemandas));
-  };
-
-  // Salvar histórico em LocalStorage
-  const saveHistorico = (newHistorico: ComentarioHistorico[]) => {
-    setHistorico(newHistorico);
-    localStorage.setItem('demandas_history', JSON.stringify(newHistorico));
-  };
 
   // --- Validação da Senha Forte e E-mail Corporativo ---
   useEffect(() => {
@@ -158,125 +100,86 @@ export const App: React.FC = () => {
     });
   }, [cadEmail, cadSenha]);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail.toLowerCase().endsWith('@rioeduca.net')) {
-      alert("Apenas e-mails do domínio @rioeduca.net são permitidos para acesso.");
-      return;
+    try {
+      await session.signIn(loginEmail, loginSenha);
+    } catch (reason) {
+      alert(reason instanceof Error ? reason.message : 'Não foi possível entrar.');
     }
-    if (loginSenha.length < 8) {
-      alert("A senha informada deve possuir no mínimo 8 caracteres.");
-      return;
-    }
-    
-    // Simula a autenticação com sucesso
-    setUserEmail(loginEmail);
-    localStorage.setItem('demandas_user', loginEmail);
   };
 
-  const handleCadastroSubmit = (e: React.FormEvent) => {
+  const handleCadastroSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isSenhaForte = senhaValida.minimo && senhaValida.maiuscula && senhaValida.minuscula && senhaValida.numero;
     const isEmailValido = cadEmail.toLowerCase().endsWith('@rioeduca.net');
 
     if (isEmailValido && isSenhaForte) {
-      alert("Solicitação de acesso simulada com sucesso! Você já pode entrar com sua conta no formulário de login.");
-      setLoginTab('login');
-      setLoginEmail(cadEmail);
-      setCadEmail('');
-      setCadSenha('');
+      try {
+        await session.requestAccess(cadEmail, cadSenha);
+        alert(appServices.mode === 'local'
+          ? "Solicitação de acesso simulada com sucesso! Você já pode entrar com sua conta no formulário de login."
+          : 'Solicitação enviada. Aguarde a aprovação de um administrador antes de entrar.');
+        setLoginTab('login');
+        setLoginEmail(cadEmail);
+        setCadEmail('');
+        setCadSenha('');
+      } catch (reason) {
+        alert(reason instanceof Error ? reason.message : 'Não foi possível solicitar acesso.');
+      }
     } else {
       alert("Por favor, atenda a todos os requisitos de segurança antes de prosseguir.");
     }
   };
 
-  const handleLogout = () => {
-    setUserEmail('');
-    localStorage.removeItem('demandas_user');
+  const handleLogout = async () => {
+    await session.signOut();
+    setLoginEmail('');
+    setLoginSenha('');
+    setCadEmail('');
+    setCadSenha('');
+    setLoginTab('login');
   };
 
-  // --- Operações de Dados Locais ---
-  
   // Criar nova demanda
-  const handleSalvarNovaDemanda = (novaDemanda: Omit<Demanda, 'id'>) => {
-    const novoId = demandas.length > 0 ? Math.max(...demandas.map(d => d.id)) + 1 : 1;
-    const demandaCompleta: Demanda = {
-      id: novoId,
-      ...novaDemanda
-    };
-    
-    const novasDemandas = [demandaCompleta, ...demandas];
-    saveDemandas(novasDemandas);
-    setModalNovoAberto(false);
-
-    // Grava um comentário inicial de criação de registro no histórico
-    const hojeStr = new Date().toLocaleString('pt-BR');
-    const novoComentario: ComentarioHistorico = {
-      id: Date.now(),
-      demandaId: novoId,
-      data_hora: hojeStr,
-      status_novo: novaDemanda.status,
-      setor: novaDemanda.setor,
-      comentario: 'Demanda cadastrada no sistema.'
-    };
-    saveHistorico([novoComentario, ...historico]);
+  const handleSalvarNovaDemanda = async (novaDemanda: Omit<Demanda, 'id'>) => {
+    try {
+      await data.create(novaDemanda);
+      setModalNovoAberto(false);
+    } catch (reason) {
+      alert(reason instanceof Error ? reason.message : 'Não foi possível criar a demanda.');
+    }
   };
 
   // Editar dados da demanda
-  const handleSalvarEdicaoDemanda = (demandaId: number, camposAlterados: Partial<Demanda>) => {
-    const novasDemandas = demandas.map(d => {
-      if (d.id === demandaId) {
-        return { ...d, ...camposAlterados };
-      }
-      return d;
-    });
-    saveDemandas(novasDemandas);
-    setModalEditarAberto(false);
-    setDemandaSelecionada(null);
+  const handleSalvarEdicaoDemanda = async (demandaId: number, camposAlterados: Partial<Demanda>) => {
+    try {
+      await data.update(demandaId, camposAlterados);
+      return true;
+    } catch (reason) {
+      alert(reason instanceof Error ? reason.message : 'Não foi possível editar a demanda.');
+      return false;
+    }
   };
 
   // Atualizar Status e Comentário (gera histórico)
-  const handleAtualizarStatus = (demandaId: number, novoStatus: Demanda['status'], comentario: string) => {
-    const hojeStr = new Date().toLocaleString('pt-BR');
-    
-    // Atualizar status na tabela
-    const novasDemandas = demandas.map(d => {
-      if (d.id === demandaId) {
-        return { ...d, status: novoStatus };
-      }
-      return d;
-    });
-    saveDemandas(novasDemandas);
-
-    // Encontrar setor da demanda para o histórico
-    const demandaModificada = demandas.find(d => d.id === demandaId);
-    const setorModificado = demandaModificada?.setor || '—';
-
-    // Inserir comentário no histórico
-    const novoComentario: ComentarioHistorico = {
-      id: Date.now(),
-      demandaId,
-      data_hora: hojeStr,
-      status_novo: novoStatus,
-      setor: setorModificado,
-      comentario
-    };
-    
-    const novoHistorico = [novoComentario, ...historico];
-    saveHistorico(novoHistorico);
-
-    setModalStatusAberto(false);
-    setDemandaSelecionada(null);
+  const handleAtualizarStatus = async (demandaId: number, novoStatus: Demanda['status'], comentario: string) => {
+    try {
+      await data.updateStatus(demandaId, novoStatus, comentario);
+      return true;
+    } catch (reason) {
+      alert(reason instanceof Error ? reason.message : 'Não foi possível atualizar o status.');
+      return false;
+    }
   };
 
   // Excluir demanda
-  const handleExcluirDemanda = (demandaId: number) => {
-    const novasDemandas = demandas.filter(d => d.id !== demandaId);
-    saveDemandas(novasDemandas);
-    
-    // Limpar histórico daquela demanda
-    const novoHistorico = historico.filter(h => h.demandaId !== demandaId);
-    saveHistorico(novoHistorico);
+  const handleExcluirDemanda = async (demandaId: number) => {
+    try {
+      await data.delete(demandaId);
+    } catch (reason) {
+      alert(reason instanceof Error ? reason.message : 'Não foi possível excluir a demanda.');
+    }
   };
 
   // --- Utilitários de Filtros ---
@@ -553,7 +456,12 @@ export const App: React.FC = () => {
                     />
                   </div>
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontWeight: '600' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ width: '100%', padding: '12px', fontWeight: '600' }}
+                  disabled={session.loading}
+                >
                   Acessar Sistema
                 </button>
               </form>
@@ -617,7 +525,7 @@ export const App: React.FC = () => {
                   type="submit" 
                   className="btn btn-primary" 
                   style={{ width: '100%', padding: '12px', fontWeight: '600' }}
-                  disabled={!(cadEmail.toLowerCase().endsWith('@rioeduca.net') && senhaValida.minimo && senhaValida.maiuscula && senhaValida.minuscula && senhaValida.numero)}
+                  disabled={session.loading || !(cadEmail.toLowerCase().endsWith('@rioeduca.net') && senhaValida.minimo && senhaValida.maiuscula && senhaValida.minuscula && senhaValida.numero)}
                 >
                   Solicitar Aprovação
                 </button>
@@ -782,12 +690,14 @@ export const App: React.FC = () => {
               setDemandaSelecionada(null);
             }
           }}
-          onSalvar={(id, campos) => {
-            handleSalvarEdicaoDemanda(id, campos);
+          onSalvar={async (id, campos) => {
+            if (!await handleSalvarEdicaoDemanda(id, campos)) return;
             setModalEditarAberto(false);
             // Atualiza a referência de visualização se o Drawer de detalhe estiver aberto
             if (drawerAberto) {
               setDemandaSelecionada(prev => prev ? { ...prev, ...campos } : null);
+            } else {
+              setDemandaSelecionada(null);
             }
           }}
         />
@@ -803,13 +713,15 @@ export const App: React.FC = () => {
               setDemandaSelecionada(null);
             }
           }}
-          onAtualizar={(id: number, status: Demanda['status'], coment: string) => {
-            handleAtualizarStatus(id, status, coment);
+          onAtualizar={async (id: number, status: Demanda['status'], coment: string) => {
+            if (!await handleAtualizarStatus(id, status, coment)) return;
             setModalStatusAberto(false);
             // Atualiza a referência de visualização se o Drawer de detalhe estiver aberto
             if (drawerAberto) {
               const novaD = demandas.find(d => d.id === id);
               setDemandaSelecionada(prev => prev ? { ...prev, status, setor: novaD?.setor || prev.setor } : null);
+            } else {
+              setDemandaSelecionada(null);
             }
           }}
         />

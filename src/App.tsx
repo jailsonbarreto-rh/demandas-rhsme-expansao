@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Demanda } from './types';
+import { Demanda, type PerfilUsuario } from './types';
 import { resolveAppConfig } from './config/appConfig';
 import { useAppSession } from './hooks/useAppSession';
 import { useDemandasData } from './hooks/useDemandasData';
@@ -24,6 +24,9 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const session = useAppSession(appServices.auth);
   const data = useDemandasData(appServices.demandas, session.user, appServices.mode === 'supabase');
   const userEmail = session.user?.email ?? '';
+  const [perfis, setPerfis] = useState<PerfilUsuario[]>([]);
+  const canAccessAdmin = appServices.mode === 'local'
+    || (session.user?.perfil.nivel === 'administrador' && session.user.perfil.status === 'ativo');
 
   // --- Estados do formulário de autenticação ---
   const [loginEmail, setLoginEmail] = useState<string>('');
@@ -71,6 +74,32 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false);
   const [modalStatusAberto, setModalStatusAberto] = useState<boolean>(false);
   const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (appServices.mode !== 'supabase' || !canAccessAdmin) {
+      setPerfis([]);
+      return;
+    }
+    let active = true;
+    void appServices.profiles.list()
+      .then((items) => { if (active) setPerfis(items); })
+      .catch((reason: unknown) => {
+        if (active) alert(reason instanceof Error ? reason.message : 'Não foi possível carregar os perfis.');
+      });
+    return () => { active = false; };
+  }, [appServices, canAccessAdmin]);
+
+  const handleUpdatePerfil = async (
+    id: string,
+    patch: Partial<Pick<PerfilUsuario, 'nivel' | 'status' | 'setor'>>,
+  ) => {
+    try {
+      await appServices.profiles.updateAccess(id, patch);
+      setPerfis(await appServices.profiles.list());
+    } catch (reason) {
+      alert(reason instanceof Error ? reason.message : 'Não foi possível atualizar o perfil.');
+    }
+  };
 
   // Recalcular lista de setores únicos a partir de todas as demandas cadastradas
   useEffect(() => {
@@ -589,15 +618,17 @@ export const App: React.FC<AppProps> = ({ services }) => {
           <span>Demandas</span>
         </button>
 
-        <button 
-          type="button" 
-          className={`nav-tab-link ${activeTab === 'admin' ? 'active' : ''}`}
-          onClick={() => setActiveTab('admin')}
-          title="Ver e gerenciar configurações e perfis de servidores"
-        >
-          <i className="fa-solid fa-sliders"></i>
-          <span>Administração</span>
-        </button>
+        {canAccessAdmin && (
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === 'admin' ? 'active' : ''}`}
+            onClick={() => setActiveTab('admin')}
+            title="Ver e gerenciar configurações e perfis de servidores"
+          >
+            <i className="fa-solid fa-sliders"></i>
+            <span>Administração</span>
+          </button>
+        )}
       </nav>
 
       {/* Conteúdo Dinâmico Baseado na Aba Ativa */}
@@ -665,8 +696,10 @@ export const App: React.FC<AppProps> = ({ services }) => {
         </div>
       )}
 
-      {activeTab === 'admin' && (
-        <AdminPanel />
+      {activeTab === 'admin' && canAccessAdmin && (
+        appServices.mode === 'supabase'
+          ? <AdminPanel perfis={perfis} onUpdatePerfil={handleUpdatePerfil} />
+          : <AdminPanel />
       )}
 
       {/* --- Modais Clássicos (Acionados a partir da Tabela ou do Drawer) --- */}

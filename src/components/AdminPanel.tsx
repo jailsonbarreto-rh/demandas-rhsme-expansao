@@ -1,22 +1,51 @@
 import React from 'react';
+import type { PerfilUsuario } from '../types';
 
 interface ServidorPerfil {
-  id: number;
+  id: string;
   nome: string;
   email: string;
-  nivel: 'Administrador' | 'Avançado' | 'Básico';
+  nivel: string;
   setor: string;
-  status: 'Ativo' | 'Pendente';
+  status: string;
+  nivelReal?: PerfilUsuario['nivel'];
+  statusReal?: PerfilUsuario['status'];
 }
 
-export const AdminPanel: React.FC = () => {
+interface AdminPanelProps {
+  perfis?: PerfilUsuario[];
+  onUpdatePerfil?: (
+    id: string,
+    patch: Partial<Pick<PerfilUsuario, 'nivel' | 'status' | 'setor'>>,
+  ) => Promise<void> | void;
+}
+
+const nivelLabel: Record<PerfilUsuario['nivel'], string> = {
+  administrador: 'Administrador', editor: 'Editor', leitor: 'Leitor',
+};
+
+const statusLabel: Record<PerfilUsuario['status'], string> = {
+  ativo: 'Ativo', pendente: 'Pendente', inativo: 'Inativo',
+};
+
+export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }) => {
+  const isSupabase = perfis !== undefined;
   // Lista simulada de servidores homologados na CTRH
-  const servidores: ServidorPerfil[] = [
-    { id: 1, nome: 'Wilson Peixoto', email: 'wilson.peixoto@rioeduca.net', nivel: 'Administrador', setor: 'CTRH', status: 'Ativo' },
-    { id: 2, nome: 'Erica Ramos', email: 'erica.ramos@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Ativo' },
-    { id: 3, nome: 'Ricardo Silva', email: 'ricardo.silva@rioeduca.net', nivel: 'Básico', setor: 'CARH', status: 'Ativo' },
-    { id: 4, nome: 'Servidor SME Teste', email: 'sme.teste@rioeduca.net', nivel: 'Básico', setor: 'SME', status: 'Ativo' },
-    { id: 5, nome: 'Mariana Costa', email: 'mariana.costa@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Pendente' }
+  const servidores: ServidorPerfil[] = perfis?.map((perfil) => ({
+    id: perfil.id,
+    nome: perfil.nome || perfil.email,
+    email: perfil.email,
+    nivel: nivelLabel[perfil.nivel],
+    setor: perfil.setor,
+    status: statusLabel[perfil.status],
+    nivelReal: perfil.nivel,
+    statusReal: perfil.status,
+  })) ?? [
+    { id: '1', nome: 'Wilson Peixoto', email: 'wilson.peixoto@rioeduca.net', nivel: 'Administrador', setor: 'CTRH', status: 'Ativo' },
+    { id: '2', nome: 'Erica Ramos', email: 'erica.ramos@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Ativo' },
+    { id: '3', nome: 'Ricardo Silva', email: 'ricardo.silva@rioeduca.net', nivel: 'Básico', setor: 'CARH', status: 'Ativo' },
+    { id: '4', nome: 'Servidor SME Teste', email: 'sme.teste@rioeduca.net', nivel: 'Básico', setor: 'SME', status: 'Ativo' },
+    { id: '5', nome: 'Mariana Costa', email: 'mariana.costa@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Pendente' }
   ];
 
   const handleSimulateAction = (acao: string) => {
@@ -111,6 +140,7 @@ export const AdminPanel: React.FC = () => {
                 <th style={{ width: '20%', textAlign: 'left' }}>Nível de Acesso</th>
                 <th style={{ width: '15%', textAlign: 'left' }}>Setor</th>
                 <th style={{ width: '10%' }}>Status</th>
+                {isSupabase && <th>Ações</th>}
               </tr>
             </thead>
             <tbody>
@@ -124,12 +154,25 @@ export const AdminPanel: React.FC = () => {
                   
                   {/* Nível de Acesso */}
                   <td style={{ textAlign: 'left' }}>
-                    <span 
-                      className={`badge ${serv.nivel === 'Administrador' ? 'encerrado' : serv.nivel === 'Avançado' ? 'assinatura' : 'aguardando'}`} 
-                      style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'none' }}
-                    >
-                      {serv.nivel}
-                    </span>
+                    {isSupabase ? (
+                      <select
+                        className="form-control"
+                        aria-label={`Nível de acesso de ${serv.nome}`}
+                        value={serv.nivelReal}
+                        onChange={(event) => { void onUpdatePerfil?.(serv.id, { nivel: event.target.value as PerfilUsuario['nivel'] }); }}
+                      >
+                        <option value="administrador">Administrador</option>
+                        <option value="editor">Editor</option>
+                        <option value="leitor">Leitor</option>
+                      </select>
+                    ) : (
+                      <span
+                        className={`badge ${serv.nivel === 'Administrador' ? 'encerrado' : serv.nivel === 'Avançado' ? 'assinatura' : 'aguardando'}`}
+                        style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'none' }}
+                      >
+                        {serv.nivel}
+                      </span>
+                    )}
                   </td>
                   
                   {/* Setor */}
@@ -144,6 +187,27 @@ export const AdminPanel: React.FC = () => {
                       {serv.status}
                     </span>
                   </td>
+                  {isSupabase && (
+                    <td>
+                      {serv.statusReal === 'pendente' ? (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => { void onUpdatePerfil?.(serv.id, { status: 'ativo' }); }}
+                        >
+                          Aprovar
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-secondary-outline"
+                          onClick={() => { void onUpdatePerfil?.(serv.id, { status: serv.statusReal === 'ativo' ? 'inativo' : 'ativo' }); }}
+                        >
+                          {serv.statusReal === 'ativo' ? 'Desativar' : 'Ativar'}
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

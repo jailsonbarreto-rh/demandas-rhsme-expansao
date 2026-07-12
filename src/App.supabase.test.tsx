@@ -57,6 +57,7 @@ describe('App no modo Supabase', () => {
     render(<App services={services} />);
     await fillLogin(user);
     expect(await screen.findByRole('button', { name: /nova demanda/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /administração/i })).not.toBeInTheDocument();
     await waitFor(() => expect(load).toHaveBeenCalled());
 
     await user.click(screen.getByRole('button', { name: /nova demanda/i }));

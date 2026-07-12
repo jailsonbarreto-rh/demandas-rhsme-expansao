@@ -28,5 +28,7 @@ dist-ssr
 .env.production
 .env.development
 .env.staging
+.env.bootstrap
+.env.bootstrap.local
 
 .vercel

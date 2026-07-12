@@ -1,0 +1,995 @@
+import React, { useState, useEffect } from 'react';
+import { Demanda, ComentarioHistorico } from './types';
+import { initialDemandas } from './data/initialDemandas';
+import { Header } from './components/Header';
+import { FilterPanel } from './components/FilterPanel';
+import { DemandasTable } from './components/DemandasTable';
+import { ModalNovo } from './components/ModalNovo';
+import { ModalEditar } from './components/ModalEditar';
+import { ModalStatus } from './components/ModalStatus';
+import { ModalHistorico } from './components/ModalHistorico';
+import { AtencaoImediata } from './components/AtencaoImediata';
+import { VisaoGeral } from './components/VisaoGeral';
+import { AdminPanel } from './components/AdminPanel';
+
+export const App: React.FC = () => {
+  // --- Estados de Autenticação (Simulada para rapidez local) ---
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [loginEmail, setLoginEmail] = useState<string>('');
+  const [loginSenha, setLoginSenha] = useState<string>('');
+  const [cadEmail, setCadEmail] = useState<string>('');
+  const [cadSenha, setCadSenha] = useState<string>('');
+  const [loginTab, setLoginTab] = useState<'login' | 'cadastro'>('login');
+  
+  // Mensagens de erro e validações
+  const [erroEmail, setErroEmail] = useState<boolean>(false);
+  const [senhaValida, setSenhaValida] = useState({
+    minimo: false,
+    maiuscula: false,
+    minuscula: false,
+    numero: false
+  });
+
+  // --- Estados do Aplicativo ---
+  const [demandas, setDemandas] = useState<Demanda[]>([]);
+  const [historico, setHistorico] = useState<ComentarioHistorico[]>([]);
+  const [setoresDisponiveis, setSetoresDisponiveis] = useState<string[]>([]);
+  
+  // --- Estados de Filtro ---
+  const [filtros, setFiltros] = useState({
+    busca: '',
+    tipo: 'Todos',
+    classificacao: 'Todas',
+    status: 'Somente ativos (padrão)', // Padrão solicitado no DOCX
+    setor: 'Todos'
+  });
+
+  const [quickFilters, setQuickFilters] = useState({
+    assinatura: false,
+    hoje: false,
+    vencido: false
+  });
+
+  // --- Estados de Roteamento SPA ---
+  const [activeTab, setActiveTab] = useState<'visao-geral' | 'demandas' | 'admin'>('visao-geral');
+  const [drawerAberto, setDrawerAberto] = useState<boolean>(false);
+
+  // --- Estados dos Modais ---
+  const [modalNovoAberto, setModalNovoAberto] = useState<boolean>(false);
+  const [demandaSelecionada, setDemandaSelecionada] = useState<Demanda | null>(null);
+  const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false);
+  const [modalStatusAberto, setModalStatusAberto] = useState<boolean>(false);
+  const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);
+
+  // --- Efeitos e Inicialização ---
+  useEffect(() => {
+    // Carregar sessão se existir
+    const loggedUser = localStorage.getItem('demandas_user');
+    if (loggedUser) {
+      setUserEmail(loggedUser);
+    }
+
+    // Carregar demandas de LocalStorage ou usar inicial da planilha demandas.xlsx
+    const storedDemandas = localStorage.getItem('demandas_data');
+    if (storedDemandas) {
+      const parsed = JSON.parse(storedDemandas);
+      if (parsed.length < 20) {
+        setDemandas(initialDemandas);
+        localStorage.setItem('demandas_data', JSON.stringify(initialDemandas));
+      } else {
+        setDemandas(parsed);
+      }
+    } else {
+      setDemandas(initialDemandas);
+      localStorage.setItem('demandas_data', JSON.stringify(initialDemandas));
+    }
+
+    // Carregar histórico de LocalStorage ou criar histórico inicial vazio
+    const storedHistorico = localStorage.getItem('demandas_history');
+    if (storedHistorico) {
+      const parsedHist = JSON.parse(storedHistorico);
+      if (parsedHist.length < 20) {
+        const hojeStr = new Date().toLocaleString('pt-BR');
+        const mockHistorico: ComentarioHistorico[] = initialDemandas.map(d => ({
+          id: d.id,
+          demandaId: d.id,
+          data_hora: hojeStr,
+          status_novo: d.status,
+          setor: d.setor || 'SME',
+          comentario: 'Demanda importada da planilha inicial.'
+        }));
+        setHistorico(mockHistorico);
+        localStorage.setItem('demandas_history', JSON.stringify(mockHistorico));
+      } else {
+        setHistorico(parsedHist);
+      }
+    } else {
+      const hojeStr = new Date().toLocaleString('pt-BR');
+      const mockHistorico: ComentarioHistorico[] = initialDemandas.map(d => ({
+        id: d.id,
+        demandaId: d.id,
+        data_hora: hojeStr,
+        status_novo: d.status,
+        setor: d.setor || 'SME',
+        comentario: 'Demanda importada da planilha inicial.'
+      }));
+      setHistorico(mockHistorico);
+      localStorage.setItem('demandas_history', JSON.stringify(mockHistorico));
+    }
+  }, []);
+
+  // Recalcular lista de setores únicos a partir de todas as demandas cadastradas
+  useEffect(() => {
+    const setoresUnicos = Array.from(
+      new Set(
+        demandas
+          .map(d => d.setor?.trim())
+          .filter((s): s is string => !!s)
+      )
+    ).sort();
+    setSetoresDisponiveis(setoresUnicos);
+  }, [demandas]);
+
+  // Salvar demandas em LocalStorage
+  const saveDemandas = (newDemandas: Demanda[]) => {
+    setDemandas(newDemandas);
+    localStorage.setItem('demandas_data', JSON.stringify(newDemandas));
+  };
+
+  // Salvar histórico em LocalStorage
+  const saveHistorico = (newHistorico: ComentarioHistorico[]) => {
+    setHistorico(newHistorico);
+    localStorage.setItem('demandas_history', JSON.stringify(newHistorico));
+  };
+
+  // --- Validação da Senha Forte e E-mail Corporativo ---
+  useEffect(() => {
+    if (cadEmail && !cadEmail.toLowerCase().endsWith('@rioeduca.net')) {
+      setErroEmail(true);
+    } else {
+      setErroEmail(false);
+    }
+
+    setSenhaValida({
+      minimo: cadSenha.length >= 8,
+      maiuscula: /[A-Z]/.test(cadSenha),
+      minuscula: /[a-z]/.test(cadSenha),
+      numero: /[0-9]/.test(cadSenha)
+    });
+  }, [cadEmail, cadSenha]);
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail.toLowerCase().endsWith('@rioeduca.net')) {
+      alert("Apenas e-mails do domínio @rioeduca.net são permitidos para acesso.");
+      return;
+    }
+    if (loginSenha.length < 8) {
+      alert("A senha informada deve possuir no mínimo 8 caracteres.");
+      return;
+    }
+    
+    // Simula a autenticação com sucesso
+    setUserEmail(loginEmail);
+    localStorage.setItem('demandas_user', loginEmail);
+  };
+
+  const handleCadastroSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const isSenhaForte = senhaValida.minimo && senhaValida.maiuscula && senhaValida.minuscula && senhaValida.numero;
+    const isEmailValido = cadEmail.toLowerCase().endsWith('@rioeduca.net');
+
+    if (isEmailValido && isSenhaForte) {
+      alert("Solicitação de acesso simulada com sucesso! Você já pode entrar com sua conta no formulário de login.");
+      setLoginTab('login');
+      setLoginEmail(cadEmail);
+      setCadEmail('');
+      setCadSenha('');
+    } else {
+      alert("Por favor, atenda a todos os requisitos de segurança antes de prosseguir.");
+    }
+  };
+
+  const handleLogout = () => {
+    setUserEmail('');
+    localStorage.removeItem('demandas_user');
+  };
+
+  // --- Operações de Dados Locais ---
+  
+  // Criar nova demanda
+  const handleSalvarNovaDemanda = (novaDemanda: Omit<Demanda, 'id'>) => {
+    const novoId = demandas.length > 0 ? Math.max(...demandas.map(d => d.id)) + 1 : 1;
+    const demandaCompleta: Demanda = {
+      id: novoId,
+      ...novaDemanda
+    };
+    
+    const novasDemandas = [demandaCompleta, ...demandas];
+    saveDemandas(novasDemandas);
+    setModalNovoAberto(false);
+
+    // Grava um comentário inicial de criação de registro no histórico
+    const hojeStr = new Date().toLocaleString('pt-BR');
+    const novoComentario: ComentarioHistorico = {
+      id: Date.now(),
+      demandaId: novoId,
+      data_hora: hojeStr,
+      status_novo: novaDemanda.status,
+      setor: novaDemanda.setor,
+      comentario: 'Demanda cadastrada no sistema.'
+    };
+    saveHistorico([novoComentario, ...historico]);
+  };
+
+  // Editar dados da demanda
+  const handleSalvarEdicaoDemanda = (demandaId: number, camposAlterados: Partial<Demanda>) => {
+    const novasDemandas = demandas.map(d => {
+      if (d.id === demandaId) {
+        return { ...d, ...camposAlterados };
+      }
+      return d;
+    });
+    saveDemandas(novasDemandas);
+    setModalEditarAberto(false);
+    setDemandaSelecionada(null);
+  };
+
+  // Atualizar Status e Comentário (gera histórico)
+  const handleAtualizarStatus = (demandaId: number, novoStatus: Demanda['status'], comentario: string) => {
+    const hojeStr = new Date().toLocaleString('pt-BR');
+    
+    // Atualizar status na tabela
+    const novasDemandas = demandas.map(d => {
+      if (d.id === demandaId) {
+        return { ...d, status: novoStatus };
+      }
+      return d;
+    });
+    saveDemandas(novasDemandas);
+
+    // Encontrar setor da demanda para o histórico
+    const demandaModificada = demandas.find(d => d.id === demandaId);
+    const setorModificado = demandaModificada?.setor || '—';
+
+    // Inserir comentário no histórico
+    const novoComentario: ComentarioHistorico = {
+      id: Date.now(),
+      demandaId,
+      data_hora: hojeStr,
+      status_novo: novoStatus,
+      setor: setorModificado,
+      comentario
+    };
+    
+    const novoHistorico = [novoComentario, ...historico];
+    saveHistorico(novoHistorico);
+
+    setModalStatusAberto(false);
+    setDemandaSelecionada(null);
+  };
+
+  // Excluir demanda
+  const handleExcluirDemanda = (demandaId: number) => {
+    const novasDemandas = demandas.filter(d => d.id !== demandaId);
+    saveDemandas(novasDemandas);
+    
+    // Limpar histórico daquela demanda
+    const novoHistorico = historico.filter(h => h.demandaId !== demandaId);
+    saveHistorico(novoHistorico);
+  };
+
+  // --- Utilitários de Filtros ---
+  const getTodayString = () => {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
+  const isBeforeToday = (dateStr: string) => {
+    if (!dateStr || dateStr === 'dd/mm/aaaa') return false;
+    const [day, month, year] = dateStr.split('/').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    
+    const today = new Date();
+    const todayObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    return dateObj < todayObj;
+  };
+
+  // Calcula rótulos semânticos de prazo final
+  const getPrazoFinalSemantics = (dateStr: string | undefined) => {
+    if (!dateStr || dateStr === 'dd/mm/aaaa') {
+      return { data: '—', label: null, classe: '' };
+    }
+
+    try {
+      const [day, month, year] = dateStr.split('/').map(Number);
+      const dateObj = new Date(year, month - 1, day);
+      
+      const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+      const dataFormatada = `${String(day).padStart(2, '0')} ${meses[month - 1]} ${year}`;
+
+      const today = new Date();
+      const todayObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      const diffTime = dateObj.getTime() - todayObj.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        const absDays = Math.abs(diffDays);
+        return {
+          data: dataFormatada,
+          label: `${absDays} ${absDays === 1 ? 'dia' : 'dias'} em atraso`,
+          classe: 'status-atrasado'
+        };
+      } else if (diffDays === 0) {
+        return {
+          data: dataFormatada,
+          label: 'vence hoje',
+          classe: 'status-hoje'
+        };
+      } else {
+        return {
+          data: dataFormatada,
+          label: `em ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`,
+          classe: 'status-no-prazo'
+        };
+      }
+    } catch {
+      return { data: dateStr, label: null, classe: '' };
+    }
+  };
+
+  // Lógica de filtragem dos dados
+  const getDemandasFiltradas = () => {
+    const todayStr = getTodayString();
+
+    return demandas.filter(d => {
+      // 1. Filtros Rápidos Cumulativos ("Hoje", "Vencido", "Para assinatura")
+      const algunQuickAtivo = quickFilters.assinatura || quickFilters.hoje || quickFilters.vencido;
+      
+      if (algunQuickAtivo) {
+        let matchQuick = false;
+        
+        if (quickFilters.assinatura && d.status === 'Para Assinatura') {
+          matchQuick = true;
+        }
+        if (quickFilters.hoje && d.status !== 'Encerrado' && d.limite2 === todayStr) {
+          matchQuick = true;
+        }
+        if (quickFilters.vencido && d.status !== 'Encerrado' && d.limite2 && isBeforeToday(d.limite2)) {
+          matchQuick = true;
+        }
+
+        if (!matchQuick) return false;
+      }
+
+      // 2. Filtro de Busca por texto (Número, Assunto, Responsável)
+      if (filtros.busca.trim()) {
+        const buscaLower = filtros.busca.toLowerCase();
+        const numMatch = d.numero.toLowerCase().includes(buscaLower);
+        const assMatch = d.assunto.toLowerCase().includes(buscaLower);
+        const respMatch = d.responsavel?.toLowerCase().includes(buscaLower) || false;
+        
+        if (!numMatch && !assMatch && !respMatch) {
+          return false;
+        }
+      }
+
+      // 3. Filtro de Tipo
+      if (filtros.tipo !== 'Todos' && d.tipo !== filtros.tipo) {
+        return false;
+      }
+
+      // 4. Filtro de Classificação
+      if (filtros.classificacao !== 'Todas' && d.classificacao !== filtros.classificacao) {
+        return false;
+      }
+
+      // 5. Filtro de Status
+      if (filtros.status === 'Somente ativos (padrão)') {
+        if (d.status === 'Encerrado') return false;
+      } else if (filtros.status !== 'Todos (exibir tudo)') {
+        if (d.status !== filtros.status) return false;
+      }
+
+      // 6. Filtro de Setor
+      if (filtros.setor !== 'Todos' && d.setor !== filtros.setor) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
+  const demandasFiltradas = getDemandasFiltradas();
+
+  // Exportar demandas filtradas como CSV
+  const handleExportCSV = () => {
+    if (demandasFiltradas.length === 0) {
+      alert("Nenhum registro disponível para exportação na filtragem atual.");
+      return;
+    }
+
+    const headers = ['ID', 'Número', 'Tipo', 'Assunto', 'Responsável', 'Limite 1', 'Limite 2', 'Status', 'Setor', 'Classificação'];
+    
+    const rows = demandasFiltradas.map(d => [
+      d.id,
+      `"${d.numero}"`,
+      `"${d.tipo}"`,
+      `"${d.assunto.replace(/"/g, '""')}"`,
+      `"${d.responsavel || ''}"`,
+      `"${d.limite1 || ''}"`,
+      `"${d.limite2 || ''}"`,
+      `"${d.status}"`,
+      `"${d.setor || ''}"`,
+      `"${d.classificacao || ''}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `demandas_sme_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Renderização condicional: Tela de Login ou Área de Dashboard
+  if (!userEmail) {
+    return (
+      <div className="login-split-container">
+        {/* Lado Esquerdo: Painel Azul/Slate Corporativo */}
+        <div className="login-sidebar">
+          <div className="login-sidebar-content">
+            <span className="sidebar-badge">CTRH • SME</span>
+            <h2>Central de Demandas</h2>
+            <p className="sidebar-description">
+              Organização, acompanhamento e rastreabilidade das demandas de Recursos Humanos.
+            </p>
+            
+            <div className="sidebar-features">
+              <div className="feature-item">
+                <div className="feature-icon-wrapper">
+                  <i className="fa-solid fa-calendar-check"></i>
+                </div>
+                <div className="feature-text">
+                  <strong>Prazos</strong>
+                  <span>Alertas visuais e semânticos sobre datas limites e providências em atraso.</span>
+                </div>
+              </div>
+              
+              <div className="feature-item">
+                <div className="feature-icon-wrapper">
+                  <i className="fa-solid fa-user-check"></i>
+                </div>
+                <div className="feature-text">
+                  <strong>Responsáveis</strong>
+                  <span>Atribuição clara de tarefas com suporte a avatares e vinculação por setores.</span>
+                </div>
+              </div>
+              
+              <div className="feature-item">
+                <div className="feature-icon-wrapper">
+                  <i className="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div className="feature-text">
+                  <strong>Histórico</strong>
+                  <span>Rastreabilidade completa de logs e comentários de status por processo.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Padrão geométrico decorativo em segundo plano */}
+          <div className="sidebar-pattern"></div>
+        </div>
+
+        {/* Lado Direito: Card de Autenticação */}
+        <div className="login-form-area">
+          <div className="login-card-editorial">
+            {/* Cabeçalho de Login Móvel (Aparece apenas em Mobile) */}
+            <div className="login-mobile-brand">
+              <h2>Central de Demandas</h2>
+              <p>CTRH — Secretaria Municipal de Educação</p>
+            </div>
+
+            <div className="login-card-header">
+              <h3>Painel de Acesso</h3>
+              <p>Identifique-se com a sua credencial @rioeduca.net</p>
+            </div>
+
+            <div className="login-tabs">
+              <button 
+                type="button" 
+                className={`login-tab-btn ${loginTab === 'login' ? 'active' : ''}`}
+                onClick={() => setLoginTab('login')}
+              >
+                Entrar
+              </button>
+              <button 
+                type="button" 
+                className={`login-tab-btn ${loginTab === 'cadastro' ? 'active' : ''}`}
+                onClick={() => setLoginTab('cadastro')}
+              >
+                Primeiro Acesso
+              </button>
+            </div>
+
+            {loginTab === 'login' ? (
+              /* Formulário de Login */
+              <form onSubmit={handleLoginSubmit}>
+                <div className="login-form-group">
+                  <label>E-mail Corporativo</label>
+                  <div className="input-icon-group">
+                    <i className="fa-solid fa-envelope"></i>
+                    <input 
+                      type="email" 
+                      className="form-control" 
+                      placeholder="usuario@rioeduca.net"
+                      value={loginEmail}
+                      onChange={e => setLoginEmail(e.target.value)}
+                      required 
+                    />
+                  </div>
+                </div>
+                <div className="login-form-group" style={{ marginBottom: '25px' }}>
+                  <label>Senha</label>
+                  <div className="input-icon-group">
+                    <i className="fa-solid fa-lock"></i>
+                    <input 
+                      type="password" 
+                      className="form-control" 
+                      placeholder="••••••••"
+                      value={loginSenha}
+                      onChange={e => setLoginSenha(e.target.value)}
+                      required 
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontWeight: '600' }}>
+                  Acessar Sistema
+                </button>
+              </form>
+            ) : (
+              /* Formulário de Primeiro Acesso (Solicitação) */
+              <form onSubmit={handleCadastroSubmit}>
+                <div className="login-form-group">
+                  <label>Seu E-mail Corporativo</label>
+                  <div className="input-icon-group">
+                    <i className="fa-solid fa-envelope"></i>
+                    <input 
+                      type="email" 
+                      className="form-control" 
+                      placeholder="nome@rioeduca.net"
+                      value={cadEmail}
+                      onChange={e => setCadEmail(e.target.value)}
+                      required 
+                    />
+                  </div>
+                  {erroEmail && (
+                    <div className="text-danger">Apenas e-mails do domínio @rioeduca.net são aceitos.</div>
+                  )}
+                </div>
+                
+                <div className="login-form-group" style={{ marginBottom: '20px' }}>
+                  <label>Criar Nova Senha</label>
+                  <div className="input-icon-group">
+                    <i className="fa-solid fa-lock"></i>
+                    <input 
+                      type="password" 
+                      className="form-control" 
+                      placeholder="••••••••"
+                      value={cadSenha}
+                      onChange={e => setCadSenha(e.target.value)}
+                      required 
+                    />
+                  </div>
+                  
+                  {/* Visualização de critérios de Senha Forte */}
+                  <div className="password-requirements">
+                    <div className={`req-item ${senhaValida.minimo ? 'valid' : ''}`}>
+                      <i className={senhaValida.minimo ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
+                      <span>Mínimo de 8 caracteres</span>
+                    </div>
+                    <div className={`req-item ${senhaValida.maiuscula ? 'valid' : ''}`}>
+                      <i className={senhaValida.maiuscula ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
+                      <span>Pelo menos uma letra maiúscula</span>
+                    </div>
+                    <div className={`req-item ${senhaValida.minuscula ? 'valid' : ''}`}>
+                      <i className={senhaValida.minuscula ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
+                      <span>Pelo menos uma letra minúscula</span>
+                    </div>
+                    <div className={`req-item ${senhaValida.numero ? 'valid' : ''}`}>
+                      <i className={senhaValida.numero ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
+                      <span>Pelo menos um número</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', padding: '12px', fontWeight: '600' }}
+                  disabled={!(cadEmail.toLowerCase().endsWith('@rioeduca.net') && senhaValida.minimo && senhaValida.maiuscula && senhaValida.minuscula && senhaValida.numero)}
+                >
+                  Solicitar Aprovação
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-container">
+      {/* Cabeçalho com cards de estatísticas */}
+      <Header 
+        userEmail={userEmail} 
+        demandas={demandas} 
+        onLogout={handleLogout} 
+        onOpenNovo={() => setModalNovoAberto(true)}
+        onExportCSV={handleExportCSV}
+        filtrosAtivos={{
+          status: filtros.status,
+          quickFilters
+        }}
+        onToggleFiltroStatus={(novoStatus) => {
+          setFiltros(prev => ({ ...prev, status: novoStatus }));
+          setQuickFilters({ assinatura: false, hoje: false, vencido: false });
+          setActiveTab('demandas'); // Direciona para a página de Demandas
+        }}
+        onToggleQuickFilter={(filtro) => {
+          setQuickFilters(prev => {
+            const novoVal = !prev[filtro];
+            return {
+              ...prev,
+              [filtro]: novoVal
+            };
+          });
+          setActiveTab('demandas'); // Direciona para a página de Demandas
+        }}
+      />
+
+      {/* Navegação por Abas SPA */}
+      <nav className="nav-tabs">
+        <button 
+          type="button" 
+          className={`nav-tab-link ${activeTab === 'visao-geral' ? 'active' : ''}`}
+          onClick={() => setActiveTab('visao-geral')}
+          title="Ver o resumo e indicadores do CTRH"
+        >
+          <i className="fa-solid fa-chart-pie"></i>
+          <span>Visão geral</span>
+        </button>
+        
+        <button 
+          type="button" 
+          className={`nav-tab-link ${activeTab === 'demandas' ? 'active' : ''}`}
+          onClick={() => setActiveTab('demandas')}
+          title="Ver a listagem e pesquisar processos operacionais"
+        >
+          <i className="fa-solid fa-list-check"></i>
+          <span>Demandas</span>
+        </button>
+
+        <button 
+          type="button" 
+          className={`nav-tab-link ${activeTab === 'admin' ? 'active' : ''}`}
+          onClick={() => setActiveTab('admin')}
+          title="Ver e gerenciar configurações e perfis de servidores"
+        >
+          <i className="fa-solid fa-sliders"></i>
+          <span>Administração</span>
+        </button>
+      </nav>
+
+      {/* Conteúdo Dinâmico Baseado na Aba Ativa */}
+      {activeTab === 'visao-geral' && (
+        <VisaoGeral 
+          demandas={demandas}
+          historico={historico}
+          onOpenEditar={(d) => {
+            setDemandaSelecionada(d);
+            setDrawerAberto(true);
+          }}
+          renderAtencaoImediata={() => (
+            <AtencaoImediata 
+              demandas={demandas}
+              historico={historico}
+              onOpenEditar={(d) => {
+                setDemandaSelecionada(d);
+                setDrawerAberto(true);
+              }}
+            />
+          )}
+        />
+      )}
+
+      {activeTab === 'demandas' && (
+        <div style={{ animation: 'fadeIn 0.4s ease-out forwards' }}>
+          {/* Faixa de Atenção Imediata (Opcional, também visível na mesa de trabalho) */}
+          <AtencaoImediata 
+            demandas={demandas}
+            historico={historico}
+            onOpenEditar={(d) => {
+              setDemandaSelecionada(d);
+              setDrawerAberto(true);
+            }}
+          />
+
+          {/* Painel de Filtros e Busca */}
+          <FilterPanel 
+            filtros={filtros} 
+            setFiltros={setFiltros} 
+            quickFilters={quickFilters}
+            setQuickFilters={setQuickFilters}
+            setoresDisponiveis={setoresDisponiveis}
+            totalExibidos={demandasFiltradas.length}
+            totalGeral={demandas.length}
+          />
+
+          {/* Tabela de Demandas */}
+          <DemandasTable 
+            demandas={demandasFiltradas}
+            onOpenEditar={(d) => {
+              setDemandaSelecionada(d);
+              setDrawerAberto(true); // Clicar em Abrir/Número agora abre o Drawer lateral!
+            }}
+            onOpenStatus={(d) => {
+              setDemandaSelecionada(d);
+              setModalStatusAberto(true);
+            }}
+            onOpenHistorico={(d) => {
+              setDemandaSelecionada(d);
+              setModalHistoricoAberto(true);
+            }}
+            onExcluir={handleExcluirDemanda}
+          />
+        </div>
+      )}
+
+      {activeTab === 'admin' && (
+        <AdminPanel />
+      )}
+
+      {/* --- Modais Clássicos (Acionados a partir da Tabela ou do Drawer) --- */}
+      
+      {/* Modal Novo Registro */}
+      {modalNovoAberto && (
+        <ModalNovo 
+          onClose={() => setModalNovoAberto(false)}
+          onSalvar={handleSalvarNovaDemanda}
+        />
+      )}
+
+      {/* Modal Editar Demanda */}
+      {modalEditarAberto && demandaSelecionada && (
+        <ModalEditar 
+          demanda={demandaSelecionada}
+          onClose={() => {
+            setModalEditarAberto(false);
+            // Se o Drawer estava aberto, não zeramos o demandaSelecionada para mantê-lo ativo
+            if (!drawerAberto) {
+              setDemandaSelecionada(null);
+            }
+          }}
+          onSalvar={(id, campos) => {
+            handleSalvarEdicaoDemanda(id, campos);
+            setModalEditarAberto(false);
+            // Atualiza a referência de visualização se o Drawer de detalhe estiver aberto
+            if (drawerAberto) {
+              setDemandaSelecionada(prev => prev ? { ...prev, ...campos } : null);
+            }
+          }}
+        />
+      )}
+
+      {/* Modal Atualizar Status */}
+      {modalStatusAberto && demandaSelecionada && (
+        <ModalStatus 
+          demanda={demandaSelecionada}
+          onClose={() => {
+            setModalStatusAberto(false);
+            if (!drawerAberto) {
+              setDemandaSelecionada(null);
+            }
+          }}
+          onAtualizar={(id: number, status: Demanda['status'], coment: string) => {
+            handleAtualizarStatus(id, status, coment);
+            setModalStatusAberto(false);
+            // Atualiza a referência de visualização se o Drawer de detalhe estiver aberto
+            if (drawerAberto) {
+              const novaD = demandas.find(d => d.id === id);
+              setDemandaSelecionada(prev => prev ? { ...prev, status, setor: novaD?.setor || prev.setor } : null);
+            }
+          }}
+        />
+      )}
+
+      {/* Modal Histórico Comentários */}
+      {modalHistoricoAberto && demandaSelecionada && (
+        <ModalHistorico 
+          demanda={demandaSelecionada}
+          historico={historico}
+          onClose={() => {
+            setModalHistoricoAberto(false);
+            if (!drawerAberto) {
+              setDemandaSelecionada(null);
+            }
+          }}
+        />
+      )}
+
+      {/* Drawer Lateral de Detalhe da Demanda */}
+      {drawerAberto && demandaSelecionada && (() => {
+        const prazoSemantics = getPrazoFinalSemantics(demandaSelecionada.limite2);
+        // Filtrar histórico dessa demanda
+        const histFiltrado = historico.filter(h => h.demandaId === demandaSelecionada.id);
+        
+        return (
+          <div className="drawer-overlay" onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}>
+            <div className="drawer-content" onClick={e => e.stopPropagation()}>
+              <div className="drawer-header">
+                <h2>Processo nº {demandaSelecionada.numero}</h2>
+                <button 
+                  type="button"
+                  className="btn-drawer-close" 
+                  onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}
+                  title="Fechar painel de detalhes"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              
+              <div className="drawer-body">
+                {/* Seção 1: Identificação */}
+                <div className="drawer-section">
+                  <h3>Identificação</h3>
+                  <div className="drawer-meta-grid">
+                    <div className="drawer-meta-item full-width">
+                      <label>Assunto</label>
+                      <span className="value" style={{ fontWeight: 600, fontSize: '0.938rem' }}>{demandaSelecionada.assunto}</span>
+                    </div>
+                    <div className="drawer-meta-item">
+                      <label>Tipo</label>
+                      <span className="value">{demandaSelecionada.tipo}</span>
+                    </div>
+                    <div className="drawer-meta-item">
+                      <label>Classificação</label>
+                      <span className="value">{demandaSelecionada.classificacao || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 2: Responsabilidade */}
+                <div className="drawer-section">
+                  <h3>Responsabilidade</h3>
+                  <div className="drawer-meta-grid">
+                    <div className="drawer-meta-item">
+                      <label>Responsável Atual</label>
+                      <span className="value" style={{ fontWeight: 600 }}>{demandaSelecionada.responsavel || 'Não atribuído'}</span>
+                    </div>
+                    <div className="drawer-meta-item">
+                      <label>Setor Vinculado</label>
+                      <span className="value">{demandaSelecionada.setor || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 3: Prazos */}
+                <div className="drawer-section">
+                  <h3>Prazos</h3>
+                  <div className="drawer-meta-grid">
+                    <div className="drawer-meta-item">
+                      <label>Prazo de Análise (Interno)</label>
+                      <span className="value">{demandaSelecionada.limite1 || '—'}</span>
+                    </div>
+                    <div className="drawer-meta-item">
+                      <label>Prazo Final</label>
+                      <div className="prazo-final-container" style={{ alignItems: 'flex-start' }}>
+                        <span className="value" style={{ fontWeight: 600 }}>{prazoSemantics.data}</span>
+                        {prazoSemantics.label && demandaSelecionada.status !== 'Encerrado' && (
+                          <span className={`prazo-status-label ${prazoSemantics.classe}`} style={{ marginTop: '4px', display: 'inline-block' }}>
+                            {prazoSemantics.label}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 4: Situação */}
+                <div className="drawer-section">
+                  <h3>Situação Atual</h3>
+                  <div className="drawer-meta-grid">
+                    <div className="drawer-meta-item">
+                      <label>Status</label>
+                      <span 
+                        className={`badge ${demandaSelecionada.status === 'Para Assinatura' ? 'assinatura' : demandaSelecionada.status === 'Encerrado' ? 'encerrado' : 'aguardando'}`} 
+                        style={{ marginTop: '4px', fontSize: '0.725rem', padding: '4px 10px', display: 'inline-block', width: 'fit-content' }}
+                      >
+                        {demandaSelecionada.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 5: Histórico de Movimentações */}
+                <div className="drawer-section" style={{ borderBottom: 'none' }}>
+                  <h3>Histórico de Comentários</h3>
+                  {histFiltrado.length > 0 ? (
+                    <div className="timeline-container" style={{ paddingLeft: '20px', marginLeft: '0px' }}>
+                      {histFiltrado.map((h, idx) => {
+                        let statusBadgeClass = 'badge aguardando';
+                        if (h.status_novo === 'Para Assinatura') statusBadgeClass = 'badge assinatura';
+                        else if (h.status_novo === 'Encerrado') statusBadgeClass = 'badge encerrado';
+                        else if (h.status_novo === 'Tramitado') statusBadgeClass = 'badge tramitado';
+                        else if (h.status_novo === 'Ajustar') statusBadgeClass = 'badge ajustar';
+                        else if (h.status_novo === 'Sobrestado') statusBadgeClass = 'badge sobrestado';
+
+                        return (
+                          <div key={h.id} className={`timeline-item ${idx === 0 ? 'latest' : ''}`} style={{ marginBottom: '16px' }}>
+                            <div className="timeline-circle"></div>
+                            <div className="timeline-content" style={{ padding: '10px 14px' }}>
+                              <div className="timeline-header" style={{ marginBottom: '4px' }}>
+                                <span className="timeline-meta" style={{ fontSize: '0.7rem' }}>{h.data_hora}</span>
+                                <span className={statusBadgeClass} style={{ fontSize: '0.6rem', padding: '1px 6px' }}>{h.status_novo}</span>
+                              </div>
+                              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>{h.setor || 'CTRH'}</div>
+                              <div className="timeline-comment" style={{ fontSize: '0.75rem', marginTop: '4px' }}>{h.comentario}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '0.813rem', color: 'var(--text-muted)' }}>Nenhum log registrado.</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="drawer-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary-outline"
+                  onClick={() => setModalStatusAberto(true)}
+                  title="Alterar status do processo"
+                >
+                  <i className="fa-solid fa-rotate-left"></i> Status
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary-outline"
+                  onClick={() => setModalEditarAberto(true)}
+                  title="Editar informações do processo"
+                >
+                  <i className="fa-solid fa-pen-to-square"></i> Editar
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setDrawerAberto(false);
+                    setDemandaSelecionada(null);
+                  }}
+                  title="Concluir leitura dos detalhes"
+                >
+                  <i className="fa-solid fa-check"></i> Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+};

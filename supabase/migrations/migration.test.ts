@@ -42,4 +42,9 @@ describe('migração Supabase', () => {
     expect(sql).toContain('grant select, insert, update, delete on table public.sme_demandas to authenticated');
     expect(sql).toContain('grant select, insert on table public.sme_historico to authenticated');
   });
+
+  it('habilita Realtime para demandas e histórico', () => {
+    expect(sql).toContain('alter publication supabase_realtime add table public.sme_demandas');
+    expect(sql).toContain('alter publication supabase_realtime add table public.sme_historico');
+  });
 });

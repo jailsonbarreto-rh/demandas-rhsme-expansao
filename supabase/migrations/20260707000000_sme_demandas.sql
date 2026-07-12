@@ -144,6 +144,9 @@ grant select, insert, update, delete on table public.sme_demandas to authenticat
 grant select, insert on table public.sme_historico to authenticated;
 grant usage, select on all sequences in schema public to authenticated;
 
+alter publication supabase_realtime add table public.sme_demandas;
+alter publication supabase_realtime add table public.sme_historico;
+
 create or replace function private.touch_updated_at()
 returns trigger
 language plpgsql

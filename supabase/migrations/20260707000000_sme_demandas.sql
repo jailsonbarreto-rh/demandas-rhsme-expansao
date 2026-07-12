@@ -151,6 +151,9 @@ set search_path = ''
 as $$
 begin
   new.updated_at = now();
+  if tg_table_name = 'sme_demandas' then
+    new.updated_by = (select auth.uid());
+  end if;
   return new;
 end;
 $$;

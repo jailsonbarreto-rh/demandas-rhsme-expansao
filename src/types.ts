@@ -19,3 +19,18 @@ export interface ComentarioHistorico {
   setor: string;
   comentario: string;
 }
+
+export interface PerfilUsuario {
+  id: string;
+  nome: string;
+  email: string;
+  setor: string;
+  nivel: 'administrador' | 'editor' | 'leitor';
+  status: 'ativo' | 'pendente' | 'inativo';
+}
+
+export interface AppUser {
+  id: string;
+  email: string;
+  perfil: PerfilUsuario;
+}

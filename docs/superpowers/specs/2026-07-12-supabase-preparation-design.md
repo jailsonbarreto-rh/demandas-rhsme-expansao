@@ -18,7 +18,7 @@ A Central de Demandas CTRH SME está publicada como uma aplicação React/Vite e
 - Aplicar as migrações em um banco remoto.
 - Criar usuários reais antes de existir um projeto Supabase.
 - Cadastrar credenciais na Vercel ou ativar o modo Supabase em produção.
-- Redesenhar componentes, textos, navegação ou estilos.
+- Redesenhar componentes, navegação ou identidade visual. Polimentos incrementais de acessibilidade, clareza e segurança são permitidos desde que preservem a composição existente.
 
 ## Modos de execução
 
@@ -106,7 +106,7 @@ O código será dividido em unidades pequenas:
 - repositório Supabase para demandas e histórico;
 - serviço de perfis administrativos.
 
-O `App.tsx` continuará sendo o ponto de composição da interface. A refatoração ficará limitada à substituição das operações de persistência e autenticação por interfaces assíncronas comuns aos dois modos. Componentes visuais e CSS não serão redesenhados.
+O `App.tsx` continuará sendo o ponto de composição da interface. A refatoração ficará limitada à substituição das operações de persistência e autenticação por interfaces assíncronas comuns aos dois modos. Componentes visuais e CSS não serão redesenhados. A entrega poderá incluir melhorias locais confirmadas pela auditoria funcional: limpar credenciais ao sair, permitir visualizar ou ocultar senha, rotular controles apenas com ícones, reforçar foco por teclado e área de toque, e identificar claramente ações administrativas ainda demonstrativas.
 
 ## Dados iniciais
 
@@ -130,9 +130,9 @@ No modo Supabase, a aplicação assinará mudanças de `sme_demandas` e `sme_his
 
 ## Preservação da experiência atual
 
-Com as variáveis atuais da Vercel, o aplicativo continuará no modo local. Devem permanecer inalterados:
+Com as variáveis atuais da Vercel, o aplicativo continuará no modo local. Devem permanecer reconhecíveis e estruturalmente inalterados:
 
-- estrutura e estilo da tela de login;
+- composição, identidade e estilo-base da tela de login;
 - login local do perfil de teste com a credencial atual;
 - abas, cabeçalho, filtros, tabela, modais, drawer e painel administrativo simulado;
 - criação, edição, mudança de status, exclusão, exportação CSV e persistência local;
@@ -162,4 +162,3 @@ Depois que o projeto Supabase for criado:
 5. configurar URL e chave pública na Vercel;
 6. validar um deployment de preview com `VITE_APP_MODE=supabase`;
 7. somente após homologação, ativar o modo Supabase em produção.
-

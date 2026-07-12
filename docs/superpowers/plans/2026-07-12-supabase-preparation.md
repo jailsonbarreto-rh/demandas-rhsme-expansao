@@ -12,7 +12,7 @@
 
 - `VITE_APP_MODE` ausente ou igual a `local` deve preservar o comportamento atual.
 - O modo Supabase só pode iniciar com `VITE_APP_MODE=supabase`, `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` válidos.
-- Não alterar `src/index.css`, a estrutura visual dos componentes ou a cópia exibida no modo local, exceto mensagens de erro necessárias.
+- Não redesenhar a interface nem trocar identidade, estrutura ou navegação. Alterações em `src/index.css` e nos componentes ficam limitadas a polimento incremental aprovado: segurança do login, foco, contraste, área de toque, rótulos acessíveis e clareza de funções demonstrativas.
 - O login local de `teste@rioeduca.net` com a credencial atual deve continuar funcionando.
 - Nunca gravar a senha temporária, `service_role`, chave secreta ou credencial administrativa em arquivo rastreado.
 - Wilson e Jailson serão administradores ativos; o perfil de teste será editor ativo.
@@ -830,7 +830,57 @@ git commit -m "docs: documentar ativação futura do Supabase"
 
 ---
 
-### Task 9: Verificação integral, comparação visual e publicação
+### Task 9: Polimento incremental de UX e acessibilidade
+
+**Files:**
+- Modify: `src/App.tsx`
+- Modify: `src/components/DemandasTable.tsx`
+- Modify: `src/components/AdminPanel.tsx`
+- Modify: `src/index.css`
+- Test: `src/App.ux.test.tsx`
+- Test: `src/components/DemandasTable.test.tsx`
+- Test: `src/components/AdminPanel.test.tsx`
+
+**Interfaces:**
+- Preserva composição e identidade existentes.
+- Não altera o modo local nem as operações funcionais.
+
+- [ ] **Step 1: escrever testes RED de segurança e clareza do login**
+
+Provar que o logout limpa e-mail e senha dos inputs, que existe controle acessível para mostrar ou ocultar senha e que o login local do perfil de teste continua funcionando.
+
+- [ ] **Step 2: implementar o mínimo e executar GREEN**
+
+Limpar estados de credencial no logout e adicionar um botão de visibilidade dentro do campo, com `aria-label` alternando entre `Mostrar senha` e `Ocultar senha`. Reutilizar cores, bordas e ícones atuais.
+
+- [ ] **Step 3: escrever testes RED dos controles apenas com ícones**
+
+Provar que fechar drawer, abrir menu de ações e fechar modais possuem nomes acessíveis descritivos, sem depender do glifo Font Awesome.
+
+- [ ] **Step 4: implementar rótulos e foco**
+
+Adicionar `aria-label` e `aria-expanded` onde necessário e um `:focus-visible` consistente com o azul institucional. Em telas até 900px, controles de toque essenciais devem ter pelo menos 44px de altura e largura sem reorganizar o layout.
+
+- [ ] **Step 5: tornar funções demonstrativas inequívocas**
+
+No modo local, manter as ações administrativas existentes, mas exibir o texto `Demonstração` junto à descrição do bloco e alinhar o usuário de teste exibido ao e-mail real `teste@rioeduca.net`. No modo Supabase, o marcador não aparece.
+
+- [ ] **Step 6: executar testes e comparação visual**
+
+Run: `npm test -- src/App.ux.test.tsx src/components/DemandasTable.test.tsx src/components/AdminPanel.test.tsx && npm run build`
+
+Expected: testes PASS; login, cabeçalho, abas, cartões, filtros, tabela e drawer permanecem reconhecíveis e sem mudança estrutural.
+
+- [ ] **Step 7: commit**
+
+```bash
+git add src/App.tsx src/components/DemandasTable.tsx src/components/AdminPanel.tsx src/index.css src/App.ux.test.tsx src/components/*.test.tsx
+git commit -m "fix: aprimorar segurança e acessibilidade da interface"
+```
+
+---
+
+### Task 10: Verificação integral, comparação visual e publicação
 
 **Files:**
 - No planned source edits; any discovered bug requires a failing regression test before a fix.

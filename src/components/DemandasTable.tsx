@@ -56,7 +56,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
     if (!name) return '—';
     const cleanName = name.trim();
     if (!cleanName || cleanName === '—') return '—';
-    
+
     const parts = cleanName.split(' ').filter(p => p.length > 0);
     if (parts.length === 0) return '—';
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
@@ -94,14 +94,13 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
 
                 return (
                   <tr key={d.id}>
-                    {/* Processo / Documento (Número, Tipo e Classificação consolidados) */}
                     <td style={{ textAlign: 'left' }}>
                       <div className="processo-identificacao">
-                        <button 
+                        <button
                           type="button"
-                          className="numero-link" 
+                          className="numero-link"
                           onClick={() => onOpenEditar(d)}
-                          title={canEdit ? `Clique para editar a demanda do processo nº ${d.numero}` : `Abrir detalhes do processo nº ${d.numero}`}
+                          title={`Abrir detalhes do processo nº ${d.numero}`}
                         >
                           {d.numero}
                         </button>
@@ -116,15 +115,13 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                         </div>
                       </div>
                     </td>
-                    
-                    {/* Assunto (Alinhado à esquerda e limitado a 2-3 linhas) */}
+
                     <td className="text-start-cell">
                       <div className="limite-linhas" title={d.assunto}>
                         {d.assunto}
                       </div>
                     </td>
-                    
-                    {/* Responsável com Avatar e Setor */}
+
                     <td style={{ textAlign: 'left' }}>
                       <div className="avatar-circle-group">
                         {showAvatar ? (
@@ -142,11 +139,9 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                         </div>
                       </div>
                     </td>
-                    
-                    {/* Prazo Interno */}
+
                     <td>{d.limite1 && d.limite1 !== 'dd/mm/aaaa' ? d.limite1 : '—'}</td>
-                    
-                    {/* Prazo Final com Semântica */}
+
                     <td>
                       <div className="prazo-final-container">
                         <span className="prazo-final-data">{prazoFinal.data}</span>
@@ -157,32 +152,30 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                         )}
                       </div>
                     </td>
-                    
-                    {/* Status */}
+
                     <td>
                       <span className={getStatusBadgeClass(d.status)}>
                         {d.status}
                       </span>
                     </td>
-                    
-                    {/* Ações Consolidadas (Botão Abrir + Dropdown Menu) */}
+
                     <td>
                       <div className="actions-wrapper">
-                        <button 
+                        <button
                           type="button"
                           className="btn btn-abrir-tabela"
                           onClick={() => onOpenEditar(d)}
-                          title={canEdit ? "Editar demanda" : "Abrir detalhes da demanda"}
+                          title="Abrir detalhes da demanda"
                         >
-                          {canEdit ? "Editar" : "Abrir"}
+                          Abrir
                         </button>
-                        
+
                         <div className="dropdown-container">
                           <button
                             type="button"
                             className={`btn-ellipsis ${activeDropdownId === d.id ? 'active' : ''}`}
                             onClick={(e) => {
-                              e.stopPropagation(); // Evita fechamento imediato pelo clique global
+                              e.stopPropagation();
                               setActiveDropdownId(activeDropdownId === d.id ? null : d.id);
                             }}
                             title="Mais ações"
@@ -193,12 +186,12 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                           >
                             <i className="fa-solid fa-ellipsis-vertical"></i>
                           </button>
-                          
+
                           {activeDropdownId === d.id && (
                             <div className="dropdown-menu" id={`menu-acoes-${d.id}`} role="menu">
                               {canEdit && (
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   className="dropdown-item"
                                   role="menuitem"
                                   onClick={() => onOpenStatus(d)}
@@ -207,19 +200,8 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                                   <span>Alterar status</span>
                                 </button>
                               )}
-                              {canEdit && (
-                                <button 
-                                  type="button" 
-                                  className="dropdown-item"
-                                  role="menuitem"
-                                  onClick={() => onOpenEditar(d)}
-                                >
-                                  <i className="fa-solid fa-pen-to-square"></i>
-                                  <span>Editar</span>
-                                </button>
-                              )}
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 className="dropdown-item"
                                 role="menuitem"
                                 onClick={() => onOpenHistorico(d)}
@@ -230,8 +212,8 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                               {canDelete && (
                                 <>
                                   <div className="dropdown-divider"></div>
-                                  <button 
-                                    type="button" 
+                                  <button
+                                    type="button"
                                     className="dropdown-item delete-item"
                                     role="menuitem"
                                     onClick={() => handleExcluirClick(d.id, d.numero)}

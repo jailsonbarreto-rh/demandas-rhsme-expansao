@@ -46,7 +46,7 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSa
       <div className="modal-wrapper" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Editar Dados da Demanda</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar edição da demanda">
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>

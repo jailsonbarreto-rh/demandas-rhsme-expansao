@@ -31,7 +31,7 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
       <div className="modal-wrapper" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
         <div className="modal-header">
           <h2>Atualizar Status</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar atualização de status">
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>

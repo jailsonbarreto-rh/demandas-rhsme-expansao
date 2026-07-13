@@ -236,6 +236,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                               setActiveDropdownId(activeDropdownId === d.id ? null : d.id);
                             }}
                             title="Mais ações"
+                            aria-label={`Mais ações da demanda ${d.numero}`}
                             aria-expanded={activeDropdownId === d.id}
                             aria-haspopup="menu"
                             aria-controls={`menu-acoes-${d.id}`}

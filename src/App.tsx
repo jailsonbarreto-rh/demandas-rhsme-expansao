@@ -31,8 +31,10 @@ export const App: React.FC<AppProps> = ({ services }) => {
   // --- Estados do formulário de autenticação ---
   const [loginEmail, setLoginEmail] = useState<string>('');
   const [loginSenha, setLoginSenha] = useState<string>('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [cadEmail, setCadEmail] = useState<string>('');
   const [cadSenha, setCadSenha] = useState<string>('');
+  const [showCadastroPassword, setShowCadastroPassword] = useState(false);
   const [loginTab, setLoginTab] = useState<'login' | 'cadastro'>('login');
   
   // Mensagens de erro e validações
@@ -167,6 +169,8 @@ export const App: React.FC<AppProps> = ({ services }) => {
     setLoginSenha('');
     setCadEmail('');
     setCadSenha('');
+    setShowLoginPassword(false);
+    setShowCadastroPassword(false);
     setLoginTab('login');
   };
 
@@ -458,11 +462,12 @@ export const App: React.FC<AppProps> = ({ services }) => {
               /* Formulário de Login */
               <form onSubmit={handleLoginSubmit}>
                 <div className="login-form-group">
-                  <label>E-mail Corporativo</label>
+                  <label htmlFor="login-email">E-mail Corporativo</label>
                   <div className="input-icon-group">
                     <i className="fa-solid fa-envelope"></i>
                     <input 
                       type="email" 
+                      id="login-email"
                       className="form-control" 
                       placeholder="usuario@rioeduca.net"
                       value={loginEmail}
@@ -472,17 +477,27 @@ export const App: React.FC<AppProps> = ({ services }) => {
                   </div>
                 </div>
                 <div className="login-form-group" style={{ marginBottom: '25px' }}>
-                  <label>Senha</label>
-                  <div className="input-icon-group">
+                  <label htmlFor="login-senha">Senha</label>
+                  <div className="input-icon-group has-visibility-toggle">
                     <i className="fa-solid fa-lock"></i>
                     <input 
-                      type="password" 
+                      type={showLoginPassword ? 'text' : 'password'}
+                      id="login-senha"
                       className="form-control" 
                       placeholder="••••••••"
                       value={loginSenha}
                       onChange={e => setLoginSenha(e.target.value)}
                       required 
                     />
+                    <button
+                      type="button"
+                      className="password-visibility-toggle"
+                      aria-label={showLoginPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      aria-pressed={showLoginPassword}
+                      onClick={() => setShowLoginPassword((visible) => !visible)}
+                    >
+                      <i className={`fa-solid ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                    </button>
                   </div>
                 </div>
                 <button
@@ -498,11 +513,12 @@ export const App: React.FC<AppProps> = ({ services }) => {
               /* Formulário de Primeiro Acesso (Solicitação) */
               <form onSubmit={handleCadastroSubmit}>
                 <div className="login-form-group">
-                  <label>Seu E-mail Corporativo</label>
+                  <label htmlFor="cadastro-email">Seu E-mail Corporativo</label>
                   <div className="input-icon-group">
                     <i className="fa-solid fa-envelope"></i>
                     <input 
                       type="email" 
+                      id="cadastro-email"
                       className="form-control" 
                       placeholder="nome@rioeduca.net"
                       value={cadEmail}
@@ -516,17 +532,27 @@ export const App: React.FC<AppProps> = ({ services }) => {
                 </div>
                 
                 <div className="login-form-group" style={{ marginBottom: '20px' }}>
-                  <label>Criar Nova Senha</label>
-                  <div className="input-icon-group">
+                  <label htmlFor="cadastro-senha">Criar Nova Senha</label>
+                  <div className="input-icon-group has-visibility-toggle">
                     <i className="fa-solid fa-lock"></i>
                     <input 
-                      type="password" 
+                      type={showCadastroPassword ? 'text' : 'password'}
+                      id="cadastro-senha"
                       className="form-control" 
                       placeholder="••••••••"
                       value={cadSenha}
                       onChange={e => setCadSenha(e.target.value)}
                       required 
                     />
+                    <button
+                      type="button"
+                      className="password-visibility-toggle"
+                      aria-label={showCadastroPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      aria-pressed={showCadastroPassword}
+                      onClick={() => setShowCadastroPassword((visible) => !visible)}
+                    >
+                      <i className={`fa-solid ${showCadastroPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                    </button>
                   </div>
                   
                   {/* Visualização de critérios de Senha Forte */}
@@ -790,6 +816,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
                   className="btn-drawer-close" 
                   onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}
                   title="Fechar painel de detalhes"
+                  aria-label="Fechar painel de detalhes"
                 >
                   <i className="fa-solid fa-xmark"></i>
                 </button>

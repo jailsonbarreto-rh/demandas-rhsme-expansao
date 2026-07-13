@@ -44,7 +44,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
     { id: '1', nome: 'Wilson Peixoto', email: 'wilson.peixoto@rioeduca.net', nivel: 'Administrador', setor: 'CTRH', status: 'Ativo' },
     { id: '2', nome: 'Erica Ramos', email: 'erica.ramos@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Ativo' },
     { id: '3', nome: 'Ricardo Silva', email: 'ricardo.silva@rioeduca.net', nivel: 'Básico', setor: 'CARH', status: 'Ativo' },
-    { id: '4', nome: 'Servidor SME Teste', email: 'sme.teste@rioeduca.net', nivel: 'Básico', setor: 'SME', status: 'Ativo' },
+    { id: '4', nome: 'Servidor SME Teste', email: 'teste@rioeduca.net', nivel: 'Básico', setor: 'SME', status: 'Ativo' },
     { id: '5', nome: 'Mariana Costa', email: 'mariana.costa@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Pendente' }
   ];
 
@@ -129,6 +129,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
         </h2>
         <p style={{ fontSize: '0.813rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
           Visualização dos e-mails corporativos autorizados no sistema da SME e seus respectivos papéis de segurança.
+          {!isSupabase && <span className="demo-label">Demonstração</span>}
         </p>
 
         <div className="table-responsive">

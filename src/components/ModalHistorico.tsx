@@ -16,7 +16,7 @@ export const ModalHistorico: React.FC<ModalHistoricoProps> = ({ demanda, histori
       <div className="modal-wrapper" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Histórico de Comentários — Processo {demanda.numero}</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar histórico da demanda">
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>

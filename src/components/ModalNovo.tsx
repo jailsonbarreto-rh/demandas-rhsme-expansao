@@ -55,7 +55,7 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
       <div className="modal-wrapper" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Novo Registro</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar novo registro">
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>

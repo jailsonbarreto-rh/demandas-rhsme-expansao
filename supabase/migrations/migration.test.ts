@@ -51,10 +51,19 @@ describe('migração Supabase', () => {
     expect(sql).not.toContain('grant insert on table public.sme_historico');
   });
 
-  it('cria a RPC de bootstrap privada e revoga execução geral', () => {
+  it('permite a RPC de bootstrap somente para service_role', () => {
     expect(sql).toContain('create or replace function public.bootstrap_importar_demanda');
-    expect(sql).toContain('revoke all on function public.bootstrap_importar_demanda');
-    expect(sql).not.toContain('grant execute on function public.bootstrap_importar_demanda');
+    expect(sql).toMatch(/revoke all on function public\.bootstrap_importar_demanda\([\s\S]*?\) from public, anon, authenticated;/);
+    expect(sql).toMatch(/grant execute on function public\.bootstrap_importar_demanda\([\s\S]*?\) to service_role;/);
+    expect(sql).not.toMatch(/grant execute on function public\.bootstrap_importar_demanda\([\s\S]*?\) to authenticated;/);
+  });
+
+  it('serializa alterações administrativas e trata update e delete', () => {
+    expect(sql).toContain('pg_catalog.pg_advisory_xact_lock(1122334455)');
+    expect(sql).toContain("if tg_op = 'delete'");
+    expect(sql).toContain('return old');
+    expect(sql).toContain("if tg_op = 'update'");
+    expect(sql).toContain('return new');
   });
 
   it('habilita Realtime para demandas e histórico', () => {

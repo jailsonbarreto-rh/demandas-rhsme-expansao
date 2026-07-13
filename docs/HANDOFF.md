@@ -1,52 +1,69 @@
 # Handoff Operacional — Central de Demandas CTRH SME
 
-Atualizado em: 2026-07-13 (Saneamento de Bloqueadores do PR #3 concluído com 65 testes)
+Atualizado em: 2026-07-13 — saneamento final do Gate 0 no PR #4
 
 ---
 
-## 📌 Norte Operacional e Status
+## Norte operacional e status
 
-Toda a infraestrutura visual, design system editorial, fluxo estático e integração Supabase endurecida e segura estão **prontos para homologação**. O Pull Request #3 foi atualizado no GitHub para sanar todas as revisões críticas do Gate 0.
+A infraestrutura visual, o modo local e a camada de integração Supabase estão **prontos para homologação remota**, mas o Gate 0 somente será considerado homologado após a execução da migration e do bootstrap em um projeto Supabase de testes e a aprovação dos testes funcionais de administrador, editor e leitor.
 
-*   **URL de Produção**: [demandas-rhsme-expansao.vercel.app](https://demandas-rhsme-expansao.vercel.app)
-*   **Repositório GitHub**: [github.com/WilsonMPeixoto-2/demandas-rhsme-expansao](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao)
-*   **Pull Request Ativo**: [#3 (Homologação Gate 0 - Ajustes de Segurança e UX)](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao/pull/3)
-
----
-
-## 🛠️ Entregas Realizadas no Saneamento (PR #3)
-
-### 1. Hardening do Banco de Dados e RPCs
-* **Revogação de INSERT Direto:** Retirado o privilégio de `INSERT` na tabela `sme_demandas` para usuários autenticados, forçando a criação a passar exclusivamente pela RPC `criar_sme_demanda`.
-* **Segurança Concorrente de Administradores:** Atualizada a trigger administrativa `private.prevent_no_active_admin()` para incluir travamento explícito de linhas usando `SELECT ... FOR UPDATE` nas transações concorrentes através de um advisory lock transacional (`pg_advisory_xact_lock`), e escopo estendido com retornos válidos de `OLD`/`NEW` para operações `BEFORE UPDATE OR DELETE` no banco de dados.
-* **Validações nas RPCs:** Adicionada checagem contra strings nulas ou vazias (`btrim(...) = ''`) para parâmetros obrigatórios de processos e status.
-* **Restrição de Exclusão:** Limitada a política de RLS do `DELETE` na tabela `sme_demandas` exclusivamente a administradores ativos.
-
-### 2. Script de Bootstrap Seguro e Idempotente
-* **Carga Atômica via RPC de Bootstrap:** Criada a RPC `public.bootstrap_importar_demanda` (com privilégios de execução revogados de `public` e `authenticated`) para realizar a carga inicial transacional contendo a demanda e o histórico, sem depender de sessões de login com senhas pessoais dos administradores no script de bootstrap.
-* **Senhas Iniciais Únicas:** As contas geradas recebem senhas exclusivas e distintas concatenadas com o prefixo de seus e-mails, eliminando senhas compartilhadas no bootstrap.
-* **Idempotência de Usuários:** Substituído o `upsert` na tabela `perfis_usuarios` por uma promoção direcionada: perfis novos no estado inicial da trigger (`leitor` e `status = 'pendente'`) são elevados aos níveis corretos do bootstrap. Configurações personalizadas em perfis já existentes no banco de dados são rigorosamente preservadas.
-
-### 3. Robustez e Reconciliação do Repositório Local
-* **Validação Estrutural:** Implementada checagem estrutural rigorosa dos dados locais do LocalStorage (`isValidDemandaArray`, `isValidHistoryArray`) no `load()`. Em caso de inconsistência profunda ou dados nulos/corrompidos, redefine ambas as chaves de forma mútua para evitar quebras silenciosas.
-* **Paridade de Validação:** Lançamento de erro explícito no repositório local ao tentar atualizar IDs inexistentes ou criar demandas com números de processo duplicados. Ignora atualizações diretas de `status` no método `update` local para conformidade de contratos.
-
-### 4. Aprimoramento da Interface e UX
-* **Formatação Progressiva de Data:** O componente `DateMaskInput.tsx` foi reescrito para utilizar formatação progressiva baseada no evento `onChange` padrão do HTML5 (não mais no `keydown`), permitindo colagem livre de datas (`onPaste`), suporte a qualquer dispositivo móvel e leitores de tela. O estado do pai é mantido como `""` por padrão se não houver interação do usuário.
-* **Validação de Data no Submit:** Adicionada validação rigorosa das datas nos formulários de criação (`ModalNovo`) e edição (`ModalEditar`), recusando submissões com datas parciais ou inválidas.
-* **Restrição Visual de Exclusão:** Separadas as permissões visuais na interface. O botão de excluir demandas agora é exibido unicamente a administradores ativos (`canDelete`), impedindo que editores vejam opções que o banco rejeitaria.
-* **Alertas e Skeletons Globais:** Movidos os loaders (`data.loading`) e o banner de falha de conexão (`data.error`) para o nível global do `App.tsx` para evitar exibição de abas ou painéis SPA vazios durante a carga.
-* **Sanitização de CSV Injection:** Otimizada a sanitização do CSV para aplicar `trim()` e escapar caracteres de controle e espaços iniciais antes do escape de segurança.
-
-### 5. Validação da Suíte de Testes
-* Suíte de testes automatizados unitários (`vitest`) rodando e passando com **65 testes em verde** (100% de sucesso).
-* Build de produção Vite + TypeScript executando com 100% de sucesso.
+- **URL de produção atual:** [demandas-rhsme-expansao.vercel.app](https://demandas-rhsme-expansao.vercel.app)
+- **Repositório GitHub:** [WilsonMPeixoto-2/demandas-rhsme-expansao](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao)
+- **Pull Request ativo:** [#4 — Homologação Gate 0](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao/pull/4)
+- **Branch de trabalho:** `homologacao/gate-0`
 
 ---
 
-## 🔮 Próximas Etapas (Fluxo de Homologação)
+## Entregas do saneamento final
 
-1. Aplicar a migração `20260707000000_sme_demandas.sql` em um banco de dados de **preview/homologação** do Supabase.
-2. Rodar o script de bootstrap na base remota de testes.
-3. Testar o fluxo de login dos usuários de teste, a carga remota e a consistência das restrições RLS.
-4. Após validação em preview, aprovar o Pull Request #3 na branch `main` e aplicar na base de produção.
+### 1. Banco, RLS e RPCs
+
+- Inserção direta em `sme_demandas` e `sme_historico` removida para usuários comuns.
+- Alteração direta da coluna `status` removida; mudanças de status passam pela RPC transacional `atualizar_status_sme_demanda`.
+- Exclusão de demandas restrita a administradores ativos.
+- RPCs de aplicação executadas como `security definer`, com `search_path` vazio e validação interna de permissão.
+- Trigger `private.prevent_no_active_admin()` protege contra a ausência de administrador ativo e serializa alterações concorrentes com advisory lock transacional.
+- RPC `public.bootstrap_importar_demanda` restrita à `service_role`, com inserção atômica de demanda e histórico e reparação de carga incompleta.
+
+### 2. Bootstrap
+
+- Senhas iniciais distintas por usuário, fornecidas por variáveis de ambiente separadas.
+- Usuários existentes não têm a senha redefinida.
+- Perfis recém-criados pela trigger no estado `leitor/pendente` são promovidos; perfis já personalizados são preservados.
+- Carga inicial não depende da senha pessoal de um administrador.
+- Reexecuções importam somente registros ausentes e podem reparar demanda sem histórico inicial.
+
+### 3. Repositórios e interface
+
+- Modo local preserva bases válidas com qualquer quantidade de registros e trata dados estruturais inválidos.
+- Atualizações comuns ignoram `status`; a operação é exclusiva do fluxo de movimentação com histórico.
+- `canEdit` e `canDelete` estão separados, mantendo exclusão apenas para administradores.
+- Loader e banner de erro são globais.
+- Logout limpa abas, filtros, modais, drawer e dados administrativos da sessão anterior.
+
+### 4. Datas e exportação
+
+- `DateMaskInput` utiliza entrada progressiva pelo evento `onChange`, compatível com colagem, mobile e tecnologias assistivas.
+- Modais de criação e edição validam datas no envio.
+- O mapper recusa datas parciais ou inexistentes antes de montar o valor para o banco.
+- CSV utiliza `;`, cabeçalho `sep=;` e neutralização de células com potencial de fórmula.
+
+### 5. Validação automatizada
+
+- Testes de regressão cobrem permissões da migration, credenciais do bootstrap, datas inválidas, exclusão do `status` no update comum e validação dos formulários.
+- GitHub Actions executa instalação bloqueada, auditoria de dependências, testes e build de produção.
+- A contagem final de testes e o SHA homologado devem ser confirmados na execução mais recente da CI do PR #4.
+
+---
+
+## Próximas etapas obrigatórias
+
+1. Confirmar CI e Preview verdes sobre o SHA final do PR #4.
+2. Criar projeto Supabase exclusivo de homologação.
+3. Aplicar `supabase/migrations/20260707000000_sme_demandas.sql`.
+4. Executar `npm run bootstrap:supabase` com credenciais privadas e distintas.
+5. Homologar administrador, editor e leitor.
+6. Testar RLS, RPCs, concorrência administrativa, idempotência do bootstrap e Realtime.
+7. Somente após aprovação formal, mesclar o PR #4 na `main`.
+8. Ativar Supabase em Production apenas depois da homologação do Preview.

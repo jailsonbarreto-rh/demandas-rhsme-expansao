@@ -202,7 +202,7 @@ as $$
 declare
   v_admin_count integer;
 begin
-  -- Serializar transações concorrentes na verificação administrativa
+  -- Serializa alterações administrativas concorrentes durante a validação.
   perform pg_catalog.pg_advisory_xact_lock(1122334455);
 
   if tg_op = 'DELETE' then
@@ -219,9 +219,8 @@ begin
   end if;
 
   if tg_op = 'UPDATE' then
-    if (old.nivel = 'administrador' and old.status = 'ativo') and 
+    if (old.nivel = 'administrador' and old.status = 'ativo') and
        (new.nivel <> 'administrador' or new.status <> 'ativo') then
-      
       select count(*) into v_admin_count
       from public.perfis_usuarios
       where nivel = 'administrador' and status = 'ativo' and id <> old.id;
@@ -355,16 +354,33 @@ create or replace function public.bootstrap_importar_demanda(
   p_classificacao text,
   p_actor_id uuid
 )
-returns void
+returns boolean
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
   v_demanda_id bigint;
+  v_created boolean := false;
 begin
+  -- Impede duas execuções concorrentes do bootstrap sobre o mesmo conjunto.
+  perform pg_catalog.pg_advisory_xact_lock(2233445566);
+
+  if p_actor_id is null or not exists (
+    select 1
+    from public.perfis_usuarios
+    where id = p_actor_id
+      and nivel = 'administrador'
+      and status = 'ativo'
+  ) then
+    raise exception 'O autor informado para o bootstrap não é um administrador ativo.';
+  end if;
+
   if p_numero is null or btrim(p_numero) = '' then
     raise exception 'O número do processo é obrigatório.';
+  end if;
+  if p_tipo is null or btrim(p_tipo) = '' then
+    raise exception 'O tipo do processo é obrigatório.';
   end if;
   if p_assunto is null or btrim(p_assunto) = '' then
     raise exception 'O assunto do processo é obrigatório.';
@@ -377,7 +393,7 @@ begin
     numero, tipo, assunto, responsavel, limite1, limite2, status,
     setor, classificacao, created_by, updated_by
   ) values (
-    p_numero, p_tipo, p_assunto, coalesce(p_responsavel, ''), p_limite1,
+    btrim(p_numero), p_tipo, btrim(p_assunto), coalesce(p_responsavel, ''), p_limite1,
     p_limite2, p_status, coalesce(p_setor, ''), coalesce(p_classificacao, ''),
     p_actor_id, p_actor_id
   )
@@ -385,15 +401,39 @@ begin
   returning id into v_demanda_id;
 
   if v_demanda_id is not null then
+    v_created := true;
+  else
+    select id into v_demanda_id
+    from public.sme_demandas
+    where numero = btrim(p_numero);
+  end if;
+
+  if v_demanda_id is null then
+    raise exception 'Não foi possível localizar ou criar a demanda do bootstrap.';
+  end if;
+
+  -- Repara também uma carga anterior que tenha demanda sem histórico.
+  if not exists (
+    select 1
+    from public.sme_historico
+    where demanda_id = v_demanda_id
+  ) then
     insert into public.sme_historico (
       demanda_id, status_novo, setor, comentario, created_by
     ) values (
       v_demanda_id, p_status, coalesce(p_setor, ''),
       'Demanda importada da planilha inicial.', p_actor_id
-    )
-    on conflict do nothing;
+    );
   end if;
+
+  return v_created;
 end;
 $$;
 
-revoke all on function public.bootstrap_importar_demanda(text, text, text, text, date, date, text, text, text, uuid) from public, authenticated;
+revoke all on function public.bootstrap_importar_demanda(
+  text, text, text, text, date, date, text, text, text, uuid
+) from public, anon, authenticated;
+
+grant execute on function public.bootstrap_importar_demanda(
+  text, text, text, text, date, date, text, text, text, uuid
+) to service_role;

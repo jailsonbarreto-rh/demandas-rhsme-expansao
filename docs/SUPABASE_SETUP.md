@@ -1,12 +1,12 @@
 # Ativação futura do Supabase
 
-Este procedimento deve ser executado somente depois da criação do projeto Supabase. Até lá, mantenha `VITE_APP_MODE=local`; o site atual continuará usando o armazenamento do navegador.
+Este procedimento deve ser executado somente depois da criação de um projeto Supabase exclusivo de homologação. Até lá, mantenha `VITE_APP_MODE=local`; o site atual continuará usando o armazenamento do navegador.
 
-## 1. Criar o projeto
+## 1. Criar o projeto de homologação
 
 No painel do Supabase, crie um projeto novo e selecione a região **South America (São Paulo) — `sa-east-1`**. Guarde a senha do banco em um gerenciador de senhas.
 
-Em **Authentication > URL Configuration**, cadastre primeiro a URL de Preview da Vercel e, após a validação, a URL de produção. Em **Authentication > Providers > Email**, mantenha o acesso por e-mail e senha habilitado.
+Em **Authentication > URL Configuration**, cadastre primeiro a URL de Preview da Vercel. Em **Authentication > Providers > Email**, mantenha o acesso por e-mail e senha habilitado.
 
 ## 2. Ligar o repositório e aplicar a migração
 
@@ -27,16 +27,21 @@ Copie `.env.bootstrap.example` para `.env.bootstrap` e preencha somente no compu
 ```dotenv
 SUPABASE_URL=https://SEU_PROJECT_REF.supabase.co
 SUPABASE_SECRET_KEY=SUA_CHAVE_SECRETA
-BOOTSTRAP_PASSWORD=SENHA_TEMPORARIA_COMBINADA
+
+BOOTSTRAP_WILSON_PASSWORD=SENHA_INICIAL_EXCLUSIVA
+BOOTSTRAP_JAILSON_PASSWORD=SENHA_INICIAL_EXCLUSIVA
+BOOTSTRAP_TESTE_PASSWORD=SENHA_INICIAL_EXCLUSIVA
 ```
 
-O arquivo `.env.bootstrap` é ignorado pelo Git. Execute:
+As três senhas precisam ser diferentes. O arquivo `.env.bootstrap` é ignorado pelo Git. Execute:
 
 ```bash
 npm run bootstrap:supabase
 ```
 
-O processo é idempotente: prepara os dois administradores, mantém o perfil de teste como editor e importa somente as demandas ainda inexistentes. A senha temporária poderá ser alterada depois pelo Supabase Auth.
+O processo é idempotente: prepara os dois administradores, mantém o perfil de teste como editor, preserva perfis que já tenham sido personalizados e importa somente as demandas ainda inexistentes. A carga inicial é realizada por uma RPC transacional permitida exclusivamente à `service_role`.
+
+Cada usuário recebe uma senha inicial exclusiva. As credenciais devem ser entregues individualmente e alteradas antes do uso institucional definitivo.
 
 ## 4. Verificar segurança e dados
 
@@ -56,7 +61,7 @@ select count(*) as demandas from public.sme_demandas;
 select count(*) as historicos from public.sme_historico;
 ```
 
-As três tabelas devem apresentar RLS ativo; os três perfis iniciais devem estar ativos; a primeira carga deve conter 50 demandas e 50 históricos.
+As três tabelas devem apresentar RLS ativo; os três perfis iniciais devem estar ativos; a primeira carga deve conter 50 demandas e pelo menos um histórico por demanda.
 
 ## 5. Ativar primeiro em Preview
 
@@ -72,13 +77,18 @@ Faça um novo deploy de Preview e valide:
 
 1. login dos dois administradores e do perfil de teste;
 2. criação, edição, status, histórico e exclusão de uma demanda de teste;
-3. aprovação e desativação de perfil pela Administração;
-4. atualização Realtime em duas abas;
-5. bloqueio de perfil pendente, leitor e e-mail fora de `@rioeduca.net`.
+3. editor criando e editando, mas sem acesso à exclusão;
+4. leitor consultando sem ações de escrita;
+5. aprovação e desativação de perfil pela Administração;
+6. atualização Realtime em duas abas;
+7. bloqueio de perfil pendente e de e-mail fora de `@rioeduca.net`;
+8. recusa de inserção direta em `sme_demandas` e `sme_historico`;
+9. recusa de atualização direta da coluna `status`;
+10. recusa da RPC de bootstrap para usuários autenticados comuns.
 
 ## 6. Ativar Production
 
-Somente após a validação de Preview, replique as três variáveis públicas para **Production** e faça novo deploy. Nunca configure `SUPABASE_SECRET_KEY` ou `BOOTSTRAP_PASSWORD` na aplicação Vercel.
+Somente após a homologação completa do Preview, o merge do PR #4 e a aprovação formal dos testes funcionais, replique as três variáveis públicas para **Production** e faça novo deploy. Nunca configure `SUPABASE_SECRET_KEY` ou qualquer senha de bootstrap na aplicação Vercel.
 
 ## Rollback imediato
 

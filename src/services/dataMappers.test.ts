@@ -16,6 +16,16 @@ describe('adaptadores de dados', () => {
   });
 
   it.each([
+    '12/07',
+    '31/02/2026',
+    '00/01/2026',
+    '15/13/2026',
+    'texto',
+  ])('rejeita data inválida %s', (input) => {
+    expect(() => toDatabaseDate(input)).toThrow('Data inválida');
+  });
+
+  it.each([
     ['2026-06-30', '30/06/2026'],
     ['2026-06-30T12:00:00Z', '30/06/2026'],
     [null, ''],

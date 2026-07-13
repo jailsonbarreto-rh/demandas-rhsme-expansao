@@ -1,4 +1,5 @@
 import type { ComentarioHistorico, Demanda } from '../types';
+import { isValidDateString } from '../utils/date';
 
 export interface DemandaRow {
   id: number;
@@ -23,8 +24,14 @@ export interface HistoricoRow {
 }
 
 export function toDatabaseDate(value?: string): string | null {
-  if (!value || value === 'dd/mm/aaaa') return null;
-  const [day, month, year] = value.split('/');
+  const normalized = value?.trim() ?? '';
+  if (!normalized || normalized === 'dd/mm/aaaa') return null;
+
+  if (!isValidDateString(normalized)) {
+    throw new Error(`Data inválida: "${normalized}". Utilize o formato dd/mm/aaaa.`);
+  }
+
+  const [day, month, year] = normalized.split('/');
   return `${year}-${month}-${day}`;
 }
 

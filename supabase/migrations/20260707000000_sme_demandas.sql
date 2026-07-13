@@ -114,34 +114,27 @@ create policy "usuários ativos consultam demandas"
 on public.sme_demandas for select to authenticated
 using ((select private.is_active()));
 
-create policy "editores criam demandas"
-on public.sme_demandas for insert to authenticated
-with check ((select private.can_edit()));
-
 create policy "editores atualizam demandas"
 on public.sme_demandas for update to authenticated
 using ((select private.can_edit()))
 with check ((select private.can_edit()));
 
-create policy "editores excluem demandas"
+create policy "administradores ativos excluem demandas"
 on public.sme_demandas for delete to authenticated
-using ((select private.can_edit()));
+using ((select private.is_admin()));
 
 create policy "usuários ativos consultam histórico"
 on public.sme_historico for select to authenticated
 using ((select private.is_active()));
-
-create policy "editores registram histórico"
-on public.sme_historico for insert to authenticated
-with check ((select private.can_edit()));
 
 revoke all on table public.perfis_usuarios from anon, authenticated;
 revoke all on table public.sme_demandas from anon, authenticated;
 revoke all on table public.sme_historico from anon, authenticated;
 grant select on table public.perfis_usuarios to authenticated;
 grant update (nivel, status, setor) on table public.perfis_usuarios to authenticated;
-grant select, insert, update, delete on table public.sme_demandas to authenticated;
-grant select, insert on table public.sme_historico to authenticated;
+grant select, delete on table public.sme_demandas to authenticated;
+grant update (numero, tipo, assunto, responsavel, limite1, limite2, setor, classificacao) on table public.sme_demandas to authenticated;
+grant select on table public.sme_historico to authenticated;
 grant usage, select on all sequences in schema public to authenticated;
 
 alter publication supabase_realtime add table public.sme_demandas;
@@ -200,6 +193,55 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function private.handle_new_user();
 
+create or replace function private.prevent_no_active_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_admin_count integer;
+begin
+  -- Serializa alterações administrativas concorrentes durante a validação.
+  perform pg_catalog.pg_advisory_xact_lock(1122334455);
+
+  if tg_op = 'DELETE' then
+    if old.nivel = 'administrador' and old.status = 'ativo' then
+      select count(*) into v_admin_count
+      from public.perfis_usuarios
+      where nivel = 'administrador' and status = 'ativo' and id <> old.id;
+
+      if v_admin_count = 0 then
+        raise exception 'Operação bloqueada: O sistema não pode ficar sem nenhum administrador ativo.';
+      end if;
+    end if;
+    return old;
+  end if;
+
+  if tg_op = 'UPDATE' then
+    if (old.nivel = 'administrador' and old.status = 'ativo') and
+       (new.nivel <> 'administrador' or new.status <> 'ativo') then
+      select count(*) into v_admin_count
+      from public.perfis_usuarios
+      where nivel = 'administrador' and status = 'ativo' and id <> old.id;
+
+      if v_admin_count = 0 then
+        raise exception 'Operação bloqueada: O sistema não pode ficar sem nenhum administrador ativo.';
+      end if;
+    end if;
+    return new;
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function private.prevent_no_active_admin() from public;
+
+create trigger perfis_usuarios_prevent_no_active_admin
+before update or delete on public.perfis_usuarios
+for each row execute function private.prevent_no_active_admin();
+
 create or replace function public.criar_sme_demanda(
   p_numero text,
   p_tipo text,
@@ -213,12 +255,26 @@ create or replace function public.criar_sme_demanda(
 )
 returns public.sme_demandas
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
   v_demanda public.sme_demandas;
 begin
+  if not private.can_edit() then
+    raise exception 'Acesso negado: permissões insuficientes.';
+  end if;
+
+  if p_numero is null or btrim(p_numero) = '' then
+    raise exception 'O número do processo é obrigatório.';
+  end if;
+  if p_assunto is null or btrim(p_assunto) = '' then
+    raise exception 'O assunto do processo é obrigatório.';
+  end if;
+  if p_status is null or btrim(p_status) = '' then
+    raise exception 'O status do processo é obrigatório.';
+  end if;
+
   insert into public.sme_demandas (
     numero, tipo, assunto, responsavel, limite1, limite2, status,
     setor, classificacao, created_by, updated_by
@@ -246,12 +302,23 @@ create or replace function public.atualizar_status_sme_demanda(
 )
 returns void
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
   v_setor text;
 begin
+  if not private.can_edit() then
+    raise exception 'Acesso negado: permissões insuficientes.';
+  end if;
+
+  if p_novo_status is null or btrim(p_novo_status) = '' then
+    raise exception 'O novo status é obrigatório.';
+  end if;
+  if p_comentario is null or btrim(p_comentario) = '' then
+    raise exception 'O comentário de acompanhamento é obrigatório para registrar a movimentação.';
+  end if;
+
   update public.sme_demandas
   set status = p_novo_status, updated_by = (select auth.uid())
   where id = p_demanda_id
@@ -265,7 +332,7 @@ begin
     demanda_id, status_novo, setor, comentario, created_by
   ) values (
     p_demanda_id, p_novo_status, coalesce(v_setor, ''),
-    coalesce(p_comentario, ''), (select auth.uid())
+    p_comentario, (select auth.uid())
   );
 end;
 $$;
@@ -274,3 +341,99 @@ revoke all on function public.criar_sme_demanda(text, text, text, text, date, da
 revoke all on function public.atualizar_status_sme_demanda(bigint, text, text) from public;
 grant execute on function public.criar_sme_demanda(text, text, text, text, date, date, text, text, text) to authenticated;
 grant execute on function public.atualizar_status_sme_demanda(bigint, text, text) to authenticated;
+
+create or replace function public.bootstrap_importar_demanda(
+  p_numero text,
+  p_tipo text,
+  p_assunto text,
+  p_responsavel text,
+  p_limite1 date,
+  p_limite2 date,
+  p_status text,
+  p_setor text,
+  p_classificacao text,
+  p_actor_id uuid
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_demanda_id bigint;
+  v_created boolean := false;
+begin
+  -- Impede duas execuções concorrentes do bootstrap sobre o mesmo conjunto.
+  perform pg_catalog.pg_advisory_xact_lock(2233445566);
+
+  if p_actor_id is null or not exists (
+    select 1
+    from public.perfis_usuarios
+    where id = p_actor_id
+      and nivel = 'administrador'
+      and status = 'ativo'
+  ) then
+    raise exception 'O autor informado para o bootstrap não é um administrador ativo.';
+  end if;
+
+  if p_numero is null or btrim(p_numero) = '' then
+    raise exception 'O número do processo é obrigatório.';
+  end if;
+  if p_tipo is null or btrim(p_tipo) = '' then
+    raise exception 'O tipo do processo é obrigatório.';
+  end if;
+  if p_assunto is null or btrim(p_assunto) = '' then
+    raise exception 'O assunto do processo é obrigatório.';
+  end if;
+  if p_status is null or btrim(p_status) = '' then
+    raise exception 'O status do processo é obrigatório.';
+  end if;
+
+  insert into public.sme_demandas (
+    numero, tipo, assunto, responsavel, limite1, limite2, status,
+    setor, classificacao, created_by, updated_by
+  ) values (
+    btrim(p_numero), p_tipo, btrim(p_assunto), coalesce(p_responsavel, ''), p_limite1,
+    p_limite2, p_status, coalesce(p_setor, ''), coalesce(p_classificacao, ''),
+    p_actor_id, p_actor_id
+  )
+  on conflict (numero) do nothing
+  returning id into v_demanda_id;
+
+  if v_demanda_id is not null then
+    v_created := true;
+  else
+    select id into v_demanda_id
+    from public.sme_demandas
+    where numero = btrim(p_numero);
+  end if;
+
+  if v_demanda_id is null then
+    raise exception 'Não foi possível localizar ou criar a demanda do bootstrap.';
+  end if;
+
+  -- Repara também uma carga anterior que tenha demanda sem histórico.
+  if not exists (
+    select 1
+    from public.sme_historico
+    where demanda_id = v_demanda_id
+  ) then
+    insert into public.sme_historico (
+      demanda_id, status_novo, setor, comentario, created_by
+    ) values (
+      v_demanda_id, p_status, coalesce(p_setor, ''),
+      'Demanda importada da planilha inicial.', p_actor_id
+    );
+  end if;
+
+  return v_created;
+end;
+$$;
+
+revoke all on function public.bootstrap_importar_demanda(
+  text, text, text, text, date, date, text, text, text, uuid
+) from public, anon, authenticated;
+
+grant execute on function public.bootstrap_importar_demanda(
+  text, text, text, text, date, date, text, text, text, uuid
+) to service_role;

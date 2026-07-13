@@ -1,58 +1,69 @@
 # Handoff Operacional — Central de Demandas CTRH SME
 
-Atualizado em: 2026-07-07 (Encerramento do dia com Layout e Visual Editorial de Alto Impacto)
+Atualizado em: 2026-07-13 — saneamento final do Gate 0 no PR #4
 
 ---
 
-## 📌 Norte Operacional e Status
+## Norte operacional e status
 
-Toda a infraestrutura visual, design system editorial, tipografia profissional (Inter) e fluxo estático offline baseados em `LocalStorage` estão **100% entregues, verdes e publicados** na Vercel:
+A infraestrutura visual, o modo local e a camada de integração Supabase estão **prontos para homologação remota**, mas o Gate 0 somente será considerado homologado após a execução da migration e do bootstrap em um projeto Supabase de testes e a aprovação dos testes funcionais de administrador, editor e leitor.
 
-*   **URL de Produção**: [demandas-rhsme-nine.vercel.app](https://demandas-rhsme-nine.vercel.app)
-*   **Repositório GitHub**: [github.com/WilsonMPeixoto-2/demandas-rhsme](https://github.com/WilsonMPeixoto-2/demandas-rhsme)
-
----
-
-## 🛠️ Entregas Realizadas Hoje
-
-### 1. Split Login Corporativo
-*   Estrutura dividida no desktop com painel institucional navy escuro e padrão geométrico de grid com glows sutis.
-*   Lista dos 3 pilares do sistema (Prazos, Responsáveis, Histórico).
-*   Abas nítidas para *Entrar* e *Primeiro acesso* com checagens de e-mail corporativo (`@rioeduca.net`) e senhas fortes.
-*   Mobile com ocultação da barra lateral de forma automatizada e marca compacta centralizada.
-
-### 2. Cabeçalho Institucional de Ponta a Ponta
-*   Faixa superior de identificação do órgão (`CTRH • Secretaria Municipal de Educação | Sistema interno de acompanhamento`).
-*   Dados de sessão, tag do ambiente e data e hora da última atualização reativa.
-*   Título principal **Central de Demandas** associado aos botões **Nova demanda** e **Exportar CSV**.
-
-### 3. Faixa de Atenção Imediata
-*   Filtragem automática das demandas críticas do sistema:
-    *   *Mais antiga vencida* (ex: "Vencida há 7 dias")
-    *   *Vencimento no dia* (ex: "Vence hoje")
-    *   *Assinatura pendente há mais tempo* (ex: "Aguardando assinatura")
-*   Desaparece automaticamente se não houver itens críticos.
-
-### 4. Tabela de Prazos Semânticos e Ações Dropdown
-*   Colunas agrupadas por hierarquia de leitura em varredura.
-*   Avatares redondos dos responsáveis com exibição do setor secundário (`E/CTRH`).
-*   Etiquetas coloridas dinâmicas na coluna de prazo final (*vence hoje*, *X dias em atraso*, *em X dias*).
-*   Menu dropdown acionado pelas reticências `⋮` consolidando ações secundárias para prevenir exclusão acidental.
-
-### 5. Saneamento de Termos (RH -> CTRH)
-*   Substituição completa do termo visual "RH" pela sigla administrativa oficial **"CTRH"** em todas as interfaces.
+- **URL de produção atual:** [demandas-rhsme-expansao.vercel.app](https://demandas-rhsme-expansao.vercel.app)
+- **Repositório GitHub:** [WilsonMPeixoto-2/demandas-rhsme-expansao](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao)
+- **Pull Request ativo:** [#4 — Homologação Gate 0](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao/pull/4)
+- **Branch de trabalho:** `homologacao/gate-0`
 
 ---
 
-## 🔮 Próximas Etapas Recomendadas
+## Entregas do saneamento final
 
-Quando retomar o projeto amanhã ou transferir a tarefa, siga esta ordem:
+### 1. Banco, RLS e RPCs
 
-1.  **Criação de Tabelas do Supabase**:
-    *   O script SQL com as estruturas necessárias para o banco (`demandas`, `historico_comentarios`, `perfis_usuarios`, triggers e políticas RLS) já está pronto e salvo no diretório `/supabase/migrations`.
-2.  **Variáveis de Ambiente**:
-    *   Copiar `.env.example` para `.env` e preencher as chaves de acesso público do Supabase.
-3.  **Substituir LocalStorage por Supabase API**:
-    *   Substituir a carga estática local em `src/App.tsx` pelas funções reais de consulta e escrita (que estão comentadas no arquivo prontas para ativação).
-4.  **Ativação de Autenticação Segura**:
-    *   Conectar o Supabase Auth para cadastro real de servidores de SME e validações de e-mail.
+- Inserção direta em `sme_demandas` e `sme_historico` removida para usuários comuns.
+- Alteração direta da coluna `status` removida; mudanças de status passam pela RPC transacional `atualizar_status_sme_demanda`.
+- Exclusão de demandas restrita a administradores ativos.
+- RPCs de aplicação executadas como `security definer`, com `search_path` vazio e validação interna de permissão.
+- Trigger `private.prevent_no_active_admin()` protege contra a ausência de administrador ativo e serializa alterações concorrentes com advisory lock transacional.
+- RPC `public.bootstrap_importar_demanda` restrita à `service_role`, com inserção atômica de demanda e histórico e reparação de carga incompleta.
+
+### 2. Bootstrap
+
+- Senhas iniciais distintas por usuário, fornecidas por variáveis de ambiente separadas.
+- Usuários existentes não têm a senha redefinida.
+- Perfis recém-criados pela trigger no estado `leitor/pendente` são promovidos; perfis já personalizados são preservados.
+- Carga inicial não depende da senha pessoal de um administrador.
+- Reexecuções importam somente registros ausentes e podem reparar demanda sem histórico inicial.
+
+### 3. Repositórios e interface
+
+- Modo local preserva bases válidas com qualquer quantidade de registros e trata dados estruturais inválidos.
+- Atualizações comuns ignoram `status`; a operação é exclusiva do fluxo de movimentação com histórico.
+- `canEdit` e `canDelete` estão separados, mantendo exclusão apenas para administradores.
+- Loader e banner de erro são globais.
+- Logout limpa abas, filtros, modais, drawer e dados administrativos da sessão anterior.
+
+### 4. Datas e exportação
+
+- `DateMaskInput` utiliza entrada progressiva pelo evento `onChange`, compatível com colagem, mobile e tecnologias assistivas.
+- Modais de criação e edição validam datas no envio.
+- O mapper recusa datas parciais ou inexistentes antes de montar o valor para o banco.
+- CSV utiliza `;`, cabeçalho `sep=;` e neutralização de células com potencial de fórmula.
+
+### 5. Validação automatizada
+
+- Testes de regressão cobrem permissões da migration, credenciais do bootstrap, datas inválidas, exclusão do `status` no update comum e validação dos formulários.
+- GitHub Actions executa instalação bloqueada, auditoria de dependências, testes e build de produção.
+- A contagem final de testes e o SHA homologado devem ser confirmados na execução mais recente da CI do PR #4.
+
+---
+
+## Próximas etapas obrigatórias
+
+1. Confirmar CI e Preview verdes sobre o SHA final do PR #4.
+2. Criar projeto Supabase exclusivo de homologação.
+3. Aplicar `supabase/migrations/20260707000000_sme_demandas.sql`.
+4. Executar `npm run bootstrap:supabase` com credenciais privadas e distintas.
+5. Homologar administrador, editor e leitor.
+6. Testar RLS, RPCs, concorrência administrativa, idempotência do bootstrap e Realtime.
+7. Somente após aprovação formal, mesclar o PR #4 na `main`.
+8. Ativar Supabase em Production apenas depois da homologação do Preview.

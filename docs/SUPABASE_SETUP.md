@@ -1,16 +1,23 @@
-# Ativação futura do Supabase
+# Supabase e operação multiusuário
 
-Este procedimento deve ser executado somente depois da criação do projeto Supabase. Até lá, mantenha `VITE_APP_MODE=local`; o site atual continuará usando o armazenamento do navegador.
+O projeto Supabase de homologação/produção da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, na região `sa-east-1`.
 
-## 1. Criar o projeto
+A aplicação mantém dois modos:
 
-No painel do Supabase, crie um projeto novo e selecione a região **South America (São Paulo) — `sa-east-1`**. Guarde a senha do banco em um gerenciador de senhas.
+- `supabase`: persistência compartilhada, autenticação real, RLS e atualização Realtime;
+- `local`: rollback explícito para o armazenamento do navegador.
 
-Em **Authentication > URL Configuration**, cadastre primeiro a URL de Preview da Vercel e, após a validação, a URL de produção. Em **Authentication > Providers > Email**, mantenha o acesso por e-mail e senha habilitado.
+## 1. Schema e migrations
 
-## 2. Ligar o repositório e aplicar a migração
+O repositório contém:
 
-Com a CLI do Supabase autenticada:
+```text
+supabase/migrations/20260707000000_sme_demandas.sql
+supabase/migrations/20260713211616_revoke_anon_operational_rpcs.sql
+supabase/migrations/20260713211703_add_foreign_key_indexes.sql
+```
+
+Para um projeto novo:
 
 ```bash
 npx supabase login
@@ -18,49 +25,43 @@ npx supabase link --project-ref SEU_PROJECT_REF
 npx supabase db push
 ```
 
-O comando aplica `supabase/migrations/20260707000000_sme_demandas.sql`, que cria tabelas, perfis, políticas RLS, RPCs e permissões explícitas. Não copie uma chave secreta para arquivos `VITE_*`.
+As migrations criam as tabelas `perfis_usuarios`, `sme_demandas` e `sme_historico`, habilitam RLS e Realtime, instalam as RPCs atômicas e revogam explicitamente a execução anônima das funções privilegiadas.
 
-## 3. Preparar usuários e dados iniciais
+## 2. Dados e usuários iniciais
 
-Copie `.env.bootstrap.example` para `.env.bootstrap` e preencha somente no computador autorizado:
+No projeto `kdhekkzwcokfrpcrsllr`, a carga inicial já foi concluída e validada:
+
+- 50 demandas;
+- 50 históricos;
+- nenhuma demanda sem histórico;
+- nenhuma duplicidade de número;
+- bootstrap idempotente e capaz de reparar histórico ausente.
+
+Perfis configurados:
+
+| E-mail | Nível | Status |
+|---|---|---|
+| `wilson.mpeixoto@rioeduca.net` | administrador | ativo |
+| `jailsonbsilva@rioeduca.net` | administrador | ativo |
+| `teste@rioeduca.net` | editor | ativo |
+| `ernane.jann@rioeduca.net` | leitor | pendente |
+
+Senhas, chaves secretas e credenciais administrativas não devem ser registradas no Git ou em variáveis expostas ao Vite.
+
+## 3. Integração Vercel
+
+A integração oficial Supabase–Vercel sincroniza automaticamente as variáveis públicas:
 
 ```dotenv
-SUPABASE_URL=https://SEU_PROJECT_REF.supabase.co
-SUPABASE_SECRET_KEY=SUA_CHAVE_SECRETA
-BOOTSTRAP_PASSWORD=SENHA_TEMPORARIA_COMBINADA
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
 ```
 
-O arquivo `.env.bootstrap` é ignorado pelo Git. Execute:
+Ela também pode fornecer os equivalentes `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
-```bash
-npm run bootstrap:supabase
-```
+O `vite.config.ts` expõe ao bundle somente essas credenciais públicas. Variáveis como `SUPABASE_SECRET_KEY`, URLs PostgreSQL e senhas permanecem indisponíveis no navegador.
 
-O processo é idempotente: prepara os dois administradores, mantém o perfil de teste como editor e importa somente as demandas ainda inexistentes. A senha temporária poderá ser alterada depois pelo Supabase Auth.
-
-## 4. Verificar segurança e dados
-
-No painel, abra **Database > Advisors** e **Security Advisor**. Corrija qualquer alerta antes de ativar a aplicação. No SQL Editor, valide:
-
-```sql
-select schemaname, tablename, rowsecurity
-from pg_tables
-where schemaname = 'public'
-  and tablename in ('perfis_usuarios', 'sme_demandas', 'sme_historico');
-
-select email, nivel, status
-from public.perfis_usuarios
-order by email;
-
-select count(*) as demandas from public.sme_demandas;
-select count(*) as historicos from public.sme_historico;
-```
-
-As três tabelas devem apresentar RLS ativo; os três perfis iniciais devem estar ativos; a primeira carga deve conter 50 demandas e 50 históricos.
-
-## 5. Ativar primeiro em Preview
-
-No projeto da Vercel, configure apenas no ambiente **Preview**:
+Quando uma dupla completa de variáveis públicas estiver presente, a aplicação inicia automaticamente no modo Supabase. Também é possível usar configuração explícita:
 
 ```dotenv
 VITE_APP_MODE=supabase
@@ -68,24 +69,48 @@ VITE_SUPABASE_URL=https://SEU_PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLICA
 ```
 
-Faça um novo deploy de Preview e valide:
+Configuração parcial produz erro controlado e nunca faz fallback silencioso.
 
-1. login dos dois administradores e do perfil de teste;
-2. criação, edição, status, histórico e exclusão de uma demanda de teste;
-3. aprovação e desativação de perfil pela Administração;
-4. atualização Realtime em duas abas;
-5. bloqueio de perfil pendente, leitor e e-mail fora de `@rioeduca.net`.
+## 4. Critérios já homologados no banco
 
-## 6. Ativar Production
+Foram validados:
 
-Somente após a validação de Preview, replique as três variáveis públicas para **Production** e faça novo deploy. Nunca configure `SUPABASE_SECRET_KEY` ou `BOOTSTRAP_PASSWORD` na aplicação Vercel.
+1. administrador consulta e gerencia perfis, edita e exclui demandas;
+2. editor cria e edita por fluxos autorizados, mas não exclui;
+3. leitor ativo apenas consulta;
+4. perfil pendente não acessa dados operacionais;
+5. inserções diretas em demandas e histórico são recusadas;
+6. alteração direta de `status` é recusada;
+7. criação e mudança de status funcionam somente pelas RPCs transacionais;
+8. a RPC de bootstrap é exclusiva da `service_role`;
+9. a role `anon` não executa RPCs operacionais;
+10. o último administrador ativo não pode ser rebaixado nem removido;
+11. Realtime está habilitado para demandas e histórico.
 
-## Rollback imediato
+## 5. Verificação do deployment
 
-Se surgir qualquer problema, defina na Vercel:
+Depois de cada alteração consolidada:
+
+```bash
+npm ci
+npm run test
+npm run build
+```
+
+No deployment Vercel, confirme:
+
+- login com conta real do Supabase Auth;
+- carregamento das 50 demandas;
+- atualização em outra sessão ou aba via Realtime;
+- diferenças de ações entre administrador, editor e leitor;
+- persistência após sair, atualizar a página e entrar novamente.
+
+## 6. Rollback imediato
+
+Para retornar temporariamente ao armazenamento local, configure na Vercel:
 
 ```dotenv
 VITE_APP_MODE=local
 ```
 
-Faça novo deploy. A interface voltará ao armazenamento local sem mudança de layout e o acesso local continuará disponível.
+Um novo deployment aplicará o rollback sem alteração de layout. Para reativar o Supabase, remova essa sobrescrita ou defina `VITE_APP_MODE=supabase`.

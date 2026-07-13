@@ -53,6 +53,21 @@ describe('SupabaseDemandasRepository', () => {
     }));
   });
 
+  it('não envia status pelo update comum', async () => {
+    const eq = vi.fn().mockResolvedValue({ data: null, error: null });
+    const update = vi.fn(() => ({ eq }));
+    const client = { from: vi.fn(() => ({ update })) };
+    const repository = new SupabaseDemandasRepository(client as never);
+
+    await repository.update(7, {
+      assunto: 'Assunto atualizado',
+      status: 'Encerrado',
+    });
+
+    expect(update).toHaveBeenCalledWith({ assunto: 'Assunto atualizado' });
+    expect(eq).toHaveBeenCalledWith('id', 7);
+  });
+
   it('altera status pela RPC atômica', async () => {
     const { client, rpc } = createClient();
     await new SupabaseDemandasRepository(client as never)

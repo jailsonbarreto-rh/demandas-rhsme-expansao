@@ -1,33 +1,52 @@
 {
   "project": "Central de Demandas — CTRH SME",
-  "updated_at": "2026-07-13T15:37:00-03:00",
+  "updated_at": "2026-07-13T16:30:00-03:00",
   "source_of_truth": {
     "repository": "https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao",
     "base_branch": "main",
     "base_commit": "30557be9ff80c6218fb6cd32619cfd20fc0447ed",
+    "working_branch": "homologacao/gate-0",
+    "pull_request": 4,
     "note": "Always verify against GitHub code, branch, commit, diff and tests. This file is a snapshot, not a source of truth."
   },
   "operational_north": {
-    "plan": "Saneamento de Bloqueadores no PR #3 (Gate 0) em Homologação",
-    "current_mode": "Saneamento técnico aplicado localmente; pronto para testes de integração em ambiente de preview/homologação Supabase."
+    "plan": "Saneamento final de bloqueadores no PR #4 — Gate 0 em revisão",
+    "current_mode": "Correções publicadas na branch de homologação; aguardando confirmação da CI final e homologação funcional em Supabase de Preview."
   },
   "recent_commits": [
-    { "message": "Homologação Gate 0 - Ajustes de Segurança e UX (PR #3)", "commit": "homologacao/gate-0", "date": "2026-07-13" },
-    { "message": "feat: redesign login screen with desktop split layout, institutional brand banner, mesh pattern background and features list", "commit": "6a44d4a", "date": "2026-07-07" }
+    {
+      "message": "fix: reservar mudanças de status à RPC",
+      "commit": "e5e4c99e73cf05d79a445125ade07942bbb6d2ae",
+      "date": "2026-07-13"
+    },
+    {
+      "message": "fix: tornar bootstrap idempotente e seguro",
+      "commit": "10e026b8d31cb02e319fcfbba2cf7c8c2c527c61",
+      "date": "2026-07-13"
+    },
+    {
+      "message": "fix: endurecer RPC administrativa de bootstrap",
+      "commit": "6abacea0c9f6582ba063a9b68e69e05036d66ef9",
+      "date": "2026-07-13"
+    }
   ],
   "delivered_state": {
-    "gate_0_security_hardening": "delivered; RPCs criar_sme_demanda e atualizar_status_sme_demanda convertidas em security definer com checagem interna de can_edit, RLS de insert direto em sme_demandas revogado, trigger contra auto-bloqueio de administrador com SELECT FOR UPDATE concorrente aplicada no Postgres e no frontend; bootstrap corrigido para usar RPCs de forma atômica e não sobrescrever dados.",
-    "robustez_repositorio_local": "delivered; localDemandasRepository corrigido com validação estrutural de localStorage e fallback de histórico seguro; logout limpa modais, filtros e drawers.",
-    "protecoes_ux_seguranca": "delivered; DateMaskInput reescrito com formatador progressivo nativo que aceita colagem e digitação livre em mobile/acessibilidade; exportador CSV sanitiza CSV Injection e usa delimitador ponto e vírgula com sep=; no topo; loaders/erros no nível global do App.tsx; suíte de testes unitários com 65 passados em verde e build concluído."
+    "gate_0_security_hardening": "implemented in PR #4; insert and status bypasses removed, delete restricted to administrators, RPCs protected, bootstrap RPC restricted to service_role and last-active-admin invariant protected with transactional locking.",
+    "bootstrap": "implemented; separate initial passwords, no password resets for existing users, preservation of customized profiles and atomic idempotent demand import.",
+    "robustez_repositorio_local": "implemented; structural validation, consistent fallback, duplicate-number checks and status updates restricted to the dedicated history flow.",
+    "protecoes_ux_seguranca": "implemented; progressive date input, validation on submit and mapper, global loading/error states, role-aware actions and CSV injection mitigation.",
+    "validation": "automated regression tests added; final count and successful production build must be confirmed by the latest GitHub Actions run for PR #4."
   },
   "next_priority": {
-    "immediate_next_step": "Homologar as alterações do Pull Request #3 em um ambiente Supabase de testes/preview antes de mesclar à main de produção.",
+    "immediate_next_step": "Confirm the final CI and Vercel Preview for PR #4, then apply migration and bootstrap to an isolated Supabase Preview project before authorizing merge.",
     "smoke_checklist": [
-      "Confirmar se os testes de CI remoto do GitHub Actions passam com sucesso sobre o PR #3",
-      "Executar as migrações SQL atualizadas no Supabase de homologação/preview",
-      "Submeter o script de bootstrap na base Supabase remota de preview",
-      "Validar se o fluxo de login de administrador, alteração de status e auditoria funcionam perfeitamente na nuvem",
-      "Garantir que a exclusão direta no banco e visibilidade do botão de excluir na interface estão restritos a administradores ativos (editores não veem)"
+      "Confirmar CI e build verdes sobre o SHA final do PR #4",
+      "Aplicar a migration atualizada em Supabase de homologação",
+      "Executar o bootstrap com três senhas iniciais distintas",
+      "Validar administrador, editor e leitor",
+      "Validar bloqueios RLS e execução exclusiva da RPC de bootstrap pela service_role",
+      "Validar idempotência, reparação de histórico e concorrência do último administrador",
+      "Validar Realtime em duas sessões"
     ]
   }
 }

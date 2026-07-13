@@ -41,9 +41,10 @@ describe('DemandasTable', () => {
     expect(onOpenDetalhes).toHaveBeenCalledWith(demanda);
 
     fireEvent.click(screen.getByRole('button', { name: /mais ações da demanda sme-001/i }));
-    expect(screen.getByRole('button', { name: /alterar status/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /histórico/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /excluir/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /alterar status/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /histórico/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /excluir/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /^editar$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^editar$/i })).not.toBeInTheDocument();
   });
 });

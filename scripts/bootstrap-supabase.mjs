@@ -41,10 +41,16 @@ async function ensureUsers(client, password) {
 
   for (const definition of getBootstrapUsers()) {
     let user = knownUsers.find((candidate) => candidate.email?.toLowerCase() === definition.email);
+    
+    // Senhas distintas por usuário para mitigar compartilhamento de senhas
+    const userPassword = definition.email.toLowerCase() === 'wilson.peixoto@rioeduca.net'
+      ? password
+      : `${password}_${definition.email.split('@')[0]}`;
+
     if (!user) {
       const result = await client.auth.admin.createUser({
         email: definition.email,
-        password,
+        password: userPassword,
         email_confirm: true,
         user_metadata: { nome: definition.nome },
       });
@@ -52,24 +58,43 @@ async function ensureUsers(client, password) {
       user = result.data.user;
       knownUsers.push(user);
       createdUsers.push(user.id);
+      console.log(`Conta criada: ${definition.email} (Senha inicial configurada)`);
     } else {
       const result = await client.auth.admin.updateUserById(user.id, {
-        password,
         email_confirm: true,
         user_metadata: { ...user.user_metadata, nome: definition.nome },
       });
       if (result.error) throw result.error;
     }
 
-    const { error: profileError } = await client.from('perfis_usuarios').upsert({
-      id: user.id,
-      nome: definition.nome,
-      email: definition.email,
-      setor: 'E/CTRH',
-      nivel: definition.nivel,
-      status: 'ativo',
-    });
-    if (profileError) throw profileError;
+    const { data: existingProfile, error: profileCheckError } = await client
+      .from('perfis_usuarios')
+      .select('id, nivel, status')
+      .eq('id', user.id)
+      .maybeSingle();
+      
+    if (profileCheckError) throw profileCheckError;
+    
+    if (!existingProfile) {
+      const { error: profileError } = await client.from('perfis_usuarios').insert({
+        id: user.id,
+        nome: definition.nome,
+        email: definition.email,
+        setor: 'E/CTRH',
+        nivel: definition.nivel,
+        status: 'ativo',
+      });
+      if (profileError) throw profileError;
+    } else if (existingProfile.nivel === 'leitor' && existingProfile.status === 'pendente') {
+      // Se foi criado pela trigger de novos usuários, promove para os níveis do bootstrap
+      const { error: profileError } = await client.from('perfis_usuarios').update({
+        setor: 'E/CTRH',
+        nivel: definition.nivel,
+        status: 'ativo',
+      }).eq('id', user.id);
+      if (profileError) throw profileError;
+      console.log(`Perfil promovido: ${definition.email} -> ${definition.nivel}`);
+    }
   }
 
   return { users: knownUsers, createdUsers };
@@ -87,33 +112,22 @@ async function importDemandas(client, demandas, actorId) {
 
   for (const demanda of demandas) {
     if (existingNumbers.has(demanda.numero)) continue;
-    const { data: inserted, error: insertError } = await client
-      .from('sme_demandas')
-      .insert({
-        numero: demanda.numero,
-        tipo: demanda.tipo,
-        assunto: demanda.assunto,
-        responsavel: demanda.responsavel ?? '',
-        limite1: toDatabaseDate(demanda.limite1),
-        limite2: toDatabaseDate(demanda.limite2),
-        status: demanda.status,
-        setor: demanda.setor ?? '',
-        classificacao: demanda.classificacao ?? '',
-        created_by: actorId,
-        updated_by: actorId,
-      })
-      .select('id,status,setor')
-      .single();
-    if (insertError) throw insertError;
-
-    const { error: historyError } = await client.from('sme_historico').insert({
-      demanda_id: inserted.id,
-      status_novo: inserted.status,
-      setor: inserted.setor,
-      comentario: 'Demanda importada da planilha inicial.',
-      created_by: actorId,
+    
+    // Inserção atômica via RPC administrativa de bootstrap, sem requerer login de sessão do administrador
+    const { error: rpcError } = await client.rpc('bootstrap_importar_demanda', {
+      p_numero: demanda.numero,
+      p_tipo: demanda.tipo,
+      p_assunto: demanda.assunto,
+      p_responsavel: demanda.responsavel ?? '',
+      p_limite1: toDatabaseDate(demanda.limite1),
+      p_limite2: toDatabaseDate(demanda.limite2),
+      p_status: demanda.status,
+      p_setor: demanda.setor ?? '',
+      p_classificacao: demanda.classificacao ?? '',
+      p_actor_id: actorId,
     });
-    if (historyError) throw historyError;
+
+    if (rpcError) throw rpcError;
     created += 1;
   }
 
@@ -122,8 +136,11 @@ async function importDemandas(client, demandas, actorId) {
 
 export async function runBootstrap(client, password, demandas) {
   const { users } = await ensureUsers(client, password);
-  const actor = users.find((user) => user.email?.toLowerCase() === 'wilson.peixoto@rioeduca.net');
-  if (!actor) throw new Error('Administrador de bootstrap não encontrado.');
+  
+  // Wilson é o autor padrão de auditoria para inserção das demandas do bootstrap
+  const actor = users.find((u) => u.email?.toLowerCase() === 'wilson.peixoto@rioeduca.net');
+  if (!actor) throw new Error('Administrador Wilson Peixoto não encontrado.');
+
   return importDemandas(client, demandas, actor.id);
 }
 

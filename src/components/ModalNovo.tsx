@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Demanda } from '../types';
+import { isValidDateString } from '../utils/date';
 import { DateMaskInput } from './DateMaskInput';
 
 interface ModalNovoProps {
@@ -20,33 +21,47 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tipo || !numero || !assunto || !status || !classificacao) {
-      alert("Por favor, preencha todos os campos obrigatórios.");
+
+    const numeroNormalizado = numero.trim();
+    const assuntoNormalizado = assunto.trim();
+
+    if (!tipo || !numeroNormalizado || !assuntoNormalizado || !status || !classificacao) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    if (limite1.trim() && !isValidDateString(limite1)) {
+      alert('O prazo de análise interna é inválido. Utilize o formato dd/mm/aaaa.');
+      return;
+    }
+
+    if (limite2.trim() && !isValidDateString(limite2)) {
+      alert('O prazo final é inválido. Utilize o formato dd/mm/aaaa.');
       return;
     }
 
     onSalvar({
       tipo: tipo as Demanda['tipo'],
-      numero,
-      assunto,
-      responsavel,
-      limite1,
-      limite2,
+      numero: numeroNormalizado,
+      assunto: assuntoNormalizado,
+      responsavel: responsavel.trim(),
+      limite1: limite1.trim(),
+      limite2: limite2.trim(),
       status: status as Demanda['status'],
-      setor,
-      classificacao
+      setor: setor.trim(),
+      classificacao,
     });
   };
 
   const classificacoes = [
-    'Dispensa de Ponto', 'CCFG', 'Cessão', 'Concursos', 'Contratação', 
-    'Consultas', 'Inventário', 'Expediente Parlamentar', 'MP', 
-    'Representação Judicial', 'DP', 'PGM', 'Recurso', 'Financeiro', 
+    'Dispensa de Ponto', 'CCFG', 'Cessão', 'Concursos', 'Contratação',
+    'Consultas', 'Inventário', 'Expediente Parlamentar', 'MP',
+    'Representação Judicial', 'DP', 'PGM', 'Recurso', 'Financeiro',
     'Demanda Interna', 'Outros'
   ];
 
   const statusList = [
-    'Aguardando Andamento', 'Tramitado', 'Para Assinatura', 
+    'Aguardando Andamento', 'Tramitado', 'Para Assinatura',
     'Encerrado', 'Sobrestado', 'Ajustar'
   ];
 
@@ -59,18 +74,12 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
             <div className="form-grid-modal">
-              {/* Tipo */}
               <div className="input-container-floating col-full">
-                <select 
-                  id="novo-tipo"
-                  value={tipo} 
-                  onChange={e => setTipo(e.target.value)} 
-                  required
-                >
+                <select id="novo-tipo" value={tipo} onChange={e => setTipo(e.target.value)} required>
                   <option value="" disabled hidden></option>
                   <option value="Expediente">Expediente</option>
                   <option value="Processo">Processo</option>
@@ -79,110 +88,52 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
                 <label htmlFor="novo-tipo">Tipo</label>
               </div>
 
-              {/* Número */}
               <div className="input-container-floating col-full">
-                <input 
-                  type="text" 
-                  id="novo-numero"
-                  placeholder=" "
-                  value={numero} 
-                  onChange={e => setNumero(e.target.value)} 
-                  required 
-                />
+                <input type="text" id="novo-numero" placeholder=" " value={numero} onChange={e => setNumero(e.target.value)} required />
                 <label htmlFor="novo-numero">Número</label>
               </div>
 
-              {/* Assunto */}
               <div className="input-container-floating col-full">
-                <input 
-                  type="text" 
-                  id="novo-assunto"
-                  placeholder=" "
-                  value={assunto} 
-                  onChange={e => setAssunto(e.target.value)} 
-                  required 
-                />
+                <input type="text" id="novo-assunto" placeholder=" " value={assunto} onChange={e => setAssunto(e.target.value)} required />
                 <label htmlFor="novo-assunto">Assunto</label>
               </div>
 
-              {/* Responsável */}
               <div className="input-container-floating col-full">
-                <input 
-                  type="text" 
-                  id="novo-responsavel"
-                  placeholder=" "
-                  value={responsavel} 
-                  onChange={e => setResponsavel(e.target.value)} 
-                />
+                <input type="text" id="novo-responsavel" placeholder=" " value={responsavel} onChange={e => setResponsavel(e.target.value)} />
                 <label htmlFor="novo-responsavel">Responsável</label>
               </div>
 
-              {/* Limite 1 (Título Externo) */}
               <div>
-                <DateMaskInput 
-                  id="novo-limite1"
-                  label="Limite 1"
-                  value={limite1}
-                  onChange={setLimite1}
-                />
+                <DateMaskInput id="novo-limite1" label="Limite 1" value={limite1} onChange={setLimite1} />
               </div>
 
-              {/* Limite 2 (Título Externo) */}
               <div>
-                <DateMaskInput 
-                  id="novo-limite2"
-                  label="Limite 2"
-                  value={limite2}
-                  onChange={setLimite2}
-                />
+                <DateMaskInput id="novo-limite2" label="Limite 2" value={limite2} onChange={setLimite2} />
               </div>
 
-              {/* Status */}
               <div className="input-container-floating col-full">
-                <select 
-                  id="novo-status"
-                  value={status} 
-                  onChange={e => setStatus(e.target.value)} 
-                  required
-                >
+                <select id="novo-status" value={status} onChange={e => setStatus(e.target.value)} required>
                   <option value="" disabled hidden></option>
-                  {statusList.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
+                  {statusList.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
                 <label htmlFor="novo-status">Status</label>
               </div>
 
-              {/* Setor */}
               <div className="input-container-floating col-full">
-                <input 
-                  type="text" 
-                  id="novo-setor"
-                  placeholder=" "
-                  value={setor} 
-                  onChange={e => setSetor(e.target.value)} 
-                />
+                <input type="text" id="novo-setor" placeholder=" " value={setor} onChange={e => setSetor(e.target.value)} />
                 <label htmlFor="novo-setor">Setor (ex: E/CTRH)</label>
               </div>
 
-              {/* Classificação */}
               <div className="input-container-floating col-full">
-                <select 
-                  id="novo-classificacao"
-                  value={classificacao} 
-                  onChange={e => setClassificacao(e.target.value)} 
-                  required
-                >
+                <select id="novo-classificacao" value={classificacao} onChange={e => setClassificacao(e.target.value)} required>
                   <option value="" disabled hidden></option>
-                  {classificacoes.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
+                  {classificacoes.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <label htmlFor="novo-classificacao">Selecione a classificação</label>
               </div>
             </div>
           </div>
-          
+
           <div className="modal-footer">
             <button type="submit" className="btn btn-primary">
               <i className="fa-solid fa-floppy-disk"></i> Salvar

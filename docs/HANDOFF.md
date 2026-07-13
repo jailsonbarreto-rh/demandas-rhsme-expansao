@@ -1,58 +1,52 @@
 # Handoff Operacional — Central de Demandas CTRH SME
 
-Atualizado em: 2026-07-07 (Encerramento do dia com Layout e Visual Editorial de Alto Impacto)
+Atualizado em: 2026-07-13 (Saneamento de Bloqueadores do PR #3 concluído com 65 testes)
 
 ---
 
 ## 📌 Norte Operacional e Status
 
-Toda a infraestrutura visual, design system editorial, tipografia profissional (Inter) e fluxo estático offline baseados em `LocalStorage` estão **100% entregues, verdes e publicados** na Vercel:
+Toda a infraestrutura visual, design system editorial, fluxo estático e integração Supabase endurecida e segura estão **prontos para homologação**. O Pull Request #3 foi atualizado no GitHub para sanar todas as revisões críticas do Gate 0.
 
-*   **URL de Produção**: [demandas-rhsme-nine.vercel.app](https://demandas-rhsme-nine.vercel.app)
-*   **Repositório GitHub**: [github.com/WilsonMPeixoto-2/demandas-rhsme](https://github.com/WilsonMPeixoto-2/demandas-rhsme)
-
----
-
-## 🛠️ Entregas Realizadas Hoje
-
-### 1. Split Login Corporativo
-*   Estrutura dividida no desktop com painel institucional navy escuro e padrão geométrico de grid com glows sutis.
-*   Lista dos 3 pilares do sistema (Prazos, Responsáveis, Histórico).
-*   Abas nítidas para *Entrar* e *Primeiro acesso* com checagens de e-mail corporativo (`@rioeduca.net`) e senhas fortes.
-*   Mobile com ocultação da barra lateral de forma automatizada e marca compacta centralizada.
-
-### 2. Cabeçalho Institucional de Ponta a Ponta
-*   Faixa superior de identificação do órgão (`CTRH • Secretaria Municipal de Educação | Sistema interno de acompanhamento`).
-*   Dados de sessão, tag do ambiente e data e hora da última atualização reativa.
-*   Título principal **Central de Demandas** associado aos botões **Nova demanda** e **Exportar CSV**.
-
-### 3. Faixa de Atenção Imediata
-*   Filtragem automática das demandas críticas do sistema:
-    *   *Mais antiga vencida* (ex: "Vencida há 7 dias")
-    *   *Vencimento no dia* (ex: "Vence hoje")
-    *   *Assinatura pendente há mais tempo* (ex: "Aguardando assinatura")
-*   Desaparece automaticamente se não houver itens críticos.
-
-### 4. Tabela de Prazos Semânticos e Ações Dropdown
-*   Colunas agrupadas por hierarquia de leitura em varredura.
-*   Avatares redondos dos responsáveis com exibição do setor secundário (`E/CTRH`).
-*   Etiquetas coloridas dinâmicas na coluna de prazo final (*vence hoje*, *X dias em atraso*, *em X dias*).
-*   Menu dropdown acionado pelas reticências `⋮` consolidando ações secundárias para prevenir exclusão acidental.
-
-### 5. Saneamento de Termos (RH -> CTRH)
-*   Substituição completa do termo visual "RH" pela sigla administrativa oficial **"CTRH"** em todas as interfaces.
+*   **URL de Produção**: [demandas-rhsme-expansao.vercel.app](https://demandas-rhsme-expansao.vercel.app)
+*   **Repositório GitHub**: [github.com/WilsonMPeixoto-2/demandas-rhsme-expansao](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao)
+*   **Pull Request Ativo**: [#3 (Homologação Gate 0 - Ajustes de Segurança e UX)](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao/pull/3)
 
 ---
 
-## 🔮 Próximas Etapas Recomendadas
+## 🛠️ Entregas Realizadas no Saneamento (PR #3)
 
-Quando retomar o projeto amanhã ou transferir a tarefa, siga esta ordem:
+### 1. Hardening do Banco de Dados e RPCs
+* **Revogação de INSERT Direto:** Retirado o privilégio de `INSERT` na tabela `sme_demandas` para usuários autenticados, forçando a criação a passar exclusivamente pela RPC `criar_sme_demanda`.
+* **Segurança Concorrente de Administradores:** Atualizada a trigger administrativa `private.prevent_no_active_admin()` para incluir travamento explícito de linhas usando `SELECT ... FOR UPDATE` nas transações concorrentes através de um advisory lock transacional (`pg_advisory_xact_lock`), e escopo estendido com retornos válidos de `OLD`/`NEW` para operações `BEFORE UPDATE OR DELETE` no banco de dados.
+* **Validações nas RPCs:** Adicionada checagem contra strings nulas ou vazias (`btrim(...) = ''`) para parâmetros obrigatórios de processos e status.
+* **Restrição de Exclusão:** Limitada a política de RLS do `DELETE` na tabela `sme_demandas` exclusivamente a administradores ativos.
 
-1.  **Criação de Tabelas do Supabase**:
-    *   O script SQL com as estruturas necessárias para o banco (`demandas`, `historico_comentarios`, `perfis_usuarios`, triggers e políticas RLS) já está pronto e salvo no diretório `/supabase/migrations`.
-2.  **Variáveis de Ambiente**:
-    *   Copiar `.env.example` para `.env` e preencher as chaves de acesso público do Supabase.
-3.  **Substituir LocalStorage por Supabase API**:
-    *   Substituir a carga estática local em `src/App.tsx` pelas funções reais de consulta e escrita (que estão comentadas no arquivo prontas para ativação).
-4.  **Ativação de Autenticação Segura**:
-    *   Conectar o Supabase Auth para cadastro real de servidores de SME e validações de e-mail.
+### 2. Script de Bootstrap Seguro e Idempotente
+* **Carga Atômica via RPC de Bootstrap:** Criada a RPC `public.bootstrap_importar_demanda` (com privilégios de execução revogados de `public` e `authenticated`) para realizar a carga inicial transacional contendo a demanda e o histórico, sem depender de sessões de login com senhas pessoais dos administradores no script de bootstrap.
+* **Senhas Iniciais Únicas:** As contas geradas recebem senhas exclusivas e distintas concatenadas com o prefixo de seus e-mails, eliminando senhas compartilhadas no bootstrap.
+* **Idempotência de Usuários:** Substituído o `upsert` na tabela `perfis_usuarios` por uma promoção direcionada: perfis novos no estado inicial da trigger (`leitor` e `status = 'pendente'`) são elevados aos níveis corretos do bootstrap. Configurações personalizadas em perfis já existentes no banco de dados são rigorosamente preservadas.
+
+### 3. Robustez e Reconciliação do Repositório Local
+* **Validação Estrutural:** Implementada checagem estrutural rigorosa dos dados locais do LocalStorage (`isValidDemandaArray`, `isValidHistoryArray`) no `load()`. Em caso de inconsistência profunda ou dados nulos/corrompidos, redefine ambas as chaves de forma mútua para evitar quebras silenciosas.
+* **Paridade de Validação:** Lançamento de erro explícito no repositório local ao tentar atualizar IDs inexistentes ou criar demandas com números de processo duplicados. Ignora atualizações diretas de `status` no método `update` local para conformidade de contratos.
+
+### 4. Aprimoramento da Interface e UX
+* **Formatação Progressiva de Data:** O componente `DateMaskInput.tsx` foi reescrito para utilizar formatação progressiva baseada no evento `onChange` padrão do HTML5 (não mais no `keydown`), permitindo colagem livre de datas (`onPaste`), suporte a qualquer dispositivo móvel e leitores de tela. O estado do pai é mantido como `""` por padrão se não houver interação do usuário.
+* **Validação de Data no Submit:** Adicionada validação rigorosa das datas nos formulários de criação (`ModalNovo`) e edição (`ModalEditar`), recusando submissões com datas parciais ou inválidas.
+* **Restrição Visual de Exclusão:** Separadas as permissões visuais na interface. O botão de excluir demandas agora é exibido unicamente a administradores ativos (`canDelete`), impedindo que editores vejam opções que o banco rejeitaria.
+* **Alertas e Skeletons Globais:** Movidos os loaders (`data.loading`) e o banner de falha de conexão (`data.error`) para o nível global do `App.tsx` para evitar exibição de abas ou painéis SPA vazios durante a carga.
+* **Sanitização de CSV Injection:** Otimizada a sanitização do CSV para aplicar `trim()` e escapar caracteres de controle e espaços iniciais antes do escape de segurança.
+
+### 5. Validação da Suíte de Testes
+* Suíte de testes automatizados unitários (`vitest`) rodando e passando com **65 testes em verde** (100% de sucesso).
+* Build de produção Vite + TypeScript executando com 100% de sucesso.
+
+---
+
+## 🔮 Próximas Etapas (Fluxo de Homologação)
+
+1. Aplicar a migração `20260707000000_sme_demandas.sql` em um banco de dados de **preview/homologação** do Supabase.
+2. Rodar o script de bootstrap na base remota de testes.
+3. Testar o fluxo de login dos usuários de teste, a carga remota e a consistência das restrições RLS.
+4. Após validação em preview, aprovar o Pull Request #3 na branch `main` e aplicar na base de produção.

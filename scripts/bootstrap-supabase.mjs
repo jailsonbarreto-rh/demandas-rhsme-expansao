@@ -3,21 +3,52 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
-const requiredEnv = ['SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'BOOTSTRAP_PASSWORD'];
+const requiredEnv = [
+  'SUPABASE_URL',
+  'SUPABASE_SECRET_KEY',
+  'BOOTSTRAP_WILSON_PASSWORD',
+  'BOOTSTRAP_JAILSON_PASSWORD',
+  'BOOTSTRAP_TESTE_PASSWORD',
+];
 
 export function getBootstrapUsers() {
   return [
-    { nome: 'Wilson Peixoto', email: 'wilson.peixoto@rioeduca.net', nivel: 'administrador' },
-    { nome: 'Jailson B. Silva', email: 'jailsonbsilva@rioeduca.net', nivel: 'administrador' },
-    { nome: 'Perfil de teste', email: 'teste@rioeduca.net', nivel: 'editor' },
+    {
+      nome: 'Wilson Peixoto',
+      email: 'wilson.peixoto@rioeduca.net',
+      nivel: 'administrador',
+      passwordEnv: 'BOOTSTRAP_WILSON_PASSWORD',
+    },
+    {
+      nome: 'Jailson B. Silva',
+      email: 'jailsonbsilva@rioeduca.net',
+      nivel: 'administrador',
+      passwordEnv: 'BOOTSTRAP_JAILSON_PASSWORD',
+    },
+    {
+      nome: 'Perfil de teste',
+      email: 'teste@rioeduca.net',
+      nivel: 'editor',
+      passwordEnv: 'BOOTSTRAP_TESTE_PASSWORD',
+    },
   ];
 }
 
 export function readBootstrapEnv(env) {
+  const result = {};
+
   for (const key of requiredEnv) {
-    if (!env[key]?.trim()) throw new Error(`Variável obrigatória ausente: ${key}`);
+    const value = env[key]?.trim();
+    if (!value) throw new Error(`Variável obrigatória ausente: ${key}`);
+    result[key] = value;
   }
-  return Object.fromEntries(requiredEnv.map((key) => [key, env[key]]));
+
+  const passwords = getBootstrapUsers().map((definition) => result[definition.passwordEnv]);
+  if (new Set(passwords).size !== passwords.length) {
+    throw new Error('As senhas iniciais dos usuários do bootstrap devem ser distintas.');
+  }
+
+  return result;
 }
 
 export function loadInitialDemandas(sourcePath) {
@@ -29,36 +60,56 @@ export function loadInitialDemandas(sourcePath) {
 
 function toDatabaseDate(value) {
   if (!value || value === 'dd/mm/aaaa') return null;
-  const [day, month, year] = value.split('/');
-  return `${year}-${month}-${day}`;
+
+  const normalized = String(value).trim();
+  const match = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) throw new Error(`Data inválida no bootstrap: ${normalized}`);
+
+  const [, dayText, monthText, yearText] = match;
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year
+    || date.getMonth() !== month - 1
+    || date.getDate() !== day
+  ) {
+    throw new Error(`Data inexistente no bootstrap: ${normalized}`);
+  }
+
+  return `${yearText}-${monthText}-${dayText}`;
 }
 
-async function ensureUsers(client, password) {
+export async function ensureUsers(client, env) {
   const { data, error } = await client.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (error) throw error;
   const knownUsers = [...data.users];
-  const createdUsers = [];
 
   for (const definition of getBootstrapUsers()) {
-    let user = knownUsers.find((candidate) => candidate.email?.toLowerCase() === definition.email);
-    
-    // Senhas distintas por usuário para mitigar compartilhamento de senhas
-    const userPassword = definition.email.toLowerCase() === 'wilson.peixoto@rioeduca.net'
-      ? password
-      : `${password}_${definition.email.split('@')[0]}`;
+    let user = knownUsers.find(
+      (candidate) => candidate.email?.toLowerCase() === definition.email.toLowerCase(),
+    );
 
     if (!user) {
       const result = await client.auth.admin.createUser({
         email: definition.email,
-        password: userPassword,
+        password: env[definition.passwordEnv],
         email_confirm: true,
-        user_metadata: { nome: definition.nome },
+        user_metadata: {
+          nome: definition.nome,
+          bootstrap_password_change_required: true,
+        },
       });
-      if (result.error || !result.data.user) throw result.error ?? new Error(`Falha ao criar ${definition.email}.`);
+
+      if (result.error || !result.data.user) {
+        throw result.error ?? new Error(`Falha ao criar ${definition.email}.`);
+      }
+
       user = result.data.user;
       knownUsers.push(user);
-      createdUsers.push(user.id);
-      console.log(`Conta criada: ${definition.email} (Senha inicial configurada)`);
+      console.log(`Conta criada: ${definition.email}`);
     } else {
       const result = await client.auth.admin.updateUserById(user.id, {
         email_confirm: true,
@@ -72,9 +123,9 @@ async function ensureUsers(client, password) {
       .select('id, nivel, status')
       .eq('id', user.id)
       .maybeSingle();
-      
+
     if (profileCheckError) throw profileCheckError;
-    
+
     if (!existingProfile) {
       const { error: profileError } = await client.from('perfis_usuarios').insert({
         id: user.id,
@@ -86,7 +137,6 @@ async function ensureUsers(client, password) {
       });
       if (profileError) throw profileError;
     } else if (existingProfile.nivel === 'leitor' && existingProfile.status === 'pendente') {
-      // Se foi criado pela trigger de novos usuários, promove para os níveis do bootstrap
       const { error: profileError } = await client.from('perfis_usuarios').update({
         setor: 'E/CTRH',
         nivel: definition.nivel,
@@ -94,27 +144,19 @@ async function ensureUsers(client, password) {
       }).eq('id', user.id);
       if (profileError) throw profileError;
       console.log(`Perfil promovido: ${definition.email} -> ${definition.nivel}`);
+    } else {
+      console.log(`Perfil existente preservado: ${definition.email}`);
     }
   }
 
-  return { users: knownUsers, createdUsers };
+  return knownUsers;
 }
 
-async function importDemandas(client, demandas, actorId) {
-  const numeros = demandas.map((demanda) => demanda.numero);
-  const { data: existing, error: existingError } = await client
-    .from('sme_demandas')
-    .select('numero')
-    .in('numero', numeros);
-  if (existingError) throw existingError;
-  const existingNumbers = new Set((existing ?? []).map((row) => row.numero));
+export async function importDemandas(client, demandas, actorId) {
   let created = 0;
 
   for (const demanda of demandas) {
-    if (existingNumbers.has(demanda.numero)) continue;
-    
-    // Inserção atômica via RPC administrativa de bootstrap, sem requerer login de sessão do administrador
-    const { error: rpcError } = await client.rpc('bootstrap_importar_demanda', {
+    const { data, error } = await client.rpc('bootstrap_importar_demanda', {
       p_numero: demanda.numero,
       p_tipo: demanda.tipo,
       p_assunto: demanda.assunto,
@@ -127,18 +169,18 @@ async function importDemandas(client, demandas, actorId) {
       p_actor_id: actorId,
     });
 
-    if (rpcError) throw rpcError;
-    created += 1;
+    if (error) throw error;
+    if (data === true) created += 1;
   }
 
   return created;
 }
 
-export async function runBootstrap(client, password, demandas) {
-  const { users } = await ensureUsers(client, password);
-  
-  // Wilson é o autor padrão de auditoria para inserção das demandas do bootstrap
-  const actor = users.find((u) => u.email?.toLowerCase() === 'wilson.peixoto@rioeduca.net');
+export async function runBootstrap(client, env, demandas) {
+  const users = await ensureUsers(client, env);
+  const actor = users.find(
+    (user) => user.email?.toLowerCase() === 'wilson.peixoto@rioeduca.net',
+  );
   if (!actor) throw new Error('Administrador Wilson Peixoto não encontrado.');
 
   return importDemandas(client, demandas, actor.id);
@@ -151,7 +193,7 @@ async function main() {
   });
   const here = dirname(fileURLToPath(import.meta.url));
   const demandas = loadInitialDemandas(resolve(here, '..', 'src', 'data', 'initialDemandas.ts'));
-  const created = await runBootstrap(client, env.BOOTSTRAP_PASSWORD, demandas);
+  const created = await runBootstrap(client, env, demandas);
   console.log(`Bootstrap concluído: ${getBootstrapUsers().length} perfis preparados e ${created} demandas novas importadas.`);
 }
 

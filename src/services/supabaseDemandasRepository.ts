@@ -53,9 +53,9 @@ export class SupabaseDemandasRepository implements DemandasRepository {
     if (changes.responsavel !== undefined) payload.responsavel = changes.responsavel;
     if (changes.limite1 !== undefined) payload.limite1 = toDatabaseDate(changes.limite1);
     if (changes.limite2 !== undefined) payload.limite2 = toDatabaseDate(changes.limite2);
-    if (changes.status !== undefined) payload.status = changes.status;
     if (changes.setor !== undefined) payload.setor = changes.setor;
     if (changes.classificacao !== undefined) payload.classificacao = changes.classificacao;
+
     const { error } = await this.client.from('sme_demandas').update(payload).eq('id', id);
     throwIfError(error);
   }

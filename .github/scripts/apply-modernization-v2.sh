@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+git fetch origin modernizacao/funcional-2026:refs/remotes/origin/modernizacao/funcional-2026 --depth=1
+git show origin/modernizacao/funcional-2026:scripts/apply-functional-modernization.mjs > /tmp/apply-modernization.mjs
+node /tmp/apply-modernization.mjs
+rm -f .github/dependabot.yml
+
+python - <<'PY'
+from pathlib import Path
+
+def replace(path, old, new):
+    p = Path(path)
+    text = p.read_text()
+    if old not in text:
+        raise SystemExit(f'pattern not found in {path}: {old[:80]}')
+    p.write_text(text.replace(old, new, 1))
+
+replace(
+    'src/App.tsx',
+    "  const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);\n",
+    "  const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);\n  const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;\n",
+)
+replace(
+    'src/App.tsx',
+    '          <div className="drawer-overlay" onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}>',
+    '''          <div
+            className="drawer-overlay"
+            inert={drawerBloqueadoPorModal ? true : undefined}
+            aria-hidden={drawerBloqueadoPorModal ? 'true' : undefined}
+            onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}
+          >''',
+)
+for path in (
+    'src/components/ModalNovo.tsx',
+    'src/components/ModalEditar.tsx',
+    'src/components/ModalStatus.tsx',
+    'src/components/ModalHistorico.tsx',
+):
+    replace(
+        path,
+        '<div className="modal-overlay" onClick={onClose}>',
+        '<div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>',
+    )
+replace('src/components/ModalNovo.tsx', '<h2>Novo Registro</h2>', '<h2>Nova Demanda</h2>')
+replace(
+    'src/index.css',
+    '  z-index: 1000;\n  animation: fadeIn var(--transition-normal) forwards;',
+    '  z-index: 1100;\n  animation: fadeIn var(--transition-normal) forwards;',
+)
+replace(
+    'vite.config.ts',
+    "    setupFiles: './src/test/setup.ts',\n",
+    "    setupFiles: './src/test/setup.ts',\n    exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],\n",
+)
+
+test_path = Path('src/App.ux.test.tsx')
+test = test_path.read_text()
+block = (
+    "\n  it('torna o drawer inerte enquanto um modal está aberto sobre ele', async () => {\n"
+    "    localStorage.setItem('demandas_user', 'teste@rioeduca.net');\n"
+    "    const { container } = render(<App />);\n"
+    "    const user = userEvent.setup();\n\n"
+    "    await user.click(await screen.findByRole('button', { name: /^demandas$/i }));\n"
+    "    await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);\n"
+    "    await user.click(screen.getByRole('button', { name: /^editar$/i }));\n\n"
+    "    const drawer = container.querySelector('.drawer-overlay');\n"
+    "    expect(drawer).toHaveAttribute('inert');\n"
+    "    expect(drawer).toHaveAttribute('aria-hidden', 'true');\n"
+    "    expect(screen.getByRole('heading', { name: /editar dados da demanda/i })).toBeVisible();\n"
+    "  });\n"
+)
+if 'torna o drawer inerte enquanto um modal está aberto sobre ele' not in test:
+    marker = '\n});\n'
+    index = test.rfind(marker)
+    if index < 0:
+        raise SystemExit('test suite ending not found')
+    test_path.write_text(test[:index] + block + test[index:])
+PY
+
+sed -i "/import '.\/index.css';/i import '.\/responsive-modernization.css';" src/main.tsx
+cat > src/responsive-modernization.css <<'CSS'
+.drawer-overlay[inert] { pointer-events: none; }
+html, body, #root { max-width: 100%; }
+
+@media (max-width: 640px) {
+  .app-container { padding: 28px 16px; overflow-x: clip; }
+  .institucional-bar { margin: -28px -16px 20px; padding-inline: 16px; }
+  .inst-left, .inst-right, .title-area, .header-global-actions,
+  .alerta-info-grupo, .alerta-detalhe { min-width: 0; max-width: 100%; }
+  .title-area, .header-global-actions, .alerta-info-grupo { width: 100%; }
+  .inst-right, .alerta-info-grupo, .alerta-detalhe { flex-wrap: wrap; }
+  .inst-meta-item, .inst-meta-item span, .alerta-assunto {
+    min-width: 0; max-width: 100%; overflow-wrap: anywhere;
+  }
+  .alerta-prazo-tag { min-width: 0; }
+  .nav-tabs {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px; min-width: 0; max-width: 100%;
+  }
+  .nav-tab-link {
+    min-width: 0; width: 100%; justify-content: center;
+    padding: 10px 8px; text-align: center;
+  }
+  .dashboard-row { grid-template-columns: minmax(0, 1fr); }
+  .modal-overlay { padding: 12px; }
+  .modal-wrapper {
+    max-width: 100%; max-height: calc(100dvh - 24px);
+    overflow-y: auto; padding: 22px 18px;
+  }
+  .form-grid-modal { grid-template-columns: minmax(0, 1fr); }
+  .col-full { grid-column: span 1; }
+}
+CSS
+
+cat > tests/e2e/modal-layering.spec.ts <<'TS'
+import { expect, test } from '@playwright/test';
+
+async function login(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await page.getByPlaceholder('usuario@rioeduca.net').fill('teste@rioeduca.net');
+  await page.getByPlaceholder('••••••••').first().fill('senha-local-teste');
+  await page.getByRole('button', { name: /acessar sistema/i }).click();
+  await expect(page.getByRole('button', { name: /sair/i })).toBeVisible();
+}
+
+test('modal de edição permanece interativo acima do drawer', async ({ page }) => {
+  await login(page);
+  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^abrir$/i }).first().click();
+  await page.getByRole('button', { name: /^editar$/i }).click();
+  await expect(page.getByRole('heading', { name: /editar dados da demanda/i })).toBeVisible();
+  await page.getByRole('button', { name: /^cancelar$/i }).click();
+  await expect(page.getByRole('heading', { name: /editar dados da demanda/i })).toBeHidden();
+  await expect(page.getByRole('heading', { name: /processo nº/i })).toBeVisible();
+});
+TS
+
+rm -f .github/modernizacao-trigger.txt
+rm -f .github/workflows/bootstrap-modernizacao.yml
+
+npm install --save-exact \
+  react@19.2.7 react-dom@19.2.7 \
+  @supabase/supabase-js@2.110.4 \
+  @fortawesome/fontawesome-free@6.7.2 \
+  @fontsource-variable/inter@5.2.8
+npm install --save-dev --save-exact \
+  @playwright/test@1.61.1 \
+  @testing-library/jest-dom@6.9.1 \
+  @testing-library/react@16.3.2 \
+  @testing-library/user-event@14.6.1 \
+  @types/node@24.13.3 \
+  @types/react@19.2.17 \
+  @types/react-dom@19.2.3 \
+  @vitejs/plugin-react@6.0.3 \
+  jsdom@29.1.1 typescript@5.9.3 vite@8.1.4 vitest@4.1.10
+
+npm audit --audit-level=high
+npm test
+npm run build
+npx playwright install --with-deps chromium
+npm run test:e2e
+
+rm -f .github/workflows/export-modernization-workspace.yml
+rm -rf dist playwright-report test-results
+rm -f .github/scripts/apply-modernization-v2.sh /tmp/apply-modernization.mjs
+
+git config user.name "github-actions[bot]"
+git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+git add -A
+git commit -m "chore: modernizar toolchain e homologação em navegador"
+git push origin HEAD:modernizacao/funcional-2026-v2

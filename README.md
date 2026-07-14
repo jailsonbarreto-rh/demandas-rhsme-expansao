@@ -7,7 +7,7 @@ Sistema institucional para acompanhamento de demandas de Recursos Humanos da Sec
 
 ## Situação atual
 
-O modo local continua sendo o padrão e preserva o login e os dados já usados no navegador. A integração Supabase está preparada, mas permanece desligada até a criação do projeto e a configuração das variáveis públicas.
+A aplicação opera em produção no modo multiusuário integrado ao Supabase, com autenticação real, persistência compartilhada, RLS, RPCs transacionais e atualização em tempo real. O modo local permanece disponível apenas como mecanismo explícito de contingência e rollback.
 
 O projeto inclui:
 
@@ -37,9 +37,9 @@ npm test
 npm run build
 ```
 
-## Ativar o Supabase futuramente
+## Configuração do Supabase
 
-Siga o guia [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md). A chave secreta de bootstrap nunca deve ser configurada no frontend nem rastreada pelo Git.
+Consulte o guia [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md). A chave secreta de bootstrap nunca deve ser configurada no frontend nem rastreada pelo Git.
 
 ## Relatório do projeto
 

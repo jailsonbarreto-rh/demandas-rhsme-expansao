@@ -3,13 +3,21 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "bootstrap:supabase": "node --env-file=.env.bootstrap scripts/bootstrap-supabase.mjs",
+    "types:supabase": "supabase gen types typescript --project-id kdhekkzwcokfrpcrsllr --schema public > src/lib/database.types.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "check": "npm audit --audit-level=high && npm test && npm run build",
+    "check:full": "npm run check && npm run test:e2e"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.1",

@@ -81,6 +81,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false);
   const [modalStatusAberto, setModalStatusAberto] = useState<boolean>(false);
   const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);
+  const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
 
   useEffect(() => {
     if (appServices.mode !== 'supabase' || !canAccessAdmin || activeTab !== 'admin') {
@@ -850,7 +851,12 @@ export const App: React.FC<AppProps> = ({ services }) => {
         const histFiltrado = historico.filter(h => h.demandaId === demandaSelecionada.id);
         
         return (
-          <div className="drawer-overlay" onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}>
+          <div
+            className="drawer-overlay"
+            inert={drawerBloqueadoPorModal ? true : undefined}
+            aria-hidden={drawerBloqueadoPorModal ? 'true' : undefined}
+            onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}
+          >
             <div className="drawer-content" onClick={e => e.stopPropagation()}>
               <div className="drawer-header">
                 <h2>Processo nº {demandaSelecionada.numero}</h2>

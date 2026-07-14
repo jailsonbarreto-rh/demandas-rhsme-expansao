@@ -1,19 +1,15 @@
 name: Apply validated functional modernization v2
 
 on:
-  pull_request_target:
-    types: [opened, reopened, synchronize]
+  push:
     branches: [main]
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   apply-test-and-consolidate:
-    if: >-
-      github.event.pull_request.head.ref == 'modernizacao/funcional-2026-v2' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -33,4 +29,21 @@ jobs:
           cache: npm
 
       - name: Apply, validate and create one consolidated commit
-        run: bash .github/scripts/apply-modernization-v2.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          if bash .github/scripts/apply-modernization-v2.sh 2>&1 | tee /tmp/modernization.log; then
+            gh pr comment 9 --body "Modernização v2 aplicada e validada: auditoria, testes, build e Chromium desktop/mobile concluídos. O commit funcional foi consolidado na branch."
+          else
+            tail -n 120 /tmp/modernization.log > /tmp/modernization-tail.log
+            {
+              echo 'Falha na execução consolidada da modernização v2.'
+              echo
+              echo '```text'
+              cat /tmp/modernization-tail.log
+              echo '```'
+            } > /tmp/pr-comment.md
+            gh pr comment 9 --body-file /tmp/pr-comment.md
+            exit 1
+          fi

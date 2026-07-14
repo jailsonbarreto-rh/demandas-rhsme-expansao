@@ -1,1 +1,1 @@
-Execução única da modernização funcional v2 após validação sintática do pipeline.
+Validação da modernização funcional v2 em 14/07/2026.

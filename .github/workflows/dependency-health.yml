@@ -1,17 +1,16 @@
-name: Dependency health
+name: Build exact production artifact
 
 on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   audit-test-build-browser:
-    name: Audit, tests, build and browser QA
+    name: Audit, tests, build, browser QA and artifact
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -42,3 +41,11 @@ jobs:
 
       - name: Run browser smoke tests
         run: npm run test:e2e
+
+      - name: Upload exact production artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-dist-181567d
+          path: dist
+          if-no-files-found: error
+          retention-days: 1

@@ -106,3 +106,11 @@ for (const relativePath of [
     write(relativePath, content);
   }
 }
+
+// O token do job não deve enviar alterações de workflows. O arquivo permanente
+// será restaurado separadamente na main após o commit funcional.
+execFileSync('git', ['update-index', '--skip-worktree', '.github/workflows/dependency-health.yml']);
+
+// O workflow legado remove este caminho ao final. Mantemos um marcador apenas
+// no workspace do runner para que a limpeza seja idempotente e não seja commitada.
+write('.github/workflows/prepare-functional-modernization.yml', 'name: Temporary local marker\n');

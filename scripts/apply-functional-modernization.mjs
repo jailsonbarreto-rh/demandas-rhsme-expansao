@@ -1,9 +1,12 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const originalCommit = '7f96e5a53c0cad554136bab21f141ec7cd10685e';
 const originalPath = '/tmp/apply-functional-modernization-original.mjs';
+
+execFileSync('git', ['fetch', '--no-tags', 'origin', originalCommit], { stdio: 'inherit' });
 const original = execFileSync(
   'git',
   ['show', `${originalCommit}:scripts/apply-functional-modernization.mjs`],
@@ -12,21 +15,21 @@ const original = execFileSync(
 fs.writeFileSync(originalPath, original);
 await import(`${pathToFileURL(originalPath).href}?run=${Date.now()}`);
 
-function read(path) {
-  return fs.readFileSync(path, 'utf8');
+function read(relativePath) {
+  return fs.readFileSync(relativePath, 'utf8');
 }
 
-function write(path, content) {
-  fs.mkdirSync(new URL('.', `file://${process.cwd()}/${path}`).pathname, { recursive: true });
-  fs.writeFileSync(path, content.endsWith('\n') ? content : `${content}\n`);
+function write(relativePath, content) {
+  fs.mkdirSync(path.dirname(relativePath), { recursive: true });
+  fs.writeFileSync(relativePath, content.endsWith('\n') ? content : `${content}\n`);
 }
 
-function replaceOnce(path, before, after) {
-  const source = read(path);
+function replaceOnce(relativePath, before, after) {
+  const source = read(relativePath);
   if (!source.includes(before)) {
-    throw new Error(`Padrão não encontrado em ${path}: ${before.slice(0, 90)}`);
+    throw new Error(`Padrão não encontrado em ${relativePath}: ${before.slice(0, 90)}`);
   }
-  write(path, source.replace(before, after));
+  write(relativePath, source.replace(before, after));
 }
 
 fs.rmSync('.github/dependabot.yml', { force: true });
@@ -42,14 +45,14 @@ replaceOnce(
   `          <div\n            className="drawer-overlay"\n            inert={drawerBloqueadoPorModal ? true : undefined}\n            aria-hidden={drawerBloqueadoPorModal ? 'true' : undefined}\n            onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}\n          >`,
 );
 
-for (const path of [
+for (const relativePath of [
   'src/components/ModalNovo.tsx',
   'src/components/ModalEditar.tsx',
   'src/components/ModalStatus.tsx',
   'src/components/ModalHistorico.tsx',
 ]) {
   replaceOnce(
-    path,
+    relativePath,
     '<div className="modal-overlay" onClick={onClose}>',
     '<div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>',
   );
@@ -85,21 +88,21 @@ if (!test.includes('torna o drawer inerte enquanto um modal está aberto sobre e
 
 write('tests/e2e/modal-layering.spec.ts', `import { expect, test } from '@playwright/test';\n\nasync function login(page: import('@playwright/test').Page) {\n  await page.goto('/');\n  await page.getByPlaceholder('usuario@rioeduca.net').fill('teste@rioeduca.net');\n  await page.getByPlaceholder('••••••••').first().fill('senha-local-teste');\n  await page.getByRole('button', { name: /acessar sistema/i }).click();\n  await expect(page.getByRole('button', { name: /sair/i })).toBeVisible();\n}\n\ntest('modal de edição permanece interativo acima do drawer', async ({ page }) => {\n  await login(page);\n  await page.getByRole('button', { name: /^demandas$/i }).click();\n  await page.getByRole('button', { name: /^abrir$/i }).first().click();\n  await page.getByRole('button', { name: /^editar$/i }).click();\n  await expect(page.getByRole('heading', { name: /editar dados da demanda/i })).toBeVisible();\n  await page.getByRole('button', { name: /^cancelar$/i }).click();\n  await expect(page.getByRole('heading', { name: /editar dados da demanda/i })).toBeHidden();\n  await expect(page.getByRole('heading', { name: /processo nº/i })).toBeVisible();\n});\n`);
 
-for (const path of [
+for (const relativePath of [
   '.github/modernizacao-trigger.txt',
   '.github/workflows/bootstrap-modernizacao.yml',
 ]) {
-  fs.rmSync(path, { force: true });
+  fs.rmSync(relativePath, { force: true });
 }
 
-for (const path of [
+for (const relativePath of [
   'docs/superpowers/specs/2026-07-14-functional-modernization-design.md',
   'docs/superpowers/plans/2026-07-14-functional-modernization.md',
 ]) {
-  if (fs.existsSync(path)) {
-    let content = read(path)
+  if (fs.existsSync(relativePath)) {
+    const content = read(relativePath)
       .replace('- Weekly dependency maintenance through Dependabot.\n', '')
       .replace('- [x] Add weekly dependency maintenance.\n', '');
-    write(path, content);
+    write(relativePath, content);
   }
 }

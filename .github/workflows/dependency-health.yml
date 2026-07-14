@@ -1,30 +1,23 @@
-name: Apply validated functional modernization v2
+name: Dependency health
 
 on:
-  pull_request_target:
-    types: [opened]
-    branches: [main]
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
-  apply-test-and-consolidate:
-    if: >-
-      github.event.pull_request.head.ref == 'modernizacao/funcional-2026-v2' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+  audit-test-build-browser:
+    name: Audit, tests, build and browser QA
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout modernization branch
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository }}
-          ref: modernizacao/funcional-2026-v2
-          fetch-depth: 0
-          persist-credentials: true
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v4
@@ -32,23 +25,20 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Apply, validate and create one consolidated commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -o pipefail
-          if bash .github/scripts/apply-modernization-v2.sh 2>&1 | tee /tmp/modernization.log; then
-            gh pr comment "$PR_NUMBER" --body "Modernização v2 aplicada e validada: auditoria, testes, build e Chromium desktop/mobile concluídos. O commit funcional foi consolidado na branch."
-          else
-            tail -n 120 /tmp/modernization.log > /tmp/modernization-tail.log
-            {
-              echo 'Falha na execução consolidada da modernização v2.'
-              echo
-              echo '```text'
-              cat /tmp/modernization-tail.log
-              echo '```'
-            } > /tmp/pr-comment.md
-            gh pr comment "$PR_NUMBER" --body-file /tmp/pr-comment.md
-            exit 1
-          fi
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Run unit and integration tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke tests
+        run: npm run test:e2e

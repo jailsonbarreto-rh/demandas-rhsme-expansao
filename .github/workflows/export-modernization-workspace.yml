@@ -1,0 +1,35 @@
+name: Export modernization workspace
+
+on:
+  push:
+    branches:
+      - modernizacao/funcional-2026-v2
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create repository archive
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=node_modules \
+            --exclude=dist \
+            --exclude=playwright-report \
+            --exclude=test-results \
+            -czf /tmp/demandas-rhsme-workspace.tar.gz .
+
+      - name: Upload repository archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: modernization-workspace
+          path: /tmp/demandas-rhsme-workspace.tar.gz
+          if-no-files-found: error
+          retention-days: 1

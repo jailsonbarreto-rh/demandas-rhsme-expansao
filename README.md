@@ -7,7 +7,7 @@ Sistema institucional para acompanhamento de demandas de Recursos Humanos da Sec
 
 ## Situação atual
 
-A aplicação opera em produção no modo multiusuário integrado ao Supabase, com autenticação real, persistência compartilhada, RLS, RPCs transacionais e atualização em tempo real. O modo local permanece disponível apenas como mecanismo explícito de contingência e rollback.
+A aplicação opera em produção no modo multiusuário integrado ao Supabase, com autenticação real, persistência compartilhada, RLS, RPCs transacionais e atualização em tempo real. Builds de produção utilizam o projeto Supabase oficial mesmo quando a hospedagem não sincroniza as variáveis públicas; o modo local permanece disponível apenas como mecanismo explícito de contingência e rollback.
 
 O projeto inclui:
 

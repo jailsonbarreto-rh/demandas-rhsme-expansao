@@ -47,3 +47,5 @@ jobs:
             gh pr comment 9 --body-file /tmp/pr-comment.md
             exit 1
           fi
+
+# Gatilho único registrado após a ativação do evento push.

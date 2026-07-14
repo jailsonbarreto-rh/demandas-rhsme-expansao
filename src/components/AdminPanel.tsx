@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PerfilUsuario } from '../types';
 
-interface ServidorPerfil {
+export interface ServidorPerfil {
   id: string;
   nome: string;
   email: string;
@@ -20,6 +20,14 @@ interface AdminPanelProps {
   ) => Promise<void> | void;
 }
 
+export interface AccessIntegrityReport {
+  ok: boolean;
+  issues: string[];
+  totalProfiles: number;
+  activeProfiles: number;
+  activeAdministrators: number;
+}
+
 const nivelLabel: Record<PerfilUsuario['nivel'], string> = {
   administrador: 'Administrador', editor: 'Editor', leitor: 'Leitor',
 };
@@ -28,9 +36,70 @@ const statusLabel: Record<PerfilUsuario['status'], string> = {
   ativo: 'Ativo', pendente: 'Pendente', inativo: 'Inativo',
 };
 
+export function buildAccessBackup(servidores: ServidorPerfil[]) {
+  return {
+    sistema: 'Central de Demandas CTRH SME',
+    escopo: 'perfis_e_niveis_de_acesso',
+    backup_timestamp: new Date().toISOString(),
+    usuarios_count: servidores.length,
+    perfis: servidores.map(({ id, nome, email, nivel, setor, status }) => ({
+      id, nome, email, nivel, setor, status,
+    })),
+  };
+}
+
+export function analyzeAccessIntegrity(servidores: ServidorPerfil[]): AccessIntegrityReport {
+  const issues: string[] = [];
+  const emailCounts = new Map<string, number>();
+  const idCounts = new Map<string, number>();
+
+  servidores.forEach((servidor) => {
+    const email = servidor.email.trim().toLowerCase();
+    emailCounts.set(email, (emailCounts.get(email) ?? 0) + 1);
+    idCounts.set(servidor.id, (idCounts.get(servidor.id) ?? 0) + 1);
+
+    if (!servidor.nome.trim()) {
+      issues.push(`Perfil ${servidor.id} sem nome informado.`);
+    }
+    if (!email.endsWith('@rioeduca.net')) {
+      issues.push(`E-mail fora do domínio institucional: ${servidor.email || '(vazio)'}.`);
+    }
+  });
+
+  const duplicateEmails = Array.from(emailCounts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([email]) => email);
+  const duplicateIds = Array.from(idCounts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([id]) => id);
+
+  if (duplicateEmails.length > 0) {
+    issues.push(`E-mails duplicados: ${duplicateEmails.join(', ')}.`);
+  }
+  if (duplicateIds.length > 0) {
+    issues.push(`Identificadores duplicados: ${duplicateIds.join(', ')}.`);
+  }
+
+  const activeProfiles = servidores.filter((servidor) => servidor.status === 'Ativo').length;
+  const activeAdministrators = servidores.filter(
+    (servidor) => servidor.status === 'Ativo' && servidor.nivel === 'Administrador',
+  ).length;
+
+  if (activeAdministrators === 0) {
+    issues.push('Nenhum administrador ativo foi encontrado.');
+  }
+
+  return {
+    ok: issues.length === 0,
+    issues,
+    totalProfiles: servidores.length,
+    activeProfiles,
+    activeAdministrators,
+  };
+}
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }) => {
   const isSupabase = perfis !== undefined;
-  // Lista simulada de servidores homologados na CTRH
   const servidores: ServidorPerfil[] = perfis?.map((perfil) => ({
     id: perfil.id,
     nome: perfil.nome || perfil.email,
@@ -48,31 +117,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
     { id: '5', nome: 'Mariana Costa', email: 'mariana.costa@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Pendente' }
   ];
 
-  const handleSimulateAction = (acao: string) => {
-    alert(`Ação de administração "${acao}" simulada com sucesso! Na versão integrada com Supabase, esta ação persistirá no banco de dados.`);
-  };
-
   const handleExportJSONBackup = () => {
-    const backupData = {
-      sistema: 'Central de Demandas CTRH SME',
-      backup_timestamp: new Date().toISOString(),
-      usuarios_count: servidores.length,
-      versao: '1.0.0-preview'
-    };
-
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
-    const link = document.createElement("a");
-    link.setAttribute("href", dataStr);
-    link.setAttribute("download", `backup_ctrh_sme_${new Date().toISOString().slice(0, 10)}.json`);
+    const backupData = buildAccessBackup(servidores);
+    const dataStr = `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(backupData, null, 2))}`;
+    const link = document.createElement('a');
+    link.setAttribute('href', dataStr);
+    link.setAttribute('download', `perfis_acesso_ctrh_sme_${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const handleIntegrityCheck = () => {
+    const report = analyzeAccessIntegrity(servidores);
+    if (report.ok) {
+      alert(
+        `Verificação concluída: ${report.totalProfiles} perfis analisados, `
+        + `${report.activeProfiles} ativos e ${report.activeAdministrators} administradores ativos. `
+        + 'Nenhuma inconsistência de acesso foi encontrada.',
+      );
+      return;
+    }
+
+    alert(
+      `Verificação concluída com ${report.issues.length} inconsistência(s):\n\n`
+      + report.issues.map((issue) => `• ${issue}`).join('\n'),
+    );
+  };
+
   return (
     <div className="admin-panel-container" style={{ animation: 'fadeIn 0.4s ease-out forwards' }}>
-      
-      {/* 1. Visão de Auditoria e Integridade */}
       <div className="dashboard-row" style={{ marginBottom: '25px' }}>
         <div className="dashboard-col-card">
           <h2>
@@ -80,24 +154,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
             Segurança & Integridade
           </h2>
           <p style={{ fontSize: '0.813rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
-            Controle de backups do sistema e auditorias de consistência da base de dados local do CTRH.
+            Exportação dos perfis cadastrados e verificação de consistência dos acessos ao sistema.
           </p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button 
-              type="button" 
-              className="btn btn-secondary-outline" 
+            <button
+              type="button"
+              className="btn btn-secondary-outline"
               onClick={handleExportJSONBackup}
-              title="Exportar backup completo"
+              title="Exportar perfis e níveis de acesso em JSON"
             >
-              <i className="fa-solid fa-file-export"></i> Backup da Base (JSON)
+              <i className="fa-solid fa-file-export"></i> Exportar Perfis (JSON)
             </button>
-            <button 
-              type="button" 
-              className="btn btn-secondary-outline" 
-              onClick={() => handleSimulateAction('Verificação de Integridade')}
-              title="Executar varredura de consistência"
+            <button
+              type="button"
+              className="btn btn-secondary-outline"
+              onClick={handleIntegrityCheck}
+              title="Verificar duplicidades, domínio institucional e administradores ativos"
             >
-              <i className="fa-solid fa-stethoscope"></i> Varredura de Integridade
+              <i className="fa-solid fa-stethoscope"></i> Verificar Acessos
             </button>
           </div>
         </div>
@@ -121,7 +195,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
         </div>
       </div>
 
-      {/* 2. Lista de Servidores Cadastrados */}
       <div className="dashboard-col-card">
         <h2>
           <i className="fa-solid fa-user-gear" style={{ color: 'var(--accent-color)' }}></i>
@@ -147,13 +220,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
             <tbody>
               {servidores.map(serv => (
                 <tr key={serv.id}>
-                  {/* Nome */}
                   <td style={{ textAlign: 'left', fontWeight: 600 }}>{serv.nome}</td>
-                  
-                  {/* E-mail */}
                   <td style={{ textAlign: 'left', fontFamily: 'monospace' }}>{serv.email}</td>
-                  
-                  {/* Nível de Acesso */}
                   <td style={{ textAlign: 'left' }}>
                     {isSupabase ? (
                       <select
@@ -175,13 +243,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
                       </span>
                     )}
                   </td>
-                  
-                  {/* Setor */}
                   <td style={{ textAlign: 'left', fontWeight: 500 }}>{serv.setor}</td>
-                  
-                  {/* Status */}
                   <td>
-                    <span 
+                    <span
                       className={`badge ${serv.status === 'Ativo' ? 'tramitado' : 'ajustar'}`}
                       style={{ fontSize: '0.65rem', fontWeight: 700 }}
                     >

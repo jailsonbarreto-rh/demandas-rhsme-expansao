@@ -3,7 +3,7 @@ export type AppConfig =
   | { mode: 'supabase'; supabaseUrl: string; supabasePublishableKey: string }
   | { mode: 'invalid'; message: string };
 
-type PublicEnv = Record<string, string | undefined>;
+type PublicEnv = Record<string, string | boolean | undefined>;
 
 type CredentialSource = {
   url?: string;
@@ -12,31 +12,56 @@ type CredentialSource = {
   keyName: string;
 };
 
+// A URL e a publishable key são credenciais públicas destinadas ao cliente web.
+// Este fallback garante que um build de produção nunca opere silenciosamente em LocalStorage
+// quando a sincronização de variáveis da hospedagem estiver ausente.
+const PRODUCTION_SUPABASE_URL = 'https://kdhekkzwcokfrpcrsllr.supabase.co';
+const PRODUCTION_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_8a_9nkPr3eo7LlrWybgNrw_ZPRrAjCy';
+
+function firstDefined(...values: Array<string | boolean | undefined>): string | undefined {
+  return values.find((value): value is string => typeof value === 'string' && value.length > 0);
+}
+
 function resolveCredentials(env: PublicEnv, explicitMode?: string): CredentialSource {
-  if (env.VITE_SUPABASE_URL || env.VITE_SUPABASE_PUBLISHABLE_KEY) {
+  const viteKey = firstDefined(env.VITE_SUPABASE_PUBLISHABLE_KEY, env.VITE_SUPABASE_ANON_KEY);
+  if (env.VITE_SUPABASE_URL || viteKey) {
     return {
-      url: env.VITE_SUPABASE_URL,
-      key: env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      url: firstDefined(env.VITE_SUPABASE_URL),
+      key: viteKey,
       urlName: 'VITE_SUPABASE_URL',
       keyName: 'VITE_SUPABASE_PUBLISHABLE_KEY',
     };
   }
 
-  if (env.SUPABASE_URL || env.SUPABASE_PUBLISHABLE_KEY) {
+  const integrationKey = firstDefined(env.SUPABASE_PUBLISHABLE_KEY, env.SUPABASE_ANON_KEY);
+  if (env.SUPABASE_URL || integrationKey) {
     return {
-      url: env.SUPABASE_URL,
-      key: env.SUPABASE_PUBLISHABLE_KEY,
+      url: firstDefined(env.SUPABASE_URL),
+      key: integrationKey,
       urlName: 'SUPABASE_URL',
       keyName: 'SUPABASE_PUBLISHABLE_KEY',
     };
   }
 
-  if (env.NEXT_PUBLIC_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+  const nextPublicKey = firstDefined(
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  );
+  if (env.NEXT_PUBLIC_SUPABASE_URL || nextPublicKey) {
     return {
-      url: env.NEXT_PUBLIC_SUPABASE_URL,
-      key: env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      url: firstDefined(env.NEXT_PUBLIC_SUPABASE_URL),
+      key: nextPublicKey,
       urlName: 'NEXT_PUBLIC_SUPABASE_URL',
       keyName: 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+    };
+  }
+
+  if (env.PROD === true) {
+    return {
+      url: PRODUCTION_SUPABASE_URL,
+      key: PRODUCTION_SUPABASE_PUBLISHABLE_KEY,
+      urlName: 'configuração pública de produção',
+      keyName: 'publishable key pública de produção',
     };
   }
 
@@ -49,7 +74,7 @@ function resolveCredentials(env: PublicEnv, explicitMode?: string): CredentialSo
 }
 
 export function resolveAppConfig(env: PublicEnv): AppConfig {
-  const explicitMode = env.VITE_APP_MODE;
+  const explicitMode = firstDefined(env.VITE_APP_MODE);
 
   if (explicitMode === 'local') return { mode: 'local' };
   if (explicitMode && explicitMode !== 'supabase') {

@@ -27,7 +27,7 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
   ];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="modal-wrapper" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
         <div className="modal-header">
           <h2>Atualizar Status</h2>

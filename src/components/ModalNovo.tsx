@@ -66,10 +66,10 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
   ];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="modal-wrapper" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Novo Registro</h2>
+          <h2>Nova Demanda</h2>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar novo registro">
             <i className="fa-solid fa-xmark"></i>
           </button>

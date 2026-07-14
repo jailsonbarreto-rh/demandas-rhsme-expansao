@@ -1,7 +1,5 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AppConfig } from '../config/appConfig';
 import { initialDemandas } from '../data/initialDemandas';
-import type { Database } from '../lib/database.types';
 import { getSupabaseClient } from '../lib/supabase';
 import type { AuthService, DemandasRepository, ProfilesService } from './contracts';
 import { LocalAuthService } from './localAuthService';
@@ -40,7 +38,7 @@ export function createAppServices(config: AppConfig, storage: Storage = window.l
     };
   }
 
-  const client = getSupabaseClient(config) as SupabaseClient<Database>;
+  const client = getSupabaseClient(config);
   return {
     mode: 'supabase',
     auth: new SupabaseAuthService(client),

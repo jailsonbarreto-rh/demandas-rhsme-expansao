@@ -39,4 +39,19 @@ describe('segurança e acessibilidade do login', () => {
     await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);
     expect(screen.getByRole('button', { name: /fechar painel de detalhes/i })).toHaveAttribute('aria-label');
   });
+  it('torna o drawer inerte enquanto um modal está aberto sobre ele', async () => {
+    localStorage.setItem('demandas_user', 'teste@rioeduca.net');
+    const { container } = render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /^demandas$/i }));
+    await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);
+    await user.click(screen.getByRole('button', { name: /^editar$/i }));
+
+    const drawer = container.querySelector('.drawer-overlay');
+    expect(drawer).toHaveAttribute('inert');
+    expect(drawer).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('heading', { name: /editar dados da demanda/i })).toBeVisible();
+  });
+
 });

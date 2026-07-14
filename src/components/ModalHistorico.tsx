@@ -12,7 +12,7 @@ export const ModalHistorico: React.FC<ModalHistoricoProps> = ({ demanda, histori
   const historicoFiltrado = historico.filter(h => h.demandaId === demanda.id);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="modal-wrapper" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Histórico de Comentários — Processo {demanda.numero}</h2>

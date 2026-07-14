@@ -53,7 +53,7 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSa
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="modal-wrapper" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Editar Dados da Demanda</h2>

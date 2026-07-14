@@ -10,10 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  audit-and-build:
-    name: Audit and build
+  audit-test-build:
+    name: Audit, test and build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -31,8 +31,14 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=high
 
-      - name: Run tests
+      - name: Run unit and integration tests
         run: npm test
+
+      - name: Install Chromium for browser tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke tests
+        run: npm run test:e2e
 
       - name: Build production bundle
         run: npm run build

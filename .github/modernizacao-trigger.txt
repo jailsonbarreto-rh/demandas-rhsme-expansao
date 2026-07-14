@@ -1,0 +1,1 @@
+Execução única para validar e atualizar a branch modernizacao/segura-2026.

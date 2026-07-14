@@ -1,1 +1,1 @@
-Execução única da modernização funcional v2. Este marcador será removido pelo commit consolidado.
+Execução única da modernização funcional v2 após validação sintática do pipeline.

@@ -1,7 +1,8 @@
 name: Apply validated functional modernization v2
 
 on:
-  push:
+  pull_request_target:
+    types: [opened]
     branches: [main]
 
 permissions:
@@ -10,6 +11,9 @@ permissions:
 
 jobs:
   apply-test-and-consolidate:
+    if: >-
+      github.event.pull_request.head.ref == 'modernizacao/funcional-2026-v2' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -31,10 +35,11 @@ jobs:
       - name: Apply, validate and create one consolidated commit
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -o pipefail
           if bash .github/scripts/apply-modernization-v2.sh 2>&1 | tee /tmp/modernization.log; then
-            gh pr comment 9 --body "Modernização v2 aplicada e validada: auditoria, testes, build e Chromium desktop/mobile concluídos. O commit funcional foi consolidado na branch."
+            gh pr comment "$PR_NUMBER" --body "Modernização v2 aplicada e validada: auditoria, testes, build e Chromium desktop/mobile concluídos. O commit funcional foi consolidado na branch."
           else
             tail -n 120 /tmp/modernization.log > /tmp/modernization-tail.log
             {
@@ -44,8 +49,6 @@ jobs:
               cat /tmp/modernization-tail.log
               echo '```'
             } > /tmp/pr-comment.md
-            gh pr comment 9 --body-file /tmp/pr-comment.md
+            gh pr comment "$PR_NUMBER" --body-file /tmp/pr-comment.md
             exit 1
           fi
-
-# Gatilho único registrado após a ativação do evento push.

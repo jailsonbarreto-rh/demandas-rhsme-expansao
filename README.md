@@ -44,3 +44,5 @@ Consulte o guia [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md). A chave secret
 ## Relatório do projeto
 
 O histórico consolidado do trabalho entregue e o estado atual dos ambientes estão em [docs/RELATORIO_ESTADO_ATUAL.md](docs/RELATORIO_ESTADO_ATUAL.md).
+
+<!-- deployment-retry: 2026-07-14T06:53:00Z -->

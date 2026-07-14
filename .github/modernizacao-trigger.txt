@@ -1,1 +1,1 @@
-Execução única para validar e atualizar a branch modernizacao/segura-2026.
+Execução única da modernização funcional v2. Este marcador será removido pelo commit consolidado.

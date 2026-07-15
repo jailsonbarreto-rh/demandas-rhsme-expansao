@@ -15,23 +15,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Decode payload
+      - name: Inspect payloads
         shell: bash
         run: |
-          set -euo pipefail
           mkdir -p /tmp/ux-payload
-          cat .github/ux-patches/patches.part.* | base64 --decode > /tmp/ux-payload/payload.xz
-          xz --decompress --stdout /tmp/ux-payload/payload.xz > /tmp/ux-payload/payload
           {
-            echo "sha256_xz=$(sha256sum /tmp/ux-payload/payload.xz | cut -d' ' -f1)"
-            echo "sha256_payload=$(sha256sum /tmp/ux-payload/payload | cut -d' ' -f1)"
-            echo "size_xz=$(stat -c%s /tmp/ux-payload/payload.xz)"
-            echo "size_payload=$(stat -c%s /tmp/ux-payload/payload)"
-            echo "file_type=$(file -b /tmp/ux-payload/payload)"
-          } | tee /tmp/ux-payload/report.txt
-          head -c 256 /tmp/ux-payload/payload | xxd >> /tmp/ux-payload/report.txt
+            echo 'OLD PARTS'
+            wc -c .github/ux-patches/patches.part.* || true
+            cat .github/ux-patches/patches.part.* > /tmp/ux-payload/old.b64
+            base64 --decode /tmp/ux-payload/old.b64 > /tmp/ux-payload/old.xz
+            echo "old_decode_exit=$?"
+            xz --test /tmp/ux-payload/old.xz
+            echo "old_xz_exit=$?"
+            sha256sum /tmp/ux-payload/old.xz || true
+            echo 'NEW PARTS'
+            wc -c .github/ux-transfer/payload.part.* || true
+            cat .github/ux-transfer/payload.part.* > /tmp/ux-payload/new-partial.b64
+            base64 --decode /tmp/ux-payload/new-partial.b64 > /tmp/ux-payload/new-partial.xz
+            echo "new_decode_exit=$?"
+            xz --test /tmp/ux-payload/new-partial.xz
+            echo "new_xz_exit=$?"
+            sha256sum /tmp/ux-payload/new-partial.xz || true
+          } 2>&1 | tee /tmp/ux-payload/report.txt
+          exit 0
 
-      - name: Upload decoded payload
+      - name: Upload inspection
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ux-payload-inspection

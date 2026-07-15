@@ -19,7 +19,7 @@ interface AdminPanelProps {
   onUpdatePerfil?: (
     id: string,
     patch: Partial<Pick<PerfilUsuario, 'nivel' | 'status' | 'setor'>>,
-  ) => Promise<void> | void;
+  ) => Promise<boolean> | boolean;
 }
 
 export interface AccessIntegrityReport {
@@ -265,9 +265,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
       <AdminProfileDialog
         perfil={perfilEmEdicao}
         onClose={() => setPerfilEmEdicao(null)}
-        onSave={async (id, values) => {
-          await onUpdatePerfil?.(id, values);
-        }}
+        onSave={async (id, values) => (await onUpdatePerfil?.(id, values)) ?? false}
       />
     </div>
   );

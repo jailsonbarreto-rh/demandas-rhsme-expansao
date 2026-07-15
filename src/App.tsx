@@ -141,7 +141,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       const outrosAdminsAtivos = perfis.filter(p => p.id !== id && p.nivel === 'administrador' && p.status === 'ativo').length;
       if (outrosAdminsAtivos === 0) {
         toast.error('Ação bloqueada: o sistema não pode ficar sem nenhum administrador ativo.');
-        return;
+        return false;
       }
     }
 
@@ -149,8 +149,10 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       await appServices.profiles.updateAccess(id, patch);
       setPerfis(await appServices.profiles.list());
       toast.success('Perfil atualizado com sucesso.');
+      return true;
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : 'Não foi possível atualizar o perfil.');
+      return false;
     }
   };
 

@@ -10,7 +10,7 @@ import { FormError } from './ui/FormError';
 interface AdminProfileDialogProps {
   perfil: PerfilUsuario | null;
   onClose: () => void;
-  onSave: (id: string, values: ProfileAccessValues) => Promise<void> | void;
+  onSave: (id: string, values: ProfileAccessValues) => Promise<boolean> | boolean;
 }
 
 export function AdminProfileDialog({ perfil, onClose, onSave }: AdminProfileDialogProps) {
@@ -42,8 +42,8 @@ export function AdminProfileDialog({ perfil, onClose, onSave }: AdminProfileDial
   };
 
   const submit = handleSubmit(async (values) => {
-    await onSave(perfil.id, values);
-    onClose();
+    const saved = await onSave(perfil.id, values);
+    if (saved) onClose();
   });
 
   return (

@@ -49,7 +49,7 @@ describe('AdminPanel', () => {
   });
 
   it('edita um perfil real em formulário validado e com confirmação explícita', async () => {
-    const onUpdatePerfil = vi.fn().mockResolvedValue(undefined);
+    const onUpdatePerfil = vi.fn().mockResolvedValue(true);
     render(<AdminPanel perfis={[pending]} onUpdatePerfil={onUpdatePerfil} />);
     expect(screen.queryByText('Demonstração')).not.toBeInTheDocument();
     const user = userEvent.setup();
@@ -64,6 +64,18 @@ describe('AdminPanel', () => {
       status: 'ativo',
       setor: 'E/CTRH',
     });
+  });
+
+  it('mantém o formulário aberto quando a atualização administrativa é rejeitada', async () => {
+    const onUpdatePerfil = vi.fn().mockResolvedValue(false);
+    render(<AdminPanel perfis={[pending]} onUpdatePerfil={onUpdatePerfil} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /gerenciar acesso/i }));
+    await user.selectOptions(screen.getByLabelText(/status do acesso/i), 'ativo');
+    await user.click(screen.getByRole('button', { name: /salvar acesso/i }));
+
+    expect(onUpdatePerfil).toHaveBeenCalledOnce();
+    expect(screen.getByRole('dialog', { name: /gerenciar acesso/i })).toBeInTheDocument();
   });
 
   it('gera backup contendo os perfis e níveis de acesso', () => {

@@ -68,7 +68,7 @@ export class LocalDemandasRepository implements DemandasRepository {
       this.historico = parsedHistorico;
     } else {
       if ((rawDemandas !== null || rawHistorico !== null) && !houveErroParse) {
-        alert("A base de dados local estava inconsistente ou corrompida. Todos os dados foram redefinidos para os valores padrões de segurança.");
+        console.warn('A base de dados local estava inconsistente ou corrompida. Todos os dados foram redefinidos para os valores padrões de segurança.');
       }
       this.demandas = this.initialDemandas.map((demanda) => ({ ...demanda }));
       this.saveDemandas();
@@ -173,7 +173,7 @@ export class LocalDemandasRepository implements DemandasRepository {
     try {
       return JSON.parse(value) as T;
     } catch {
-      alert(`Os dados locais de "${key}" estavam corrompidos e foram redefinidos para os valores padrões.`);
+      console.warn(`Os dados locais de "${key}" estavam corrompidos e foram redefinidos para os valores padrões.`);
       return null;
     }
   }

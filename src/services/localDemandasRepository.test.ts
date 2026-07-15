@@ -102,7 +102,8 @@ describe('LocalDemandasRepository', () => {
   });
 
   it('redefine para fallback se os dados locais estiverem corrompidos (JSON inválido)', async () => {
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
     
     storage.setItem('demandas_data', '{invalid json}');
     storage.setItem('demandas_history', '{invalid json}');
@@ -111,8 +112,9 @@ describe('LocalDemandasRepository', () => {
     const data = await repository.load();
 
     expect(data.demandas).toEqual(initialDemandas);
-    expect(alertMock).toHaveBeenCalledTimes(2);
-    
+    expect(warning).toHaveBeenCalledTimes(2);
+    expect(alertMock).not.toHaveBeenCalled();
+    warning.mockRestore();
     alertMock.mockRestore();
   });
 
@@ -231,7 +233,7 @@ describe('LocalDemandasRepository', () => {
   });
 
   it('redefine dados locais se o array lido possuir chaves ou tipos estruturais inválidos', async () => {
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     
     // Salva estrutura que é JSON válido mas possui chaves incorretas
     storage.setItem('demandas_data', JSON.stringify([{ id: 'texto_em_vez_de_numero', numero: '' }]));
@@ -240,11 +242,11 @@ describe('LocalDemandasRepository', () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     const data = await repository.load();
 
-    // Deve carregar fallback consistente e alertar
+    // Deve carregar fallback consistente sem bloquear a interface.
     expect(data.demandas).toEqual(initialDemandas);
-    expect(alertMock).toHaveBeenCalledTimes(1);
+    expect(warning).toHaveBeenCalledTimes(1);
 
-    alertMock.mockRestore();
+    warning.mockRestore();
   });
 
   it('não cria assinatura remota no modo local', () => {

@@ -40,9 +40,9 @@ function createServices(signIn = vi.fn().mockResolvedValue(activeUser)) {
 }
 
 async function fillLogin(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByPlaceholderText('usuario@rioeduca.net'), 'teste@rioeduca.net');
-  await user.type(screen.getAllByPlaceholderText('••••••••')[0], 'senha-remota-teste');
-  await user.click(screen.getByRole('button', { name: /acessar sistema/i }));
+  await user.type(await screen.findByPlaceholderText('usuario@rioeduca.net'), 'teste@rioeduca.net');
+  await user.type((await screen.findAllByPlaceholderText('••••••••'))[0], 'senha-remota-teste');
+  await user.click(await screen.findByRole('button', { name: /acessar sistema/i }));
 }
 
 describe('App no modo Supabase', () => {
@@ -61,7 +61,7 @@ describe('App no modo Supabase', () => {
     await waitFor(() => expect(load).toHaveBeenCalled());
 
     await user.click(screen.getByRole('button', { name: /nova demanda/i }));
-    await user.selectOptions(screen.getByLabelText('Tipo'), 'Processo');
+    await user.selectOptions(await screen.findByLabelText('Tipo'), 'Processo');
     await user.type(screen.getByLabelText('Número'), 'SME-TESTE-001');
     await user.type(screen.getByLabelText('Assunto'), 'Demanda de integração');
     await user.selectOptions(screen.getByLabelText('Status'), 'Aguardando Andamento');
@@ -74,15 +74,13 @@ describe('App no modo Supabase', () => {
   });
 
   it('mantém perfil pendente na tela de login', async () => {
-    const alert = vi.fn();
-    vi.stubGlobal('alert', alert);
     const signIn = vi.fn().mockRejectedValue(new AccessPendingError());
     const { services, load } = createServices(signIn);
     render(<App services={services} />);
     await fillLogin(userEvent.setup());
 
     expect(await screen.findByRole('button', { name: /acessar sistema/i })).toBeInTheDocument();
-    expect(alert).toHaveBeenCalledWith(expect.stringMatching(/aguarda aprovação/i));
+    expect(await screen.findByText(/aguarda aprovação/i)).toBeVisible();
     expect(load).not.toHaveBeenCalled();
   });
 });

@@ -1,88 +1,85 @@
 import React, { useState } from 'react';
-import { Demanda } from '../types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { Demanda } from '../types';
+import { statusDemandaSchema, statusValues, type StatusDemandaValues } from '../validation/demandaSchemas';
+import { AppDialog } from './ui/AppDialog';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { FormError } from './ui/FormError';
 
 interface ModalStatusProps {
   demanda: Demanda;
   onClose: () => void;
-  onAtualizar: (demandaId: number, novoStatus: Demanda['status'], comentario: string) => void;
+  onAtualizar: (demandaId: number, novoStatus: Demanda['status'], comentario: string) => void | boolean | Promise<void | boolean>;
 }
 
 export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAtualizar }) => {
-  const [status, setStatus] = useState<Demanda['status']>(demanda.status);
-  const [comentario, setComentario] = useState<string>('');
+  const [confirmClose, setConfirmClose] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty, isSubmitting },
+  } = useForm<StatusDemandaValues>({
+    resolver: zodResolver(statusDemandaSchema),
+    defaultValues: { status: demanda.status, comentario: '' },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!status || !comentario.trim()) {
-      alert("Por favor, selecione o status e insira um comentário justificando a alteração.");
-      return;
-    }
-
-    onAtualizar(demanda.id, status, comentario.trim());
+  const requestClose = () => {
+    if (isDirty && !isSubmitting) setConfirmClose(true);
+    else onClose();
   };
 
-  const statusList: Demanda['status'][] = [
-    'Aguardando Andamento', 'Tramitado', 'Para Assinatura', 
-    'Encerrado', 'Sobrestado', 'Ajustar'
-  ];
+  const submit = handleSubmit(async (values) => {
+    await onAtualizar(demanda.id, values.status, values.comentario);
+  });
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="modal-wrapper" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-        <div className="modal-header">
-          <h2>Atualizar Status</h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar atualização de status">
-            <i className="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-        
-        <form onSubmit={handleSubmit}>
+    <>
+      <AppDialog title="Atualizar Status" onClose={requestClose} contentClassName="modal-compact">
+        <form onSubmit={(event) => { void submit(event); }} noValidate>
           <div className="modal-body">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              
-              {/* Seleção do Novo Status */}
+            <div className="form-stack">
               <div>
                 <label htmlFor="modal_status_select" className="input-label-externa">Status da Demanda</label>
-                <select 
-                  id="modal_status_select"
-                  className="form-select"
-                  value={status}
-                  onChange={e => setStatus(e.target.value as Demanda['status'])}
-                  required
-                >
-                  {statusList.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
+                <select id="modal_status_select" className="form-select" {...register('status')}>
+                  {statusValues.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
+                <FormError message={errors.status?.message} />
               </div>
-
-              {/* Comentário / Observação */}
               <div>
                 <label htmlFor="modal_status_comentario" className="input-label-externa">Comentário / Observação</label>
-                <textarea 
+                <textarea
                   id="modal_status_comentario"
-                  className="form-control"
-                  style={{ height: '120px', resize: 'vertical' }}
-                  placeholder="Descreva as atualizações ou alterações realizadas para justificar a mudança de status..."
-                  value={comentario}
-                  onChange={e => setComentario(e.target.value)}
-                  required
-                ></textarea>
+                  className={`form-control status-comment ${errors.comentario ? 'field-invalid' : ''}`.trim()}
+                  placeholder="Descreva as atualizações realizadas para justificar a mudança de status..."
+                  {...register('comentario')}
+                  aria-invalid={Boolean(errors.comentario)}
+                  aria-describedby={errors.comentario ? 'status-comentario-error' : undefined}
+                />
+                <FormError id="status-comentario-error" message={errors.comentario?.message} />
               </div>
-
             </div>
           </div>
-          
           <div className="modal-footer">
-            <button type="submit" className="btn btn-primary">
-              <i className="fa-solid fa-floppy-disk"></i> Atualizar
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting} aria-busy={isSubmitting}>
+              <i className={`fa-solid ${isSubmitting ? 'fa-spinner fa-spin' : 'fa-floppy-disk'}`} aria-hidden="true" />
+              {isSubmitting ? 'Atualizando…' : 'Atualizar'}
             </button>
-            <button type="button" className="btn" onClick={onClose}>
-              <i className="fa-solid fa-xmark"></i> Cancelar
+            <button type="button" className="btn" onClick={requestClose} disabled={isSubmitting}>
+              <i className="fa-solid fa-xmark" aria-hidden="true" /> Cancelar
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </AppDialog>
+
+      <ConfirmDialog
+        open={confirmClose}
+        title="Descartar alteração de status?"
+        description="O status ou o comentário foram alterados e ainda não foram registrados."
+        confirmLabel="Descartar alterações"
+        onConfirm={onClose}
+        onOpenChange={setConfirmClose}
+      />
+    </>
   );
 };

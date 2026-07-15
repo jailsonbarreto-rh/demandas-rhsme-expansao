@@ -1,5 +1,7 @@
-import React from 'react';
+import { toast } from 'sonner';
+import React, { useState } from 'react';
 import type { PerfilUsuario } from '../types';
+import { AdminProfileDialog } from './AdminProfileDialog';
 
 export interface ServidorPerfil {
   id: string;
@@ -17,7 +19,7 @@ interface AdminPanelProps {
   onUpdatePerfil?: (
     id: string,
     patch: Partial<Pick<PerfilUsuario, 'nivel' | 'status' | 'setor'>>,
-  ) => Promise<void> | void;
+  ) => Promise<boolean> | boolean;
 }
 
 export interface AccessIntegrityReport {
@@ -100,6 +102,7 @@ export function analyzeAccessIntegrity(servidores: ServidorPerfil[]): AccessInte
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }) => {
   const isSupabase = perfis !== undefined;
+  const [perfilEmEdicao, setPerfilEmEdicao] = useState<PerfilUsuario | null>(null);
   const servidores: ServidorPerfil[] = perfis?.map((perfil) => ({
     id: perfil.id,
     nome: perfil.nome || perfil.email,
@@ -131,17 +134,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
   const handleIntegrityCheck = () => {
     const report = analyzeAccessIntegrity(servidores);
     if (report.ok) {
-      alert(
+      toast.success(
         `Verificação concluída: ${report.totalProfiles} perfis analisados, `
-        + `${report.activeProfiles} ativos e ${report.activeAdministrators} administradores ativos. `
-        + 'Nenhuma inconsistência de acesso foi encontrada.',
+        + `${report.activeProfiles} ativos e ${report.activeAdministrators} administradores ativos.`,
       );
       return;
     }
 
-    alert(
-      `Verificação concluída com ${report.issues.length} inconsistência(s):\n\n`
-      + report.issues.map((issue) => `• ${issue}`).join('\n'),
+    toast.error(
+      `Verificação concluída com ${report.issues.length} inconsistência(s).`,
+      { description: report.issues.join(' • '), duration: 7000 },
     );
   };
 
@@ -205,7 +207,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
           {!isSupabase && <span className="demo-label">Demonstração</span>}
         </p>
 
-        <div className="table-responsive">
+        <div className="table-responsive" role="region" aria-label="Tabela de perfis e acessos" tabIndex={0}>
           <table className="demandas-table">
             <thead>
               <tr>
@@ -223,25 +225,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
                   <td style={{ textAlign: 'left', fontWeight: 600 }}>{serv.nome}</td>
                   <td style={{ textAlign: 'left', fontFamily: 'monospace' }}>{serv.email}</td>
                   <td style={{ textAlign: 'left' }}>
-                    {isSupabase ? (
-                      <select
-                        className="form-control"
-                        aria-label={`Nível de acesso de ${serv.nome}`}
-                        value={serv.nivelReal}
-                        onChange={(event) => { void onUpdatePerfil?.(serv.id, { nivel: event.target.value as PerfilUsuario['nivel'] }); }}
-                      >
-                        <option value="administrador">Administrador</option>
-                        <option value="editor">Editor</option>
-                        <option value="leitor">Leitor</option>
-                      </select>
-                    ) : (
-                      <span
-                        className={`badge ${serv.nivel === 'Administrador' ? 'encerrado' : serv.nivel === 'Avançado' ? 'assinatura' : 'aguardando'}`}
-                        style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'none' }}
-                      >
-                        {serv.nivel}
-                      </span>
-                    )}
+                    <span
+                      className={`badge ${serv.nivel === 'Administrador' ? 'encerrado' : serv.nivel === 'Editor' || serv.nivel === 'Avançado' ? 'assinatura' : 'aguardando'}`}
+                      style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'none' }}
+                    >
+                      {serv.nivel}
+                    </span>
                   </td>
                   <td style={{ textAlign: 'left', fontWeight: 500 }}>{serv.setor}</td>
                   <td>
@@ -254,23 +243,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
                   </td>
                   {isSupabase && (
                     <td>
-                      {serv.statusReal === 'pendente' ? (
-                        <button
-                          type="button"
-                          className="btn btn-primary"
-                          onClick={() => { void onUpdatePerfil?.(serv.id, { status: 'ativo' }); }}
-                        >
-                          Aprovar
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn btn-secondary-outline"
-                          onClick={() => { void onUpdatePerfil?.(serv.id, { status: serv.statusReal === 'ativo' ? 'inativo' : 'ativo' }); }}
-                        >
-                          {serv.statusReal === 'ativo' ? 'Desativar' : 'Ativar'}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className={serv.statusReal === 'pendente' ? 'btn btn-primary' : 'btn btn-secondary-outline'}
+                        onClick={() => {
+                          const perfil = perfis?.find((item) => item.id === serv.id) ?? null;
+                          setPerfilEmEdicao(perfil);
+                        }}
+                      >
+                        Gerenciar acesso
+                      </button>
                     </td>
                   )}
                 </tr>
@@ -279,6 +261,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
           </table>
         </div>
       </div>
+
+      <AdminProfileDialog
+        perfil={perfilEmEdicao}
+        onClose={() => setPerfilEmEdicao(null)}
+        onSave={async (id, values) => (await onUpdatePerfil?.(id, values)) ?? false}
+      />
     </div>
   );
 };

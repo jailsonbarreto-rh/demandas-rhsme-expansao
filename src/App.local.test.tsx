@@ -17,9 +17,9 @@ describe('App no modo local', () => {
   it('mantém login e dashboard local do perfil de teste', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.type(screen.getByPlaceholderText('usuario@rioeduca.net'), 'teste@rioeduca.net');
-    await user.type(screen.getAllByPlaceholderText('••••••••')[0], 'senha-local-teste');
-    await user.click(screen.getByRole('button', { name: /acessar sistema/i }));
+    await user.type(await screen.findByPlaceholderText('usuario@rioeduca.net'), 'teste@rioeduca.net');
+    await user.type((await screen.findAllByPlaceholderText('••••••••'))[0], 'senha-local-teste');
+    await user.click(await screen.findByRole('button', { name: /acessar sistema/i }));
 
     expect(await screen.findByRole('button', { name: /sair/i })).toBeInTheDocument();
     expect(localStorage.getItem('demandas_user')).toBe('teste@rioeduca.net');
@@ -30,10 +30,10 @@ describe('App no modo local', () => {
     const user = userEvent.setup();
     localStorage.setItem('demandas_user', 'teste@rioeduca.net');
     render(<App />);
-    await user.click(await screen.findByRole('button', { name: /sair/i }));
+    await user.click(await screen.findByRole('button', { name: /sair/i }, { timeout: 3000 }));
 
     await waitFor(() => expect(localStorage.getItem('demandas_user')).toBeNull());
-    expect(screen.getByRole('button', { name: /acessar sistema/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /acessar sistema/i })).toBeInTheDocument();
     expect(localStorage.getItem('demandas_data')).not.toBeNull();
   });
 });

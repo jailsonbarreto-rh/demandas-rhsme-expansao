@@ -48,6 +48,16 @@ jobs:
           echo 'd24bce53d9351d60728d8ee2172c2a659e4ebc6d0f4f8ec898389d6411dbbb56  /tmp/ux-modernization.tar.xz' | sha256sum -c -
           tar -xJf /tmp/ux-modernization.tar.xz
 
+      - name: Normalize npm registry references
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's#https://packages.applied-caas-gateway1.internal.api.openai.org/artifactory/api/npm/npm-public/#https://registry.npmjs.org/#g' package-lock.json
+          if grep -q 'packages.applied-caas-gateway1.internal.api.openai.org' package-lock.json; then
+            echo 'Internal npm registry reference remains in package-lock.json.' >&2
+            exit 1
+          fi
+
       - name: Install locked dependencies
         run: timeout 8m npm ci --prefer-offline --no-audit --no-fund --fetch-retries=1 --fetch-retry-mintimeout=1000 --fetch-retry-maxtimeout=5000 --fetch-timeout=60000
 

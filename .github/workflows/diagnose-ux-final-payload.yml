@@ -1,0 +1,42 @@
+name: Diagnose UX final payload
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'feat/ux-profissional-central-demandas'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect final payload fragments
+        shell: bash
+        run: |
+          set +e
+          mkdir -p /tmp/ux-final-diagnostic
+          {
+            wc -c .github/ux-final/final.part.*
+            cat .github/ux-final/final.part.* > /tmp/ux-final-diagnostic/payload.b64
+            echo "combined_size=$(stat -c%s /tmp/ux-final-diagnostic/payload.b64)"
+            base64 --decode /tmp/ux-final-diagnostic/payload.b64 > /tmp/ux-final-diagnostic/payload.tar.xz
+            echo "base64_exit=$?"
+            echo "archive_size=$(stat -c%s /tmp/ux-final-diagnostic/payload.tar.xz)"
+            sha256sum /tmp/ux-final-diagnostic/payload.tar.xz
+            xz --test /tmp/ux-final-diagnostic/payload.tar.xz
+            echo "xz_exit=$?"
+          } 2>&1 | tee /tmp/ux-final-diagnostic/report.txt
+          exit 0
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-final-payload-diagnostic
+          path: /tmp/ux-final-diagnostic/report.txt
+          retention-days: 1

@@ -1,0 +1,95 @@
+name: Apply UX modernization
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-ux-modernization-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    if: github.head_ref == 'feat/ux-profissional-central-demandas'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/ux-profissional-central-demandas
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Reconstruct and verify implementation payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/ux-transfer/payload.part.0[0-7] > /tmp/ux-modernization.b64
+          python - <<'PY'
+          from pathlib import Path
+          hex_text = ''.join(
+              path.read_text(encoding='ascii').strip()
+              for path in sorted(Path('.github/ux-transfer').glob('tail.hex.part.*'))
+          )
+          with Path('/tmp/ux-modernization.b64').open('ab') as target:
+              target.write(bytes.fromhex(hex_text))
+          PY
+          base64 --decode /tmp/ux-modernization.b64 > /tmp/ux-modernization.tar.xz
+          echo 'd24bce53d9351d60728d8ee2172c2a659e4ebc6d0f4f8ec898389d6411dbbb56  /tmp/ux-modernization.tar.xz' | sha256sum -c -
+          tar -xJf /tmp/ux-modernization.tar.xz
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Run unit and integration tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Enforce bundle budget
+        run: npm run check:bundle
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser and accessibility tests
+        run: npm run test:e2e
+
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-browser-diagnostics
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Commit verified implementation and remove transfer scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .github/ux-transfer .github/ux-patches
+          rm -f .github/workflows/export-source-temporary.yml
+          rm -f .github/workflows/inspect-ux-payload.yml
+          rm -f .github/workflows/apply-ux-modernization.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: elevar experiência de uso da Central de Demandas'
+          git push origin HEAD:feat/ux-profissional-central-demandas

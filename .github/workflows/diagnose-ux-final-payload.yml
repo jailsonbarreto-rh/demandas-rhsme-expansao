@@ -23,8 +23,10 @@ jobs:
           mkdir -p /tmp/ux-final-diagnostic
           {
             wc -c .github/ux-final/final.part.*
+            sha256sum .github/ux-final/final.part.*
             cat .github/ux-final/final.part.* > /tmp/ux-final-diagnostic/payload.b64
             echo "combined_size=$(stat -c%s /tmp/ux-final-diagnostic/payload.b64)"
+            sha256sum /tmp/ux-final-diagnostic/payload.b64
             base64 --decode /tmp/ux-final-diagnostic/payload.b64 > /tmp/ux-final-diagnostic/payload.tar.xz
             echo "base64_exit=$?"
             echo "archive_size=$(stat -c%s /tmp/ux-final-diagnostic/payload.tar.xz)"

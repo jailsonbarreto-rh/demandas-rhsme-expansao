@@ -48,6 +48,15 @@ jobs:
           echo 'd24bce53d9351d60728d8ee2172c2a659e4ebc6d0f4f8ec898389d6411dbbb56  /tmp/ux-modernization.tar.xz' | sha256sum -c -
           tar -xJf /tmp/ux-modernization.tar.xz
 
+      - name: Apply verified accessibility and routing fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/ux-transfer/fixes.part.* > /tmp/ux-fixes.b64
+          base64 --decode /tmp/ux-fixes.b64 > /tmp/ux-fixes.tar.xz
+          echo '030bd4712a63d2906effda874c6d205dc213e57384e3e827a68fd4da4f78c4c1  /tmp/ux-fixes.tar.xz' | sha256sum -c -
+          tar -xJf /tmp/ux-fixes.tar.xz
+
       - name: Normalize npm registry references
         shell: bash
         run: |

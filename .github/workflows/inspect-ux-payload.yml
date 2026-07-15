@@ -1,9 +1,9 @@
 name: Inspect UX payload
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/ux-profissional-central-demandas
+      - main
 
 permissions:
   contents: read

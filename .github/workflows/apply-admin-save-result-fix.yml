@@ -1,0 +1,130 @@
+name: Apply admin save result fix
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-admin-save-result-fix-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  apply-and-verify:
+    if: github.head_ref == 'feat/ux-profissional-central-demandas'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/ux-profissional-central-demandas
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Apply administrative save-result fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding='utf-8')
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected exactly one match in {path}, found {text.count(old)}')
+              target.write_text(text.replace(old, new), encoding='utf-8')
+
+          replace_once(
+              'src/App.tsx',
+              "        toast.error('Ação bloqueada: o sistema não pode ficar sem nenhum administrador ativo.');\n        return;",
+              "        toast.error('Ação bloqueada: o sistema não pode ficar sem nenhum administrador ativo.');\n        return false;",
+          )
+          replace_once(
+              'src/App.tsx',
+              "      toast.success('Perfil atualizado com sucesso.');\n    } catch (reason) {\n      toast.error(reason instanceof Error ? reason.message : 'Não foi possível atualizar o perfil.');\n    }\n  };",
+              "      toast.success('Perfil atualizado com sucesso.');\n      return true;\n    } catch (reason) {\n      toast.error(reason instanceof Error ? reason.message : 'Não foi possível atualizar o perfil.');\n      return false;\n    }\n  };",
+          )
+          replace_once(
+              'src/components/AdminPanel.tsx',
+              ") => Promise<void> | void;",
+              ") => Promise<boolean> | boolean;",
+          )
+          replace_once(
+              'src/components/AdminPanel.tsx',
+              "        onSave={async (id, values) => {\n          await onUpdatePerfil?.(id, values);\n        }}",
+              "        onSave={async (id, values) => (await onUpdatePerfil?.(id, values)) ?? false}",
+          )
+          replace_once(
+              'src/components/AdminProfileDialog.tsx',
+              "  onSave: (id: string, values: ProfileAccessValues) => Promise<void> | void;",
+              "  onSave: (id: string, values: ProfileAccessValues) => Promise<boolean> | boolean;",
+          )
+          replace_once(
+              'src/components/AdminProfileDialog.tsx',
+              "  const submit = handleSubmit(async (values) => {\n    await onSave(perfil.id, values);\n    onClose();\n  });",
+              "  const submit = handleSubmit(async (values) => {\n    const saved = await onSave(perfil.id, values);\n    if (saved) onClose();\n  });",
+          )
+          replace_once(
+              'src/components/AdminPanel.test.tsx',
+              "const onUpdatePerfil = vi.fn().mockResolvedValue(undefined);",
+              "const onUpdatePerfil = vi.fn().mockResolvedValue(true);",
+          )
+          replace_once(
+              'src/components/AdminPanel.test.tsx',
+              "\n  it('gera backup contendo os perfis e níveis de acesso', () => {",
+              "\n  it('mantém o formulário aberto quando a atualização administrativa é rejeitada', async () => {\n    const onUpdatePerfil = vi.fn().mockResolvedValue(false);\n    render(<AdminPanel perfis={[pending]} onUpdatePerfil={onUpdatePerfil} />);\n    const user = userEvent.setup();\n    await user.click(screen.getByRole('button', { name: /gerenciar acesso/i }));\n    await user.selectOptions(screen.getByLabelText(/status do acesso/i), 'ativo');\n    await user.click(screen.getByRole('button', { name: /salvar acesso/i }));\n\n    expect(onUpdatePerfil).toHaveBeenCalledOnce();\n    expect(screen.getByRole('dialog', { name: /gerenciar acesso/i })).toBeInTheDocument();\n  });\n\n  it('gera backup contendo os perfis e níveis de acesso', () => {",
+          )
+          PY
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Run unit and integration tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Enforce initial bundle budget
+        run: npm run check:bundle
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser and accessibility tests
+        run: npm run test:e2e
+
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-save-result-browser-diagnostics
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Commit verified administrative fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf playwright-report test-results
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/App.tsx src/components/AdminPanel.tsx src/components/AdminProfileDialog.tsx src/components/AdminPanel.test.tsx
+          git commit -m 'fix: preservar formulário quando atualização de acesso falhar'
+          git push origin HEAD:feat/ux-profissional-central-demandas

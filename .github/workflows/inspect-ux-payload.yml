@@ -1,0 +1,39 @@
+name: Inspect UX payload
+
+on:
+  push:
+    branches:
+      - feat/ux-profissional-central-demandas
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decode payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ux-payload
+          cat .github/ux-patches/patches.part.* | base64 --decode > /tmp/ux-payload/payload.xz
+          xz --decompress --stdout /tmp/ux-payload/payload.xz > /tmp/ux-payload/payload
+          {
+            echo "sha256_xz=$(sha256sum /tmp/ux-payload/payload.xz | cut -d' ' -f1)"
+            echo "sha256_payload=$(sha256sum /tmp/ux-payload/payload | cut -d' ' -f1)"
+            echo "size_xz=$(stat -c%s /tmp/ux-payload/payload.xz)"
+            echo "size_payload=$(stat -c%s /tmp/ux-payload/payload)"
+            echo "file_type=$(file -b /tmp/ux-payload/payload)"
+          } | tee /tmp/ux-payload/report.txt
+          head -c 256 /tmp/ux-payload/payload | xxd >> /tmp/ux-payload/report.txt
+
+      - name: Upload decoded payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-payload-inspection
+          path: /tmp/ux-payload
+          retention-days: 1

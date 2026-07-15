@@ -48,12 +48,22 @@ describe('AdminPanel', () => {
     expect(screen.queryByRole('button', { name: /aprovar/i })).not.toBeInTheDocument();
   });
 
-  it('permite ao administrador aprovar um perfil real', async () => {
+  it('edita um perfil real em formulário validado e com confirmação explícita', async () => {
     const onUpdatePerfil = vi.fn().mockResolvedValue(undefined);
     render(<AdminPanel perfis={[pending]} onUpdatePerfil={onUpdatePerfil} />);
     expect(screen.queryByText('Demonstração')).not.toBeInTheDocument();
-    await userEvent.setup().click(screen.getByRole('button', { name: /aprovar/i }));
-    expect(onUpdatePerfil).toHaveBeenCalledWith(pending.id, { status: 'ativo' });
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /gerenciar acesso/i }));
+    await user.selectOptions(screen.getByLabelText(/status do acesso/i), 'ativo');
+    await user.clear(screen.getByLabelText(/^setor$/i));
+    await user.type(screen.getByLabelText(/^setor$/i), 'E/CTRH');
+    await user.click(screen.getByRole('button', { name: /salvar acesso/i }));
+
+    expect(onUpdatePerfil).toHaveBeenCalledWith(pending.id, {
+      nivel: 'leitor',
+      status: 'ativo',
+      setor: 'E/CTRH',
+    });
   });
 
   it('gera backup contendo os perfis e níveis de acesso', () => {

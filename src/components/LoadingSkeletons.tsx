@@ -30,3 +30,16 @@ export function AdminSkeleton() {
     </div>
   );
 }
+
+export function AuthSkeleton() {
+  return (
+    <div className="login-split-container" aria-label="Carregando acesso" aria-busy="true">
+      <div className="login-sidebar"><div className="skeleton-block" style={{ minHeight: '100%' }} /></div>
+      <div className="login-form-area">
+        <div className="login-card-editorial">
+          <div className="skeleton-card skeleton-block" style={{ minHeight: '360px' }} />
+        </div>
+      </div>
+    </div>
+  );
+}

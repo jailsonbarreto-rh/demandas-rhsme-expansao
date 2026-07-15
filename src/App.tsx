@@ -10,7 +10,7 @@ import { Header } from './components/Header';
 import { FilterPanel } from './components/FilterPanel';
 import { AtencaoImediata } from './components/AtencaoImediata';
 import { VisaoGeral } from './components/VisaoGeral';
-import { AdminSkeleton, DashboardSkeleton, TableSkeleton } from './components/LoadingSkeletons';
+import { AdminSkeleton, AuthSkeleton, DashboardSkeleton, TableSkeleton } from './components/LoadingSkeletons';
 import { getTodayString, isBeforeToday } from './utils/date';
 
 const DemandasTable = lazy(() => import('./components/DemandasTable').then((module) => ({ default: module.DemandasTable })));
@@ -20,6 +20,7 @@ const ModalStatus = lazy(() => import('./components/ModalStatus').then((module) 
 const ModalHistorico = lazy(() => import('./components/ModalHistorico').then((module) => ({ default: module.ModalHistorico })));
 const AdminPanel = lazy(() => import('./components/AdminPanel').then((module) => ({ default: module.AdminPanel })));
 const DemandDetailDrawer = lazy(() => import('./components/DemandDetailDrawer').then((module) => ({ default: module.DemandDetailDrawer })));
+const AuthPanel = lazy(() => import('./components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
 
 interface AppProps {
   services?: AppServices;
@@ -40,24 +41,6 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     || (session.user?.perfil.status === 'ativo' && ['administrador', 'editor'].includes(session.user.perfil.nivel));
   const canDelete = appServices.mode === 'local'
     || (session.user?.perfil.status === 'ativo' && session.user.perfil.nivel === 'administrador');
-
-  // --- Estados do formulário de autenticação ---
-  const [loginEmail, setLoginEmail] = useState<string>('');
-  const [loginSenha, setLoginSenha] = useState<string>('');
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [cadEmail, setCadEmail] = useState<string>('');
-  const [cadSenha, setCadSenha] = useState<string>('');
-  const [showCadastroPassword, setShowCadastroPassword] = useState(false);
-  const [loginTab, setLoginTab] = useState<'login' | 'cadastro'>('login');
-  
-  // Mensagens de erro e validações
-  const [erroEmail, setErroEmail] = useState<boolean>(false);
-  const [senhaValida, setSenhaValida] = useState({
-    minimo: false,
-    maiuscula: false,
-    minuscula: false,
-    numero: false
-  });
 
   // --- Estados do Aplicativo ---
   const demandas = data.demandas;
@@ -183,63 +166,8 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     setSetoresDisponiveis(setoresUnicos);
   }, [demandas]);
 
-  // --- Validação da Senha Forte e E-mail Corporativo ---
-  useEffect(() => {
-    if (cadEmail && !cadEmail.toLowerCase().endsWith('@rioeduca.net')) {
-      setErroEmail(true);
-    } else {
-      setErroEmail(false);
-    }
-
-    setSenhaValida({
-      minimo: cadSenha.length >= 8,
-      maiuscula: /[A-Z]/.test(cadSenha),
-      minuscula: /[a-z]/.test(cadSenha),
-      numero: /[0-9]/.test(cadSenha)
-    });
-  }, [cadEmail, cadSenha]);
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await session.signIn(loginEmail, loginSenha);
-    } catch (reason) {
-      toast.error(reason instanceof Error ? reason.message : 'Não foi possível entrar.');
-    }
-  };
-
-  const handleCadastroSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const isSenhaForte = senhaValida.minimo && senhaValida.maiuscula && senhaValida.minuscula && senhaValida.numero;
-    const isEmailValido = cadEmail.toLowerCase().endsWith('@rioeduca.net');
-
-    if (isEmailValido && isSenhaForte) {
-      try {
-        await session.requestAccess(cadEmail, cadSenha);
-        toast.success(appServices.mode === 'local'
-          ? 'Solicitação simulada com sucesso. Você já pode entrar com sua conta.'
-          : 'Solicitação enviada. Aguarde a aprovação de um administrador.');
-        setLoginTab('login');
-        setLoginEmail(cadEmail);
-        setCadEmail('');
-        setCadSenha('');
-      } catch (reason) {
-        toast.error(reason instanceof Error ? reason.message : 'Não foi possível solicitar acesso.');
-      }
-    } else {
-      toast.error('Atenda a todos os requisitos de segurança antes de prosseguir.');
-    }
-  };
-
   const handleLogout = async () => {
     await session.signOut();
-    setLoginEmail('');
-    setLoginSenha('');
-    setCadEmail('');
-    setCadSenha('');
-    setShowLoginPassword(false);
-    setShowCadastroPassword(false);
-    setLoginTab('login');
     setActiveTab('visao-geral');
     setDrawerAberto(false);
     setDemandaSelecionada(null);
@@ -428,215 +356,14 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   // Renderização condicional: Tela de Login ou Área de Dashboard
   if (!userEmail) {
     return (
-      <div className="login-split-container">
-        {/* Lado Esquerdo: Painel Azul/Slate Corporativo */}
-        <div className="login-sidebar">
-          <div className="login-sidebar-content">
-            <span className="sidebar-badge">CTRH • SME</span>
-            <h2>Central de Demandas</h2>
-            <p className="sidebar-description">
-              Organização, acompanhamento e rastreabilidade das demandas de Recursos Humanos.
-            </p>
-            
-            <div className="sidebar-features">
-              <div className="feature-item">
-                <div className="feature-icon-wrapper">
-                  <i className="fa-solid fa-calendar-check"></i>
-                </div>
-                <div className="feature-text">
-                  <strong>Prazos</strong>
-                  <span>Alertas visuais e semânticos sobre datas limites e providências em atraso.</span>
-                </div>
-              </div>
-              
-              <div className="feature-item">
-                <div className="feature-icon-wrapper">
-                  <i className="fa-solid fa-user-check"></i>
-                </div>
-                <div className="feature-text">
-                  <strong>Responsáveis</strong>
-                  <span>Atribuição clara de tarefas com suporte a avatares e vinculação por setores.</span>
-                </div>
-              </div>
-              
-              <div className="feature-item">
-                <div className="feature-icon-wrapper">
-                  <i className="fa-solid fa-clock-rotate-left"></i>
-                </div>
-                <div className="feature-text">
-                  <strong>Histórico</strong>
-                  <span>Rastreabilidade completa de logs e comentários de status por processo.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Padrão geométrico decorativo em segundo plano */}
-          <div className="sidebar-pattern"></div>
-        </div>
-
-        {/* Lado Direito: Card de Autenticação */}
-        <div className="login-form-area">
-          <div className="login-card-editorial">
-            {/* Cabeçalho de Login Móvel (Aparece apenas em Mobile) */}
-            <div className="login-mobile-brand">
-              <h2>Central de Demandas</h2>
-              <p>CTRH — Secretaria Municipal de Educação</p>
-            </div>
-
-            <div className="login-card-header">
-              <h3>Painel de Acesso</h3>
-              <p>Identifique-se com a sua credencial @rioeduca.net</p>
-            </div>
-
-            <div className="login-tabs">
-              <button 
-                type="button" 
-                className={`login-tab-btn ${loginTab === 'login' ? 'active' : ''}`}
-                onClick={() => setLoginTab('login')}
-              >
-                Entrar
-              </button>
-              <button 
-                type="button" 
-                className={`login-tab-btn ${loginTab === 'cadastro' ? 'active' : ''}`}
-                onClick={() => setLoginTab('cadastro')}
-              >
-                Primeiro Acesso
-              </button>
-            </div>
-
-            {loginTab === 'login' ? (
-              /* Formulário de Login */
-              <form onSubmit={handleLoginSubmit}>
-                <div className="login-form-group">
-                  <label htmlFor="login-email">E-mail Corporativo</label>
-                  <div className="input-icon-group">
-                    <i className="fa-solid fa-envelope"></i>
-                    <input 
-                      type="email" 
-                      id="login-email"
-                      className="form-control" 
-                      placeholder="usuario@rioeduca.net"
-                      value={loginEmail}
-                      onChange={e => setLoginEmail(e.target.value)}
-                      required 
-                    />
-                  </div>
-                </div>
-                <div className="login-form-group" style={{ marginBottom: '25px' }}>
-                  <label htmlFor="login-senha">Senha</label>
-                  <div className="input-icon-group has-visibility-toggle">
-                    <i className="fa-solid fa-lock"></i>
-                    <input 
-                      type={showLoginPassword ? 'text' : 'password'}
-                      id="login-senha"
-                      className="form-control" 
-                      placeholder="••••••••"
-                      value={loginSenha}
-                      onChange={e => setLoginSenha(e.target.value)}
-                      required 
-                    />
-                    <button
-                      type="button"
-                      className="password-visibility-toggle"
-                      aria-label={showLoginPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                      aria-pressed={showLoginPassword}
-                      onClick={() => setShowLoginPassword((visible) => !visible)}
-                    >
-                      <i className={`fa-solid ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                    </button>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ width: '100%', padding: '12px', fontWeight: '600' }}
-                  disabled={session.loading}
-                >
-                  Acessar Sistema
-                </button>
-              </form>
-            ) : (
-              /* Formulário de Primeiro Acesso (Solicitação) */
-              <form onSubmit={handleCadastroSubmit}>
-                <div className="login-form-group">
-                  <label htmlFor="cadastro-email">Seu E-mail Corporativo</label>
-                  <div className="input-icon-group">
-                    <i className="fa-solid fa-envelope"></i>
-                    <input 
-                      type="email" 
-                      id="cadastro-email"
-                      className="form-control" 
-                      placeholder="nome@rioeduca.net"
-                      value={cadEmail}
-                      onChange={e => setCadEmail(e.target.value)}
-                      required 
-                    />
-                  </div>
-                  {erroEmail && (
-                    <div className="text-danger">Apenas e-mails do domínio @rioeduca.net são aceitos.</div>
-                  )}
-                </div>
-                
-                <div className="login-form-group" style={{ marginBottom: '20px' }}>
-                  <label htmlFor="cadastro-senha">Criar Nova Senha</label>
-                  <div className="input-icon-group has-visibility-toggle">
-                    <i className="fa-solid fa-lock"></i>
-                    <input 
-                      type={showCadastroPassword ? 'text' : 'password'}
-                      id="cadastro-senha"
-                      className="form-control" 
-                      placeholder="••••••••"
-                      value={cadSenha}
-                      onChange={e => setCadSenha(e.target.value)}
-                      required 
-                    />
-                    <button
-                      type="button"
-                      className="password-visibility-toggle"
-                      aria-label={showCadastroPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                      aria-pressed={showCadastroPassword}
-                      onClick={() => setShowCadastroPassword((visible) => !visible)}
-                    >
-                      <i className={`fa-solid ${showCadastroPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                    </button>
-                  </div>
-                  
-                  {/* Visualização de critérios de Senha Forte */}
-                  <div className="password-requirements">
-                    <div className={`req-item ${senhaValida.minimo ? 'valid' : ''}`}>
-                      <i className={senhaValida.minimo ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
-                      <span>Mínimo de 8 caracteres</span>
-                    </div>
-                    <div className={`req-item ${senhaValida.maiuscula ? 'valid' : ''}`}>
-                      <i className={senhaValida.maiuscula ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
-                      <span>Pelo menos uma letra maiúscula</span>
-                    </div>
-                    <div className={`req-item ${senhaValida.minuscula ? 'valid' : ''}`}>
-                      <i className={senhaValida.minuscula ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
-                      <span>Pelo menos uma letra minúscula</span>
-                    </div>
-                    <div className={`req-item ${senhaValida.numero ? 'valid' : ''}`}>
-                      <i className={senhaValida.numero ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'}></i>
-                      <span>Pelo menos um número</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button 
-                  type="submit" 
-                  className="btn btn-primary" 
-                  style={{ width: '100%', padding: '12px', fontWeight: '600' }}
-                  disabled={session.loading || !(cadEmail.toLowerCase().endsWith('@rioeduca.net') && senhaValida.minimo && senhaValida.maiuscula && senhaValida.minuscula && senhaValida.numero)}
-                >
-                  Solicitar Aprovação
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      </div>
+      <Suspense fallback={<AuthSkeleton />}>
+        <AuthPanel
+          mode={appServices.mode}
+          loading={session.loading}
+          onSignIn={session.signIn}
+          onRequestAccess={session.requestAccess}
+        />
+      </Suspense>
     );
   }
 

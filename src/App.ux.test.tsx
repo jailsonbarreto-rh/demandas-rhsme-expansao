@@ -13,11 +13,32 @@ describe('segurança e acessibilidade do login', () => {
 
   it('permite mostrar e ocultar a senha', async () => {
     render(<App />);
-    const password = screen.getAllByPlaceholderText('••••••••')[0];
+    const password = (await screen.findAllByPlaceholderText('••••••••'))[0];
     expect(password).toHaveAttribute('type', 'password');
     await userEvent.setup().click(screen.getByRole('button', { name: /mostrar senha/i }));
     expect(password).toHaveAttribute('type', 'text');
     expect(screen.getByRole('button', { name: /ocultar senha/i })).toBeInTheDocument();
+  });
+
+  it('apresenta validação contextual no login sem recorrer à validação nativa', async () => {
+    render(<App />);
+    await userEvent.setup().click(await screen.findByRole('button', { name: /acessar sistema/i }));
+
+    expect(await screen.findByText(/informe o e-mail corporativo/i)).toBeInTheDocument();
+    expect(screen.getByText(/informe a senha/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('usuario@rioeduca.net')).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('mantém no formulário de primeiro acesso os erros junto aos campos', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: /primeiro acesso/i }));
+    await user.type(screen.getByPlaceholderText('nome@rioeduca.net'), 'usuario@exemplo.com');
+    await user.type(screen.getAllByPlaceholderText('••••••••')[0], 'fraca');
+    await user.click(screen.getByRole('button', { name: /solicitar acesso/i }));
+
+    expect(await screen.findByText(/use um e-mail @rioeduca\.net/i)).toBeInTheDocument();
+    expect(screen.getByText(/a senha deve ter no mínimo 8 caracteres/i)).toBeInTheDocument();
   });
 
   it('limpa e-mail e senha dos campos ao sair', async () => {

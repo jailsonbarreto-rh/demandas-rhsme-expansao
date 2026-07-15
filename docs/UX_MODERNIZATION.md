@@ -6,14 +6,14 @@ Este ciclo moderniza a experiência de uso sem alterar banco de dados, RLS, aute
 
 - diálogos, menus e confirmações baseados em primitivas acessíveis do Radix UI;
 - notificações não bloqueantes com Sonner;
-- formulários de demanda e status com React Hook Form e Zod;
+- formulários de autenticação, solicitação de acesso, demandas, status e gestão de perfis com React Hook Form e Zod;
 - validação contextual, bloqueio de envio duplicado e preservação de dados após erro;
 - confirmação antes de descartar alterações não salvas;
 - tabela operacional com TanStack Table, ordenação, paginação e contador de resultados;
 - rotas persistentes para visão geral, demandas, detalhe e administração;
 - filtros de demandas representados na URL;
 - painel lateral acessível com transições funcionais e suporte a movimento reduzido;
-- skeletons de carregamento para dashboard, tabela, administração e detalhes;
+- skeletons de carregamento para acesso, dashboard, tabela, administração e detalhes;
 - testes automatizados de acessibilidade com Axe em desktop e mobile;
 - orçamento automatizado para impedir crescimento superior a 15% do bundle inicial.
 

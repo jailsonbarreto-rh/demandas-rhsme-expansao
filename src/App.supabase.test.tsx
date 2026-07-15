@@ -40,9 +40,9 @@ function createServices(signIn = vi.fn().mockResolvedValue(activeUser)) {
 }
 
 async function fillLogin(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByPlaceholderText('usuario@rioeduca.net'), 'teste@rioeduca.net');
-  await user.type(screen.getAllByPlaceholderText('••••••••')[0], 'senha-remota-teste');
-  await user.click(screen.getByRole('button', { name: /acessar sistema/i }));
+  await user.type(await screen.findByPlaceholderText('usuario@rioeduca.net'), 'teste@rioeduca.net');
+  await user.type((await screen.findAllByPlaceholderText('••••••••'))[0], 'senha-remota-teste');
+  await user.click(await screen.findByRole('button', { name: /acessar sistema/i }));
 }
 
 describe('App no modo Supabase', () => {

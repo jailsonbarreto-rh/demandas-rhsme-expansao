@@ -1,0 +1,43 @@
+name: Diagnose push failure
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'feat/ux-profissional-central-demandas'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download failed job log and print tail
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FAILED_JOB_ID: '87480608531'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/jobs/${FAILED_JOB_ID}/logs" \
+            --output /tmp/job-logs
+          if file /tmp/job-logs | grep -qi 'zip archive'; then
+            unzip -p /tmp/job-logs > /tmp/full-job.log
+          else
+            cp /tmp/job-logs /tmp/full-job.log
+          fi
+          tail -n 160 /tmp/full-job.log | tee /tmp/push-failure-tail.log
+
+      - name: Upload diagnostic tail
+        uses: actions/upload-artifact@v4
+        with:
+          name: push-failure-tail
+          path: /tmp/push-failure-tail.log
+          retention-days: 1

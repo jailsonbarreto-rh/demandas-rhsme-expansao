@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { BrowserRouter, useInRouterContext, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Toaster, toast } from 'sonner';
 import { Demanda, type PerfilUsuario } from './types';
 import { resolveAppConfig } from './config/appConfig';
 import { useAppSession } from './hooks/useAppSession';
@@ -6,21 +8,27 @@ import { useDemandasData } from './hooks/useDemandasData';
 import { createAppServices, type AppServices } from './services/createAppServices';
 import { Header } from './components/Header';
 import { FilterPanel } from './components/FilterPanel';
-import { DemandasTable } from './components/DemandasTable';
-import { ModalNovo } from './components/ModalNovo';
-import { ModalEditar } from './components/ModalEditar';
-import { ModalStatus } from './components/ModalStatus';
-import { ModalHistorico } from './components/ModalHistorico';
 import { AtencaoImediata } from './components/AtencaoImediata';
 import { VisaoGeral } from './components/VisaoGeral';
-import { AdminPanel } from './components/AdminPanel';
-import { getTodayString, isBeforeToday, getPrazoFinalSemantics } from './utils/date';
+import { AdminSkeleton, DashboardSkeleton, TableSkeleton } from './components/LoadingSkeletons';
+import { getTodayString, isBeforeToday } from './utils/date';
+
+const DemandasTable = lazy(() => import('./components/DemandasTable').then((module) => ({ default: module.DemandasTable })));
+const ModalNovo = lazy(() => import('./components/ModalNovo').then((module) => ({ default: module.ModalNovo })));
+const ModalEditar = lazy(() => import('./components/ModalEditar').then((module) => ({ default: module.ModalEditar })));
+const ModalStatus = lazy(() => import('./components/ModalStatus').then((module) => ({ default: module.ModalStatus })));
+const ModalHistorico = lazy(() => import('./components/ModalHistorico').then((module) => ({ default: module.ModalHistorico })));
+const AdminPanel = lazy(() => import('./components/AdminPanel').then((module) => ({ default: module.AdminPanel })));
+const DemandDetailDrawer = lazy(() => import('./components/DemandDetailDrawer').then((module) => ({ default: module.DemandDetailDrawer })));
 
 interface AppProps {
   services?: AppServices;
 }
 
-export const App: React.FC<AppProps> = ({ services }) => {
+const AppContent: React.FC<AppProps> = ({ services }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [appServices] = useState(() => services ?? createAppServices(resolveAppConfig(import.meta.env)));
   const session = useAppSession(appServices.auth);
   const data = useDemandasData(appServices.demandas, session.user, appServices.mode === 'supabase');
@@ -56,24 +64,34 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const historico = data.historico;
   const [setoresDisponiveis, setSetoresDisponiveis] = useState<string[]>([]);
   
-  // --- Estados de Filtro ---
-  const [filtros, setFiltros] = useState({
-    busca: '',
-    tipo: 'Todos',
-    classificacao: 'Todas',
-    status: 'Somente ativos (padrão)', // Padrão solicitado no DOCX
-    setor: 'Todos'
-  });
+  // --- Estado de filtros restaurável pela URL ---
+  const [filtros, setFiltros] = useState(() => ({
+    busca: searchParams.get('busca') ?? '',
+    tipo: searchParams.get('tipo') ?? 'Todos',
+    classificacao: searchParams.get('classificacao') ?? 'Todas',
+    status: searchParams.get('status') ?? 'Somente ativos (padrão)',
+    setor: searchParams.get('setor') ?? 'Todos',
+  }));
 
-  const [quickFilters, setQuickFilters] = useState({
-    assinatura: false,
-    hoje: false,
-    vencido: false
-  });
+  const [quickFilters, setQuickFilters] = useState(() => ({
+    assinatura: searchParams.get('assinatura') === '1',
+    hoje: searchParams.get('hoje') === '1',
+    vencido: searchParams.get('vencido') === '1',
+  }));
 
-  // --- Estados de Roteamento SPA ---
-  const [activeTab, setActiveTab] = useState<'visao-geral' | 'demandas' | 'admin'>('visao-geral');
-  const [drawerAberto, setDrawerAberto] = useState<boolean>(false);
+  const activeTab: 'visao-geral' | 'demandas' | 'admin' = location.pathname.startsWith('/admin')
+    ? 'admin'
+    : location.pathname.startsWith('/demandas')
+      ? 'demandas'
+      : 'visao-geral';
+  const drawerAberto = /^\/demandas\/\d+$/.test(location.pathname);
+  const setActiveTab = (tab: 'visao-geral' | 'demandas' | 'admin') => {
+    const target = tab === 'visao-geral' ? '/' : tab === 'admin' ? '/admin' : '/demandas';
+    navigate({ pathname: target, search: tab === 'demandas' ? searchParams.toString() : '' });
+  };
+  const setDrawerAberto = (open: boolean) => {
+    if (!open) navigate({ pathname: '/demandas', search: searchParams.toString() });
+  };
 
   // --- Estados dos Modais ---
   const [modalNovoAberto, setModalNovoAberto] = useState<boolean>(false);
@@ -84,6 +102,36 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
 
   useEffect(() => {
+    if (activeTab !== 'demandas') return;
+    const next = new URLSearchParams();
+    if (filtros.busca) next.set('busca', filtros.busca);
+    if (filtros.tipo !== 'Todos') next.set('tipo', filtros.tipo);
+    if (filtros.classificacao !== 'Todas') next.set('classificacao', filtros.classificacao);
+    if (filtros.status !== 'Somente ativos (padrão)') next.set('status', filtros.status);
+    if (filtros.setor !== 'Todos') next.set('setor', filtros.setor);
+    if (quickFilters.assinatura) next.set('assinatura', '1');
+    if (quickFilters.hoje) next.set('hoje', '1');
+    if (quickFilters.vencido) next.set('vencido', '1');
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+  }, [activeTab, filtros, quickFilters, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const match = /^\/demandas\/(\d+)$/.exec(location.pathname);
+    if (!match || demandas.length === 0) return;
+    const selected = demandas.find((demanda) => demanda.id === Number(match[1]));
+    if (selected) setDemandaSelecionada(selected);
+    else {
+      toast.error('A demanda informada não foi encontrada.');
+      navigate({ pathname: '/demandas', search: searchParams.toString() }, { replace: true });
+    }
+  }, [demandas, location.pathname, navigate, searchParams]);
+
+  const openDemand = (demanda: Demanda) => {
+    setDemandaSelecionada(demanda);
+    navigate({ pathname: `/demandas/${demanda.id}`, search: searchParams.toString() });
+  };
+
+  useEffect(() => {
     if (appServices.mode !== 'supabase' || !canAccessAdmin || activeTab !== 'admin') {
       return;
     }
@@ -91,7 +139,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
     void appServices.profiles.list()
       .then((items) => { if (active) setPerfis(items); })
       .catch((reason: unknown) => {
-        if (active) alert(reason instanceof Error ? reason.message : 'Não foi possível carregar os perfis.');
+        if (active) toast.error(reason instanceof Error ? reason.message : 'Não foi possível carregar os perfis.');
       });
     return () => { active = false; };
   }, [appServices, canAccessAdmin, activeTab]);
@@ -109,7 +157,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
     if (eraAdminAtivo && vaiDeixarDeSer) {
       const outrosAdminsAtivos = perfis.filter(p => p.id !== id && p.nivel === 'administrador' && p.status === 'ativo').length;
       if (outrosAdminsAtivos === 0) {
-        alert("Ação Bloqueada: O sistema não pode ficar sem nenhum administrador ativo.");
+        toast.error('Ação bloqueada: o sistema não pode ficar sem nenhum administrador ativo.');
         return;
       }
     }
@@ -117,8 +165,9 @@ export const App: React.FC<AppProps> = ({ services }) => {
     try {
       await appServices.profiles.updateAccess(id, patch);
       setPerfis(await appServices.profiles.list());
+      toast.success('Perfil atualizado com sucesso.');
     } catch (reason) {
-      alert(reason instanceof Error ? reason.message : 'Não foi possível atualizar o perfil.');
+      toast.error(reason instanceof Error ? reason.message : 'Não foi possível atualizar o perfil.');
     }
   };
 
@@ -155,7 +204,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
     try {
       await session.signIn(loginEmail, loginSenha);
     } catch (reason) {
-      alert(reason instanceof Error ? reason.message : 'Não foi possível entrar.');
+      toast.error(reason instanceof Error ? reason.message : 'Não foi possível entrar.');
     }
   };
 
@@ -167,18 +216,18 @@ export const App: React.FC<AppProps> = ({ services }) => {
     if (isEmailValido && isSenhaForte) {
       try {
         await session.requestAccess(cadEmail, cadSenha);
-        alert(appServices.mode === 'local'
-          ? "Solicitação de acesso simulada com sucesso! Você já pode entrar com sua conta no formulário de login."
-          : 'Solicitação enviada. Aguarde a aprovação de um administrador antes de entrar.');
+        toast.success(appServices.mode === 'local'
+          ? 'Solicitação simulada com sucesso. Você já pode entrar com sua conta.'
+          : 'Solicitação enviada. Aguarde a aprovação de um administrador.');
         setLoginTab('login');
         setLoginEmail(cadEmail);
         setCadEmail('');
         setCadSenha('');
       } catch (reason) {
-        alert(reason instanceof Error ? reason.message : 'Não foi possível solicitar acesso.');
+        toast.error(reason instanceof Error ? reason.message : 'Não foi possível solicitar acesso.');
       }
     } else {
-      alert("Por favor, atenda a todos os requisitos de segurança antes de prosseguir.");
+      toast.error('Atenda a todos os requisitos de segurança antes de prosseguir.');
     }
   };
 
@@ -218,8 +267,9 @@ export const App: React.FC<AppProps> = ({ services }) => {
     try {
       await data.create(novaDemanda);
       setModalNovoAberto(false);
+      toast.success('Demanda criada com sucesso.');
     } catch (reason) {
-      alert(reason instanceof Error ? reason.message : 'Não foi possível criar a demanda.');
+      toast.error(reason instanceof Error ? reason.message : 'Não foi possível criar a demanda. Os dados preenchidos foram preservados.');
     }
   };
 
@@ -227,9 +277,10 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const handleSalvarEdicaoDemanda = async (demandaId: number, camposAlterados: Partial<Demanda>) => {
     try {
       await data.update(demandaId, camposAlterados);
+      toast.success('Demanda atualizada com sucesso.');
       return true;
     } catch (reason) {
-      alert(reason instanceof Error ? reason.message : 'Não foi possível editar a demanda.');
+      toast.error(reason instanceof Error ? reason.message : 'Não foi possível editar a demanda. Os dados preenchidos foram preservados.');
       return false;
     }
   };
@@ -238,9 +289,10 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const handleAtualizarStatus = async (demandaId: number, novoStatus: Demanda['status'], comentario: string) => {
     try {
       await data.updateStatus(demandaId, novoStatus, comentario);
+      toast.success('Status atualizado com sucesso.');
       return true;
     } catch (reason) {
-      alert(reason instanceof Error ? reason.message : 'Não foi possível atualizar o status.');
+      toast.error(reason instanceof Error ? reason.message : 'Não foi possível atualizar o status.');
       return false;
     }
   };
@@ -249,8 +301,9 @@ export const App: React.FC<AppProps> = ({ services }) => {
   const handleExcluirDemanda = async (demandaId: number) => {
     try {
       await data.delete(demandaId);
+      toast.success('Demanda excluída com sucesso.');
     } catch (reason) {
-      alert(reason instanceof Error ? reason.message : 'Não foi possível excluir a demanda.');
+      toast.error(reason instanceof Error ? reason.message : 'Não foi possível excluir a demanda.');
     }
   };
 
@@ -323,7 +376,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
   // Exportar demandas filtradas como CSV (Protegido contra CSV Injection)
   const handleExportCSV = () => {
     if (demandasFiltradas.length === 0) {
-      alert("Nenhum registro disponível para exportação na filtragem atual.");
+      toast.info('Nenhum registro disponível para exportação na filtragem atual.');
       return;
     }
 
@@ -369,6 +422,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    toast.success('Arquivo CSV exportado.');
   };
 
   // Renderização condicional: Tela de Login ou Área de Dashboard
@@ -587,6 +641,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
   }
 
   return (
+    <Suspense fallback={activeTab === 'admin' ? <AdminSkeleton /> : activeTab === 'demandas' ? <TableSkeleton /> : null}>
     <div className="app-container">
       {/* Cabeçalho com cards de estatísticas */}
       <Header 
@@ -679,57 +734,33 @@ export const App: React.FC<AppProps> = ({ services }) => {
 
       {/* Tabela de Demandas ou Estado de Carregamento Global */}
       {data.loading ? (
-        <div style={{ padding: '24px' }}>
-          <div className="loading-state-wrapper" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '80px 20px',
-            backgroundColor: '#ffffff',
-            border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-sm)',
-            gap: '16px',
-            color: 'var(--text-muted)'
-          }}>
-            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2.5rem', color: 'var(--accent-color)' }}></i>
-            <span style={{ fontSize: '0.925rem', color: 'var(--text-muted)', fontWeight: 500 }}>Carregando dados da Central...</span>
-          </div>
-        </div>
+        activeTab === 'visao-geral' ? <DashboardSkeleton /> : activeTab === 'admin' ? <AdminSkeleton /> : <TableSkeleton />
       ) : (
         <>
           {activeTab === 'visao-geral' && (
+            <div key="visao-geral" className="route-transition">
             <VisaoGeral 
               demandas={demandas}
               historico={historico}
-              onOpenEditar={(d) => {
-                setDemandaSelecionada(d);
-                setDrawerAberto(true);
-              }}
+              onOpenEditar={openDemand}
               renderAtencaoImediata={() => (
                 <AtencaoImediata 
                   demandas={demandas}
                   historico={historico}
-                  onOpenEditar={(d) => {
-                    setDemandaSelecionada(d);
-                    setDrawerAberto(true);
-                  }}
+                  onOpenEditar={openDemand}
                 />
               )}
             />
+            </div>
           )}
 
           {activeTab === 'demandas' && (
-            <div style={{ animation: 'fadeIn 0.4s ease-out forwards' }}>
+            <div key="demandas" className="route-transition">
               {/* Faixa de Atenção Imediata */}
               <AtencaoImediata 
                 demandas={demandas}
                 historico={historico}
-                onOpenEditar={(d) => {
-                  setDemandaSelecionada(d);
-                  setDrawerAberto(true);
-                }}
+                onOpenEditar={openDemand}
               />
 
               {/* Painel de Filtros e Busca */}
@@ -747,10 +778,7 @@ export const App: React.FC<AppProps> = ({ services }) => {
                 demandas={demandasFiltradas}
                 canEdit={canEdit}
                 canDelete={canDelete}
-                onOpenEditar={(d) => {
-                  setDemandaSelecionada(d);
-                  setDrawerAberto(true);
-                }}
+                onOpenEditar={openDemand}
                 onOpenStatus={(d) => {
                   setDemandaSelecionada(d);
                   setModalStatusAberto(true);
@@ -845,176 +873,31 @@ export const App: React.FC<AppProps> = ({ services }) => {
       )}
 
       {/* Drawer Lateral de Detalhe da Demanda */}
-      {drawerAberto && demandaSelecionada && (() => {
-        const prazoSemantics = getPrazoFinalSemantics(demandaSelecionada.limite2);
-        // Filtrar histórico dessa demanda
-        const histFiltrado = historico.filter(h => h.demandaId === demandaSelecionada.id);
-        
-        return (
-          <div
-            className="drawer-overlay"
-            inert={drawerBloqueadoPorModal ? true : undefined}
-            aria-hidden={drawerBloqueadoPorModal ? 'true' : undefined}
-            onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}
-          >
-            <div className="drawer-content" onClick={e => e.stopPropagation()}>
-              <div className="drawer-header">
-                <h2>Processo nº {demandaSelecionada.numero}</h2>
-                <button 
-                  type="button"
-                  className="btn-drawer-close" 
-                  onClick={() => { setDrawerAberto(false); setDemandaSelecionada(null); }}
-                  title="Fechar painel de detalhes"
-                  aria-label="Fechar painel de detalhes"
-                >
-                  <i className="fa-solid fa-xmark"></i>
-                </button>
-              </div>
-              
-              <div className="drawer-body">
-                {/* Seção 1: Identificação */}
-                <div className="drawer-section">
-                  <h3>Identificação</h3>
-                  <div className="drawer-meta-grid">
-                    <div className="drawer-meta-item full-width">
-                      <label>Assunto</label>
-                      <span className="value" style={{ fontWeight: 600, fontSize: '0.938rem' }}>{demandaSelecionada.assunto}</span>
-                    </div>
-                    <div className="drawer-meta-item">
-                      <label>Tipo</label>
-                      <span className="value">{demandaSelecionada.tipo}</span>
-                    </div>
-                    <div className="drawer-meta-item">
-                      <label>Classificação</label>
-                      <span className="value">{demandaSelecionada.classificacao || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Seção 2: Responsabilidade */}
-                <div className="drawer-section">
-                  <h3>Responsabilidade</h3>
-                  <div className="drawer-meta-grid">
-                    <div className="drawer-meta-item">
-                      <label>Responsável Atual</label>
-                      <span className="value" style={{ fontWeight: 600 }}>{demandaSelecionada.responsavel || 'Não atribuído'}</span>
-                    </div>
-                    <div className="drawer-meta-item">
-                      <label>Setor Vinculado</label>
-                      <span className="value">{demandaSelecionada.setor || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Seção 3: Prazos */}
-                <div className="drawer-section">
-                  <h3>Prazos</h3>
-                  <div className="drawer-meta-grid">
-                    <div className="drawer-meta-item">
-                      <label>Prazo de Análise (Interno)</label>
-                      <span className="value">{demandaSelecionada.limite1 || '—'}</span>
-                    </div>
-                    <div className="drawer-meta-item">
-                      <label>Prazo Final</label>
-                      <div className="prazo-final-container" style={{ alignItems: 'flex-start' }}>
-                        <span className="value" style={{ fontWeight: 600 }}>{prazoSemantics.data}</span>
-                        {prazoSemantics.label && demandaSelecionada.status !== 'Encerrado' && (
-                          <span className={`prazo-status-label ${prazoSemantics.classe}`} style={{ marginTop: '4px', display: 'inline-block' }}>
-                            {prazoSemantics.label}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Seção 4: Situação */}
-                <div className="drawer-section">
-                  <h3>Situação Atual</h3>
-                  <div className="drawer-meta-grid">
-                    <div className="drawer-meta-item">
-                      <label>Status</label>
-                      <span 
-                        className={`badge ${demandaSelecionada.status === 'Para Assinatura' ? 'assinatura' : demandaSelecionada.status === 'Encerrado' ? 'encerrado' : 'aguardando'}`} 
-                        style={{ marginTop: '4px', fontSize: '0.725rem', padding: '4px 10px', display: 'inline-block', width: 'fit-content' }}
-                      >
-                        {demandaSelecionada.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Seção 5: Histórico de Movimentações */}
-                <div className="drawer-section" style={{ borderBottom: 'none' }}>
-                  <h3>Histórico de Comentários</h3>
-                  {histFiltrado.length > 0 ? (
-                    <div className="timeline-container" style={{ paddingLeft: '20px', marginLeft: '0px' }}>
-                      {histFiltrado.map((h, idx) => {
-                        let statusBadgeClass = 'badge aguardando';
-                        if (h.status_novo === 'Para Assinatura') statusBadgeClass = 'badge assinatura';
-                        else if (h.status_novo === 'Encerrado') statusBadgeClass = 'badge encerrado';
-                        else if (h.status_novo === 'Tramitado') statusBadgeClass = 'badge tramitado';
-                        else if (h.status_novo === 'Ajustar') statusBadgeClass = 'badge ajustar';
-                        else if (h.status_novo === 'Sobrestado') statusBadgeClass = 'badge sobrestado';
-
-                        return (
-                          <div key={h.id} className={`timeline-item ${idx === 0 ? 'latest' : ''}`} style={{ marginBottom: '16px' }}>
-                            <div className="timeline-circle"></div>
-                            <div className="timeline-content" style={{ padding: '10px 14px' }}>
-                              <div className="timeline-header" style={{ marginBottom: '4px' }}>
-                                <span className="timeline-meta" style={{ fontSize: '0.7rem' }}>{h.data_hora}</span>
-                                <span className={statusBadgeClass} style={{ fontSize: '0.6rem', padding: '1px 6px' }}>{h.status_novo}</span>
-                              </div>
-                              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>{h.setor || 'CTRH'}</div>
-                              <div className="timeline-comment" style={{ fontSize: '0.75rem', marginTop: '4px' }}>{h.comentario}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <span style={{ fontSize: '0.813rem', color: 'var(--text-muted)' }}>Nenhum log registrado.</span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="drawer-footer">
-                {canEdit && (
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary-outline"
-                    onClick={() => setModalStatusAberto(true)}
-                    title="Alterar status do processo"
-                  >
-                    <i className="fa-solid fa-rotate-left"></i> Status
-                  </button>
-                )}
-                {canEdit && (
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary-outline"
-                    onClick={() => setModalEditarAberto(true)}
-                    title="Editar informações do processo"
-                  >
-                    <i className="fa-solid fa-pen-to-square"></i> Editar
-                  </button>
-                )}
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                  onClick={() => {
-                    setDrawerAberto(false);
-                    setDemandaSelecionada(null);
-                  }}
-                  title="Concluir leitura dos detalhes"
-                >
-                  <i className="fa-solid fa-check"></i> Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      <DemandDetailDrawer
+        demanda={demandaSelecionada}
+        historico={historico}
+        open={drawerAberto}
+        nestedDialogOpen={drawerBloqueadoPorModal}
+        canEdit={canEdit}
+        onClose={() => {
+          setDrawerAberto(false);
+          setDemandaSelecionada(null);
+        }}
+        onEdit={() => setModalEditarAberto(true)}
+        onStatus={() => setModalStatusAberto(true)}
+      />
     </div>
+    </Suspense>
+  );
+};
+
+export const App: React.FC<AppProps> = (props) => {
+  const inRouter = useInRouterContext();
+  const app = inRouter ? <AppContent {...props} /> : <BrowserRouter><AppContent {...props} /></BrowserRouter>;
+  return (
+    <>
+      {app}
+      <Toaster richColors position="top-right" closeButton duration={4200} />
+    </>
   );
 };

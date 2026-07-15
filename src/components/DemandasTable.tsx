@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Demanda } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+} from '@tanstack/react-table';
+import type { Demanda } from '../types';
 import { getPrazoFinalSemantics } from '../utils/date';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 
 interface DemandasTableProps {
   demandas: Demanda[];
@@ -12,6 +23,33 @@ interface DemandasTableProps {
   canDelete?: boolean;
 }
 
+function getStatusBadgeClass(status: string) {
+  switch (status) {
+    case 'Aguardando Andamento': return 'badge aguardando';
+    case 'Tramitado': return 'badge tramitado';
+    case 'Para Assinatura': return 'badge assinatura';
+    case 'Encerrado': return 'badge encerrado';
+    case 'Sobrestado': return 'badge sobrestado';
+    case 'Ajustar': return 'badge ajustar';
+    default: return 'badge';
+  }
+}
+
+function getInitials(name?: string) {
+  const cleanName = name?.trim();
+  if (!cleanName || cleanName === '—') return '—';
+  const parts = cleanName.split(/\s+/);
+  return parts.length === 1
+    ? parts[0].substring(0, 2).toUpperCase()
+    : `${parts[0][0]}${parts.at(-1)?.[0] ?? ''}`.toUpperCase();
+}
+
+function sortableDate(value: string) {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  return Number(`${match[3]}${match[2]}${match[1]}`);
+}
+
 export const DemandasTable: React.FC<DemandasTableProps> = ({
   demandas,
   onOpenEditar,
@@ -19,228 +57,249 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   onOpenHistorico,
   onExcluir,
   canEdit = true,
-  canDelete = true
+  canDelete = true,
 }) => {
-  const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [deleteTarget, setDeleteTarget] = useState<Demanda | null>(null);
+  const columnHelper = createColumnHelper<Demanda>();
 
   useEffect(() => {
-    const handleGlobalClick = () => {
-      setActiveDropdownId(null);
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActiveDropdownId(null);
-      }
-    };
-    document.addEventListener('click', handleGlobalClick);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('click', handleGlobalClick);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
+    setPagination((current) => ({ ...current, pageIndex: 0 }));
+  }, [demandas]);
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'Aguardando Andamento': return 'badge aguardando';
-      case 'Tramitado': return 'badge tramitado';
-      case 'Para Assinatura': return 'badge assinatura';
-      case 'Encerrado': return 'badge encerrado';
-      case 'Sobrestado': return 'badge sobrestado';
-      case 'Ajustar': return 'badge ajustar';
-      default: return 'badge';
-    }
-  };
+  const columns = useMemo(() => [
+    columnHelper.accessor('numero', {
+      header: ({ column }) => (
+        <button
+          type="button"
+          className="table-sort-button"
+          onClick={column.getToggleSortingHandler()}
+          aria-label="Ordenar por processo"
+        >
+          Processo / Documento <SortIcon direction={column.getIsSorted()} />
+        </button>
+      ),
+      cell: ({ row }) => {
+        const demanda = row.original;
+        return (
+          <div className="processo-identificacao">
+            <button
+              type="button"
+              className="numero-link"
+              onClick={() => onOpenEditar(demanda)}
+              title={`Abrir detalhes do processo nº ${demanda.numero}`}
+            >
+              {demanda.numero}
+            </button>
+            <div className="processo-metadados">
+              <span>{demanda.tipo}</span>
+              {demanda.classificacao && <><span className="separador-dot">•</span><span>{demanda.classificacao}</span></>}
+            </div>
+          </div>
+        );
+      },
+      size: 220,
+    }),
+    columnHelper.accessor('assunto', {
+      header: 'Assunto',
+      cell: ({ getValue }) => <div className="limite-linhas" title={getValue()}>{getValue()}</div>,
+      enableSorting: false,
+      size: 300,
+    }),
+    columnHelper.accessor('responsavel', {
+      header: ({ column }) => (
+        <button type="button" className="table-sort-button" onClick={column.getToggleSortingHandler()} aria-label="Ordenar por responsável">
+          Responsável <SortIcon direction={column.getIsSorted()} />
+        </button>
+      ),
+      cell: ({ row }) => {
+        const demanda = row.original;
+        const initials = getInitials(demanda.responsavel);
+        return (
+          <div className="avatar-circle-group">
+            <div className={`avatar-circle ${initials === '—' ? 'no-avatar' : ''}`} title={demanda.responsavel}>{initials}</div>
+            <div className="avatar-info">
+              <span className="avatar-nome">{demanda.responsavel || 'Não atribuído'}</span>
+              {demanda.setor && <span className="avatar-setor">{demanda.setor}</span>}
+            </div>
+          </div>
+        );
+      },
+      sortingFn: (a, b) => (a.original.responsavel || '').localeCompare(b.original.responsavel || '', 'pt-BR'),
+      size: 180,
+    }),
+    columnHelper.accessor('limite1', {
+      header: 'Prazo Interno',
+      cell: ({ getValue }) => getValue() && getValue() !== 'dd/mm/aaaa' ? getValue() : '—',
+      enableSorting: false,
+      size: 110,
+    }),
+    columnHelper.accessor('limite2', {
+      header: ({ column }) => (
+        <button type="button" className="table-sort-button table-sort-centered" onClick={column.getToggleSortingHandler()} aria-label="Ordenar por prazo final">
+          Prazo Final <SortIcon direction={column.getIsSorted()} />
+        </button>
+      ),
+      cell: ({ row }) => {
+        const prazo = getPrazoFinalSemantics(row.original.limite2);
+        return (
+          <div className="prazo-final-container">
+            <span className="prazo-final-data">{prazo.data}</span>
+            {prazo.label && row.original.status !== 'Encerrado' && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}
+          </div>
+        );
+      },
+      sortingFn: (a, b) => sortableDate(a.original.limite2) - sortableDate(b.original.limite2),
+      size: 120,
+    }),
+    columnHelper.accessor('status', {
+      header: ({ column }) => (
+        <button type="button" className="table-sort-button table-sort-centered" onClick={column.getToggleSortingHandler()} aria-label="Ordenar por status">
+          Status <SortIcon direction={column.getIsSorted()} />
+        </button>
+      ),
+      cell: ({ getValue }) => <span className={getStatusBadgeClass(getValue())}>{getValue()}</span>,
+      sortingFn: 'alphanumeric',
+      size: 130,
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: 'Ações',
+      cell: ({ row }) => {
+        const demanda = row.original;
+        return (
+          <div className="actions-wrapper">
+            <button type="button" className="btn btn-abrir-tabela" onClick={() => onOpenEditar(demanda)} title="Abrir detalhes da demanda">Abrir</button>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  className="btn-ellipsis"
+                  title="Mais ações"
+                  aria-label={`Mais ações da demanda ${demanda.numero}`}
+                >
+                  <i className="fa-solid fa-ellipsis-vertical" aria-hidden="true" />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content className="dropdown-menu radix-dropdown-content" sideOffset={6} align="end">
+                  {canEdit && (
+                    <DropdownMenu.Item className="dropdown-item" onSelect={() => onOpenStatus(demanda)}>
+                      <i className="fa-solid fa-rotate-left" aria-hidden="true" /><span>Alterar status</span>
+                    </DropdownMenu.Item>
+                  )}
+                  <DropdownMenu.Item className="dropdown-item" onSelect={() => onOpenHistorico(demanda)}>
+                    <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" /><span>Histórico</span>
+                  </DropdownMenu.Item>
+                  {canDelete && (
+                    <>
+                      <DropdownMenu.Separator className="dropdown-divider" />
+                      <DropdownMenu.Item className="dropdown-item delete-item" onSelect={() => setDeleteTarget(demanda)}>
+                        <i className="fa-solid fa-trash-can" aria-hidden="true" /><span>Excluir</span>
+                      </DropdownMenu.Item>
+                    </>
+                  )}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          </div>
+        );
+      },
+      size: 100,
+    }),
+  ], [canDelete, canEdit, columnHelper, onOpenEditar, onOpenHistorico, onOpenStatus]);
 
-  const getInitials = (name: string | undefined): string => {
-    if (!name) return '—';
-    const cleanName = name.trim();
-    if (!cleanName || cleanName === '—') return '—';
+  const table = useReactTable({
+    data: demandas,
+    columns,
+    state: { sorting, pagination },
+    onSortingChange: setSorting,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
 
-    const parts = cleanName.split(' ').filter(p => p.length > 0);
-    if (parts.length === 0) return '—';
-    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
-
-  const handleExcluirClick = (id: number, numero: string) => {
-    const confirmar = window.confirm(`Tem certeza que deseja excluir a demanda do processo nº ${numero}?`);
-    if (confirmar) {
-      onExcluir(id);
-    }
-  };
+  const total = table.getRowCount();
+  const start = total === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
+  const end = Math.min(total, start + pagination.pageSize - 1);
 
   return (
-    <div className="table-card">
-      <div className="table-responsive">
-        <table className="demandas-table">
-          <thead>
-            <tr>
-              <th style={{ width: '22%', textAlign: 'left' }}>Processo / Documento</th>
-              <th style={{ width: '30%', textAlign: 'left' }}>Assunto</th>
-              <th style={{ width: '18%', textAlign: 'left' }}>Responsável</th>
-              <th style={{ width: '10%' }}>Prazo Interno</th>
-              <th style={{ width: '10%' }}>Prazo Final</th>
-              <th style={{ width: '12%' }}>Status</th>
-              <th style={{ width: '8%' }}>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {demandas.length > 0 ? (
-              demandas.map(d => {
-                const prazoFinal = getPrazoFinalSemantics(d.limite2);
-                const initials = getInitials(d.responsavel);
-                const showAvatar = initials !== '—';
-
-                return (
-                  <tr key={d.id}>
-                    <td style={{ textAlign: 'left' }}>
-                      <div className="processo-identificacao">
-                        <button
-                          type="button"
-                          className="numero-link"
-                          onClick={() => onOpenEditar(d)}
-                          title={`Abrir detalhes do processo nº ${d.numero}`}
-                        >
-                          {d.numero}
-                        </button>
-                        <div className="processo-metadados">
-                          <span>{d.tipo}</span>
-                          {d.classificacao && (
-                            <>
-                              <span className="separador-dot">•</span>
-                              <span>{d.classificacao}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
+    <>
+      <div className="table-card">
+        <div className="table-responsive" role="region" aria-label="Tabela de demandas" tabIndex={0}>
+          <table className="demandas-table">
+            <thead>
+              {table.getHeaderGroups().map((group) => (
+                <tr key={group.id}>
+                  {group.headers.map((header) => (
+                    <th key={header.id} style={{ width: header.getSize(), textAlign: ['numero', 'assunto', 'responsavel'].includes(header.column.id) ? 'left' : 'center' }}>
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.length > 0 ? table.getRowModel().rows.map((row) => (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className={cell.column.id === 'assunto' ? 'text-start-cell' : ''} style={{ textAlign: ['numero', 'assunto', 'responsavel'].includes(cell.column.id) ? 'left' : 'center' }}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
+                  ))}
+                </tr>
+              )) : (
+                <tr><td colSpan={columns.length}>
+                  <div className="empty-state table-empty-state">
+                    <i className="fa-solid fa-filter-circle-xmark" aria-hidden="true" />
+                    <strong>Nenhuma demanda encontrada</strong>
+                    <span>Revise os filtros ou faça uma nova busca.</span>
+                  </div>
+                </td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                    <td className="text-start-cell">
-                      <div className="limite-linhas" title={d.assunto}>
-                        {d.assunto}
-                      </div>
-                    </td>
-
-                    <td style={{ textAlign: 'left' }}>
-                      <div className="avatar-circle-group">
-                        {showAvatar ? (
-                          <div className="avatar-circle" title={d.responsavel}>
-                            {initials}
-                          </div>
-                        ) : (
-                          <div className="avatar-circle no-avatar">
-                            —
-                          </div>
-                        )}
-                        <div className="avatar-info">
-                          <span className="avatar-nome">{d.responsavel || 'Não atribuído'}</span>
-                          {d.setor && <span className="avatar-setor">{d.setor}</span>}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td>{d.limite1 && d.limite1 !== 'dd/mm/aaaa' ? d.limite1 : '—'}</td>
-
-                    <td>
-                      <div className="prazo-final-container">
-                        <span className="prazo-final-data">{prazoFinal.data}</span>
-                        {prazoFinal.label && d.status !== 'Encerrado' && (
-                          <span className={`prazo-status-label ${prazoFinal.classe}`}>
-                            {prazoFinal.label}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td>
-                      <span className={getStatusBadgeClass(d.status)}>
-                        {d.status}
-                      </span>
-                    </td>
-
-                    <td>
-                      <div className="actions-wrapper">
-                        <button
-                          type="button"
-                          className="btn btn-abrir-tabela"
-                          onClick={() => onOpenEditar(d)}
-                          title="Abrir detalhes da demanda"
-                        >
-                          Abrir
-                        </button>
-
-                        <div className="dropdown-container">
-                          <button
-                            type="button"
-                            className={`btn-ellipsis ${activeDropdownId === d.id ? 'active' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveDropdownId(activeDropdownId === d.id ? null : d.id);
-                            }}
-                            title="Mais ações"
-                            aria-label={`Mais ações da demanda ${d.numero}`}
-                            aria-expanded={activeDropdownId === d.id}
-                            aria-haspopup="menu"
-                            aria-controls={`menu-acoes-${d.id}`}
-                          >
-                            <i className="fa-solid fa-ellipsis-vertical"></i>
-                          </button>
-
-                          {activeDropdownId === d.id && (
-                            <div className="dropdown-menu" id={`menu-acoes-${d.id}`} role="menu">
-                              {canEdit && (
-                                <button
-                                  type="button"
-                                  className="dropdown-item"
-                                  role="menuitem"
-                                  onClick={() => onOpenStatus(d)}
-                                >
-                                  <i className="fa-solid fa-rotate-left"></i>
-                                  <span>Alterar status</span>
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className="dropdown-item"
-                                role="menuitem"
-                                onClick={() => onOpenHistorico(d)}
-                              >
-                                <i className="fa-solid fa-clock-rotate-left"></i>
-                                <span>Histórico</span>
-                              </button>
-                              {canDelete && (
-                                <>
-                                  <div className="dropdown-divider"></div>
-                                  <button
-                                    type="button"
-                                    className="dropdown-item delete-item"
-                                    role="menuitem"
-                                    onClick={() => handleExcluirClick(d.id, d.numero)}
-                                  >
-                                    <i className="fa-solid fa-trash-can"></i>
-                                    <span>Excluir</span>
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={7} style={{ padding: '30px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                  Nenhuma demanda encontrada para os filtros aplicados.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <div className="table-pagination" aria-label="Paginação da tabela">
+          <div className="pagination-summary">{start}–{end} de {total} resultados</div>
+          <label className="page-size-control">
+            Exibir
+            <select value={pagination.pageSize} onChange={(event) => table.setPageSize(Number(event.target.value))} aria-label="Resultados por página">
+              {[10, 25, 50].map((size) => <option key={size} value={size}>{size}</option>)}
+            </select>
+          </label>
+          <div className="pagination-actions">
+            <button type="button" className="btn pagination-button" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label="Página anterior">
+              <i className="fa-solid fa-chevron-left" aria-hidden="true" />
+            </button>
+            <span>Página {table.getPageCount() === 0 ? 0 : pagination.pageIndex + 1} de {table.getPageCount()}</span>
+            <button type="button" className="btn pagination-button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label="Próxima página">
+              <i className="fa-solid fa-chevron-right" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Excluir demanda?"
+        description={`O processo ${deleteTarget?.numero ?? ''} será removido com seu histórico. Essa ação não poderá ser desfeita.`}
+        confirmLabel="Excluir demanda"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) onExcluir(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+      />
+    </>
   );
 };
+
+function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
+  const icon = direction === 'asc' ? 'fa-arrow-up-short-wide' : direction === 'desc' ? 'fa-arrow-down-wide-short' : 'fa-sort';
+  return <i className={`fa-solid ${icon}`} aria-hidden="true" />;
+}

@@ -7,6 +7,7 @@ describe('segurança e acessibilidade do login', () => {
   afterEach(() => {
     cleanup();
     localStorage.clear();
+    window.history.replaceState({}, '', '/');
     vi.unstubAllGlobals();
   });
 
@@ -37,21 +38,40 @@ describe('segurança e acessibilidade do login', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: /^demandas$/i }));
     await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);
-    expect(screen.getByRole('button', { name: /fechar painel de detalhes/i })).toHaveAttribute('aria-label');
+    expect(await screen.findByRole('button', { name: /fechar painel de detalhes/i })).toHaveAttribute('aria-label');
   });
   it('torna o drawer inerte enquanto um modal está aberto sobre ele', async () => {
     localStorage.setItem('demandas_user', 'teste@rioeduca.net');
-    const { container } = render(<App />);
+    render(<App />);
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: /^demandas$/i }));
     await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);
-    await user.click(screen.getByRole('button', { name: /^editar$/i }));
+    await user.click(await screen.findByRole('button', { name: /^editar$/i }));
 
-    const drawer = container.querySelector('.drawer-overlay');
-    expect(drawer).toHaveAttribute('inert');
-    expect(drawer).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.getByRole('heading', { name: /editar dados da demanda/i })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /editar dados da demanda/i })).toBeVisible();
+    await waitFor(() => {
+      const drawer = document.querySelector('.drawer-overlay');
+      expect(drawer).toHaveAttribute('inert');
+      expect(drawer).toHaveAttribute('aria-hidden', 'true');
+    });
   });
 
+});
+
+describe('navegação persistente', () => {
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('restaura a tela de demandas pela URL', async () => {
+    localStorage.setItem('demandas_user', 'teste@rioeduca.net');
+    window.history.replaceState({}, '', '/demandas?status=Todos%20%28exibir%20tudo%29');
+    render(<App />);
+
+    expect(await screen.findByRole('button', { name: /^demandas$/i })).toHaveClass('active');
+    expect(await screen.findByLabelText(/^status$/i)).toHaveValue('Todos (exibir tudo)');
+  });
 });

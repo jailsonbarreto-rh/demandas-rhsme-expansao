@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": false
-  }
+  },
+  "rewrites": [
+    { "source": "/demandas", "destination": "/index.html" },
+    { "source": "/demandas/:path*", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" }
+  ]
 }

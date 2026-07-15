@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Demanda } from '../types';
 import { DemandasTable } from './DemandasTable';
@@ -24,8 +25,9 @@ describe('DemandasTable', () => {
     expect(menuButton).toHaveAttribute('aria-label');
   });
 
-  it('mantém o rótulo das ações coerente com o comportamento da tabela', () => {
+  it('mantém o rótulo das ações coerente com o comportamento da tabela', async () => {
     const onOpenDetalhes = vi.fn();
+    const user = userEvent.setup();
     render(<DemandasTable
       demandas={[demanda]}
       onOpenEditar={onOpenDetalhes}
@@ -36,12 +38,11 @@ describe('DemandasTable', () => {
       canDelete
     />);
 
-    const abrir = screen.getByRole('button', { name: /^abrir$/i });
-    fireEvent.click(abrir);
+    await user.click(screen.getByRole('button', { name: /^abrir$/i }));
     expect(onOpenDetalhes).toHaveBeenCalledWith(demanda);
 
-    fireEvent.click(screen.getByRole('button', { name: /mais ações da demanda sme-001/i }));
-    expect(screen.getByRole('menuitem', { name: /alterar status/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /mais ações da demanda sme-001/i }));
+    expect(await screen.findByRole('menuitem', { name: /alterar status/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /histórico/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /excluir/i })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /^editar$/i })).not.toBeInTheDocument();

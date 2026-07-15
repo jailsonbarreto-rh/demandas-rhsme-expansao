@@ -1,149 +1,197 @@
 import React, { useState } from 'react';
-import { Demanda } from '../types';
-import { isValidDateString } from '../utils/date';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { Demanda } from '../types';
+import { demandaFormSchema, type DemandaFormValues, statusValues, tipoValues } from '../validation/demandaSchemas';
 import { DateMaskInput } from './DateMaskInput';
+import { AppDialog } from './ui/AppDialog';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { FormError } from './ui/FormError';
 
 interface ModalNovoProps {
   onClose: () => void;
-  onSalvar: (demanda: Omit<Demanda, 'id'>) => void;
+  onSalvar: (demanda: Omit<Demanda, 'id'>) => void | Promise<void>;
 }
 
+const classificacoes = [
+  'Dispensa de Ponto', 'CCFG', 'Cessão', 'Concursos', 'Contratação',
+  'Consultas', 'Inventário', 'Expediente Parlamentar', 'MP',
+  'Representação Judicial', 'DP', 'PGM', 'Recurso', 'Financeiro',
+  'Demanda Interna', 'Outros',
+];
+
 export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
-  const [tipo, setTipo] = useState<string>('');
-  const [numero, setNumero] = useState<string>('');
-  const [assunto, setAssunto] = useState<string>('');
-  const [responsavel, setResponsavel] = useState<string>('');
-  const [limite1, setLimite1] = useState<string>('');
-  const [limite2, setLimite2] = useState<string>('');
-  const [status, setStatus] = useState<string>('');
-  const [setor, setSetor] = useState<string>('');
-  const [classificacao, setClassificacao] = useState<string>('');
+  const [confirmClose, setConfirmClose] = useState(false);
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors, isDirty, isSubmitting },
+  } = useForm<DemandaFormValues>({
+    resolver: zodResolver(demandaFormSchema),
+    defaultValues: {
+      tipo: undefined,
+      numero: '',
+      assunto: '',
+      responsavel: '',
+      limite1: '',
+      limite2: '',
+      status: undefined,
+      setor: '',
+      classificacao: '',
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const numeroNormalizado = numero.trim();
-    const assuntoNormalizado = assunto.trim();
-
-    if (!tipo || !numeroNormalizado || !assuntoNormalizado || !status || !classificacao) {
-      alert('Por favor, preencha todos os campos obrigatórios.');
-      return;
-    }
-
-    if (limite1.trim() && !isValidDateString(limite1)) {
-      alert('O prazo de análise interna é inválido. Utilize o formato dd/mm/aaaa.');
-      return;
-    }
-
-    if (limite2.trim() && !isValidDateString(limite2)) {
-      alert('O prazo final é inválido. Utilize o formato dd/mm/aaaa.');
-      return;
-    }
-
-    onSalvar({
-      tipo: tipo as Demanda['tipo'],
-      numero: numeroNormalizado,
-      assunto: assuntoNormalizado,
-      responsavel: responsavel.trim(),
-      limite1: limite1.trim(),
-      limite2: limite2.trim(),
-      status: status as Demanda['status'],
-      setor: setor.trim(),
-      classificacao,
-    });
+  const requestClose = () => {
+    if (isDirty && !isSubmitting) setConfirmClose(true);
+    else onClose();
   };
 
-  const classificacoes = [
-    'Dispensa de Ponto', 'CCFG', 'Cessão', 'Concursos', 'Contratação',
-    'Consultas', 'Inventário', 'Expediente Parlamentar', 'MP',
-    'Representação Judicial', 'DP', 'PGM', 'Recurso', 'Financeiro',
-    'Demanda Interna', 'Outros'
-  ];
-
-  const statusList = [
-    'Aguardando Andamento', 'Tramitado', 'Para Assinatura',
-    'Encerrado', 'Sobrestado', 'Ajustar'
-  ];
+  const submit = handleSubmit(async (values) => {
+    await onSalvar(values);
+  });
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="modal-wrapper" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Nova Demanda</h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar novo registro">
-            <i className="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
+    <>
+      <AppDialog title="Nova Demanda" onClose={requestClose}>
+        <form onSubmit={(event) => { void submit(event); }} noValidate>
           <div className="modal-body">
             <div className="form-grid-modal">
               <div className="input-container-floating col-full">
-                <select id="novo-tipo" value={tipo} onChange={e => setTipo(e.target.value)} required>
-                  <option value="" disabled hidden></option>
-                  <option value="Expediente">Expediente</option>
-                  <option value="Processo">Processo</option>
-                  <option value="Outros">Outros</option>
+                <select
+                  id="novo-tipo"
+                  {...register('tipo')}
+                  className={errors.tipo ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.tipo)}
+                  aria-describedby={errors.tipo ? 'novo-tipo-error' : undefined}
+                >
+                  <option value="" />
+                  {tipoValues.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
                 </select>
                 <label htmlFor="novo-tipo">Tipo</label>
+                <FormError id="novo-tipo-error" message={errors.tipo?.message} />
               </div>
 
               <div className="input-container-floating col-full">
-                <input type="text" id="novo-numero" placeholder=" " value={numero} onChange={e => setNumero(e.target.value)} required />
+                <input
+                  type="text"
+                  id="novo-numero"
+                  placeholder=" "
+                  {...register('numero')}
+                  className={errors.numero ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.numero)}
+                  aria-describedby={errors.numero ? 'novo-numero-error' : undefined}
+                />
                 <label htmlFor="novo-numero">Número</label>
+                <FormError id="novo-numero-error" message={errors.numero?.message} />
               </div>
 
               <div className="input-container-floating col-full">
-                <input type="text" id="novo-assunto" placeholder=" " value={assunto} onChange={e => setAssunto(e.target.value)} required />
+                <input
+                  type="text"
+                  id="novo-assunto"
+                  placeholder=" "
+                  {...register('assunto')}
+                  className={errors.assunto ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.assunto)}
+                  aria-describedby={errors.assunto ? 'novo-assunto-error' : undefined}
+                />
                 <label htmlFor="novo-assunto">Assunto</label>
+                <FormError id="novo-assunto-error" message={errors.assunto?.message} />
               </div>
 
               <div className="input-container-floating col-full">
-                <input type="text" id="novo-responsavel" placeholder=" " value={responsavel} onChange={e => setResponsavel(e.target.value)} />
+                <input type="text" id="novo-responsavel" placeholder=" " {...register('responsavel')} />
                 <label htmlFor="novo-responsavel">Responsável</label>
               </div>
 
-              <div>
-                <DateMaskInput id="novo-limite1" label="Limite 1" value={limite1} onChange={setLimite1} />
-              </div>
+              <Controller
+                name="limite1"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DateMaskInput
+                    id="novo-limite1"
+                    label="Limite 1"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
 
-              <div>
-                <DateMaskInput id="novo-limite2" label="Limite 2" value={limite2} onChange={setLimite2} />
-              </div>
+              <Controller
+                name="limite2"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DateMaskInput
+                    id="novo-limite2"
+                    label="Limite 2"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
 
               <div className="input-container-floating col-full">
-                <select id="novo-status" value={status} onChange={e => setStatus(e.target.value)} required>
-                  <option value="" disabled hidden></option>
-                  {statusList.map(s => <option key={s} value={s}>{s}</option>)}
+                <select
+                  id="novo-status"
+                  {...register('status')}
+                  className={errors.status ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.status)}
+                  aria-describedby={errors.status ? 'novo-status-error' : undefined}
+                >
+                  <option value="" />
+                  {statusValues.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
                 <label htmlFor="novo-status">Status</label>
+                <FormError id="novo-status-error" message={errors.status?.message} />
               </div>
 
               <div className="input-container-floating col-full">
-                <input type="text" id="novo-setor" placeholder=" " value={setor} onChange={e => setSetor(e.target.value)} />
+                <input type="text" id="novo-setor" placeholder=" " {...register('setor')} />
                 <label htmlFor="novo-setor">Setor (ex: E/CTRH)</label>
               </div>
 
               <div className="input-container-floating col-full">
-                <select id="novo-classificacao" value={classificacao} onChange={e => setClassificacao(e.target.value)} required>
-                  <option value="" disabled hidden></option>
-                  {classificacoes.map(c => <option key={c} value={c}>{c}</option>)}
+                <select
+                  id="novo-classificacao"
+                  {...register('classificacao')}
+                  className={errors.classificacao ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.classificacao)}
+                  aria-describedby={errors.classificacao ? 'novo-classificacao-error' : undefined}
+                >
+                  <option value="" />
+                  {classificacoes.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
                 <label htmlFor="novo-classificacao">Selecione a classificação</label>
+                <FormError id="novo-classificacao-error" message={errors.classificacao?.message} />
               </div>
             </div>
           </div>
 
           <div className="modal-footer">
-            <button type="submit" className="btn btn-primary">
-              <i className="fa-solid fa-floppy-disk"></i> Salvar
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting} aria-busy={isSubmitting}>
+              <i className={`fa-solid ${isSubmitting ? 'fa-spinner fa-spin' : 'fa-floppy-disk'}`} aria-hidden="true" />
+              {isSubmitting ? 'Salvando…' : 'Salvar'}
             </button>
-            <button type="button" className="btn" onClick={onClose}>
-              <i className="fa-solid fa-xmark"></i> Cancelar
+            <button type="button" className="btn" onClick={requestClose} disabled={isSubmitting}>
+              <i className="fa-solid fa-xmark" aria-hidden="true" /> Cancelar
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </AppDialog>
+
+      <ConfirmDialog
+        open={confirmClose}
+        title="Descartar alterações?"
+        description="Os dados preenchidos ainda não foram salvos. Ao sair, essas alterações serão perdidas."
+        confirmLabel="Descartar alterações"
+        onConfirm={onClose}
+        onOpenChange={setConfirmClose}
+      />
+    </>
   );
 };

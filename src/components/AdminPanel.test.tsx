@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { toast } from 'sonner';
 import type { PerfilUsuario } from '../types';
 import {
   AdminPanel,
@@ -8,6 +9,14 @@ import {
   buildAccessBackup,
   type ServidorPerfil,
 } from './AdminPanel';
+
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+  },
+}));
 
 const pending: PerfilUsuario = {
   id: 'pending-1', nome: 'Nova Servidora', email: 'nova@rioeduca.net', setor: 'CTRH',
@@ -27,6 +36,7 @@ const servidorAdmin: ServidorPerfil = {
 describe('AdminPanel', () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
@@ -68,10 +78,12 @@ describe('AdminPanel', () => {
   });
 
   it('detecta ausência de administrador ativo na verificação de acessos', async () => {
-    const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
     render(<AdminPanel perfis={[pending]} onUpdatePerfil={vi.fn()} />);
     await userEvent.setup().click(screen.getByRole('button', { name: /verificar acessos/i }));
-    expect(alert).toHaveBeenCalledWith(expect.stringMatching(/nenhum administrador ativo/i));
+    expect(toast.error).toHaveBeenCalledWith(
+      expect.stringMatching(/verificação concluída/i),
+      expect.objectContaining({ description: expect.stringMatching(/nenhum administrador ativo/i) }),
+    );
   });
 
   it('considera íntegra uma lista institucional sem duplicidades e com administrador ativo', () => {

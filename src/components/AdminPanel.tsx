@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import React from 'react';
 import type { PerfilUsuario } from '../types';
 
@@ -131,17 +132,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
   const handleIntegrityCheck = () => {
     const report = analyzeAccessIntegrity(servidores);
     if (report.ok) {
-      alert(
+      toast.success(
         `Verificação concluída: ${report.totalProfiles} perfis analisados, `
-        + `${report.activeProfiles} ativos e ${report.activeAdministrators} administradores ativos. `
-        + 'Nenhuma inconsistência de acesso foi encontrada.',
+        + `${report.activeProfiles} ativos e ${report.activeAdministrators} administradores ativos.`,
       );
       return;
     }
 
-    alert(
-      `Verificação concluída com ${report.issues.length} inconsistência(s):\n\n`
-      + report.issues.map((issue) => `• ${issue}`).join('\n'),
+    toast.error(
+      `Verificação concluída com ${report.issues.length} inconsistência(s).`,
+      { description: report.issues.join(' • '), duration: 7000 },
     );
   };
 
@@ -205,7 +205,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
           {!isSupabase && <span className="demo-label">Demonstração</span>}
         </p>
 
-        <div className="table-responsive">
+        <div className="table-responsive" role="region" aria-label="Tabela de perfis e acessos" tabIndex={0}>
           <table className="demandas-table">
             <thead>
               <tr>

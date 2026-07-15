@@ -1,0 +1,93 @@
+name: Apply UX final form fixes
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-ux-final-form-fixes-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  apply-and-verify:
+    if: github.head_ref == 'feat/ux-profissional-central-demandas'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/ux-profissional-central-demandas
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Reconstruct and verify final form fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/ux-final/final.part.* > /tmp/ux-final-fix.b64
+          base64 --decode /tmp/ux-final-fix.b64 > /tmp/ux-final-fix.tar.xz
+          echo 'e60b34811c66e08fd4722c3f704fa2ed581dee839644505a65ed457d2cd00f58  /tmp/ux-final-fix.tar.xz' | sha256sum -c -
+          tar -xJf /tmp/ux-final-fix.tar.xz
+
+      - name: Normalize npm registry references
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's#https://packages.applied-caas-gateway1.internal.api.openai.org/artifactory/api/npm/npm-public/#https://registry.npmjs.org/#g' package-lock.json
+          if grep -q 'packages.applied-caas-gateway1.internal.api.openai.org' package-lock.json; then
+            echo 'Internal npm registry reference remains in package-lock.json.' >&2
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: timeout 8m npm ci --prefer-offline --no-audit --no-fund --fetch-retries=1 --fetch-retry-mintimeout=1000 --fetch-retry-maxtimeout=5000 --fetch-timeout=60000
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Run unit and integration tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Enforce initial bundle budget
+        run: npm run check:bundle
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser and accessibility tests
+        run: npm run test:e2e
+
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-final-form-browser-diagnostics
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 3
+
+      - name: Commit verified final form fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .github/ux-final playwright-report test-results
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: concluir validação profissional dos formulários'
+          git push origin HEAD:feat/ux-profissional-central-demandas

@@ -112,7 +112,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf .github/ux-transfer .github/ux-patches
+          git checkout -- .github/workflows/dependency-health.yml
+          rm -rf .github/ux-transfer .github/ux-patches playwright-report test-results
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A

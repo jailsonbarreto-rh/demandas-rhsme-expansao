@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: apply-ux-modernization-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   apply-and-verify:
@@ -49,7 +49,7 @@ jobs:
           tar -xJf /tmp/ux-modernization.tar.xz
 
       - name: Install locked dependencies
-        run: npm ci
+        run: timeout 8m npm ci --prefer-offline --no-audit --no-fund --fetch-retries=1 --fetch-retry-mintimeout=1000 --fetch-retry-maxtimeout=5000 --fetch-timeout=60000
 
       - name: Audit dependencies
         run: npm audit --audit-level=high

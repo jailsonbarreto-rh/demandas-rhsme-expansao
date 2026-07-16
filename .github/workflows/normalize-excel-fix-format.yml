@@ -1,6 +1,13 @@
 name: Normalizar formatação do hotfix Excel
 
 on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
   push:
     branches:
       - fix/exportacao-excel-compativel
@@ -12,6 +19,7 @@ permissions:
 
 jobs:
   normalizar:
+    if: github.event_name == 'push' || github.head_ref == 'fix/exportacao-excel-compativel'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -67,7 +75,6 @@ jobs:
           rows.forEach((values, index) => {
             worksheet.getRow(9 + index).values = values;
           });'''
-          # O YAML remove seis espaços comuns do bloco literal; normalize para dois espaços no TypeScript.
           old = '\n'.join(line[6:] if line.startswith('      ') else line for line in old.splitlines())
           new = '\n'.join(line[6:] if line.startswith('      ') else line for line in new.splitlines())
           if source.count(old) != 1:

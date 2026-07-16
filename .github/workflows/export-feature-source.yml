@@ -12,14 +12,15 @@ permissions:
 jobs:
   apply-and-validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - name: Checkout feature branch
         uses: actions/checkout@v4
         with:
+          ref: feat/exportacao-excel-analitica
           fetch-depth: 0
 
-      - name: Detect transfer package
+      - name: Detect pending integration
         id: guard
         shell: bash
         run: |
@@ -27,24 +28,156 @@ jobs:
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "Transfer package already applied; nothing to do."
+            echo "Integration already applied; nothing to do."
           fi
 
-      - name: Reconstruct and verify patches
+      - name: Integrate Excel action into existing interface
         if: steps.guard.outputs.exists == 'true'
         shell: bash
         run: |
-          base64 --decode .github/excel-transfer/patches.b64 > /tmp/export-excel-patches.xz
-          echo "a69bdea816331f58501d3fce87918fcc6c2a7a596f97bf198c61538ebc4bc7e6  /tmp/export-excel-patches.xz" | sha256sum --check --strict
-          xz --decompress --stdout /tmp/export-excel-patches.xz > /tmp/export-excel-patches.mbox
+          python - <<'PY'
+          from pathlib import Path
+          import re
 
-      - name: Apply documented implementation
-        if: steps.guard.outputs.exists == 'true'
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git am --3way /tmp/export-excel-patches.mbox
+          def replace_once(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one occurrence, found {count}: {old[:80]!r}')
+              target.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          app_path = Path('src/App.tsx')
+          app = app_path.read_text(encoding='utf-8')
+          state_anchor = "  const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);\n"
+          if state_anchor not in app:
+              raise SystemExit('App.tsx: export state anchor not found')
+          app = app.replace(
+              state_anchor,
+              state_anchor + "  const [exportandoExcel, setExportandoExcel] = useState(false);\n",
+              1,
+          )
+
+          export_block = """  // Exportar o recorte filtrado como workbook Excel analítico.
+          // O módulo pesado é carregado somente no clique para preservar o bundle inicial.
+          const handleExportExcel = async () => {
+            if (demandasFiltradas.length === 0) {
+              toast.info('Nenhum registro disponível para exportação na filtragem atual.');
+              return;
+            }
+
+            if (exportandoExcel) return;
+            setExportandoExcel(true);
+
+            try {
+              const { exportDemandasExcel } = await import('./export/exportDemandasExcel');
+              const fileName = await exportDemandasExcel({
+                demandas: demandasFiltradas,
+                userEmail,
+                filters: { ...filtros, quickFilters },
+              });
+              toast.success(`Arquivo Excel exportado: ${fileName}`);
+            } catch (reason) {
+              toast.error(reason instanceof Error
+                ? reason.message
+                : 'Não foi possível gerar o arquivo Excel.');
+            } finally {
+              setExportandoExcel(false);
+            }
+          };
+
+          // Renderização condicional"""
+          app, count = re.subn(
+              r"  // Exportar demandas filtradas como CSV \(Protegido contra CSV Injection\)\n.*?^  };\n\n  // Renderização condicional",
+              export_block,
+              app,
+              count=1,
+              flags=re.MULTILINE | re.DOTALL,
+          )
+          if count != 1:
+              raise SystemExit(f'App.tsx: expected one CSV export block, replaced {count}')
+          old_header_props = """        onOpenNovo={() => setModalNovoAberto(true)}
+                  onExportCSV={handleExportCSV}"""
+          new_header_props = """        onOpenNovo={() => setModalNovoAberto(true)}
+                  onExportExcel={handleExportExcel}
+                  exportingExcel={exportandoExcel}"""
+          if old_header_props not in app:
+              raise SystemExit('App.tsx: Header export props anchor not found')
+          app = app.replace(old_header_props, new_header_props, 1)
+          app_path.write_text(app, encoding='utf-8')
+
+          replace_once(
+              'src/components/Header.tsx',
+              "  onExportCSV: () => void;\n",
+              "  onExportExcel: () => void;\n  exportingExcel?: boolean;\n",
+          )
+          replace_once(
+              'src/components/Header.tsx',
+              "  onExportCSV,\n",
+              "  onExportExcel,\n  exportingExcel = false,\n",
+          )
+          replace_once(
+              'src/components/Header.tsx',
+              """          {/* Ação Secundária: Exportar CSV */}
+                    <button 
+                      type="button"
+                      className="btn btn-secondary-outline" 
+                      onClick={onExportCSV}
+                      title="Exportar dados filtrados como arquivo CSV"
+                    >
+                      <i className="fa-solid fa-download"></i>
+                      <span>Exportar CSV</span>
+                    </button>""",
+              """          {/* Ação Secundária: Exportar Excel */}
+                    <button 
+                      type="button"
+                      className="btn btn-secondary-outline" 
+                      onClick={onExportExcel}
+                      disabled={exportingExcel}
+                      aria-busy={exportingExcel}
+                      title="Exportar os dados filtrados em um relatório Excel analítico"
+                    >
+                      <i className={`fa-solid ${exportingExcel ? 'fa-spinner fa-spin' : 'fa-file-excel'}`}></i>
+                      <span>{exportingExcel ? 'Gerando Excel…' : 'Exportar Excel'}</span>
+                    </button>""",
+          )
+
+          test_path = Path('src/components/InteractiveActions.test.tsx')
+          test = test_path.read_text(encoding='utf-8')
+          replacements = [
+              ('const onExportCSV = vi.fn();', 'const onExportExcel = vi.fn();'),
+              ('onExportCSV={onExportCSV}', 'onExportExcel={onExportExcel}'),
+              ("name: /exportar csv/i", "name: /exportar excel/i"),
+              ('expect(onExportCSV).toHaveBeenCalledOnce();', 'expect(onExportExcel).toHaveBeenCalledOnce();'),
+          ]
+          for old, new in replacements:
+              if test.count(old) != 1:
+                  raise SystemExit(f'InteractiveActions.test.tsx: expected one occurrence of {old!r}')
+              test = test.replace(old, new, 1)
+          test_path.write_text(test, encoding='utf-8')
+
+          replace_once(
+              'src/index.css',
+              """.btn:hover {
+            background-color: var(--border-light);
+            border-color: #d4d4d8;
+          }
+
+          .btn-primary""",
+              """.btn:hover {
+            background-color: var(--border-light);
+            border-color: #d4d4d8;
+          }
+
+          .btn:disabled {
+            opacity: 0.65;
+            cursor: wait;
+            transform: none;
+          }
+
+          .btn-primary""",
+          )
+          PY
 
       - name: Set up Node.js
         if: steps.guard.outputs.exists == 'true'
@@ -52,6 +185,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
+
+      - name: Refresh locked dependency graph
+        if: steps.guard.outputs.exists == 'true'
+        run: npm install --package-lock-only --ignore-scripts
 
       - name: Install locked dependencies
         if: steps.guard.outputs.exists == 'true'
@@ -81,10 +218,13 @@ jobs:
         if: steps.guard.outputs.exists == 'true'
         run: npm run test:e2e
 
-      - name: Remove transfer payload and publish validated commits
+      - name: Publish validated integration
         if: steps.guard.outputs.exists == 'true'
         shell: bash
         run: |
-          git rm .github/excel-transfer/patches.b64
-          git commit -m "chore: remover artefato de transferência"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -r .github/excel-transfer
+          git add package-lock.json src/App.tsx src/components/Header.tsx src/components/InteractiveActions.test.tsx src/index.css
+          git commit -m "feat: integrar exportação Excel analítica"
           git push origin HEAD:feat/exportacao-excel-analitica

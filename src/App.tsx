@@ -82,6 +82,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false);
   const [modalStatusAberto, setModalStatusAberto] = useState<boolean>(false);
   const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);
+  const [exportandoExcel, setExportandoExcel] = useState(false);
   const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
 
   useEffect(() => {
@@ -303,56 +304,32 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
   const demandasFiltradas = getDemandasFiltradas();
 
-  // Exportar demandas filtradas como CSV (Protegido contra CSV Injection)
-  const handleExportCSV = () => {
+  // Exportar o recorte filtrado como workbook Excel analítico.
+  // O módulo pesado é carregado somente no clique para preservar o bundle inicial.
+  const handleExportExcel = async () => {
     if (demandasFiltradas.length === 0) {
       toast.info('Nenhum registro disponível para exportação na filtragem atual.');
       return;
     }
 
-    const sanitizeCSVCell = (val: any): string => {
-      if (val === null || val === undefined) return '""';
-      let str = String(val).trim();
-      str = str.replace(/"/g, '""');
-      if (str.startsWith('=') || str.startsWith('+') || str.startsWith('-') || str.startsWith('@') || str.startsWith('\t') || str.startsWith('\r') || str.startsWith('\n')) {
-        str = `'${str}`;
-      }
-      return `"${str}"`;
-    };
+    if (exportandoExcel) return;
+    setExportandoExcel(true);
 
-    const headers = ['ID', 'Número', 'Tipo', 'Assunto', 'Responsável', 'Limite 1', 'Limite 2', 'Status', 'Setor', 'Classificação'];
-    
-    const rows = demandasFiltradas.map(d => [
-      sanitizeCSVCell(d.id),
-      sanitizeCSVCell(d.numero),
-      sanitizeCSVCell(d.tipo),
-      sanitizeCSVCell(d.assunto),
-      sanitizeCSVCell(d.responsavel),
-      sanitizeCSVCell(d.limite1),
-      sanitizeCSVCell(d.limite2),
-      sanitizeCSVCell(d.status),
-      sanitizeCSVCell(d.setor),
-      sanitizeCSVCell(d.classificacao)
-    ]);
-
-    const csvRows = [
-      'sep=;',
-      headers.join(';'),
-      ...rows.map(e => e.join(';'))
-    ];
-
-    const csvContent = "\uFEFF" + csvRows.join('\r\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `demandas_sme_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Arquivo CSV exportado.');
+    try {
+      const { exportDemandasExcel } = await import('./export/exportDemandasExcel');
+      const fileName = await exportDemandasExcel({
+        demandas: demandasFiltradas,
+        userEmail,
+        filters: { ...filtros, quickFilters },
+      });
+      toast.success(`Arquivo Excel exportado: ${fileName}`);
+    } catch (reason) {
+      toast.error(reason instanceof Error
+        ? reason.message
+        : 'Não foi possível gerar o arquivo Excel.');
+    } finally {
+      setExportandoExcel(false);
+    }
   };
 
   // Renderização condicional: Tela de Login ou Área de Dashboard
@@ -378,7 +355,8 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
         demandas={demandas} 
         onLogout={handleLogout} 
         onOpenNovo={() => setModalNovoAberto(true)}
-        onExportCSV={handleExportCSV}
+        onExportExcel={handleExportExcel}
+        exportingExcel={exportandoExcel}
         filtrosAtivos={{
           status: filtros.status,
           quickFilters

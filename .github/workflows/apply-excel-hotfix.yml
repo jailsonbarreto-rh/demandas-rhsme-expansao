@@ -1,0 +1,42 @@
+name: Apply Excel hotfix
+
+on:
+  push:
+    branches:
+      - fix/excel-corrompido-autofiltro
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/excel-corrompido-autofiltro
+          fetch-depth: 0
+
+      - name: Remove redundant worksheet AutoFilter
+        shell: python
+        run: |
+          from pathlib import Path
+
+          source = Path('src/export/exportDemandasExcel.ts')
+          text = source.read_text(encoding='utf-8')
+          needle = "  worksheet.autoFilter = `A8:L${lastRow}`;\n"
+          occurrences = text.count(needle)
+          if occurrences != 1:
+              raise SystemExit(f'Expected exactly one redundant AutoFilter, found {occurrences}')
+          source.write_text(text.replace(needle, ''), encoding='utf-8')
+
+      - name: Remove temporary workflow and commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-excel-hotfix.yml
+          git add src/export/exportDemandasExcel.ts
+          git commit -m "fix: remove autofiltro redundante da tabela Excel"
+          git push origin HEAD:fix/excel-corrompido-autofiltro

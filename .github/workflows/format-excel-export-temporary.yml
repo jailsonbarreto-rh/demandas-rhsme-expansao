@@ -1,0 +1,84 @@
+name: Format Excel export temporary
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/exportacao-excel-analitica
+          fetch-depth: 0
+
+      - name: Normalize App export block indentation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/App.tsx')
+          text = path.read_text(encoding='utf-8')
+          pattern = re.compile(
+              r"  // Exportar o recorte filtrado como workbook Excel analítico\.\n.*?^// Renderização condicional: Tela de Login ou Área de Dashboard",
+              re.MULTILINE | re.DOTALL,
+          )
+          replacement = """  // Exportar o recorte filtrado como workbook Excel analítico.
+            // O módulo pesado é carregado somente no clique para preservar o bundle inicial.
+            const handleExportExcel = async () => {
+              if (demandasFiltradas.length === 0) {
+                toast.info('Nenhum registro disponível para exportação na filtragem atual.');
+                return;
+              }
+
+              if (exportandoExcel) return;
+              setExportandoExcel(true);
+
+              try {
+                const { exportDemandasExcel } = await import('./export/exportDemandasExcel');
+                const fileName = await exportDemandasExcel({
+                  demandas: demandasFiltradas,
+                  userEmail,
+                  filters: { ...filtros, quickFilters },
+                });
+                toast.success(`Arquivo Excel exportado: ${fileName}`);
+              } catch (reason) {
+                toast.error(reason instanceof Error
+                  ? reason.message
+                  : 'Não foi possível gerar o arquivo Excel.');
+              } finally {
+                setExportandoExcel(false);
+              }
+            };
+
+            // Renderização condicional: Tela de Login ou Área de Dashboard"""
+          updated, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              if '  // O módulo pesado é carregado somente no clique' in text:
+                  print('Block already normalized.')
+                  raise SystemExit(0)
+              raise SystemExit(f'Expected one export block, found {count}')
+          path.write_text(updated, encoding='utf-8')
+          PY
+
+      - name: Commit formatting
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx
+          git commit -m "style: normalizar bloco de exportação Excel"
+          git push origin HEAD:feat/exportacao-excel-analitica

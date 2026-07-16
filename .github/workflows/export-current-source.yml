@@ -1,9 +1,9 @@
 name: Export current source
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/exportacao-excel-analitica
+      - main
 
 permissions:
   contents: read

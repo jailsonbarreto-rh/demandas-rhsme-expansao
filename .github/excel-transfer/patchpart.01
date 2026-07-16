@@ -1,0 +1,117 @@
+sExcel.ts`: montagem do workbook com ExcelJS e download do arquivo.
++- `src/App.tsx`: carregamento dinâmico do exportador somente quando o usuário clicar, preservando o bundle inicial.
++- `src/components/Header.tsx`: substituição da ação “Exportar CSV” por “Exportar Excel”.
++
++## Workbook
++
++### Aba Resumo
++
++- título institucional e descrição do recorte;
++- usuário responsável, data/hora, fonte, quantidade e filtros aplicados;
++- cartões: total exportado, ativos, encerrados, para assinatura, vencidos e vencendo hoje;
++- gráficos tabulares por status, tipo, setor e classificação;
++- análise de prazos por situação operacional e faixas de dias;
++- ranking dos dez responsáveis com maior volume;
++- nota de rastreabilidade e critérios utilizados.
++
++### Aba Demandas
++
++- título, metadados e recorte;
++- tabela estruturada com filtros automáticos;
++- cabeçalho congelado;
++- datas como valores reais do Excel;
++- colunas derivadas “Situação do prazo” e “Dias até o prazo”;
++- cores semânticas para status e prazos, sempre acompanhadas por texto;
++- larguras, quebras de linha e configuração de impressão profissionais.
++
++## Segurança
++
++Textos iniciados por `=`, `+`, `-`, `@`, tabulação ou quebra de linha receberão prefixo de apóstrofo para impedir execução como fórmula. Nenhum dado será enviado a serviço externo. A exportação continuará disponível a todos os usuários autenticados.
++
++## Desempenho
++
++ExcelJS será importado dinamicamente no clique do botão. O código pesado ficará em chunk separado e não aumentará materialmente o bundle inicial da aplicação.
++
++## Testes
++
++- funções analíticas e classificação temporal;
++- proteção contra formula injection;
++- estrutura, abas, tabela, datas e metadados do workbook;
++- ação e nomenclatura do botão;
++- build, orçamento do bundle e testes completos do projeto.
+diff --git a/src/App.tsx b/src/App.tsx
+index 08110a8..fa27aae 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -82,6 +82,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
+   const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false);
+   const [modalStatusAberto, setModalStatusAberto] = useState<boolean>(false);
+   const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);
++  const [exportandoExcel, setExportandoExcel] = useState(false);
+   const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
+ 
+   useEffect(() => {
+@@ -303,56 +304,32 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
+ 
+   const demandasFiltradas = getDemandasFiltradas();
+ 
+-  // Exportar demandas filtradas como CSV (Protegido contra CSV Injection)
+-  const handleExportCSV = () => {
++  // Exportar o recorte filtrado como workbook Excel analítico.
++  // O módulo pesado é carregado somente no clique para preservar o bundle inicial.
++  const handleExportExcel = async () => {
+     if (demandasFiltradas.length === 0) {
+       toast.info('Nenhum registro disponível para exportação na filtragem atual.');
+       return;
+     }
+ 
+-    const sanitizeCSVCell = (val: any): string => {
+-      if (val === null || val === undefined) return '""';
+-      let str = String(val).trim();
+-      str = str.replace(/"/g, '""');
+-      if (str.startsWith('=') || str.startsWith('+') || str.startsWith('-') || str.startsWith('@') || str.startsWith('\t') || str.startsWith('\r') || str.startsWith('\n')) {
+-        str = `'${str}`;
+-      }
+-      return `"${str}"`;
+-    };
+-
+-    const headers = ['ID', 'Número', 'Tipo', 'Assunto', 'Responsável', 'Limite 1', 'Limite 2', 'Status', 'Setor', 'Classificação'];
+-    
+-    const rows = demandasFiltradas.map(d => [
+-      sanitizeCSVCell(d.id),
+-      sanitizeCSVCell(d.numero),
+-      sanitizeCSVCell(d.tipo),
+-      sanitizeCSVCell(d.assunto),
+-      sanitizeCSVCell(d.responsavel),
+-      sanitizeCSVCell(d.limite1),
+-      sanitizeCSVCell(d.limite2),
+-      sanitizeCSVCell(d.status),
+-      sanitizeCSVCell(d.setor),
+-      sanitizeCSVCell(d.classificacao)
+-    ]);
+-
+-    const csvRows = [
+-      'sep=;',
+-      headers.join(';'),
+-      ...rows.map(e => e.join(';'))
+-    ];
+-
+-    const csvContent = "\uFEFF" + csvRows.join('\r\n');
+-    
+-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+-    const url = URL.createObjectURL(blob);
+-    const link = document.createElement("a");
+-    link.setAttribute("href", url);
+-    link.setAttribute("download", `demandas_sme_${new Date().toISOString().slice(0,10)}.csv`);
+-    document.body.appendChild(link);
+-    link.click();
+-    document.body.removeChild(link);
+-    URL.revokeObjectURL(url);
+-    toast.success('Arquivo CSV exportado.');
++    if (exportandoExcel) return;
++    setExportandoExcel(true);
++
++    try {
++      const { exportDemandasExcel } = await import('./export/exportDemandasExcel');
++      const fileName = await exportDemandasExcel({
++        demandas: demandasFiltrada

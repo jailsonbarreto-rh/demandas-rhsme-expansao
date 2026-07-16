@@ -1,0 +1,34 @@
+name: Export feature source
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Package source
+        run: |
+          zip -r source-snapshot.zip . \
+            -x '.git/*' \
+            -x 'node_modules/*' \
+            -x 'dist/*' \
+            -x 'playwright-report/*' \
+            -x 'test-results/*'
+
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: feature-source-snapshot
+          path: source-snapshot.zip
+          if-no-files-found: error
+          retention-days: 1

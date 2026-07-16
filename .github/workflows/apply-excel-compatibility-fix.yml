@@ -1,6 +1,13 @@
 name: Aplicar correção de compatibilidade do Excel
 
 on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
   push:
     branches:
       - fix/exportacao-excel-compativel
@@ -12,6 +19,7 @@ permissions:
 
 jobs:
   corrigir-validar-e-commitar:
+    if: github.event_name == 'push' || github.head_ref == 'fix/exportacao-excel-compativel'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 

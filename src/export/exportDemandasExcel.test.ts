@@ -1,3 +1,4 @@
+import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import type { Demanda } from '../types';
 import { buildDemandasWorkbook } from './exportDemandasExcel';
@@ -29,22 +30,23 @@ const demandas: Demanda[] = [
   },
 ];
 
+const workbookOptions = {
+  demandas,
+  userEmail: 'leitor@rioeduca.net',
+  filters: {
+    busca: 'SME',
+    tipo: 'Todos',
+    classificacao: 'Todas',
+    status: 'Todos (exibir tudo)',
+    setor: 'Todos',
+    quickFilters: { assinatura: false, hoje: false, vencido: false },
+  },
+  generatedAt: new Date(2026, 6, 16, 14, 35, 0),
+};
+
 describe('buildDemandasWorkbook', () => {
   it('gera workbook analítico com duas abas, metadados e tabela estruturada', async () => {
-    const now = new Date(2026, 6, 16, 14, 35, 0);
-    const workbook = buildDemandasWorkbook({
-      demandas,
-      userEmail: 'leitor@rioeduca.net',
-      filters: {
-        busca: 'SME',
-        tipo: 'Todos',
-        classificacao: 'Todas',
-        status: 'Todos (exibir tudo)',
-        setor: 'Todos',
-        quickFilters: { assinatura: false, hoje: false, vencido: false },
-      },
-      generatedAt: now,
-    });
+    const workbook = buildDemandasWorkbook(workbookOptions);
 
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Resumo', 'Demandas']);
     expect(workbook.creator).toBe('Central de Demandas — CTRH SME');
@@ -66,5 +68,28 @@ describe('buildDemandasWorkbook', () => {
 
     const buffer = await workbook.xlsx.writeBuffer();
     expect(buffer.byteLength).toBeGreaterThan(5_000);
+  });
+
+  it('serializa uma única estrutura de filtro vinculada à tabela', async () => {
+    const workbook = buildDemandasWorkbook(workbookOptions);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const zip = await JSZip.loadAsync(buffer);
+
+    const sheetPart = zip.file('xl/worksheets/sheet2.xml');
+    const sheetRelationshipsPart = zip.file('xl/worksheets/_rels/sheet2.xml.rels');
+    const tablePart = zip.file('xl/tables/table1.xml');
+
+    expect(sheetPart).not.toBeNull();
+    expect(sheetRelationshipsPart).not.toBeNull();
+    expect(tablePart).not.toBeNull();
+
+    const sheetXml = await sheetPart?.async('string');
+    const sheetRelationships = await sheetRelationshipsPart?.async('string');
+    const tableXml = await tablePart?.async('string');
+
+    expect(sheetXml).toContain('<tableParts count="1">');
+    expect(sheetXml).not.toMatch(/<autoFilter\b/);
+    expect(sheetRelationships).toContain('/relationships/table');
+    expect(tableXml).toContain('<autoFilter ref="A8:L10"');
   });
 });

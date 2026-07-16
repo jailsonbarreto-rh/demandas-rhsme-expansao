@@ -475,7 +475,6 @@ function buildDataSheet(
     applySemanticCellStyle(worksheet.getCell(`K${rowNumber}`), deadlineStyle);
   }
 
-  worksheet.autoFilter = `A8:L${lastRow}`;
   worksheet.pageSetup.printArea = `A1:L${lastRow}`;
   worksheet.pageSetup.printTitlesRow = '1:8';
   worksheet.headerFooter.oddHeader = '&LCentral de Demandas — CTRH SME&RBase exportada';

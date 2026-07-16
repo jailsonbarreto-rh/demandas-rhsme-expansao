@@ -1,3 +1,5 @@
+import { writeFile } from 'node:fs/promises';
+import { Workbook } from 'exceljs';
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import type { Demanda } from '../types';
@@ -45,7 +47,7 @@ const workbookOptions = {
 };
 
 describe('buildDemandasWorkbook', () => {
-  it('gera workbook analítico com duas abas, metadados e tabela estruturada', async () => {
+  it('gera workbook analítico com duas abas e intervalo filtrável conservador', async () => {
     const workbook = buildDemandasWorkbook(workbookOptions);
 
     expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Resumo', 'Demandas']);
@@ -58,8 +60,9 @@ describe('buildDemandasWorkbook', () => {
     expect(resumo?.getCell('B8').value).toBe(2);
 
     expect(base?.views[0]).toMatchObject({ state: 'frozen', ySplit: 8 });
-    expect(base?.getTables()).toHaveLength(1);
-    expect(base?.getTable('DemandasExportadas').name).toBe('DemandasExportadas');
+    expect(base?.getTables()).toHaveLength(0);
+    expect(base?.autoFilter).toBe('A8:L10');
+    expect(base?.getCell('A8').value).toBe('ID');
     expect(base?.getCell('F9').value).toEqual(new Date(2026, 6, 15));
     expect(base?.getCell('G9').value).toEqual(new Date(2026, 6, 20));
     expect(base?.getCell('D9').value).toBe("'=HIPERLINK(\"https://exemplo.invalid\")");
@@ -68,28 +71,52 @@ describe('buildDemandasWorkbook', () => {
 
     const buffer = await workbook.xlsx.writeBuffer();
     expect(buffer.byteLength).toBeGreaterThan(5_000);
+
+    if (process.env.EXCEL_COMPAT_FIXTURE_PATH) {
+      await writeFile(process.env.EXCEL_COMPAT_FIXTURE_PATH, Buffer.from(buffer));
+    }
+
+    const reopened = new Workbook();
+    await reopened.xlsx.load(buffer);
+    const reopenedBase = reopened.getWorksheet('Demandas');
+    expect(reopened.worksheets.map((sheet) => sheet.name)).toEqual(['Resumo', 'Demandas']);
+    expect(reopenedBase?.getTables()).toHaveLength(0);
+    expect(reopenedBase?.getCell('A8').value).toBe('ID');
+    expect(reopenedBase?.getCell('D9').value).toBe("'=HIPERLINK(\"https://exemplo.invalid\")");
   });
 
-  it('serializa uma única estrutura de filtro vinculada à tabela', async () => {
+  it('serializa OOXML sem partes de tabela, relações órfãs ou marcadores de recuperação', async () => {
     const workbook = buildDemandasWorkbook(workbookOptions);
     const buffer = await workbook.xlsx.writeBuffer();
     const zip = await JSZip.loadAsync(buffer);
 
     const sheetPart = zip.file('xl/worksheets/sheet2.xml');
-    const sheetRelationshipsPart = zip.file('xl/worksheets/_rels/sheet2.xml.rels');
-    const tablePart = zip.file('xl/tables/table1.xml');
+    const contentTypesPart = zip.file('[Content_Types].xml');
+    const workbookPart = zip.file('xl/workbook.xml');
 
     expect(sheetPart).not.toBeNull();
-    expect(sheetRelationshipsPart).not.toBeNull();
-    expect(tablePart).not.toBeNull();
+    expect(Object.keys(zip.files).filter((path) => path.startsWith('xl/tables/'))).toEqual([]);
+    expect(zip.file('xl/worksheets/_rels/sheet2.xml.rels')).toBeNull();
 
     const sheetXml = await sheetPart?.async('string');
-    const sheetRelationships = await sheetRelationshipsPart?.async('string');
-    const tableXml = await tablePart?.async('string');
+    const contentTypesXml = await contentTypesPart?.async('string');
+    const workbookXml = await workbookPart?.async('string');
 
-    expect(sheetXml).toContain('<tableParts count="1">');
-    expect(sheetXml).not.toMatch(/<autoFilter\b/);
-    expect(sheetRelationships).toContain('/relationships/table');
-    expect(tableXml).toContain('<autoFilter ref="A8:L10"');
+    expect(sheetXml?.match(/<autoFilter\b/g) ?? []).toHaveLength(1);
+    expect(sheetXml).toContain('<autoFilter ref="A8:L10"/>');
+    expect(sheetXml).not.toContain('<tableParts');
+    expect(contentTypesXml).not.toContain('spreadsheetml.table');
+    expect(workbookXml).not.toContain('<fileRecoveryPr');
+  });
+
+  it('mantém o autofiltro válido quando o recorte não possui registros', async () => {
+    const workbook = buildDemandasWorkbook({ ...workbookOptions, demandas: [] });
+    const base = workbook.getWorksheet('Demandas');
+    expect(base?.autoFilter).toBe('A8:L8');
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const zip = await JSZip.loadAsync(buffer);
+    const sheetXml = await zip.file('xl/worksheets/sheet2.xml')?.async('string');
+    expect(sheetXml).toContain('<autoFilter ref="A8:L8"/>');
   });
 });

@@ -410,34 +410,24 @@ function buildDataSheet(
     ];
   });
 
-  worksheet.addTable({
-    name: 'DemandasExportadas',
-    ref: 'A8',
-    headerRow: true,
-    totalsRow: false,
-    style: {
-      theme: 'TableStyleMedium2',
-      showFirstColumn: false,
-      showLastColumn: false,
-      showRowStripes: true,
-      showColumnStripes: false,
-    },
-    columns: [
-      { name: 'ID' },
-      { name: 'Número' },
-      { name: 'Tipo' },
-      { name: 'Assunto' },
-      { name: 'Responsável' },
-      { name: 'Limite 1' },
-      { name: 'Limite 2' },
-      { name: 'Status' },
-      { name: 'Setor' },
-      { name: 'Classificação' },
-      { name: 'Situação do prazo' },
-      { name: 'Dias até o prazo' },
-    ],
-    rows,
-  });
+  const headers = [
+  'ID',
+  'Número',
+  'Tipo',
+  'Assunto',
+  'Responsável',
+  'Limite 1',
+  'Limite 2',
+  'Status',
+  'Setor',
+  'Classificação',
+  'Situação do prazo',
+  'Dias até o prazo',
+];
+worksheet.getRow(8).values = headers;
+rows.forEach((values, index) => {
+  worksheet.getRow(9 + index).values = values;
+});
 
   const headerRow = worksheet.getRow(8);
   headerRow.height = 32;
@@ -454,6 +444,7 @@ function buildDataSheet(
     row.height = 34;
     row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
       cell.font = { name: 'Aptos', size: 9, color: { argb: COLORS.text } };
+      cell.fill = fill((rowNumber - 9) % 2 === 0 ? COLORS.white : 'FFFAFBFC');
       cell.alignment = {
         vertical: 'middle',
         horizontal: [1, 6, 7, 12].includes(columnNumber) ? 'center' : 'left',
@@ -464,7 +455,7 @@ function buildDataSheet(
 
     worksheet.getCell(`F${rowNumber}`).numFmt = 'dd/mm/yyyy';
     worksheet.getCell(`G${rowNumber}`).numFmt = 'dd/mm/yyyy';
-    worksheet.getCell(`L${rowNumber}`).numFmt = '0;[Red]-0;—';
+    worksheet.getCell(`L${rowNumber}`).numFmt = '0;[Red]-0;"—"';
 
     const demanda = options.demandas[rowNumber - 9];
     applySemanticCellStyle(worksheet.getCell(`H${rowNumber}`), STATUS_STYLE[demanda.status]);
@@ -475,6 +466,7 @@ function buildDataSheet(
     applySemanticCellStyle(worksheet.getCell(`K${rowNumber}`), deadlineStyle);
   }
 
+  worksheet.autoFilter = `A8:L${lastRow}`;
   worksheet.pageSetup.printArea = `A1:L${lastRow}`;
   worksheet.pageSetup.printTitlesRow = '1:8';
   worksheet.headerFooter.oddHeader = '&LCentral de Demandas — CTRH SME&RBase exportada';
@@ -520,6 +512,6 @@ export async function exportDemandasExcel(options: DemandasWorkbookOptions): Pro
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  globalThis.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   return fileName;
 }

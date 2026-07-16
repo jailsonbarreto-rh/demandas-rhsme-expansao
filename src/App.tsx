@@ -305,34 +305,34 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const demandasFiltradas = getDemandasFiltradas();
 
   // Exportar o recorte filtrado como workbook Excel analítico.
-// O módulo pesado é carregado somente no clique para preservar o bundle inicial.
-const handleExportExcel = async () => {
-  if (demandasFiltradas.length === 0) {
-    toast.info('Nenhum registro disponível para exportação na filtragem atual.');
-    return;
-  }
+  // O módulo pesado é carregado somente no clique para preservar o bundle inicial.
+  const handleExportExcel = async () => {
+    if (demandasFiltradas.length === 0) {
+      toast.info('Nenhum registro disponível para exportação na filtragem atual.');
+      return;
+    }
 
-  if (exportandoExcel) return;
-  setExportandoExcel(true);
+    if (exportandoExcel) return;
+    setExportandoExcel(true);
 
-  try {
-    const { exportDemandasExcel } = await import('./export/exportDemandasExcel');
-    const fileName = await exportDemandasExcel({
-      demandas: demandasFiltradas,
-      userEmail,
-      filters: { ...filtros, quickFilters },
-    });
-    toast.success(`Arquivo Excel exportado: ${fileName}`);
-  } catch (reason) {
-    toast.error(reason instanceof Error
-      ? reason.message
-      : 'Não foi possível gerar o arquivo Excel.');
-  } finally {
-    setExportandoExcel(false);
-  }
-};
+    try {
+      const { exportDemandasExcel } = await import('./export/exportDemandasExcel');
+      const fileName = await exportDemandasExcel({
+        demandas: demandasFiltradas,
+        userEmail,
+        filters: { ...filtros, quickFilters },
+      });
+      toast.success(`Arquivo Excel exportado: ${fileName}`);
+    } catch (reason) {
+      toast.error(reason instanceof Error
+        ? reason.message
+        : 'Não foi possível gerar o arquivo Excel.');
+    } finally {
+      setExportandoExcel(false);
+    }
+  };
 
-// Renderização condicional: Tela de Login ou Área de Dashboard
+  // Renderização condicional: Tela de Login ou Área de Dashboard
   if (!userEmail) {
     return (
       <Suspense fallback={<AuthSkeleton />}>

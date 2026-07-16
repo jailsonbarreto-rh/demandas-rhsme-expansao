@@ -40,6 +40,7 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          from textwrap import dedent
 
           source_path = Path('src/export/exportDemandasExcel.ts')
           source = source_path.read_text(encoding='utf-8')
@@ -90,7 +91,8 @@ jobs:
           source_path.write_text(source, encoding='utf-8')
 
           test_path = Path('src/export/exportDemandasExcel.test.ts')
-          test_path.write_text(r'''import { writeFile } from 'node:fs/promises';
+          test_path.write_text(dedent(r'''
+          import { writeFile } from 'node:fs/promises';
           import { Workbook } from 'exceljs';
           import JSZip from 'jszip';
           import { describe, expect, it } from 'vitest';
@@ -212,7 +214,7 @@ jobs:
               expect(sheetXml).toContain('<autoFilter ref="A8:L8"/>');
             });
           });
-          '''.replace(/^          /gm, ''), encoding='utf-8')
+          ''').lstrip(), encoding='utf-8')
 
       - name: Instalar dependências
         run: npm ci
@@ -246,6 +248,13 @@ jobs:
       - name: Testes de navegador
         run: npm run test:e2e
 
+      - name: Publicar artefato validado
+        uses: actions/upload-artifact@v4
+        with:
+          name: central-demandas-excel-compativel
+          path: /tmp/central-demandas-compatibilidade.xlsx
+          if-no-files-found: error
+
       - name: Remover mecanismo temporário e commitar correção
         run: |
           rm .github/workflows/apply-excel-compatibility-fix.yml
@@ -254,10 +263,3 @@ jobs:
           git add src/export/exportDemandasExcel.ts src/export/exportDemandasExcel.test.ts .github/workflows/apply-excel-compatibility-fix.yml
           git commit -m "fix: gerar Excel compatível sem tabela OOXML"
           git push origin HEAD:fix/exportacao-excel-compativel
-
-      - name: Publicar artefato validado
-        uses: actions/upload-artifact@v4
-        with:
-          name: central-demandas-excel-compativel
-          path: /tmp/central-demandas-compatibilidade.xlsx
-          if-no-files-found: error

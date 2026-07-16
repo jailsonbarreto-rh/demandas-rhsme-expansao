@@ -35,9 +35,9 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   await expectNoHorizontalOverflow(page);
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: /exportar csv/i }).click();
+  await page.getByRole('button', { name: /exportar excel/i }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/^demandas_sme_\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(download.suggestedFilename()).toMatch(/^central_demandas_analitico_\d{4}-\d{2}-\d{2}_\d{4}\.xlsx$/);
 
   await page.getByRole('button', { name: /nova demanda/i }).click();
   await expect(page.getByRole('heading', { name: /nova demanda/i })).toBeVisible();

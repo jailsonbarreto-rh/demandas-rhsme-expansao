@@ -75,11 +75,17 @@ describe('buildDemandasWorkbook', () => {
     const buffer = await workbook.xlsx.writeBuffer();
     const zip = await JSZip.loadAsync(buffer);
 
-    const sheetXml = await zip.file('xl/worksheets/sheet2.xml')?.async('string');
-    const sheetRelationships = await zip
-      .file('xl/worksheets/_rels/sheet2.xml.rels')
-      ?.async('string');
-    const tableXml = await zip.file('xl/tables/table1.xml')?.async('string');
+    const sheetPart = zip.file('xl/worksheets/sheet2.xml');
+    const sheetRelationshipsPart = zip.file('xl/worksheets/_rels/sheet2.xml.rels');
+    const tablePart = zip.file('xl/tables/table1.xml');
+
+    expect(sheetPart).not.toBeNull();
+    expect(sheetRelationshipsPart).not.toBeNull();
+    expect(tablePart).not.toBeNull();
+
+    const sheetXml = await sheetPart?.async('string');
+    const sheetRelationships = await sheetRelationshipsPart?.async('string');
+    const tableXml = await tablePart?.async('string');
 
     expect(sheetXml).toContain('<tableParts count="1">');
     expect(sheetXml).not.toMatch(/<autoFilter\b/);

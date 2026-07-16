@@ -1,0 +1,255 @@
+name: Aplicar correção de compatibilidade do Excel
+
+on:
+  push:
+    branches:
+      - fix/exportacao-excel-compativel
+    paths:
+      - .github/workflows/apply-excel-compatibility-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  corrigir-validar-e-commitar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix/exportacao-excel-compativel
+          fetch-depth: 0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Aplicar correção e teste de regressão
+        shell: python
+        run: |
+          from pathlib import Path
+
+          source_path = Path('src/export/exportDemandasExcel.ts')
+          source = source_path.read_text(encoding='utf-8')
+
+          start = source.index('  worksheet.addTable({')
+          end = source.index('\n\n  const headerRow = worksheet.getRow(8);', start)
+          replacement = '''  const headers = [
+            'ID',
+            'Número',
+            'Tipo',
+            'Assunto',
+            'Responsável',
+            'Limite 1',
+            'Limite 2',
+            'Status',
+            'Setor',
+            'Classificação',
+            'Situação do prazo',
+            'Dias até o prazo',
+          ];
+          worksheet.getRow(8).values = headers;
+          rows.forEach((values, index) => {
+            worksheet.getRow(9 + index).values = values;
+          });'''
+          source = source[:start] + replacement + source[end:]
+
+          style_needle = "      cell.font = { name: 'Aptos', size: 9, color: { argb: COLORS.text } };\n      cell.alignment = {"
+          style_replacement = "      cell.font = { name: 'Aptos', size: 9, color: { argb: COLORS.text } };\n      cell.fill = fill((rowNumber - 9) % 2 === 0 ? COLORS.white : 'FFFAFBFC');\n      cell.alignment = {"
+          if source.count(style_needle) != 1:
+              raise RuntimeError('Ponto de aplicação da alternância de linhas não encontrado de forma unívoca.')
+          source = source.replace(style_needle, style_replacement, 1)
+
+          source = source.replace("worksheet.getCell(`L${rowNumber}`).numFmt = '0;[Red]-0;—';", "worksheet.getCell(`L${rowNumber}`).numFmt = '0;[Red]-0;\"—\"';")
+
+          filter_needle = "  worksheet.pageSetup.printArea = `A1:L${lastRow}`;"
+          if source.count(filter_needle) != 1:
+              raise RuntimeError('Ponto de aplicação do autofiltro não encontrado.')
+          source = source.replace(filter_needle, "  worksheet.autoFilter = `A8:L${lastRow}`;\n  " + filter_needle.strip(), 1)
+
+          revoke_needle = '  URL.revokeObjectURL(url);'
+          if source.count(revoke_needle) != 1:
+              raise RuntimeError('Ponto de revogação do URL temporário não encontrado.')
+          source = source.replace(
+              revoke_needle,
+              '  globalThis.setTimeout(() => URL.revokeObjectURL(url), 30_000);',
+              1,
+          )
+          source_path.write_text(source, encoding='utf-8')
+
+          test_path = Path('src/export/exportDemandasExcel.test.ts')
+          test_path.write_text(r'''import { writeFile } from 'node:fs/promises';
+          import { Workbook } from 'exceljs';
+          import JSZip from 'jszip';
+          import { describe, expect, it } from 'vitest';
+          import type { Demanda } from '../types';
+          import { buildDemandasWorkbook } from './exportDemandasExcel';
+
+          const demandas: Demanda[] = [
+            {
+              id: 7,
+              numero: 'SME-PRO-2026/00007',
+              tipo: 'Processo',
+              assunto: '=HIPERLINK("https://exemplo.invalid")',
+              responsavel: 'Ana Souza',
+              limite1: '15/07/2026',
+              limite2: '20/07/2026',
+              status: 'Para Assinatura',
+              setor: 'CTRH',
+              classificacao: 'Administrativa',
+            },
+            {
+              id: 8,
+              numero: 'EXP-008',
+              tipo: 'Expediente',
+              assunto: 'Resposta institucional',
+              responsavel: 'Bruno Lima',
+              limite1: '',
+              limite2: '',
+              status: 'Encerrado',
+              setor: 'GAD',
+              classificacao: 'Judicial',
+            },
+          ];
+
+          const workbookOptions = {
+            demandas,
+            userEmail: 'leitor@rioeduca.net',
+            filters: {
+              busca: 'SME',
+              tipo: 'Todos',
+              classificacao: 'Todas',
+              status: 'Todos (exibir tudo)',
+              setor: 'Todos',
+              quickFilters: { assinatura: false, hoje: false, vencido: false },
+            },
+            generatedAt: new Date(2026, 6, 16, 14, 35, 0),
+          };
+
+          describe('buildDemandasWorkbook', () => {
+            it('gera workbook analítico com duas abas e intervalo filtrável conservador', async () => {
+              const workbook = buildDemandasWorkbook(workbookOptions);
+
+              expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['Resumo', 'Demandas']);
+              expect(workbook.creator).toBe('Central de Demandas — CTRH SME');
+
+              const resumo = workbook.getWorksheet('Resumo');
+              const base = workbook.getWorksheet('Demandas');
+              expect(resumo?.getCell('A1').value).toBe('CENTRAL DE DEMANDAS — RELATÓRIO ANALÍTICO');
+              expect(resumo?.getCell('B6').value).toBe('leitor@rioeduca.net');
+              expect(resumo?.getCell('B8').value).toBe(2);
+
+              expect(base?.views[0]).toMatchObject({ state: 'frozen', ySplit: 8 });
+              expect(base?.getTables()).toHaveLength(0);
+              expect(base?.autoFilter).toBe('A8:L10');
+              expect(base?.getCell('A8').value).toBe('ID');
+              expect(base?.getCell('F9').value).toEqual(new Date(2026, 6, 15));
+              expect(base?.getCell('G9').value).toEqual(new Date(2026, 6, 20));
+              expect(base?.getCell('D9').value).toBe("'=HIPERLINK(\"https://exemplo.invalid\")");
+              expect(base?.getCell('K9').value).toBe('Próximos 7 dias');
+              expect(base?.getCell('L9').value).toBe(4);
+
+              const buffer = await workbook.xlsx.writeBuffer();
+              expect(buffer.byteLength).toBeGreaterThan(5_000);
+
+              if (process.env.EXCEL_COMPAT_FIXTURE_PATH) {
+                await writeFile(process.env.EXCEL_COMPAT_FIXTURE_PATH, Buffer.from(buffer));
+              }
+
+              const reopened = new Workbook();
+              await reopened.xlsx.load(buffer);
+              const reopenedBase = reopened.getWorksheet('Demandas');
+              expect(reopened.worksheets.map((sheet) => sheet.name)).toEqual(['Resumo', 'Demandas']);
+              expect(reopenedBase?.getTables()).toHaveLength(0);
+              expect(reopenedBase?.getCell('A8').value).toBe('ID');
+              expect(reopenedBase?.getCell('D9').value).toBe("'=HIPERLINK(\"https://exemplo.invalid\")");
+            });
+
+            it('serializa OOXML sem partes de tabela, relações órfãs ou marcadores de recuperação', async () => {
+              const workbook = buildDemandasWorkbook(workbookOptions);
+              const buffer = await workbook.xlsx.writeBuffer();
+              const zip = await JSZip.loadAsync(buffer);
+
+              const sheetPart = zip.file('xl/worksheets/sheet2.xml');
+              const contentTypesPart = zip.file('[Content_Types].xml');
+              const workbookPart = zip.file('xl/workbook.xml');
+
+              expect(sheetPart).not.toBeNull();
+              expect(Object.keys(zip.files).filter((path) => path.startsWith('xl/tables/'))).toEqual([]);
+              expect(zip.file('xl/worksheets/_rels/sheet2.xml.rels')).toBeNull();
+
+              const sheetXml = await sheetPart?.async('string');
+              const contentTypesXml = await contentTypesPart?.async('string');
+              const workbookXml = await workbookPart?.async('string');
+
+              expect(sheetXml?.match(/<autoFilter\b/g) ?? []).toHaveLength(1);
+              expect(sheetXml).toContain('<autoFilter ref="A8:L10"/>');
+              expect(sheetXml).not.toContain('<tableParts');
+              expect(contentTypesXml).not.toContain('spreadsheetml.table');
+              expect(workbookXml).not.toContain('<fileRecoveryPr');
+            });
+
+            it('mantém o autofiltro válido quando o recorte não possui registros', async () => {
+              const workbook = buildDemandasWorkbook({ ...workbookOptions, demandas: [] });
+              const base = workbook.getWorksheet('Demandas');
+              expect(base?.autoFilter).toBe('A8:L8');
+
+              const buffer = await workbook.xlsx.writeBuffer();
+              const zip = await JSZip.loadAsync(buffer);
+              const sheetXml = await zip.file('xl/worksheets/sheet2.xml')?.async('string');
+              expect(sheetXml).toContain('<autoFilter ref="A8:L8"/>');
+            });
+          });
+          '''.replace(/^          /gm, ''), encoding='utf-8')
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar arquivo de compatibilidade e executar regressão focal
+        run: EXCEL_COMPAT_FIXTURE_PATH=/tmp/central-demandas-compatibilidade.xlsx npx vitest run src/export/exportDemandasExcel.test.ts
+
+      - name: Validar pacote e reabertura independente
+        run: |
+          unzip -t /tmp/central-demandas-compatibilidade.xlsx
+          python -m pip install --disable-pip-version-check openpyxl==3.1.5
+          python - <<'PY'
+          from openpyxl import load_workbook
+          path = '/tmp/central-demandas-compatibilidade.xlsx'
+          workbook = load_workbook(path, read_only=False, data_only=False)
+          assert workbook.sheetnames == ['Resumo', 'Demandas']
+          sheet = workbook['Demandas']
+          assert sheet.auto_filter.ref == 'A8:L10'
+          assert sheet['A8'].value == 'ID'
+          assert sheet['D9'].value == "'=HIPERLINK(\"https://exemplo.invalid\")"
+          workbook.close()
+          print('Arquivo reaberto com sucesso pelo openpyxl.')
+          PY
+
+      - name: Auditoria, testes e build
+        run: npm run check
+
+      - name: Instalar Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Testes de navegador
+        run: npm run test:e2e
+
+      - name: Remover mecanismo temporário e commitar correção
+        run: |
+          rm .github/workflows/apply-excel-compatibility-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/export/exportDemandasExcel.ts src/export/exportDemandasExcel.test.ts .github/workflows/apply-excel-compatibility-fix.yml
+          git commit -m "fix: gerar Excel compatível sem tabela OOXML"
+          git push origin HEAD:fix/exportacao-excel-compativel
+
+      - name: Publicar artefato validado
+        uses: actions/upload-artifact@v4
+        with:
+          name: central-demandas-excel-compativel
+          path: /tmp/central-demandas-compatibilidade.xlsx
+          if-no-files-found: error

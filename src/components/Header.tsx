@@ -7,7 +7,8 @@ interface HeaderProps {
   demandas: Demanda[];
   onLogout: () => void;
   onOpenNovo: () => void;
-  onExportCSV: () => void;
+  onExportExcel: () => void;
+  exportingExcel?: boolean;
   filtrosAtivos: {
     status: string;
     quickFilters: {
@@ -27,7 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
   demandas, 
   onLogout,
   onOpenNovo,
-  onExportCSV,
+  onExportExcel,
+  exportingExcel = false,
   filtrosAtivos,
   onToggleFiltroStatus,
   onToggleQuickFilter,
@@ -123,15 +125,17 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         
         <div className="header-global-actions">
-          {/* Ação Secundária: Exportar CSV */}
+          {/* Ação Secundária: Exportar Excel */}
           <button 
             type="button"
             className="btn btn-secondary-outline" 
-            onClick={onExportCSV}
-            title="Exportar dados filtrados como arquivo CSV"
+            onClick={onExportExcel}
+            disabled={exportingExcel}
+            aria-busy={exportingExcel}
+            title="Exportar os dados filtrados em um relatório Excel analítico"
           >
-            <i className="fa-solid fa-download"></i>
-            <span>Exportar CSV</span>
+            <i className={`fa-solid ${exportingExcel ? 'fa-spinner fa-spin' : 'fa-file-excel'}`}></i>
+            <span>{exportingExcel ? 'Gerando Excel…' : 'Exportar Excel'}</span>
           </button>
 
           {/* Ação Primária: Nova Demanda */}

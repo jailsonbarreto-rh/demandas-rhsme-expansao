@@ -44,7 +44,7 @@ describe('ações interativas da interface', () => {
   it('aciona corretamente os botões e indicadores do cabeçalho', async () => {
     const onLogout = vi.fn();
     const onOpenNovo = vi.fn();
-    const onExportCSV = vi.fn();
+    const onExportExcel = vi.fn();
     const onToggleFiltroStatus = vi.fn();
     const onToggleQuickFilter = vi.fn();
 
@@ -54,7 +54,7 @@ describe('ações interativas da interface', () => {
         demandas={[demanda]}
         onLogout={onLogout}
         onOpenNovo={onOpenNovo}
-        onExportCSV={onExportCSV}
+        onExportExcel={onExportExcel}
         filtrosAtivos={{
           status: 'Somente ativos (padrão)',
           quickFilters: { assinatura: false, hoje: false, vencido: false },
@@ -68,13 +68,13 @@ describe('ações interativas da interface', () => {
 
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /^sair$/i }));
-    await user.click(screen.getByRole('button', { name: /exportar csv/i }));
+    await user.click(screen.getByRole('button', { name: /exportar excel/i }));
     await user.click(screen.getByRole('button', { name: /nova demanda/i }));
     await user.click(screen.getByRole('button', { name: /demandas ativas/i }));
     await user.click(screen.getByRole('button', { name: /para assinatura/i }));
 
     expect(onLogout).toHaveBeenCalledOnce();
-    expect(onExportCSV).toHaveBeenCalledOnce();
+    expect(onExportExcel).toHaveBeenCalledOnce();
     expect(onOpenNovo).toHaveBeenCalledOnce();
     expect(onToggleFiltroStatus).toHaveBeenCalledWith('Somente ativos (padrão)');
     expect(onToggleQuickFilter).toHaveBeenCalledWith('assinatura');

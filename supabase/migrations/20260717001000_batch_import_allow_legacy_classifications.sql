@@ -1,51 +1,5 @@
--- Importação em lote atômica, idempotente e auditável.
--- Nenhuma tabela desta trilha é exposta aos papéis da aplicação.
-
-create schema if not exists extensions;
-create extension if not exists pgcrypto with schema extensions;
-
-create unique index if not exists sme_demandas_numero_normalizado_uidx
-on public.sme_demandas (
-  (pg_catalog.regexp_replace(pg_catalog.upper(numero), '[^A-Z0-9]', '', 'g'))
-);
-
-create table private.sme_importacoes (
-  batch_hash text primary key
-    check (batch_hash ~ '^[0-9a-f]{64}$'),
-  source_hash text not null
-    check (source_hash ~ '^[0-9a-f]{64}$'),
-  client_payload_hash text not null
-    check (client_payload_hash ~ '^[0-9a-f]{64}$'),
-  expected_count integer not null check (expected_count > 0),
-  created_count integer not null default 0 check (created_count >= 0),
-  actor_id uuid references public.perfis_usuarios(id) on delete set null,
-  db_fingerprint_before text not null,
-  db_count_before integer not null check (db_count_before >= 0),
-  db_max_id_before bigint not null check (db_max_id_before >= 0),
-  historico_fingerprint_before text not null,
-  historico_count_before integer not null check (historico_count_before >= 0),
-  historico_max_id_before bigint not null check (historico_max_id_before >= 0),
-  status text not null check (status in ('processando', 'concluido')),
-  created_at timestamptz not null default now(),
-  completed_at timestamptz
-);
-
-create table private.sme_importacao_itens (
-  batch_hash text not null references private.sme_importacoes(batch_hash) on delete restrict,
-  source_line integer not null check (source_line > 0),
-  numero text not null,
-  demanda_id bigint unique references public.sme_demandas(id) on delete set null,
-  record_hash text not null check (record_hash ~ '^[0-9a-f]{64}$'),
-  created_at timestamptz not null default now(),
-  primary key (batch_hash, source_line),
-  unique (batch_hash, numero)
-);
-
-alter table private.sme_importacoes enable row level security;
-alter table private.sme_importacao_itens enable row level security;
-
-revoke all on table private.sme_importacoes from public, anon, authenticated;
-revoke all on table private.sme_importacao_itens from public, anon, authenticated;
+-- Corrige o contrato do lote para classificações legítimas já existentes na base.
+-- A migração anterior permanece imutável em produção; esta substitui apenas a RPC.
 
 create or replace function public.importar_sme_demandas_lote(
   p_lote jsonb,
@@ -468,3 +422,4 @@ grant execute on function public.importar_sme_demandas_lote(
 comment on function public.importar_sme_demandas_lote(
   jsonb, text, text, text, integer, text, text, uuid, boolean
 ) is 'Valida e importa um lote saneado em uma única transação, com hashes, idempotência e trilha privada.';
+

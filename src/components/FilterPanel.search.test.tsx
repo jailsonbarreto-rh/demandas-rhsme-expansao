@@ -22,7 +22,7 @@ function Harness({
     classificacao: 'Todas',
     status: 'Somente ativos (padrão)',
     setor: 'Todos',
-    periodoCampo: 'limite2' as const,
+    periodoCampo: 'limite2' as 'limite1' | 'limite2' | 'historico',
     periodoInicio: '',
     periodoFim: '',
   });

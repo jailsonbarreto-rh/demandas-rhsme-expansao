@@ -88,6 +88,9 @@ describe('ações interativas da interface', () => {
         classificacao: 'Outros',
         status: 'Todos (exibir tudo)',
         setor: 'CTRH',
+        periodoCampo: 'limite2' as 'limite1' | 'limite2' | 'historico',
+        periodoInicio: '',
+        periodoFim: '',
       });
       const [quickFilters, setQuickFilters] = useState({
         assinatura: true,

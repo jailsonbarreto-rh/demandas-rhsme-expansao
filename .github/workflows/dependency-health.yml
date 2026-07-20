@@ -50,7 +50,19 @@ jobs:
           retention-days: 14
 
       - name: Run unit, integration and coverage checks
-        run: npm run test:coverage
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:coverage 2>&1 | tee test-coverage-report.txt
+
+      - name: Upload test execution report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage-report
+          path: test-coverage-report.txt
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload coverage report
         if: always()

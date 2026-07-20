@@ -123,7 +123,8 @@ export class LocalDemandasRepository implements DemandasRepository {
     const exists = this.demandas.some(d => d.id === id);
     if (!exists) throw new Error('Demanda não encontrada.');
 
-    const { status: _status, ...safeChanges } = changes;
+    const safeChanges = { ...changes };
+    delete safeChanges.status;
 
     this.demandas = this.demandas.map((demanda) =>
       demanda.id === id ? { ...demanda, ...safeChanges } : demanda,
@@ -163,7 +164,7 @@ export class LocalDemandasRepository implements DemandasRepository {
     this.saveHistorico();
   }
 
-  subscribe(_onRemoteChange: () => void): () => void {
+  subscribe(): () => void {
     return () => undefined;
   }
 

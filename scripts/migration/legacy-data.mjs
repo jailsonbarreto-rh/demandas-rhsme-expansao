@@ -485,7 +485,10 @@ function styleHeader(row) {
 
 function setWorksheetDefaults(worksheet) {
   worksheet.views = [{ state: 'frozen', ySplit: 1 }];
-  worksheet.autoFilter = worksheet.dimensions;
+  if (worksheet.columnCount > 0 && worksheet.rowCount > 0) {
+    const lastColumn = worksheet.getColumn(worksheet.columnCount).letter;
+    worksheet.autoFilter = `A1:${lastColumn}${worksheet.rowCount}`;
+  }
   worksheet.eachRow((row) => {
     row.alignment = { vertical: 'top', wrapText: true };
   });

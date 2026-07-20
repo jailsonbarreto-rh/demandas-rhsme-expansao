@@ -85,21 +85,31 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [recentSearches, setRecentSearches] = useState(() => loadRecentSearches());
+  const [searchFocusRequested, setSearchFocusRequested] = useState(false);
 
   useEffect(() => {
     const handleSearchShortcut = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'k') return;
       event.preventDefault();
+      setSearchFocusRequested(true);
       navigate({ pathname: '/demandas', search: searchParams.toString() });
-      window.setTimeout(() => {
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
-      }, 0);
     };
 
     window.addEventListener('keydown', handleSearchShortcut);
     return () => window.removeEventListener('keydown', handleSearchShortcut);
   }, [navigate, searchParams]);
+
+  useEffect(() => {
+    if (!searchFocusRequested || activeTab !== 'demandas' || data.loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      const input = searchInputRef.current;
+      if (!input) return;
+      input.focus();
+      input.select();
+      setSearchFocusRequested(false);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, data.loading, searchFocusRequested]);
 
   // --- Estados dos Modais ---
   const [modalNovoAberto, setModalNovoAberto] = useState<boolean>(false);

@@ -86,7 +86,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     if (!cleanQuery) return;
     setFiltros((current) => ({ ...current, busca: cleanQuery }));
     onCommitSearch?.(cleanQuery);
-    setSearchFocused(false);
   };
 
   const statusList = [

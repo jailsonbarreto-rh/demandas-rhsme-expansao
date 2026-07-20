@@ -12,7 +12,7 @@ test('busca avançada encontra campos distribuídos, histórico e número sem po
   await login(page);
   await page.getByRole('button', { name: /^demandas$/i }).click();
 
-  const search = page.getByRole('textbox', { name: /busca por texto/i });
+  const search = page.getByRole('combobox', { name: /busca por texto/i });
   await search.fill('cessao erica 2026');
   await search.press('Enter');
   await expect(page.locator('mark').filter({ hasText: /cessão/i }).first()).toBeVisible();
@@ -22,14 +22,16 @@ test('busca avançada encontra campos distribuídos, histórico e número sem po
   await expect(page.getByRole('button', { name: /000184\.002702\/2026-64/i })).toBeVisible();
 
   await search.fill('planilha inicial');
-  await expect(page.getByText(/Histórico: Demanda importada da planilha inicial/i).first()).toBeVisible();
+  await expect(page.locator('.search-history-snippet').first()).toContainText(
+    'Histórico: Demanda importada da planilha inicial.',
+  );
 });
 
 test('buscas recentes, atalho e período funcionam por teclado', async ({ page }) => {
   await login(page);
   await page.getByRole('button', { name: /^demandas$/i }).click();
 
-  const search = page.getByRole('textbox', { name: /busca por texto/i });
+  const search = page.getByRole('combobox', { name: /busca por texto/i });
   await search.fill('cessao erica 2026');
   await search.press('Enter');
   await search.fill('');
@@ -39,9 +41,9 @@ test('buscas recentes, atalho e período funcionam por teclado', async ({ page }
   await page.getByRole('button', { name: /^visão geral$/i }).click();
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');
   await expect(page.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('textbox', { name: /busca por texto/i })).toBeFocused();
+  await expect(page.getByRole('combobox', { name: /busca por texto/i })).toBeFocused();
 
-  await page.getByRole('button', { name: /mais filtros/i }).click();
+  await page.getByRole('button', { name: /^mais filtros$/i }).click();
   await page.getByLabel(/data inicial/i).fill('2026-08-01');
   await page.getByLabel(/data final/i).fill('2026-07-01');
   await expect(page.getByRole('alert')).toContainText(/data inicial não pode ser posterior/i);

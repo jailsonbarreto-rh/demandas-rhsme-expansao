@@ -37,7 +37,7 @@ test('busca sem resultado exato apresenta sugestões próximas explicadas', asyn
 
   await expect(page.getByRole('status')).toContainText(/nenhuma demanda contém todos os 3 termos/i);
   await expect(page.getByText(/2 de 3 termos/i).first()).toBeVisible();
-  await expect(page.getByText(/termo ausente:/i).first()).toContainText('2099');
+  await expect(page.locator('.approximate-missing-terms').first()).toContainText('Termo ausente: 2099');
   await expect(page.getByRole('button', { name: '000184.002702/2026-64', exact: true })).toBeVisible();
 });
 

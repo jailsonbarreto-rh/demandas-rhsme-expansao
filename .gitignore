@@ -10,7 +10,15 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
 *.local
+
+# Dados e artefatos administrativos de migração
+.migration/
+migration-input/
+dry-run-receipt.json
+.env.migration
+.env.migration.local
 
 # Editor directories and files
 .vscode/*

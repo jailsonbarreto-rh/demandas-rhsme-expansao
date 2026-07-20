@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   audit-test-build-browser:
-    name: Audit, tests, build and browser QA
+    name: Audit, lint, coverage, build and browser QA
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -28,14 +28,65 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Audit dependencies
+      - name: Audit dependency vulnerabilities
         run: npm audit --audit-level=high
 
-      - name: Run unit and integration tests
-        run: npm test
+      - name: Verify registry signatures and provenance
+        run: npm audit signatures
+
+      - name: Run static analysis
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee lint-report.txt
+
+      - name: Upload static analysis report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: lint-report.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Run unit, integration and coverage checks
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:coverage 2>&1 | tee test-coverage-report.txt
+
+      - name: Upload test execution report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage-report
+          path: test-coverage-report.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Build production bundle
-        run: npm run build
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build-report.txt
+
+      - name: Upload build report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-report
+          path: build-report.txt
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Enforce initial bundle budget
         run: npm run check:bundle

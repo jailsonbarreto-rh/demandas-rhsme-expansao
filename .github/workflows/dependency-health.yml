@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   audit-test-build-browser:
-    name: Audit, tests, build and browser QA
+    name: Audit, lint, coverage, build and browser QA
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -28,11 +28,26 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Audit dependencies
+      - name: Audit dependency vulnerabilities
         run: npm audit --audit-level=high
 
-      - name: Run unit and integration tests
-        run: npm test
+      - name: Verify registry signatures and provenance
+        run: npm audit signatures
+
+      - name: Run static analysis
+        run: npm run lint
+
+      - name: Run unit, integration and coverage checks
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Build production bundle
         run: npm run build

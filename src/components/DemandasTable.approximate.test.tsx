@@ -49,6 +49,6 @@ describe('DemandasTable — resultados próximos', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent(/nenhuma demanda contém todos os 3 termos/i);
     expect(screen.getByText(/2 de 3 termos/i)).toBeInTheDocument();
-    expect(screen.getByText(/termo ausente:/i)).toHaveTextContent('2026');
+    expect(document.querySelector('.approximate-missing-terms')).toHaveTextContent('Termo ausente: 2026');
   });
 });

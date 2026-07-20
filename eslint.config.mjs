@@ -46,6 +46,7 @@ export default tseslint.config(
     },
     rules: {
       ...jsxA11y.flatConfigs.recommended.rules,
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['region'] }],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
     },

@@ -153,6 +153,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <input
               ref={searchInputRef}
               type="search"
+              role="combobox"
+              aria-autocomplete="list"
               id="busca"
               name="busca"
               className="form-control"

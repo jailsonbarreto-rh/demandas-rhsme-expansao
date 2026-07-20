@@ -1,0 +1,43 @@
+name: Apply advanced search integration
+
+on:
+  push:
+    branches:
+      - feat/busca-avancada-20260720
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Apply verified source transformations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/busca-avancada-20260720
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Apply search integration
+        run: |
+          node scripts/apply-search-integration.mjs
+          node scripts/fix-search-analytics.mjs
+          git diff --check
+
+      - name: Commit generated integration
+        run: |
+          if git diff --quiet; then
+            echo "Integração já aplicada; nenhuma alteração necessária."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/export/excelAnalytics.ts src/index.css docs/RELATORIO_ESTADO_ATUAL.md
+          git commit -m "feat: aplicar integração da busca avançada"
+          git push origin HEAD:feat/busca-avancada-20260720

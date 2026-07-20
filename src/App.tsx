@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { BrowserRouter, useInRouterContext, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
 import { Demanda, type PerfilUsuario } from './types';
@@ -12,6 +12,10 @@ import { AtencaoImediata } from './components/AtencaoImediata';
 import { VisaoGeral } from './components/VisaoGeral';
 import { AdminSkeleton, AuthSkeleton, DashboardSkeleton, TableSkeleton } from './components/LoadingSkeletons';
 import { getTodayString, isBeforeToday } from './utils/date';
+import { matchDemandSearch } from './search/demandSearch';
+import { getPeriodValidationError, matchesPeriod, type PeriodField } from './search/periodFilter';
+import { clearRecentSearches, loadRecentSearches, saveRecentSearch } from './search/recentSearches';
+import type { DemandSearchMatch } from './search/searchTypes';
 
 const DemandasTable = lazy(() => import('./components/DemandasTable').then((module) => ({ default: module.DemandasTable })));
 const ModalNovo = lazy(() => import('./components/ModalNovo').then((module) => ({ default: module.ModalNovo })));
@@ -54,6 +58,9 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     classificacao: searchParams.get('classificacao') ?? 'Todas',
     status: searchParams.get('status') ?? 'Somente ativos (padrão)',
     setor: searchParams.get('setor') ?? 'Todos',
+    periodoCampo: (searchParams.get('periodoCampo') as PeriodField | null) ?? 'limite2',
+    periodoInicio: searchParams.get('periodoInicio') ?? '',
+    periodoFim: searchParams.get('periodoFim') ?? '',
   }));
 
   const [quickFilters, setQuickFilters] = useState(() => ({
@@ -76,6 +83,24 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     if (!open) navigate({ pathname: '/demandas', search: searchParams.toString() });
   };
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [recentSearches, setRecentSearches] = useState(() => loadRecentSearches());
+
+  useEffect(() => {
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'k') return;
+      event.preventDefault();
+      navigate({ pathname: '/demandas', search: searchParams.toString() });
+      window.setTimeout(() => {
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }, 0);
+    };
+
+    window.addEventListener('keydown', handleSearchShortcut);
+    return () => window.removeEventListener('keydown', handleSearchShortcut);
+  }, [navigate, searchParams]);
+
   // --- Estados dos Modais ---
   const [modalNovoAberto, setModalNovoAberto] = useState<boolean>(false);
   const [demandaSelecionada, setDemandaSelecionada] = useState<Demanda | null>(null);
@@ -93,6 +118,9 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     if (filtros.classificacao !== 'Todas') next.set('classificacao', filtros.classificacao);
     if (filtros.status !== 'Somente ativos (padrão)') next.set('status', filtros.status);
     if (filtros.setor !== 'Todos') next.set('setor', filtros.setor);
+    if (filtros.periodoCampo !== 'limite2') next.set('periodoCampo', filtros.periodoCampo);
+    if (filtros.periodoInicio) next.set('periodoInicio', filtros.periodoInicio);
+    if (filtros.periodoFim) next.set('periodoFim', filtros.periodoFim);
     if (quickFilters.assinatura) next.set('assinatura', '1');
     if (quickFilters.hoje) next.set('hoje', '1');
     if (quickFilters.vencido) next.set('vencido', '1');
@@ -184,7 +212,10 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       tipo: 'Todos',
       classificacao: 'Todas',
       status: 'Somente ativos (padrão)',
-      setor: 'Todos'
+      setor: 'Todos',
+      periodoCampo: 'limite2',
+      periodoInicio: '',
+      periodoFim: '',
     });
     setQuickFilters({
       assinatura: false,
@@ -240,69 +271,62 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
   // --- Utilitários de Filtros ---
 
-  // Lógica de filtragem dos dados
-  const getDemandasFiltradas = () => {
+  const handleCommitSearch = (query: string) => {
+    setRecentSearches(saveRecentSearch(query));
+  };
+
+  const handleClearRecentSearches = () => {
+    clearRecentSearches();
+    setRecentSearches([]);
+  };
+
+  const periodError = getPeriodValidationError({
+    field: filtros.periodoCampo,
+    start: filtros.periodoInicio,
+    end: filtros.periodoFim,
+  });
+
+  const searchState = useMemo(() => {
     const todayStr = getTodayString();
-
-    return demandas.filter(d => {
-      // 1. Filtros Rápidos Cumulativos ("Hoje", "Vencido", "Para assinatura")
-      const algunQuickAtivo = quickFilters.assinatura || quickFilters.hoje || quickFilters.vencido;
-      
-      if (algunQuickAtivo) {
-        let matchQuick = false;
-        
-        if (quickFilters.assinatura && d.status === 'Para Assinatura') {
-          matchQuick = true;
-        }
-        if (quickFilters.hoje && d.status !== 'Encerrado' && d.limite2 === todayStr) {
-          matchQuick = true;
-        }
-        if (quickFilters.vencido && d.status !== 'Encerrado' && d.limite2 && isBeforeToday(d.limite2)) {
-          matchQuick = true;
-        }
-
+    const matches = new Map<number, DemandSearchMatch>();
+    const filtered = demandas.filter((demanda) => {
+      const algumQuickAtivo = quickFilters.assinatura || quickFilters.hoje || quickFilters.vencido;
+      if (algumQuickAtivo) {
+        const matchQuick = (
+          (quickFilters.assinatura && demanda.status === 'Para Assinatura')
+          || (quickFilters.hoje && demanda.status !== 'Encerrado' && demanda.limite2 === todayStr)
+          || (quickFilters.vencido && demanda.status !== 'Encerrado' && Boolean(demanda.limite2) && isBeforeToday(demanda.limite2))
+        );
         if (!matchQuick) return false;
       }
 
-      // 2. Filtro de Busca por texto (Número, Assunto, Responsável)
-      if (filtros.busca.trim()) {
-        const buscaLower = filtros.busca.toLowerCase();
-        const numMatch = d.numero.toLowerCase().includes(buscaLower);
-        const assMatch = d.assunto.toLowerCase().includes(buscaLower);
-        const respMatch = d.responsavel?.toLowerCase().includes(buscaLower) || false;
-        
-        if (!numMatch && !assMatch && !respMatch) {
-          return false;
-        }
-      }
+      const searchMatch = matchDemandSearch(demanda, historico, filtros.busca);
+      if (!searchMatch.matches) return false;
 
-      // 3. Filtro de Tipo
-      if (filtros.tipo !== 'Todos' && d.tipo !== filtros.tipo) {
-        return false;
-      }
+      if (!matchesPeriod(demanda, historico, {
+        field: filtros.periodoCampo,
+        start: filtros.periodoInicio,
+        end: filtros.periodoFim,
+      })) return false;
 
-      // 4. Filtro de Classificação
-      if (filtros.classificacao !== 'Todas' && d.classificacao !== filtros.classificacao) {
-        return false;
-      }
-
-      // 5. Filtro de Status
+      if (filtros.tipo !== 'Todos' && demanda.tipo !== filtros.tipo) return false;
+      if (filtros.classificacao !== 'Todas' && demanda.classificacao !== filtros.classificacao) return false;
       if (filtros.status === 'Somente ativos (padrão)') {
-        if (d.status === 'Encerrado') return false;
-      } else if (filtros.status !== 'Todos (exibir tudo)') {
-        if (d.status !== filtros.status) return false;
-      }
-
-      // 6. Filtro de Setor
-      if (filtros.setor !== 'Todos' && d.setor !== filtros.setor) {
+        if (demanda.status === 'Encerrado') return false;
+      } else if (filtros.status !== 'Todos (exibir tudo)' && demanda.status !== filtros.status) {
         return false;
       }
+      if (filtros.setor !== 'Todos' && demanda.setor !== filtros.setor) return false;
 
+      matches.set(demanda.id, searchMatch);
       return true;
     });
-  };
 
-  const demandasFiltradas = getDemandasFiltradas();
+    return { demandas: filtered, matches };
+  }, [demandas, filtros, historico, quickFilters]);
+
+  const demandasFiltradas = searchState.demandas;
+  const searchMatches = searchState.matches;
 
   // Exportar o recorte filtrado como workbook Excel analítico.
   // O módulo pesado é carregado somente no clique para preservar o bundle inicial.
@@ -482,10 +506,17 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                 setoresDisponiveis={setoresDisponiveis}
                 totalExibidos={demandasFiltradas.length}
                 totalGeral={demandas.length}
+                searchInputRef={searchInputRef}
+                recentSearches={recentSearches}
+                onCommitSearch={handleCommitSearch}
+                onClearRecentSearches={handleClearRecentSearches}
+                periodError={periodError}
               />
 
               <DemandasTable 
                 demandas={demandasFiltradas}
+                searchQuery={filtros.busca}
+                searchMatches={searchMatches}
                 canEdit={canEdit}
                 canDelete={canDelete}
                 onOpenEditar={openDemand}

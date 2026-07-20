@@ -82,3 +82,8 @@ Antes de trocar Production para `VITE_APP_MODE=supabase`:
 4. testar os três usuários em Preview;
 5. validar CRUD, histórico, administração e Realtime;
 6. manter documentado o rollback para `VITE_APP_MODE=local`.
+
+
+## Busca avançada e encontrabilidade
+
+A área Demandas possui busca multi-termo sobre número, tipo, assunto, responsável, setor, classificação, status e histórico. A comparação é tolerante a acentos, caixa e pontuação de números. Resultados indicam os campos correspondentes, mostram contexto do histórico e destacam os termos visíveis. O sistema mantém até cinco buscas recentes por navegador, oferece o atalho Ctrl/Command+K e filtra prazo interno, prazo final ou movimentações por período preservado na URL.

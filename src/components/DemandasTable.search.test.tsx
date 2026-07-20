@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Demanda } from '../types';
 import type { DemandSearchMatch } from '../search/searchTypes';
 import { DemandasTable } from './DemandasTable';
+
+afterEach(() => cleanup());
 
 const demanda: Demanda = {
   id: 42,
@@ -46,8 +48,10 @@ describe('DemandasTable — resultado da busca', () => {
     );
 
     expect(screen.getByText('cessão').tagName).toBe('MARK');
-    expect(screen.getByText('Ricardo', { exact: false })).toBeInTheDocument();
+    expect(screen.getAllByText('Ricardo')).toHaveLength(2);
     expect(screen.getByText(/Encontrado em:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Histórico: Processo devolvido/i)).toBeInTheDocument();
+    expect(document.querySelector('.search-history-snippet')).toHaveTextContent(
+      'Histórico: Processo devolvido para Ricardo realizar os ajustes.',
+    );
   });
 });

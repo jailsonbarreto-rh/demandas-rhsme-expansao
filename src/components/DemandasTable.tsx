@@ -25,6 +25,7 @@ interface DemandasTableProps {
   canDelete?: boolean;
   searchQuery?: string;
   searchMatches?: Map<number, DemandSearchMatch>;
+  searchResultMode?: 'exact' | 'approximate' | 'empty';
 }
 
 const SEARCH_FIELD_LABELS: Record<DemandSearchField, string> = {
@@ -80,6 +81,15 @@ function SearchMatchContext({ match, query }: { match?: DemandSearchMatch; query
           ))}
         </span>
       </div>
+      {match.matchKind === 'approximate' && (
+        <div className="approximate-match-details">
+          <span className="approximate-match-ratio">{match.matchedTermCount} de {match.totalTermCount} termos</span>
+          <span className="approximate-missing-terms">
+            <strong>{(match.missingTerms?.length ?? 0) > 1 ? 'Termos ausentes:' : 'Termo ausente:'}</strong>{' '}
+            {match.missingTerms?.join(', ')}
+          </span>
+        </div>
+      )}
       {match.historySnippet && (
         <div className="search-history-snippet">
           <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" />
@@ -100,6 +110,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   canDelete = true,
   searchQuery = '',
   searchMatches = new Map<number, DemandSearchMatch>(),
+  searchResultMode = 'exact',
 }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -281,11 +292,21 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   const total = table.getRowCount();
   const start = total === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
   const end = Math.min(total, start + pagination.pageSize - 1);
+  const approximateTermCount = searchMatches.values().next().value?.totalTermCount ?? 0;
 
   return (
     <>
-      <div className="table-card">
-        <div className="table-responsive" role="region" aria-label="Tabela de demandas" tabIndex={0}>
+      <div className={`table-card ${searchResultMode === 'approximate' ? 'approximate-results-card' : ''}`}>
+        {searchResultMode === 'approximate' && (
+          <div className="approximate-search-notice" role="status">
+            <i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" />
+            <div>
+              <strong>Nenhuma demanda contém todos os {approximateTermCount} termos pesquisados.</strong>
+              <span>Exibindo resultados próximos, ordenados pela quantidade e relevância das correspondências.</span>
+            </div>
+          </div>
+        )}
+        <div className="table-responsive" role="region" aria-label={searchResultMode === 'approximate' ? 'Tabela de resultados próximos' : 'Tabela de demandas'} tabIndex={0}>
           <table className="demandas-table">
             <thead>
               {table.getHeaderGroups().map((group) => (
@@ -311,8 +332,8 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
                 <tr><td colSpan={columns.length}>
                   <div className="empty-state table-empty-state">
                     <i className="fa-solid fa-filter-circle-xmark" aria-hidden="true" />
-                    <strong>Nenhuma demanda encontrada</strong>
-                    <span>Revise os filtros ou faça uma nova busca.</span>
+                    <strong>{searchResultMode === 'empty' ? 'Nenhum resultado exato ou próximo encontrado' : 'Nenhuma demanda encontrada'}</strong>
+                    <span>{searchResultMode === 'empty' ? 'Tente corrigir algum termo ou reduzir a quantidade de palavras pesquisadas.' : 'Revise os filtros ou faça uma nova busca.'}</span>
                   </div>
                 </td></tr>
               )}
@@ -321,7 +342,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         </div>
 
         <div className="table-pagination" aria-label="Paginação da tabela">
-          <div className="pagination-summary">{start}–{end} de {total} resultados</div>
+          <div className="pagination-summary">{start}–{end} de {total} {searchResultMode === 'approximate' ? 'sugestões' : 'resultados'}</div>
           <label className="page-size-control">
             Exibir
             <select value={pagination.pageSize} onChange={(event) => table.setPageSize(Number(event.target.value))} aria-label="Resultados por página">

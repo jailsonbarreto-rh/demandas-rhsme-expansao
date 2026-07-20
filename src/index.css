@@ -2574,3 +2574,18 @@ h1, h2, h3, h4 {
   .recent-searches-panel { margin-top: 6px; }
   .more-filters-panel.open { max-height: 760px; }
 }
+
+
+/* Resultados próximos da busca avançada */
+.approximate-results-card { border-color: #c7d2fe; }
+.approximate-search-notice { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; border-bottom: 1px solid #c7d2fe; background: #eef2ff; color: #312e81; }
+.approximate-search-notice > i { margin-top: 2px; font-size: 1.05rem; }
+.approximate-search-notice > div { display: flex; flex-direction: column; gap: 4px; }
+.approximate-search-notice span { color: #4338ca; font-size: 0.84rem; }
+.approximate-match-details { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 7px; }
+.approximate-match-ratio { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; background: #e0e7ff; color: #3730a3; font-size: 0.75rem; font-weight: 700; }
+.approximate-missing-terms { color: #6b21a8; font-size: 0.78rem; }
+@media (max-width: 720px) {
+  .approximate-search-notice { padding: 14px; }
+  .approximate-match-details { align-items: flex-start; flex-direction: column; gap: 5px; }
+}

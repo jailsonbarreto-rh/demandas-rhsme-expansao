@@ -19,5 +19,24 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     testTimeout: 10_000,
     exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'html'],
+      reportsDirectory: 'coverage',
+      include: ['src/**/*.{ts,tsx}', 'scripts/migration/**/*.mjs'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        'src/vite-env.d.ts',
+        'src/main.tsx',
+        'scripts/migration/**/*.test.mjs',
+      ],
+      thresholds: {
+        lines: 50,
+        functions: 50,
+        branches: 40,
+        statements: 50,
+      },
+    },
   },
 });

@@ -1,9 +1,11 @@
 import { createRef, useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FilterPanel } from './FilterPanel';
 
 const quickFilters = { assinatura: false, hoje: false, vencido: false };
+
+afterEach(() => cleanup());
 
 function Harness({
   onCommitSearch = vi.fn(),
@@ -50,10 +52,11 @@ describe('FilterPanel — busca avançada', () => {
     const onCommitSearch = vi.fn();
     render(<Harness onCommitSearch={onCommitSearch} />);
 
-    const input = screen.getByRole('textbox', { name: /busca por texto/i });
+    const input = screen.getByRole('combobox', { name: /busca por texto/i });
     fireEvent.focus(input);
-    fireEvent.mouseDown(screen.getByRole('button', { name: /cessão ricardo 2025/i }));
-    fireEvent.click(screen.getByRole('button', { name: /cessão ricardo 2025/i }));
+    const recentSearch = screen.getByRole('button', { name: /cessão ricardo 2025/i });
+    fireEvent.mouseDown(recentSearch);
+    fireEvent.click(recentSearch);
 
     expect(input).toHaveValue('cessão ricardo 2025');
     expect(onCommitSearch).toHaveBeenCalledWith('cessão ricardo 2025');
@@ -63,7 +66,7 @@ describe('FilterPanel — busca avançada', () => {
     const onCommitSearch = vi.fn();
     render(<Harness onCommitSearch={onCommitSearch} />);
 
-    const input = screen.getByRole('textbox', { name: /busca por texto/i });
+    const input = screen.getByRole('combobox', { name: /busca por texto/i });
     fireEvent.change(input, { target: { value: 'cessao erica 2026' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -74,7 +77,7 @@ describe('FilterPanel — busca avançada', () => {
   it('exibe os filtros de período e a validação do intervalo', () => {
     render(<Harness periodError="A data inicial não pode ser posterior à data final." />);
 
-    fireEvent.click(screen.getByRole('button', { name: /mais filtros/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^mais filtros$/i }));
 
     expect(screen.getByLabelText(/campo de data/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/data inicial/i)).toBeInTheDocument();
@@ -86,7 +89,7 @@ describe('FilterPanel — busca avançada', () => {
     const onClearRecentSearches = vi.fn();
     render(<Harness onClearRecentSearches={onClearRecentSearches} />);
 
-    fireEvent.focus(screen.getByRole('textbox', { name: /busca por texto/i }));
+    fireEvent.focus(screen.getByRole('combobox', { name: /busca por texto/i }));
     fireEvent.click(screen.getByRole('button', { name: /limpar buscas recentes/i }));
 
     expect(onClearRecentSearches).toHaveBeenCalledTimes(1);

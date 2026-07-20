@@ -49,7 +49,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   periodError = null,
 }) => {
   const [maisFiltrosAberto, setMaisFiltrosAberto] = React.useState(
-    () => Boolean(filtros.periodoInicio || filtros.periodoFim),
+    () => Boolean((filtros.periodoInicio ?? '') || (filtros.periodoFim ?? '')),
   );
   const [searchFocused, setSearchFocused] = React.useState(false);
   const blurTimerRef = React.useRef<number | null>(null);
@@ -104,7 +104,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   if (filtros.classificacao !== 'Todas') filtrosAtivosCount += 1;
   if (filtros.status !== 'Somente ativos (padrão)') filtrosAtivosCount += 1;
   if (filtros.setor !== 'Todos') filtrosAtivosCount += 1;
-  if (filtros.periodoInicio || filtros.periodoFim) filtrosAtivosCount += 1;
+  if ((filtros.periodoInicio ?? '') || (filtros.periodoFim ?? '')) filtrosAtivosCount += 1;
   if (quickFilters.assinatura) filtrosAtivosCount += 1;
   if (quickFilters.hoje) filtrosAtivosCount += 1;
   if (quickFilters.vencido) filtrosAtivosCount += 1;
@@ -293,7 +293,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 id="periodoCampo"
                 name="periodoCampo"
                 className="form-select"
-                value={filtros.periodoCampo}
+                value={filtros.periodoCampo ?? 'limite2'}
                 onChange={handleInputChange}
               >
                 <option value="limite1">Prazo interno</option>
@@ -309,7 +309,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 name="periodoInicio"
                 type="date"
                 className={`form-control ${periodError ? 'field-invalid' : ''}`}
-                value={filtros.periodoInicio}
+                value={filtros.periodoInicio ?? ''}
                 onChange={handleInputChange}
                 aria-invalid={Boolean(periodError)}
                 aria-describedby={periodError ? 'periodo-error' : undefined}
@@ -323,7 +323,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 name="periodoFim"
                 type="date"
                 className={`form-control ${periodError ? 'field-invalid' : ''}`}
-                value={filtros.periodoFim}
+                value={filtros.periodoFim ?? ''}
                 onChange={handleInputChange}
                 aria-invalid={Boolean(periodError)}
                 aria-describedby={periodError ? 'periodo-error' : undefined}

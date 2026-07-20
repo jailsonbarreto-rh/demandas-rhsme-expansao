@@ -164,7 +164,8 @@ export class LocalDemandasRepository implements DemandasRepository {
     this.saveHistorico();
   }
 
-  subscribe(): () => void {
+  subscribe(onRemoteChange: () => void): () => void {
+    void onRemoteChange;
     return () => undefined;
   }
 

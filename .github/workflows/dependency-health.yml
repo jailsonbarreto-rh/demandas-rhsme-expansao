@@ -35,7 +35,19 @@ jobs:
         run: npm audit signatures
 
       - name: Run static analysis
-        run: npm run lint
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee lint-report.txt
+
+      - name: Upload static analysis report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: lint-report.txt
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Run unit, integration and coverage checks
         run: npm run test:coverage

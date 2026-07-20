@@ -19,7 +19,7 @@ test('busca avançada encontra campos distribuídos, histórico e número sem po
   await expect(page.getByText(/Encontrado em:/i).first()).toBeVisible();
 
   await search.fill('000184002702202664');
-  await expect(page.getByRole('button', { name: /000184\.002702\/2026-64/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: '000184.002702/2026-64', exact: true })).toBeVisible();
 
   await search.fill('planilha inicial');
   await expect(page.locator('.search-history-snippet').first()).toContainText(
@@ -35,7 +35,6 @@ test('buscas recentes, atalho e período funcionam por teclado', async ({ page }
   await search.fill('cessao erica 2026');
   await search.press('Enter');
   await search.fill('');
-  await search.focus();
   await expect(page.getByRole('button', { name: /cessao erica 2026/i })).toBeVisible();
 
   await page.getByRole('button', { name: /^visão geral$/i }).click();

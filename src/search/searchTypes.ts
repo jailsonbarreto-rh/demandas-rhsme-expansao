@@ -8,6 +8,8 @@ export type DemandSearchField =
   | 'status'
   | 'historico';
 
+export type DemandSearchMatchKind = 'exact' | 'approximate';
+
 export interface DemandSearchMatch {
   matches: boolean;
   terms: string[];
@@ -15,6 +17,11 @@ export interface DemandSearchMatch {
   fieldTerms: Partial<Record<DemandSearchField, string[]>>;
   historySnippet?: string;
   historyItemId?: number;
+  matchKind?: DemandSearchMatchKind;
+  matchedTermCount?: number;
+  totalTermCount?: number;
+  missingTerms?: string[];
+  relevanceScore?: number;
 }
 
 export interface DemandSearchResult<TDemand> {

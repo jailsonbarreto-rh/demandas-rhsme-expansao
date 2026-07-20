@@ -13,6 +13,7 @@ import { VisaoGeral } from './components/VisaoGeral';
 import { AdminSkeleton, AuthSkeleton, DashboardSkeleton, TableSkeleton } from './components/LoadingSkeletons';
 import { getTodayString, isBeforeToday } from './utils/date';
 import { matchDemandSearch } from './search/demandSearch';
+import { rankApproximateDemandSearch } from './search/approximateSearch';
 import { getPeriodValidationError, matchesPeriod, type PeriodField } from './search/periodFilter';
 import { clearRecentSearches, loadRecentSearches, saveRecentSearch } from './search/recentSearches';
 import type { DemandSearchMatch } from './search/searchTypes';
@@ -298,8 +299,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
   const searchState = useMemo(() => {
     const todayStr = getTodayString();
-    const matches = new Map<number, DemandSearchMatch>();
-    const filtered = demandas.filter((demanda) => {
+    const baseCandidates = demandas.filter((demanda) => {
       const algumQuickAtivo = quickFilters.assinatura || quickFilters.hoje || quickFilters.vencido;
       if (algumQuickAtivo) {
         const matchQuick = (
@@ -309,9 +309,6 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
         );
         if (!matchQuick) return false;
       }
-
-      const searchMatch = matchDemandSearch(demanda, historico, filtros.busca);
-      if (!searchMatch.matches) return false;
 
       if (!matchesPeriod(demanda, historico, {
         field: filtros.periodoCampo,
@@ -327,20 +324,45 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
         return false;
       }
       if (filtros.setor !== 'Todos' && demanda.setor !== filtros.setor) return false;
-
-      matches.set(demanda.id, searchMatch);
       return true;
     });
 
-    return { demandas: filtered, matches };
+    const exactMatches = new Map<number, DemandSearchMatch>();
+    const exactDemandas = baseCandidates.filter((demanda) => {
+      const match = matchDemandSearch(demanda, historico, filtros.busca);
+      if (!match.matches) return false;
+      exactMatches.set(demanda.id, { ...match, matchKind: 'exact' });
+      return true;
+    });
+
+    if (exactDemandas.length > 0 || !filtros.busca.trim()) {
+      return { demandas: exactDemandas, matches: exactMatches, mode: 'exact' as const };
+    }
+
+    const approximateResults = rankApproximateDemandSearch(baseCandidates, historico, filtros.busca);
+    if (approximateResults.length > 0) {
+      return {
+        demandas: approximateResults.map((result) => result.demanda),
+        matches: new Map(approximateResults.map((result) => [result.demanda.id, result.match])),
+        mode: 'approximate' as const,
+      };
+    }
+
+    return { demandas: [], matches: new Map<number, DemandSearchMatch>(), mode: 'empty' as const };
   }, [demandas, filtros, historico, quickFilters]);
 
   const demandasFiltradas = searchState.demandas;
   const searchMatches = searchState.matches;
+  const searchResultMode = searchState.mode;
 
   // Exportar o recorte filtrado como workbook Excel analítico.
   // O módulo pesado é carregado somente no clique para preservar o bundle inicial.
   const handleExportExcel = async () => {
+    if (searchResultMode === 'approximate') {
+      toast.info('Os resultados próximos são sugestões. Ajuste a pesquisa antes de exportar como resultado exato.');
+      return;
+    }
+
     if (demandasFiltradas.length === 0) {
       toast.info('Nenhum registro disponível para exportação na filtragem atual.');
       return;
@@ -527,6 +549,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                 demandas={demandasFiltradas}
                 searchQuery={filtros.busca}
                 searchMatches={searchMatches}
+                searchResultMode={searchResultMode}
                 canEdit={canEdit}
                 canDelete={canDelete}
                 onOpenEditar={openDemand}

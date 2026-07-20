@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import type { ReactNode } from 'react';
 import type { ComentarioHistorico, Demanda } from '../types';
 import { getPrazoFinalSemantics } from '../utils/date';
 
@@ -21,6 +22,14 @@ function badgeClass(status: string) {
   if (status === 'Ajustar') return 'badge ajustar';
   if (status === 'Sobrestado') return 'badge sobrestado';
   return 'badge aguardando';
+}
+
+function MetaLabel({ children }: { children: ReactNode }) {
+  return (
+    <span style={{ fontSize: '0.688rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+      {children}
+    </span>
+  );
 }
 
 export function DemandDetailDrawer({
@@ -71,30 +80,30 @@ export function DemandDetailDrawer({
                   </Dialog.Close>
                 </div>
 
-                <div className="drawer-body" tabIndex={0} aria-label="Conteúdo detalhado da demanda">
+                <div className="drawer-body" role="region" tabIndex={0} aria-label="Conteúdo detalhado da demanda">
                   <section className="drawer-section">
                     <h3>Identificação</h3>
                     <div className="drawer-meta-grid">
-                      <div className="drawer-meta-item full-width"><label>Assunto</label><span className="value strong-value">{demanda.assunto}</span></div>
-                      <div className="drawer-meta-item"><label>Tipo</label><span className="value">{demanda.tipo}</span></div>
-                      <div className="drawer-meta-item"><label>Classificação</label><span className="value">{demanda.classificacao || '—'}</span></div>
+                      <div className="drawer-meta-item full-width"><MetaLabel>Assunto</MetaLabel><span className="value strong-value">{demanda.assunto}</span></div>
+                      <div className="drawer-meta-item"><MetaLabel>Tipo</MetaLabel><span className="value">{demanda.tipo}</span></div>
+                      <div className="drawer-meta-item"><MetaLabel>Classificação</MetaLabel><span className="value">{demanda.classificacao || '—'}</span></div>
                     </div>
                   </section>
 
                   <section className="drawer-section">
                     <h3>Responsabilidade</h3>
                     <div className="drawer-meta-grid">
-                      <div className="drawer-meta-item"><label>Responsável Atual</label><span className="value strong-value">{demanda.responsavel || 'Não atribuído'}</span></div>
-                      <div className="drawer-meta-item"><label>Setor Vinculado</label><span className="value">{demanda.setor || '—'}</span></div>
+                      <div className="drawer-meta-item"><MetaLabel>Responsável Atual</MetaLabel><span className="value strong-value">{demanda.responsavel || 'Não atribuído'}</span></div>
+                      <div className="drawer-meta-item"><MetaLabel>Setor Vinculado</MetaLabel><span className="value">{demanda.setor || '—'}</span></div>
                     </div>
                   </section>
 
                   <section className="drawer-section">
                     <h3>Prazos</h3>
                     <div className="drawer-meta-grid">
-                      <div className="drawer-meta-item"><label>Prazo de Análise (Interno)</label><span className="value">{demanda.limite1 || '—'}</span></div>
+                      <div className="drawer-meta-item"><MetaLabel>Prazo de Análise (Interno)</MetaLabel><span className="value">{demanda.limite1 || '—'}</span></div>
                       <div className="drawer-meta-item">
-                        <label>Prazo Final</label>
+                        <MetaLabel>Prazo Final</MetaLabel>
                         <div className="prazo-final-container drawer-prazo">
                           <span className="value strong-value">{prazo.data}</span>
                           {prazo.label && demanda.status !== 'Encerrado' && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}

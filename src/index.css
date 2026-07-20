@@ -2549,7 +2549,7 @@ h1, h2, h3, h4 {
 .search-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .search-shortcut { border: 1px solid var(--border-color); border-bottom-width: 2px; border-radius: 5px; background: #f8fafc; color: var(--text-muted); font: inherit; font-size: 0.65rem; font-weight: 650; padding: 2px 7px; }
 .search-help-text { display: block; margin-top: 6px; color: var(--text-muted); font-size: 0.719rem; line-height: 1.35; }
-.recent-searches-panel { position: absolute; z-index: 900; top: calc(100% - 3px); left: 0; right: 0; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-lg); padding: 10px; }
+.recent-searches-panel { position: relative; z-index: 2; margin-top: 8px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-md); padding: 10px; }
 .recent-searches-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 6px 8px; color: var(--primary-color); font-size: 0.75rem; }
 .recent-searches-clear { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font: inherit; font-size: 0.688rem; font-weight: 600; }
 .recent-searches-clear:hover, .recent-searches-clear:focus-visible { color: var(--primary-color); text-decoration: underline; }
@@ -2571,6 +2571,6 @@ h1, h2, h3, h4 {
 
 @media (max-width: 640px) {
   .search-shortcut { display: none; }
-  .recent-searches-panel { position: static; margin-top: 6px; }
+  .recent-searches-panel { margin-top: 6px; }
   .more-filters-panel.open { max-height: 760px; }
 }

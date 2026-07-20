@@ -1,0 +1,36 @@
+name: Fix advanced search focus flow
+
+on:
+  push:
+    branches:
+      - feat/busca-avancada-20260720
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/busca-avancada-20260720
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply verified focus fixes
+        run: |
+          node scripts/fix-search-focus-flow.mjs
+          git diff --check
+      - name: Commit focus fixes
+        run: |
+          if git diff --quiet; then
+            echo "Fluxo de foco já corrigido."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/components/FilterPanel.tsx
+          git commit -m "fix: preservar foco e buscas recentes"
+          git push origin HEAD:feat/busca-avancada-20260720

@@ -10,6 +10,8 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import type { Demanda } from '../types';
+import type { DemandSearchField, DemandSearchMatch } from '../search/searchTypes';
+import { HighlightedText } from '../search/searchHighlight';
 import { getPrazoFinalSemantics } from '../utils/date';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 
@@ -21,7 +23,20 @@ interface DemandasTableProps {
   onExcluir: (id: number) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  searchQuery?: string;
+  searchMatches?: Map<number, DemandSearchMatch>;
 }
+
+const SEARCH_FIELD_LABELS: Record<DemandSearchField, string> = {
+  numero: 'número',
+  tipo: 'tipo',
+  assunto: 'assunto',
+  responsavel: 'responsável',
+  setor: 'setor',
+  classificacao: 'classificação',
+  status: 'status',
+  historico: 'histórico',
+};
 
 function getStatusBadgeClass(status: string) {
   switch (status) {
@@ -50,6 +65,31 @@ function sortableDate(value: string) {
   return Number(`${match[3]}${match[2]}${match[1]}`);
 }
 
+function SearchMatchContext({ match, query }: { match?: DemandSearchMatch; query: string }) {
+  if (!query.trim() || !match?.matches || match.matchedFields.length === 0) return null;
+
+  return (
+    <div className="search-match-context">
+      <div className="search-match-summary">
+        <span className="search-match-label">Encontrado em:</span>
+        <span className="search-match-fields">
+          {match.matchedFields.map((field) => (
+            <span key={field} className={`search-match-chip ${field === 'historico' ? 'history-match' : ''}`}>
+              {SEARCH_FIELD_LABELS[field]}
+            </span>
+          ))}
+        </span>
+      </div>
+      {match.historySnippet && (
+        <div className="search-history-snippet">
+          <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" />
+          <span><strong>Histórico:</strong> <HighlightedText text={match.historySnippet} query={query} /></span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const DemandasTable: React.FC<DemandasTableProps> = ({
   demandas,
   onOpenEditar,
@@ -58,6 +98,8 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   onExcluir,
   canEdit = true,
   canDelete = true,
+  searchQuery = '',
+  searchMatches = new Map<number, DemandSearchMatch>(),
 }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -90,11 +132,16 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
               onClick={() => onOpenEditar(demanda)}
               title={`Abrir detalhes do processo nº ${demanda.numero}`}
             >
-              {demanda.numero}
+              <HighlightedText text={demanda.numero} query={searchQuery} />
             </button>
             <div className="processo-metadados">
-              <span>{demanda.tipo}</span>
-              {demanda.classificacao && <><span className="separador-dot">•</span><span>{demanda.classificacao}</span></>}
+              <span><HighlightedText text={demanda.tipo} query={searchQuery} /></span>
+              {demanda.classificacao && (
+                <>
+                  <span className="separador-dot">•</span>
+                  <span><HighlightedText text={demanda.classificacao} query={searchQuery} /></span>
+                </>
+              )}
             </div>
           </div>
         );
@@ -103,9 +150,19 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
     }),
     columnHelper.accessor('assunto', {
       header: 'Assunto',
-      cell: ({ getValue }) => <div className="limite-linhas" title={getValue()}>{getValue()}</div>,
+      cell: ({ row }) => {
+        const demanda = row.original;
+        return (
+          <div className="assunto-search-cell">
+            <div className="limite-linhas" title={demanda.assunto}>
+              <HighlightedText text={demanda.assunto} query={searchQuery} />
+            </div>
+            <SearchMatchContext match={searchMatches.get(demanda.id)} query={searchQuery} />
+          </div>
+        );
+      },
       enableSorting: false,
-      size: 300,
+      size: 330,
     }),
     columnHelper.accessor('responsavel', {
       header: ({ column }) => (
@@ -120,8 +177,8 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           <div className="avatar-circle-group">
             <div className={`avatar-circle ${initials === '—' ? 'no-avatar' : ''}`} title={demanda.responsavel}>{initials}</div>
             <div className="avatar-info">
-              <span className="avatar-nome">{demanda.responsavel || 'Não atribuído'}</span>
-              {demanda.setor && <span className="avatar-setor">{demanda.setor}</span>}
+              <span className="avatar-nome"><HighlightedText text={demanda.responsavel || 'Não atribuído'} query={searchQuery} /></span>
+              {demanda.setor && <span className="avatar-setor"><HighlightedText text={demanda.setor} query={searchQuery} /></span>}
             </div>
           </div>
         );
@@ -159,7 +216,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           Status <SortIcon direction={column.getIsSorted()} />
         </button>
       ),
-      cell: ({ getValue }) => <span className={getStatusBadgeClass(getValue())}>{getValue()}</span>,
+      cell: ({ getValue }) => <span className={getStatusBadgeClass(getValue())}><HighlightedText text={getValue()} query={searchQuery} /></span>,
       sortingFn: 'alphanumeric',
       size: 130,
     }),
@@ -208,7 +265,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
       },
       size: 100,
     }),
-  ], [canDelete, canEdit, columnHelper, onOpenEditar, onOpenHistorico, onOpenStatus]);
+  ], [canDelete, canEdit, columnHelper, onOpenEditar, onOpenHistorico, onOpenStatus, searchMatches, searchQuery]);
 
   const table = useReactTable({
     data: demandas,

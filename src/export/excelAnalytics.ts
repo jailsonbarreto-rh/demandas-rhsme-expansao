@@ -6,6 +6,9 @@ export interface ExcelExportFilters {
   classificacao: string;
   status: string;
   setor: string;
+  periodoCampo?: 'limite1' | 'limite2' | 'historico';
+  periodoInicio?: string;
+  periodoFim?: string;
   quickFilters: {
     assinatura: boolean;
     hoje: boolean;
@@ -225,6 +228,21 @@ export function describeActiveFilters(filters: ExcelExportFilters): Array<[strin
   if (filters.classificacao !== 'Todas') result.push(['Classificação', filters.classificacao]);
   result.push(['Status', filters.status]);
   if (filters.setor !== 'Todos') result.push(['Setor', filters.setor]);
+  if (filters.periodoInicio || filters.periodoFim) {
+    const fieldLabels = {
+      limite1: 'Prazo interno',
+      limite2: 'Prazo final',
+      historico: 'Movimentação do histórico',
+    } as const;
+    const displayDate = (value?: string) => value ? value.split('-').reverse().join('/') : 'sem limite';
+    const field = filters.periodoCampo ?? 'limite2';
+    const description = fieldLabels[field]
+      + ': '
+      + displayDate(filters.periodoInicio)
+      + ' a '
+      + displayDate(filters.periodoFim);
+    result.push(['Período', description]);
+  }
 
   const quickFilters: string[] = [];
   if (filters.quickFilters.assinatura) quickFilters.push('Para assinatura');

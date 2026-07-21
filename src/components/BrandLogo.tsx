@@ -11,8 +11,6 @@ export function BrandLogo({
   showEndorsement = false,
   className = '',
 }: BrandLogoProps) {
-  const inverse = tone === 'inverse';
-
   return (
     <div className={`brand-lockup brand-lockup--${variant} brand-lockup--${tone} ${className}`.trim()}>
       <div className="brand-primary">

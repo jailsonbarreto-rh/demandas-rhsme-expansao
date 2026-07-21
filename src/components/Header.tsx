@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Demanda } from '../types';
 import { getTodayString, isBeforeToday } from '../utils/date';
+import { BrandLogo } from './BrandLogo';
 
 interface HeaderProps {
   userEmail: string;
@@ -76,12 +77,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="header-container">
-      {/* 1. Faixa Institucional Compacta (De ponta a ponta na janela) */}
+      {/* 1. Faixa institucional: marca do produto e módulo atual */}
       <div className="institucional-bar">
-        <div className="inst-left">
-          <span className="inst-orgao">CTRH • Secretaria Municipal de Educação</span>
-          <span className="inst-separador">|</span>
-          <span className="inst-sub">Sistema interno de acompanhamento</span>
+        <div className="inst-left header-brand-row">
+          <BrandLogo variant="compact" />
+          <span className="header-module-separator" aria-hidden="true">|</span>
+          <span className="header-module-label">Central de Demandas</span>
         </div>
         
         <div className="inst-right">
@@ -115,10 +116,10 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* 2. Título Principal da Central de Demandas & Ações Globais */}
+      {/* 2. Título da página e ações globais */}
       <div className="title-action-row">
         <div className="title-area">
-          <h1>Central de Demandas</h1>
+          <h1>Painel de Demandas</h1>
           <p className="header-subtitle">
             Acompanhamento de processos, expedientes, prazos e providências.
           </p>

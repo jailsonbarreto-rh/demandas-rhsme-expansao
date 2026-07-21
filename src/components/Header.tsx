@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* 1. Faixa institucional: marca única do produto */}
       <div className="institucional-bar">
         <div className="inst-left header-brand-row">
-          <BrandLogo variant="compact" />
+          <BrandLogo variant="full" />
         </div>
         
         <div className="inst-right">
@@ -186,10 +186,10 @@ export const Header: React.FC<HeaderProps> = ({
           type="button" 
           className={`stat-card hoje-card ${filtrosAtivos.quickFilters.hoje ? 'active' : ''}`}
           onClick={() => onToggleQuickFilter('hoje')}
-          title="Filtrar por demandas que vencem hoje"
+          title="Filtrar por demandas com prazo hoje"
         >
           <div className="stat-info">
-            <h3>Vencendo Hoje</h3>
+            <h3>Vencem Hoje</h3>
             <div className="stat-number">{totalHoje}</div>
           </div>
         </button>
@@ -198,35 +198,18 @@ export const Header: React.FC<HeaderProps> = ({
           type="button" 
           className={`stat-card vencido-card ${filtrosAtivos.quickFilters.vencido ? 'active' : ''}`}
           onClick={() => onToggleQuickFilter('vencido')}
-          title="Filtrar por demandas vencidas em atraso"
+          title="Filtrar por demandas vencidas"
         >
           <div className="stat-info">
-            <h3>
-              Vencidas
-              {totalVencidos > 0 && (
-                <span 
-                  className="dot-vencidas-alert" 
-                  style={{
-                    display: 'inline-block',
-                    width: '6px',
-                    height: '6px',
-                    backgroundColor: '#ef4444',
-                    borderRadius: '50%',
-                    marginLeft: '6px',
-                    verticalAlign: 'middle'
-                  }}
-                  title="Há demandas vencidas que exigem atenção imediata"
-                />
-              )}
-            </h3>
+            <h3>Vencidas</h3>
             <div className="stat-number">{totalVencidos}</div>
           </div>
         </button>
       </div>
 
-      {/* Legenda Dinâmica de Urgência */}
-      <div className="stats-legend">
-        <i className="fa-solid fa-circle-info"></i>
+      {/* Legenda de Urgência */}
+      <div className="urgency-legend" role="status" aria-live="polite">
+        <i className={`fa-solid ${totalCriticas > 0 ? 'fa-triangle-exclamation' : 'fa-circle-check'}`}></i>
         <span>{legendaCriticas}</span>
       </div>
     </header>

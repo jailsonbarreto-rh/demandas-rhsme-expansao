@@ -18,7 +18,7 @@ export function BrandLogo({
           className="brand-symbol"
           viewBox="0 0 96 96"
           role="img"
-          aria-label="Símbolo Fluxo RH"
+          aria-label="Símbolo Fluxo CTRH"
         >
           <path
             d="M19 15C19 9.5 23.5 5 29 5h54c0 12.7-10.3 23-23 23H30c-6.1 0-11 4.9-11 11V15Z"
@@ -38,7 +38,7 @@ export function BrandLogo({
 
         {variant !== 'symbol' && (
           <div className="brand-copy">
-            <div className="brand-name">Fluxo RH</div>
+            <div className="brand-name">Fluxo CTRH</div>
             {variant === 'full' && (
               <div className="brand-tagline">Gestão inteligente de processos e pessoas</div>
             )}

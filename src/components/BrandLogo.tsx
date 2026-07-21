@@ -47,13 +47,12 @@ export function BrandLogo({
       </div>
 
       {showEndorsement && variant !== 'symbol' && (
-        <div className="brand-endorsement" aria-label="Prefeitura do Rio de Janeiro, Educação">
-          <span className="brand-endorsement-rio">
-            <small>PREFEITURA</small>
-            <strong>RIO</strong>
-          </span>
-          <span className="brand-endorsement-divider" aria-hidden="true" />
-          <span className="brand-endorsement-education">Educação</span>
+        <div className="brand-endorsement">
+          <img
+            className="brand-endorsement-image"
+            src="/prefeitura-rio-educacao.svg"
+            alt="Prefeitura do Rio de Janeiro — Educação"
+          />
         </div>
       )}
     </div>

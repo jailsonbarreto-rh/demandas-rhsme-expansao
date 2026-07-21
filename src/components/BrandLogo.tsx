@@ -56,6 +56,8 @@ export function BrandLogo({
             className="brand-endorsement-image"
             src={endorsementSrc}
             alt="Prefeitura do Rio de Janeiro — Educação"
+            loading="eager"
+            decoding="sync"
           />
         </div>
       )}

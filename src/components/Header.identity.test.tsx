@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Header } from './Header';
 
-describe('Header — hierarquia da identidade do produto', () => {
-  it('apresenta Fluxo CTRH como marca, Central de Demandas como módulo e um título de página não redundante', () => {
+describe('Header — identidade única do produto', () => {
+  it('apresenta somente Fluxo RH como marca e não mantém o nome legado no cabeçalho', () => {
     render(
       <Header
         userEmail="servidor@rioeduca.net"
@@ -21,9 +21,9 @@ describe('Header — hierarquia da identidade do produto', () => {
       />,
     );
 
-    expect(screen.getByText('Fluxo CTRH')).toBeInTheDocument();
-    expect(screen.getByText('Central de Demandas')).toHaveClass('header-module-label');
+    expect(screen.getByText('Fluxo RH')).toBeInTheDocument();
+    expect(screen.queryByText('Fluxo CTRH')).not.toBeInTheDocument();
+    expect(screen.queryByText('Central de Demandas')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Painel de Demandas' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 1, name: 'Central de Demandas' })).not.toBeInTheDocument();
   });
 });

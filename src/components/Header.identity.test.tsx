@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Header } from './Header';
 
 describe('Header — identidade única do produto', () => {
-  it('apresenta somente Fluxo RH como marca e não mantém o nome legado no cabeçalho', () => {
+  it('apresenta somente Fluxo CTRH como marca e não mantém o nome legado no cabeçalho', () => {
     render(
       <Header
         userEmail="servidor@rioeduca.net"
@@ -21,8 +21,8 @@ describe('Header — identidade única do produto', () => {
       />,
     );
 
-    expect(screen.getByText('Fluxo RH')).toBeInTheDocument();
-    expect(screen.queryByText('Fluxo CTRH')).not.toBeInTheDocument();
+    expect(screen.getByText('Fluxo CTRH')).toBeInTheDocument();
+    expect(screen.queryByText('Fluxo RH')).not.toBeInTheDocument();
     expect(screen.queryByText('Central de Demandas')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Painel de Demandas' })).toBeInTheDocument();
   });

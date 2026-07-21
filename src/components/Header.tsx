@@ -77,12 +77,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="header-container">
-      {/* 1. Faixa institucional: marca do produto e módulo atual */}
+      {/* 1. Faixa institucional: marca única do produto */}
       <div className="institucional-bar">
         <div className="inst-left header-brand-row">
           <BrandLogo variant="compact" />
-          <span className="header-module-separator" aria-hidden="true">|</span>
-          <span className="header-module-label">Central de Demandas</span>
         </div>
         
         <div className="inst-right">

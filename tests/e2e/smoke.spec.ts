@@ -22,7 +22,7 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   });
 
   await page.goto('/');
-  await expect(page).toHaveTitle(/Central de Demandas/i);
+  await expect(page).toHaveTitle(/Fluxo CTRH/i);
   await expect(page.getByRole('button', { name: /acessar sistema/i })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 

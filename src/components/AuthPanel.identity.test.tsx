@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthPanel } from './AuthPanel';
 
 describe('AuthPanel — identidade única do produto', () => {
-  it('usa Fluxo RH como marca e elimina o nome legado da tela de acesso', () => {
+  it('usa Fluxo CTRH como marca e elimina o nome legado da tela de acesso', () => {
     render(
       <AuthPanel
         mode="supabase"
@@ -13,8 +13,8 @@ describe('AuthPanel — identidade única do produto', () => {
       />,
     );
 
-    expect(screen.getAllByText('Fluxo RH').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Fluxo CTRH')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Fluxo CTRH').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Fluxo RH')).not.toBeInTheDocument();
     expect(screen.queryByText('Central de Demandas')).not.toBeInTheDocument();
   });
 });

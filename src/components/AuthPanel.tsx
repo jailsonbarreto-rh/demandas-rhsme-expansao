@@ -8,6 +8,7 @@ import {
   type AccessRequestFormValues,
   type LoginFormValues,
 } from '../validation/authSchemas';
+import { BrandLogo } from './BrandLogo';
 import { FormError } from './ui/FormError';
 
 interface AuthPanelProps {
@@ -65,8 +66,12 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
     <div className="login-split-container">
       <div className="login-sidebar">
         <div className="login-sidebar-content">
-          <span className="sidebar-badge">CTRH • SME</span>
-          <h2>Central de Demandas</h2>
+          <BrandLogo
+            variant="full"
+            tone="inverse"
+            showEndorsement
+            className="login-brand-desktop"
+          />
           <p className="sidebar-description">
             Organização, acompanhamento e rastreabilidade das demandas de Recursos Humanos.
           </p>
@@ -101,8 +106,7 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
       <div className="login-form-area">
         <div className="login-card-editorial">
           <div className="login-mobile-brand">
-            <h2>Central de Demandas</h2>
-            <p>CTRH — Secretaria Municipal de Educação</p>
+            <BrandLogo variant="full" showEndorsement />
           </div>
 
           <div className="login-card-header">

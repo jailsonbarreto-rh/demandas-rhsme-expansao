@@ -11,6 +11,10 @@ export function BrandLogo({
   showEndorsement = false,
   className = '',
 }: BrandLogoProps) {
+  const endorsementSrc = tone === 'inverse'
+    ? '/prefeitura-rio-educacao-negativo.png'
+    : '/prefeitura-rio-educacao-positivo.png';
+
   return (
     <div className={`brand-lockup brand-lockup--${variant} brand-lockup--${tone} ${className}`.trim()}>
       <div className="brand-primary">
@@ -50,8 +54,10 @@ export function BrandLogo({
         <div className="brand-endorsement">
           <img
             className="brand-endorsement-image"
-            src="/prefeitura-rio-educacao.svg"
+            src={endorsementSrc}
             alt="Prefeitura do Rio de Janeiro — Educação"
+            loading="eager"
+            decoding="sync"
           />
         </div>
       )}

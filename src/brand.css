@@ -89,10 +89,10 @@
 
 .brand-lockup--inverse .brand-endorsement {
   width: fit-content;
-  padding: 0.6rem 0.75rem;
+  padding: 0;
   border: 0;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.96);
+  border-radius: 0;
+  background: transparent;
 }
 
 .login-brand-desktop {
@@ -109,6 +109,10 @@
 
 .login-brand-desktop .brand-endorsement {
   align-self: flex-start;
+}
+
+.login-brand-desktop .brand-endorsement-image {
+  width: min(18rem, 100%);
 }
 
 .login-mobile-brand {
@@ -132,18 +136,30 @@
   min-width: 0;
 }
 
+.header-brand-row .brand-lockup {
+  gap: 0;
+}
+
 .header-brand-row .brand-primary {
-  gap: 0.55rem;
+  gap: 0.6rem;
 }
 
 .header-brand-row .brand-symbol {
-  width: 2rem;
-  height: 2rem;
+  width: 2.35rem;
+  height: 2.35rem;
 }
 
 .header-brand-row .brand-name {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.35rem;
+}
+
+.header-brand-row .brand-tagline {
+  margin-top: 0.18rem;
+  font-size: 0.64rem;
+  line-height: 1.15;
+  color: #607286;
+  white-space: nowrap;
 }
 
 @media (max-width: 900px) {
@@ -170,5 +186,20 @@
 
   .header-brand-row {
     flex-wrap: nowrap;
+  }
+
+  .header-brand-row .brand-symbol {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  .header-brand-row .brand-name {
+    font-size: 1.2rem;
+  }
+
+  .header-brand-row .brand-tagline {
+    max-width: 15rem;
+    font-size: 0.58rem;
+    white-space: normal;
   }
 }

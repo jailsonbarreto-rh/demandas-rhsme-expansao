@@ -35,7 +35,9 @@ test('busca sem resultado exato apresenta sugestões próximas explicadas', asyn
   await search.fill('cessao erica 2099');
   await search.press('Enter');
 
-  await expect(page.getByRole('status')).toContainText(/nenhuma demanda contém todos os 3 termos/i);
+  await expect(page.locator('.approximate-search-notice')).toContainText(
+    /nenhuma demanda contém todos os 3 termos/i,
+  );
   await expect(page.getByText(/2 de 3 termos/i).first()).toBeVisible();
   await expect(page.locator('.approximate-missing-terms').first()).toContainText('Termo ausente: 2099');
   await expect(page.getByRole('button', { name: '000184.002702/2026-64', exact: true })).toBeVisible();

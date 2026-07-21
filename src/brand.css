@@ -169,12 +169,154 @@
   color: #c8d3df;
 }
 
+/* Aplicação visual da marca sem alterar a estrutura dos componentes existentes */
+.login-sidebar-content::before {
+  content: '';
+  display: block;
+  width: min(390px, 82%);
+  height: 104px;
+  margin-bottom: 28px;
+  background: url('/fluxo-ctrh-symbol.svg') left center / 78px 78px no-repeat;
+}
+
+.login-sidebar-content h2 {
+  font-size: 0;
+  margin-top: -104px;
+  margin-left: 98px;
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #fff;
+}
+
+.login-sidebar-content h2::before {
+  content: 'Fluxo CTRH';
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.login-sidebar-content h2::after {
+  content: 'Gestão inteligente de processos e pessoas';
+  margin-top: 8px;
+  max-width: 340px;
+  font-family: var(--font-family);
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: #b8c7d8;
+  letter-spacing: 0;
+}
+
+.login-sidebar-content .sidebar-badge {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 238px;
+  height: 61px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: url('/prefeitura-rio-educacao.svg') left center / contain no-repeat;
+  color: transparent;
+  overflow: hidden;
+}
+
+.login-sidebar-content .sidebar-description {
+  margin-top: 8px;
+}
+
+.login-mobile-brand {
+  position: relative;
+  padding-top: 82px;
+}
+
+.login-mobile-brand::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  transform: translateX(-50%);
+  background: url('/fluxo-ctrh-symbol.svg') center / contain no-repeat;
+}
+
+.login-mobile-brand h2 {
+  font-size: 0 !important;
+}
+
+.login-mobile-brand h2::before {
+  content: 'Fluxo CTRH';
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.25rem;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.login-mobile-brand p {
+  font-size: 0 !important;
+  margin-top: 8px !important;
+}
+
+.login-mobile-brand p::before {
+  content: 'Gestão inteligente de processos e pessoas';
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.login-mobile-brand p::after {
+  content: '';
+  display: block;
+  width: 190px;
+  height: 48px;
+  margin: 14px auto 0;
+  background: url('/prefeitura-rio-educacao.svg') center / contain no-repeat;
+}
+
+.inst-orgao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0 !important;
+}
+
+.inst-orgao::before {
+  content: '';
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  background: url('/fluxo-ctrh-symbol.svg') center / contain no-repeat;
+}
+
+.inst-orgao::after {
+  content: 'Fluxo CTRH';
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.18rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #17324d;
+}
+
+.inst-sub {
+  font-size: 0 !important;
+}
+
+.inst-sub::after {
+  content: 'Central de Demandas';
+  font-size: 0.78rem;
+  color: #687b8d;
+  font-weight: 600;
+}
+
 @media (max-width: 900px) {
   .login-brand-desktop {
     display: none;
   }
 
-  .login-mobile-brand {
+  .login-brand-mobile {
     display: none !important;
   }
 
@@ -206,5 +348,18 @@
   .header-module-label {
     flex-basis: 100%;
     padding-left: 2.55rem;
+  }
+
+  .inst-left {
+    align-items: flex-start;
+  }
+
+  .inst-orgao::before {
+    width: 34px;
+    height: 34px;
+  }
+
+  .inst-orgao::after {
+    font-size: 1.34rem;
   }
 }

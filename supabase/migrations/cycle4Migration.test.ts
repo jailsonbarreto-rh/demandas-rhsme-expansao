@@ -4,10 +4,19 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const migrationsDir = dirname(fileURLToPath(import.meta.url));
-const migrationPath = resolve(migrationsDir, '20260722110000_central_trabalho_mutations.sql');
-const sql = existsSync(migrationPath)
-  ? readFileSync(migrationPath, 'utf8').replace(/\r\n/g, '\n').toLowerCase()
-  : '';
+const migrationFiles = [
+  '20260722123530_cycle4_helpers_and_create_v2.sql',
+  '20260722123627_cycle4_edit_demand.sql',
+  '20260722123713_cycle4_progress_and_status.sql',
+  '20260722123920_cycle4_admin_restore_and_grants.sql',
+] as const;
+const migrationPaths = migrationFiles.map((file) => resolve(migrationsDir, file));
+const sql = migrationPaths
+  .filter(existsSync)
+  .map((path) => readFileSync(path, 'utf8'))
+  .join('\n')
+  .replace(/\r\n/g, '\n')
+  .toLowerCase();
 
 const requiredRpcs = [
   'criar_sme_demanda_v2',
@@ -20,8 +29,8 @@ const requiredRpcs = [
 ] as const;
 
 describe('Ciclo 4 — mutações transacionais', () => {
-  it('versiona a migration das mutações auditáveis', () => {
-    expect(existsSync(migrationPath)).toBe(true);
+  it('versiona as quatro migrations auditáveis registradas no banco remoto', () => {
+    expect(migrationPaths.every(existsSync)).toBe(true);
   });
 
   it('cria todas as RPCs obrigatórias com autoria no banco', () => {

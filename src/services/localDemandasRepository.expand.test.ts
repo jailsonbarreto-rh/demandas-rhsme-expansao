@@ -17,8 +17,8 @@ class MemoryStorage {
 describe('LocalDemandasRepository — contrato expandido', () => {
   it('mantém as fixtures sintéticas completas para o novo domínio', () => {
     for (const demanda of demoDemandas) {
+      expect(demanda).toHaveProperty('responsavelId');
       expect(demanda).toEqual(expect.objectContaining({
-        responsavelId: expect.anything(),
         limite1Situacao: expect.stringMatching(/^(definido|nao_informado|nao_se_aplica)$/),
         limite1Justificativa: expect.any(String),
         limite2Situacao: expect.stringMatching(/^(definido|nao_informado|nao_se_aplica)$/),

@@ -3,7 +3,7 @@
   "git": {
     "deploymentEnabled": {
       "*": false,
-      "feat/expandir-modelo-central-trabalho-ciclo-3": true
+      "main": true
     }
   },
   "rewrites": [

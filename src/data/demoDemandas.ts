@@ -17,6 +17,9 @@ function createDemoDemanda(input: DemoInput): Demanda {
     proximaAcaoEm: input.proximaAcaoEm ?? '',
     linkOrigem: '',
     origem: 'sistema',
+    deletedAt: '',
+    deletedBy: null,
+    deletionReason: '',
     createdAt: input.createdAt ?? '2026-07-01T12:00:00Z',
     updatedAt: input.updatedAt ?? '2026-07-20T12:00:00Z',
   };

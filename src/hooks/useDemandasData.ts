@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { AppUser, ComentarioHistorico, Demanda } from '../types';
+import type {
+  AppUser,
+  ComentarioHistorico,
+  Demanda,
+  LegacyCreateDemandaInput,
+} from '../types';
 import type { DemandasRepository } from '../services/contracts';
 
 export function useDemandasData(
@@ -69,7 +74,7 @@ export function useDemandasData(
 
   return {
     demandas, historico, loading, error, reload,
-    create: (input: Omit<Demanda, 'id'>) => mutate(() => repository.create(input)),
+    create: (input: LegacyCreateDemandaInput) => mutate(() => repository.create(input)),
     update: (id: number, changes: Partial<Demanda>) => mutate(() => repository.update(id, changes)),
     updateStatus: (id: number, status: Demanda['status'], comentario: string) =>
       mutate(() => repository.updateStatus(id, status, comentario)),

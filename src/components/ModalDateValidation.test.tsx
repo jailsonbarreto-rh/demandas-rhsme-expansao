@@ -15,6 +15,8 @@ const demanda = createDemandFixture({
   status: 'Aguardando Andamento',
   setor: 'E/CTRH',
   classificacao: 'Outros',
+  proximaAcao: 'Conferir documentação recebida',
+  proximaAcaoEm: '20/08/2026',
 });
 
 function fillRequiredNewDemandFields() {
@@ -23,6 +25,8 @@ function fillRequiredNewDemandFields() {
   fireEvent.change(screen.getByLabelText('Assunto'), { target: { value: 'Nova demanda' } });
   fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'Aguardando Andamento' } });
   fireEvent.change(screen.getByLabelText('Selecione a classificação'), { target: { value: 'Outros' } });
+  fireEvent.change(screen.getByLabelText('Próxima ação'), { target: { value: 'Conferir documentação recebida' } });
+  fireEvent.change(screen.getByLabelText('Data de acompanhamento'), { target: { value: '20/08/2026' } });
 }
 
 describe('validação de datas nos modais', () => {
@@ -36,7 +40,7 @@ describe('validação de datas nos modais', () => {
     const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
     render(<ModalNovo onClose={vi.fn()} onSalvar={onSalvar} />);
     fillRequiredNewDemandFields();
-    fireEvent.change(screen.getByLabelText('Limite 1'), { target: { value: '12/07' } });
+    fireEvent.change(screen.getByLabelText('Prazo interno'), { target: { value: '12/07' } });
 
     fireEvent.submit(screen.getByRole('button', { name: /^salvar$/i }).closest('form')!);
 
@@ -49,7 +53,7 @@ describe('validação de datas nos modais', () => {
     const onSalvar = vi.fn();
     render(<ModalNovo onClose={vi.fn()} onSalvar={onSalvar} />);
     fillRequiredNewDemandFields();
-    fireEvent.change(screen.getByLabelText('Limite 2'), { target: { value: '31/02/2026' } });
+    fireEvent.change(screen.getByLabelText('Prazo final'), { target: { value: '31/02/2026' } });
 
     fireEvent.submit(screen.getByRole('button', { name: /^salvar$/i }).closest('form')!);
 
@@ -57,25 +61,30 @@ describe('validação de datas nos modais', () => {
     expect(onSalvar).not.toHaveBeenCalled();
   });
 
-  it('permite criar demanda com datas válidas', async () => {
+  it('permite criar demanda com datas válidas e próxima ação', async () => {
     const onSalvar = vi.fn();
     render(<ModalNovo onClose={vi.fn()} onSalvar={onSalvar} />);
     fillRequiredNewDemandFields();
-    fireEvent.change(screen.getByLabelText('Limite 1'), { target: { value: '12/07/2026' } });
-    fireEvent.change(screen.getByLabelText('Limite 2'), { target: { value: '30/07/2026' } });
+    fireEvent.change(screen.getByLabelText('Prazo interno'), { target: { value: '12/07/2026' } });
+    fireEvent.change(screen.getByLabelText('Prazo final'), { target: { value: '30/07/2026' } });
 
     fireEvent.submit(screen.getByRole('button', { name: /^salvar$/i }).closest('form')!);
 
     await waitFor(() => expect(onSalvar).toHaveBeenCalledWith(expect.objectContaining({
       limite1: '12/07/2026',
       limite2: '30/07/2026',
+      proximaAcao: 'Conferir documentação recebida',
+      proximaAcaoEm: '20/08/2026',
     })));
   });
 
-  it('valida datas também na edição', async () => {
+  it('valida datas também na edição auditável', async () => {
     const onSalvar = vi.fn();
     render(<ModalEditar demanda={demanda} onClose={vi.fn()} onSalvar={onSalvar} />);
-    fireEvent.change(screen.getByLabelText('Limite 2'), { target: { value: '31/04/2026' } });
+    fireEvent.change(screen.getByLabelText('Prazo final'), { target: { value: '31/04/2026' } });
+    fireEvent.change(screen.getByLabelText('Justificativa da edição'), {
+      target: { value: 'Correção confirmada na conferência documental' },
+    });
 
     fireEvent.submit(screen.getByRole('button', { name: /salvar alterações/i }).closest('form')!);
 

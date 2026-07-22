@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDemandFixture } from '../test/expandedFixtures';
@@ -16,6 +16,8 @@ const base = createDemandFixture({
   status: 'Tramitado',
   setor: 'CTRH',
   classificacao: 'Outros',
+  proximaAcao: 'Verificar retorno da unidade',
+  proximaAcaoEm: '25/07/2026',
 });
 
 describe('experiência profissional de formulários e tabela', () => {
@@ -71,8 +73,8 @@ describe('experiência profissional de formulários e tabela', () => {
     expect(screen.getByText(/11–12 de 12 resultados/i)).toBeVisible();
   });
 
-  it('usa confirmação institucional antes de excluir', async () => {
-    const onExcluir = vi.fn();
+  it('solicita motivo e preservação institucional antes da exclusão lógica', async () => {
+    const onExcluir = vi.fn().mockResolvedValue(undefined);
     render(
       <DemandasTable
         demandas={[base]}
@@ -88,8 +90,12 @@ describe('experiência profissional de formulários e tabela', () => {
     await user.click(screen.getByRole('menuitem', { name: /excluir/i }));
 
     expect(screen.getByRole('alertdialog')).toBeVisible();
-    expect(screen.getByText(/essa ação não poderá ser desfeita/i)).toBeVisible();
-    await user.click(screen.getByRole('button', { name: /excluir demanda/i }));
-    expect(onExcluir).toHaveBeenCalledWith(base.id);
+    expect(screen.getByText(/continuará preservada na lixeira e no histórico/i)).toBeVisible();
+    await user.type(screen.getByLabelText('Motivo da exclusão'), 'Registro duplicado confirmado na conferência');
+    await user.click(screen.getByRole('button', { name: /excluir da carteira/i }));
+
+    await waitFor(() => expect(onExcluir).toHaveBeenCalledWith(base.id, {
+      motivo: 'Registro duplicado confirmado na conferência',
+    }));
   });
 });

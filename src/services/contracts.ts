@@ -2,6 +2,7 @@ import type {
   AppUser,
   ComentarioHistorico,
   Demanda,
+  LegacyCreateDemandaInput,
   PerfilUsuario,
 } from '../types';
 
@@ -12,7 +13,7 @@ export interface AppData {
 
 export interface DemandasRepository {
   load(): Promise<AppData>;
-  create(input: Omit<Demanda, 'id'>): Promise<void>;
+  create(input: LegacyCreateDemandaInput): Promise<void>;
   update(id: number, changes: Partial<Demanda>): Promise<void>;
   updateStatus(
     id: number,

@@ -32,7 +32,7 @@ jobs:
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v2
         with:
-          version: 2.101.0
+          version: latest
           github-token: ${{ github.token }}
 
       - name: Ensure PostgreSQL client is available
@@ -70,4 +70,4 @@ jobs:
 
       - name: Stop ephemeral Supabase
         if: always()
-        run: supabase stop --no-backup
+        run: supabase stop --no-backup || true

@@ -1,6 +1,6 @@
 import type { ComentarioHistorico, Demanda } from '../types';
 
-export type PeriodField = 'limite1' | 'limite2' | 'historico';
+export type PeriodField = 'limite1' | 'limite2' | 'historico' | 'proxima_acao';
 
 export interface PeriodFilter {
   field: PeriodField;
@@ -65,6 +65,8 @@ export function matchesPeriod(
         return value !== null && isWithinRange(value, start, end);
       });
   }
+
+  if (filter.field === 'proxima_acao') return false;
 
   const value = parseRecordDate(demanda[filter.field]);
   return value !== null && isWithinRange(value, start, end);

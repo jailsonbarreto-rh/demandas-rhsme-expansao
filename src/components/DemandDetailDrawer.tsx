@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import type { ComentarioHistorico, Demanda } from '../types';
 import { getPrazoFinalSemantics } from '../utils/date';
+import { isClosed } from '../domain/workSemantics';
 
 interface DemandDetailDrawerProps {
   demanda: Demanda | null;
@@ -106,7 +107,7 @@ export function DemandDetailDrawer({
                         <MetaLabel>Prazo Final</MetaLabel>
                         <div className="prazo-final-container drawer-prazo">
                           <span className="value strong-value">{prazo.data}</span>
-                          {prazo.label && demanda.status !== 'Encerrado' && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}
+                          {prazo.label && !isClosed(demanda) && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}
                         </div>
                       </div>
                     </div>

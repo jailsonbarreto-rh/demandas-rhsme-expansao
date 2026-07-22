@@ -1,7 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-test.use({ reducedMotion: 'reduce' });
+test.beforeEach(async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+});
 
 async function expectAccessible(page: Page, context: string, include?: string) {
   // Aguarda as transições funcionais terminarem para auditar o estado visual estável.
@@ -24,6 +26,8 @@ async function login(page: Page) {
 
 test('login e solicitação de acesso não apresentam violações críticas de acessibilidade', async ({ page }) => {
   await page.goto('/');
+  expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+  await expect(page.locator('.login-card-editorial')).toHaveCSS('animation-name', 'none');
   await expectAccessible(page, 'login');
 
   await page.getByRole('button', { name: /primeiro acesso/i }).click();

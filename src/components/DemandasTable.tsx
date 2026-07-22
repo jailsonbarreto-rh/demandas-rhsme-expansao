@@ -13,6 +13,7 @@ import type { Demanda } from '../types';
 import type { DemandSearchField, DemandSearchMatch } from '../search/searchTypes';
 import { HighlightedText } from '../search/searchHighlight';
 import { getPrazoFinalSemantics } from '../utils/date';
+import { isClosed } from '../domain/workSemantics';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 
 interface DemandasTableProps {
@@ -214,7 +215,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         return (
           <div className="prazo-final-container">
             <span className="prazo-final-data">{prazo.data}</span>
-            {prazo.label && row.original.status !== 'Encerrado' && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}
+            {prazo.label && !isClosed(row.original) && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}
           </div>
         );
       },

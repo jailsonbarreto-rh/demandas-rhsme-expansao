@@ -1,5 +1,6 @@
 import React from 'react';
 import { Demanda, ComentarioHistorico } from '../types';
+import { isInFollowUp } from '../domain/workSemantics';
 
 interface AtencaoImediataProps {
   demandas: Demanda[];
@@ -82,8 +83,8 @@ export const AtencaoImediata: React.FC<AtencaoImediataProps> = ({
 
     const hojeStr = getTodayStr();
 
-    // Filtra demandas que não estão encerradas
-    const demandasAtivas = demandas.filter(d => d.status !== 'Encerrado');
+    // Filtra demandas que continuam no acompanhamento operacional.
+    const demandasAtivas = demandas.filter(isInFollowUp);
 
     // 1. Processo vencido mais antigo
     const vencidos = demandasAtivas.filter(d => {

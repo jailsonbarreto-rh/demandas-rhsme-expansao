@@ -12,7 +12,7 @@ describe('Header — identidade única do produto', () => {
         onOpenNovo={vi.fn()}
         onExportExcel={vi.fn()}
         filtrosAtivos={{
-          status: 'Somente ativos (padrão)',
+          status: 'acompanhamento',
           quickFilters: { assinatura: false, hoje: false, vencido: false },
         }}
         onToggleFiltroStatus={vi.fn()}
@@ -26,5 +26,7 @@ describe('Header — identidade única do produto', () => {
     expect(screen.queryByText('Fluxo RH')).not.toBeInTheDocument();
     expect(screen.queryByText('Central de Demandas')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Painel de Demandas' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /em acompanhamento/i })).toBeInTheDocument();
+    expect(screen.queryByText('Demandas Ativas')).not.toBeInTheDocument();
   });
 });

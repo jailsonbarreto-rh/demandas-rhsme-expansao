@@ -2519,6 +2519,9 @@ h1, h2, h3, h4 {
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
+  .login-card-editorial {
+    animation: none !important;
+  }
   .skeleton-block::after,
   .skeleton-row::after {
     animation: none !important;

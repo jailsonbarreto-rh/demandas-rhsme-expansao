@@ -93,6 +93,19 @@ describe('navegação persistente', () => {
     render(<App />);
 
     expect(await screen.findByRole('button', { name: /^demandas$/i })).toHaveClass('active');
-    expect(await screen.findByLabelText(/^status$/i)).toHaveValue('Todos (exibir tudo)');
+    expect(await screen.findByLabelText(/^status$/i)).toHaveValue('todos');
+  });
+
+  it('migra a URL antiga de ativos e descarta parâmetro desconhecido', async () => {
+    localStorage.setItem('demandas_user', 'teste@rioeduca.net');
+    window.history.replaceState(
+      {},
+      '',
+      '/demandas?status=Somente%20ativos%20%28padr%C3%A3o%29&comando=ignorar',
+    );
+    render(<App />);
+
+    expect(await screen.findByLabelText(/^status$/i)).toHaveValue('acompanhamento');
+    await waitFor(() => expect(new URL(window.location.href).searchParams.has('comando')).toBe(false));
   });
 });

@@ -1,29 +1,18 @@
 import React from 'react';
 import { classificacaoValues } from '../constants/demandaOptions';
-import type { PeriodField } from '../search/periodFilter';
-
-interface FiltrosState {
-  busca: string;
-  tipo: string;
-  classificacao: string;
-  status: string;
-  setor: string;
-  periodoCampo: PeriodField;
-  periodoInicio: string;
-  periodoFim: string;
-}
-
-interface QuickFiltersState {
-  assinatura: boolean;
-  hoje: boolean;
-  vencido: boolean;
-}
+import {
+  DEFAULT_DEMAND_FILTERS,
+  DEFAULT_QUICK_FILTERS,
+  type DemandFilters,
+  type QuickFilters,
+} from '../filters/filterTypes';
+import type { DemandStatus } from '../types';
 
 interface FilterPanelProps {
-  filtros: FiltrosState;
-  setFiltros: React.Dispatch<React.SetStateAction<FiltrosState>>;
-  quickFilters: QuickFiltersState;
-  setQuickFilters: React.Dispatch<React.SetStateAction<QuickFiltersState>>;
+  filtros: DemandFilters;
+  setFiltros: React.Dispatch<React.SetStateAction<DemandFilters>>;
+  quickFilters: QuickFilters;
+  setQuickFilters: React.Dispatch<React.SetStateAction<QuickFilters>>;
   setoresDisponiveis: string[];
   totalExibidos: number;
   totalGeral: number;
@@ -49,7 +38,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   periodError = null,
 }) => {
   const [maisFiltrosAberto, setMaisFiltrosAberto] = React.useState(
-    () => Boolean((filtros.periodoInicio ?? '') || (filtros.periodoFim ?? '')),
+    () => Boolean(filtros.periodStart || filtros.periodEnd),
   );
   const [searchFocused, setSearchFocused] = React.useState(false);
   const blurTimerRef = React.useRef<number | null>(null);
@@ -60,35 +49,26 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
-    setFiltros((current) => ({ ...current, [name]: value }));
+    setFiltros((current) => ({ ...current, [name as keyof DemandFilters]: value }));
   };
 
-  const toggleQuickFilter = (key: keyof QuickFiltersState) => {
+  const toggleQuickFilter = (key: keyof QuickFilters) => {
     setQuickFilters((current) => ({ ...current, [key]: !current[key] }));
   };
 
   const handleLimparFiltros = () => {
-    setFiltros({
-      busca: '',
-      tipo: 'Todos',
-      classificacao: 'Todas',
-      status: 'Somente ativos (padrão)',
-      setor: 'Todos',
-      periodoCampo: 'limite2',
-      periodoInicio: '',
-      periodoFim: '',
-    });
-    setQuickFilters({ assinatura: false, hoje: false, vencido: false });
+    setFiltros({ ...DEFAULT_DEMAND_FILTERS });
+    setQuickFilters({ ...DEFAULT_QUICK_FILTERS });
   };
 
   const commitSearch = (query: string) => {
     const cleanQuery = query.trim().replace(/\s+/g, ' ');
     if (!cleanQuery) return;
-    setFiltros((current) => ({ ...current, busca: cleanQuery }));
+    setFiltros((current) => ({ ...current, query: cleanQuery }));
     onCommitSearch?.(cleanQuery);
   };
 
-  const statusList = [
+  const statusList: DemandStatus[] = [
     'Aguardando Andamento',
     'Tramitado',
     'Para Assinatura',
@@ -98,17 +78,17 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   ];
 
   let filtrosAtivosCount = 0;
-  if (filtros.busca.trim()) filtrosAtivosCount += 1;
-  if (filtros.tipo !== 'Todos') filtrosAtivosCount += 1;
-  if (filtros.classificacao !== 'Todas') filtrosAtivosCount += 1;
-  if (filtros.status !== 'Somente ativos (padrão)') filtrosAtivosCount += 1;
-  if (filtros.setor !== 'Todos') filtrosAtivosCount += 1;
-  if ((filtros.periodoInicio ?? '') || (filtros.periodoFim ?? '')) filtrosAtivosCount += 1;
+  if (filtros.query.trim()) filtrosAtivosCount += 1;
+  if (filtros.type !== 'Todos') filtrosAtivosCount += 1;
+  if (filtros.classification !== 'Todas') filtrosAtivosCount += 1;
+  if (filtros.status !== 'acompanhamento') filtrosAtivosCount += 1;
+  if (filtros.sector !== 'Todos') filtrosAtivosCount += 1;
+  if (filtros.periodStart || filtros.periodEnd) filtrosAtivosCount += 1;
   if (quickFilters.assinatura) filtrosAtivosCount += 1;
   if (quickFilters.hoje) filtrosAtivosCount += 1;
   if (quickFilters.vencido) filtrosAtivosCount += 1;
 
-  const showRecentSearches = searchFocused && !filtros.busca.trim() && recentSearches.length > 0;
+  const showRecentSearches = searchFocused && !filtros.query.trim() && recentSearches.length > 0;
 
   return (
     <div className="filters-panel">
@@ -155,10 +135,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               role="combobox"
               aria-autocomplete="list"
               id="busca"
-              name="busca"
+              name="query"
               className="form-control"
               placeholder="Número, assunto, responsável, setor, classificação ou histórico..."
-              value={filtros.busca}
+              value={filtros.query}
               autoComplete="off"
               aria-describedby="busca-ajuda"
               aria-expanded={showRecentSearches}
@@ -171,13 +151,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               onBlur={() => {
                 blurTimerRef.current = window.setTimeout(() => {
                   setSearchFocused(false);
-                  if (filtros.busca.trim()) onCommitSearch?.(filtros.busca.trim());
+                  if (filtros.query.trim()) onCommitSearch?.(filtros.query.trim());
                 }, 120);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   event.preventDefault();
-                  commitSearch(filtros.busca);
+                  commitSearch(filtros.query);
                 }
                 if (event.key === 'Escape') setSearchFocused(false);
               }}
@@ -227,8 +207,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             value={filtros.status}
             onChange={handleInputChange}
           >
-            <option value="Somente ativos (padrão)">Somente ativos (padrão)</option>
-            <option value="Todos (exibir tudo)">Todos (exibir tudo)</option>
+            <option value="acompanhamento">Somente ativos (padrão)</option>
+            <option value="providencia_ctrh">Com providência CTRH</option>
+            <option value="todos">Todos (exibir tudo)</option>
             {statusList.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
         </div>
@@ -254,7 +235,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           <div className="more-filters-grid">
             <div className="filter-group">
               <label htmlFor="tipo">Tipo</label>
-              <select id="tipo" name="tipo" className="form-select" value={filtros.tipo} onChange={handleInputChange}>
+              <select id="tipo" name="type" className="form-select" value={filtros.type} onChange={handleInputChange}>
                 <option value="Todos">Todos</option>
                 <option value="Expediente">Expediente</option>
                 <option value="Processo">Processo</option>
@@ -266,9 +247,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <label htmlFor="classificacao">Classificação</label>
               <select
                 id="classificacao"
-                name="classificacao"
+                name="classification"
                 className="form-select"
-                value={filtros.classificacao}
+                value={filtros.classification}
                 onChange={handleInputChange}
               >
                 <option value="Todas">Todas</option>
@@ -280,7 +261,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
             <div className="filter-group">
               <label htmlFor="setor">Setor</label>
-              <select id="setor" name="setor" className="form-select" value={filtros.setor} onChange={handleInputChange}>
+              <select id="setor" name="sector" className="form-select" value={filtros.sector} onChange={handleInputChange}>
                 <option value="Todos">Todos</option>
                 {setoresDisponiveis.map((setor) => <option key={setor} value={setor}>{setor}</option>)}
               </select>
@@ -290,9 +271,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <label htmlFor="periodoCampo">Campo de data</label>
               <select
                 id="periodoCampo"
-                name="periodoCampo"
+                name="periodField"
                 className="form-select"
-                value={filtros.periodoCampo ?? 'limite2'}
+                value={filtros.periodField}
                 onChange={handleInputChange}
               >
                 <option value="limite1">Prazo interno</option>
@@ -305,10 +286,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <label htmlFor="periodoInicio">Data inicial</label>
               <input
                 id="periodoInicio"
-                name="periodoInicio"
+                name="periodStart"
                 type="date"
                 className={`form-control ${periodError ? 'field-invalid' : ''}`}
-                value={filtros.periodoInicio ?? ''}
+                value={filtros.periodStart}
                 onChange={handleInputChange}
                 aria-invalid={Boolean(periodError)}
                 aria-describedby={periodError ? 'periodo-error' : undefined}
@@ -319,10 +300,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <label htmlFor="periodoFim">Data final</label>
               <input
                 id="periodoFim"
-                name="periodoFim"
+                name="periodEnd"
                 type="date"
                 className={`form-control ${periodError ? 'field-invalid' : ''}`}
-                value={filtros.periodoFim ?? ''}
+                value={filtros.periodEnd}
                 onChange={handleInputChange}
                 aria-invalid={Boolean(periodError)}
                 aria-describedby={periodError ? 'periodo-error' : undefined}

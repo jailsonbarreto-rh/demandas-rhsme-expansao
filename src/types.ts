@@ -1,3 +1,11 @@
+export type DemandStatus =
+  | 'Aguardando Andamento'
+  | 'Tramitado'
+  | 'Para Assinatura'
+  | 'Encerrado'
+  | 'Sobrestado'
+  | 'Ajustar';
+
 export interface Demanda {
   id: number;
   numero: string;
@@ -6,7 +14,7 @@ export interface Demanda {
   responsavel: string;
   limite1: string; // dd/mm/aaaa ou vazio
   limite2: string; // dd/mm/aaaa ou vazio
-  status: 'Aguardando Andamento' | 'Tramitado' | 'Para Assinatura' | 'Encerrado' | 'Sobrestado' | 'Ajustar';
+  status: DemandStatus;
   setor: string;
   classificacao: string;
 }

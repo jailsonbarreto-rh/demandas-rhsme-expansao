@@ -24,8 +24,11 @@ jobs:
       SUPABASE_TELEMETRY_DISABLED: '1'
       LOCAL_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       CYCLE3_MIGRATION: supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
-      CYCLE4_MIGRATION: supabase/migrations/20260722110000_central_trabalho_mutations.sql
-      CYCLE4_HARDENING: supabase/migrations/20260722120000_block_physical_demand_delete.sql
+      CYCLE4_CREATE: supabase/migrations/20260722123530_cycle4_helpers_and_create_v2.sql
+      CYCLE4_EDIT: supabase/migrations/20260722123627_cycle4_edit_demand.sql
+      CYCLE4_PROGRESS: supabase/migrations/20260722123713_cycle4_progress_and_status.sql
+      CYCLE4_ADMIN: supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
+      CYCLE4_HARDENING: supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
 
     steps:
       - name: Checkout repository
@@ -50,10 +53,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/cycle3-migration /tmp/cycle4-migration
+          mkdir -p /tmp/cycle3-migration /tmp/cycle4-migrations
           mv "$CYCLE3_MIGRATION" /tmp/cycle3-migration/
-          mv "$CYCLE4_MIGRATION" /tmp/cycle4-migration/
-          mv "$CYCLE4_HARDENING" /tmp/cycle4-migration/
+          mv "$CYCLE4_CREATE" /tmp/cycle4-migrations/
+          mv "$CYCLE4_EDIT" /tmp/cycle4-migrations/
+          mv "$CYCLE4_PROGRESS" /tmp/cycle4-migrations/
+          mv "$CYCLE4_ADMIN" /tmp/cycle4-migrations/
+          mv "$CYCLE4_HARDENING" /tmp/cycle4-migrations/
           supabase db start
 
       - name: Insert synthetic Cycle 3 legacy fixture
@@ -74,8 +80,11 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mv /tmp/cycle4-migration/20260722110000_central_trabalho_mutations.sql "$CYCLE4_MIGRATION"
-          mv /tmp/cycle4-migration/20260722120000_block_physical_demand_delete.sql "$CYCLE4_HARDENING"
+          mv /tmp/cycle4-migrations/20260722123530_cycle4_helpers_and_create_v2.sql "$CYCLE4_CREATE"
+          mv /tmp/cycle4-migrations/20260722123627_cycle4_edit_demand.sql "$CYCLE4_EDIT"
+          mv /tmp/cycle4-migrations/20260722123713_cycle4_progress_and_status.sql "$CYCLE4_PROGRESS"
+          mv /tmp/cycle4-migrations/20260722123920_cycle4_admin_restore_and_grants.sql "$CYCLE4_ADMIN"
+          mv /tmp/cycle4-migrations/20260722123935_cycle4_block_direct_writes.sql "$CYCLE4_HARDENING"
           supabase migration up --local 2>&1 | tee cycle4-migration-report.txt
 
       - name: Validate Cycle 4 roles, transactions and logical deletion
@@ -94,8 +103,11 @@ jobs:
             cycle4-migration-report.txt
             cycle4-invariants-report.txt
             cycle4-physical-delete-report.txt
-            supabase/migrations/20260722110000_central_trabalho_mutations.sql
-            supabase/migrations/20260722120000_block_physical_demand_delete.sql
+            supabase/migrations/20260722123530_cycle4_helpers_and_create_v2.sql
+            supabase/migrations/20260722123627_cycle4_edit_demand.sql
+            supabase/migrations/20260722123713_cycle4_progress_and_status.sql
+            supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
+            supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
           if-no-files-found: warn
           retention-days: 14
 

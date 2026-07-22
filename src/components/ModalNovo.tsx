@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { LegacyCreateDemandaInput } from '../types';
 import { demandaFormSchema, type DemandaFormValues, statusValues, tipoValues } from '../validation/demandaSchemas';
 import { DateMaskInput } from './DateMaskInput';
 import { AppDialog } from './ui/AppDialog';
@@ -9,13 +8,9 @@ import { ConfirmDialog } from './ui/ConfirmDialog';
 import { FormError } from './ui/FormError';
 import { classificacaoValues } from '../constants/demandaOptions';
 
-type SaveNewDemandHandler = {
-  bivarianceHack(demanda: LegacyCreateDemandaInput): void | Promise<void>;
-}['bivarianceHack'];
-
 interface ModalNovoProps {
   onClose: () => void;
-  onSalvar: SaveNewDemandHandler;
+  onSalvar: (demanda: DemandaFormValues) => void | Promise<void>;
 }
 
 export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
@@ -37,6 +32,8 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
       status: undefined,
       setor: '',
       classificacao: '',
+      proximaAcao: '',
+      proximaAcaoEm: '',
     },
   });
 
@@ -109,7 +106,7 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
                 render={({ field, fieldState }) => (
                   <DateMaskInput
                     id="novo-limite1"
-                    label="Limite 1"
+                    label="Prazo interno"
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
@@ -124,7 +121,7 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
                 render={({ field, fieldState }) => (
                   <DateMaskInput
                     id="novo-limite2"
-                    label="Limite 2"
+                    label="Prazo final"
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
@@ -167,6 +164,34 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
                 <label htmlFor="novo-classificacao">Selecione a classificação</label>
                 <FormError id="novo-classificacao-error" message={errors.classificacao?.message} />
               </div>
+
+              <div className="input-container-floating col-full">
+                <textarea
+                  id="novo-proxima-acao"
+                  placeholder=" "
+                  {...register('proximaAcao')}
+                  className={errors.proximaAcao ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.proximaAcao)}
+                  aria-describedby={errors.proximaAcao ? 'novo-proxima-acao-error' : undefined}
+                />
+                <label htmlFor="novo-proxima-acao">Próxima ação</label>
+                <FormError id="novo-proxima-acao-error" message={errors.proximaAcao?.message} />
+              </div>
+
+              <Controller
+                name="proximaAcaoEm"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DateMaskInput
+                    id="novo-proxima-acao-em"
+                    label="Data de acompanhamento"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
             </div>
           </div>
 

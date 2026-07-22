@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Demanda } from '../types';
 import { DEFAULT_DEMAND_FILTERS } from '../filters/filterTypes';
+import { createDemandFixture } from '../test/expandedFixtures';
 import {
   buildExcelAnalytics,
   describeActiveFilters,
@@ -8,7 +8,7 @@ import {
   sanitizeExcelText,
 } from './excelAnalytics';
 
-const base: Demanda = {
+const base = createDemandFixture({
   id: 1,
   numero: 'SME-PRO-2026/00001',
   tipo: 'Processo',
@@ -19,7 +19,7 @@ const base: Demanda = {
   status: 'Aguardando Andamento',
   setor: 'CTRH',
   classificacao: 'Administrativa',
-};
+});
 
 describe('excelAnalytics', () => {
   it('protege textos que o Excel poderia interpretar como fórmula', () => {
@@ -38,13 +38,13 @@ describe('excelAnalytics', () => {
 
   it('calcula indicadores, distribuições, ranking e prazos sem tratar encerradas como vencidas', () => {
     const now = new Date(2026, 6, 16, 12, 0, 0);
-    const demandas: Demanda[] = [
-      { ...base, id: 1, responsavel: 'Ana', limite2: '15/07/2026' },
-      { ...base, id: 2, responsavel: 'Ana', tipo: 'Expediente', status: 'Para Assinatura', limite2: '16/07/2026' },
-      { ...base, id: 3, responsavel: 'Bruno', setor: 'GAD', limite2: '20/07/2026' },
-      { ...base, id: 4, responsavel: '', status: 'Encerrado', limite2: '01/07/2026' },
-      { ...base, id: 5, responsavel: 'Carla', limite2: '' },
-      { ...base, id: 6, responsavel: 'Bruno', limite2: '10/08/2026' },
+    const demandas = [
+      { ...base, id: 1, responsavel: 'Ana', limite2: '15/07/2026', limite2Situacao: 'definido' as const },
+      { ...base, id: 2, responsavel: 'Ana', tipo: 'Expediente' as const, status: 'Para Assinatura' as const, limite2: '16/07/2026', limite2Situacao: 'definido' as const },
+      { ...base, id: 3, responsavel: 'Bruno', setor: 'GAD', limite2: '20/07/2026', limite2Situacao: 'definido' as const },
+      { ...base, id: 4, responsavel: '', status: 'Encerrado' as const, limite2: '01/07/2026', limite2Situacao: 'definido' as const },
+      { ...base, id: 5, responsavel: 'Carla', limite2: '', limite2Situacao: 'nao_informado' as const },
+      { ...base, id: 6, responsavel: 'Bruno', limite2: '10/08/2026', limite2Situacao: 'definido' as const },
     ];
 
     const result = buildExcelAnalytics(demandas, now);

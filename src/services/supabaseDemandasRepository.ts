@@ -84,8 +84,8 @@ export class SupabaseDemandasRepository implements DemandasRepository {
     ]);
 
     return {
-      demandas: demandasResult.data as DemandaRow[] | null,
-      historico: historicoResult.data as HistoricoRow[] | null,
+      demandas: demandasResult.data as unknown as DemandaRow[] | null,
+      historico: historicoResult.data as unknown as HistoricoRow[] | null,
       demandasError: demandasResult.error,
       historicoError: historicoResult.error,
     };
@@ -105,8 +105,8 @@ export class SupabaseDemandasRepository implements DemandasRepository {
     throwIfError(historicoResult.error);
 
     return {
-      demandas: ((demandasResult.data ?? []) as DemandaRow[]).map(toDemanda),
-      historico: ((historicoResult.data ?? []) as HistoricoRow[]).map(toHistorico),
+      demandas: ((demandasResult.data ?? []) as unknown as DemandaRow[]).map(toDemanda),
+      historico: ((historicoResult.data ?? []) as unknown as HistoricoRow[]).map(toHistorico),
     };
   }
 
@@ -137,7 +137,7 @@ export class SupabaseDemandasRepository implements DemandasRepository {
       .not('deleted_at', 'is', null)
       .order('deleted_at', { ascending: false });
     throwIfError(error);
-    return ((data ?? []) as DemandaRow[]).map(toDemanda);
+    return ((data ?? []) as unknown as DemandaRow[]).map(toDemanda);
   }
 
   async create(input: CreateDemandaInput | LegacyCreateDemandaInput): Promise<void> {

@@ -45,6 +45,21 @@ export interface Demanda {
   updatedAt: string; // ISO ou vazio em fixture legada
 }
 
+// Contrato temporário de compatibilidade com os formulários e RPCs v1.
+// O Ciclo 4 o substituirá pelos inputs de mutação auditáveis do Plano Mestre.
+export type LegacyCreateDemandaInput = Pick<
+  Demanda,
+  | 'numero'
+  | 'tipo'
+  | 'assunto'
+  | 'responsavel'
+  | 'limite1'
+  | 'limite2'
+  | 'status'
+  | 'setor'
+  | 'classificacao'
+>;
+
 export type HistoryEventType =
   | 'criacao'
   | 'andamento'

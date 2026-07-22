@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Demanda } from '../types';
+import type { LegacyCreateDemandaInput } from '../types';
 import { demandaFormSchema, type DemandaFormValues, statusValues, tipoValues } from '../validation/demandaSchemas';
 import { DateMaskInput } from './DateMaskInput';
 import { AppDialog } from './ui/AppDialog';
@@ -11,7 +11,7 @@ import { classificacaoValues } from '../constants/demandaOptions';
 
 interface ModalNovoProps {
   onClose: () => void;
-  onSalvar: (demanda: Omit<Demanda, 'id'>) => void | Promise<void>;
+  onSalvar: (demanda: LegacyCreateDemandaInput) => void | Promise<void>;
 }
 
 export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {

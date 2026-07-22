@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { ComentarioHistorico, Demanda, DemandStatus } from '../types';
+import type { DemandStatus } from '../types';
 import { matchDemandSearch } from '../search/demandSearch';
+import { createDemandFixture, createHistoryFixture } from '../test/expandedFixtures';
 import { applyDemandFilters } from './applyDemandFilters';
 import { DEFAULT_DEMAND_FILTERS, type DemandFilters } from './filterTypes';
-
-type FilterableDemanda = Demanda & {
-  responsavelId?: string | null;
-  proximaAcaoEm?: string;
-};
 
 const statuses: DemandStatus[] = [
   'Aguardando Andamento',
@@ -18,7 +14,7 @@ const statuses: DemandStatus[] = [
   'Ajustar',
 ];
 
-const demandas: FilterableDemanda[] = statuses.map((status, index) => ({
+const demandas = statuses.map((status, index) => createDemandFixture({
   id: index + 1,
   numero: `DEMO-${index + 1}`,
   tipo: index % 2 === 0 ? 'Processo' : 'Expediente',
@@ -33,14 +29,14 @@ const demandas: FilterableDemanda[] = statuses.map((status, index) => ({
   classificacao: index === 0 ? 'Cessão' : 'Outros',
 }));
 
-const historico: ComentarioHistorico[] = [{
+const historico = [createHistoryFixture({
   id: 1,
   demandaId: 2,
   data_hora: '15/07/2026 09:00:00',
   status_novo: 'Tramitado',
   setor: 'CTRH',
   comentario: 'Cobrança de retorno registrada',
-}];
+})];
 
 function filters(patch: Partial<DemandFilters>): DemandFilters {
   return { ...DEFAULT_DEMAND_FILTERS, ...patch };
@@ -76,7 +72,7 @@ describe('applyDemandFilters', () => {
   });
 
   it('usa exclusivamente UUID no escopo pessoal, sem aproximar pelo nome', () => {
-    const sameNameWithoutId: FilterableDemanda = {
+    const sameNameWithoutId = {
       ...demandas[1],
       id: 20,
       responsavel: 'Usuário Demonstração A',

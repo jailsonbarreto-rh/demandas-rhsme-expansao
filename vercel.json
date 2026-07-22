@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": {
+      "*": false,
+      "feat/expandir-modelo-central-trabalho-ciclo-3": true
+    }
   },
   "rewrites": [
     { "source": "/demandas", "destination": "/index.html" },

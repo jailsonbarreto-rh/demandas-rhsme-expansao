@@ -6,7 +6,7 @@ const novaDemanda: Omit<Demanda, 'id'> = {
   numero: 'SME-001', tipo: 'Processo', assunto: 'Teste', responsavel: 'Pessoa',
   limite1: '12/07/2026', limite2: '', status: 'Aguardando Andamento',
   setor: 'E/CTRH', classificacao: 'Diversos',
-};
+} as Omit<Demanda, 'id'>;
 
 function createClient() {
   const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
@@ -22,25 +22,113 @@ function createClient() {
 }
 
 describe('SupabaseDemandasRepository', () => {
-  it('carrega demandas e histórico em ordem decrescente', async () => {
+  it('carrega o modelo expandido e exclui registros logicamente removidos', async () => {
     const demandasOrder = vi.fn().mockResolvedValue({ data: [{
       id: 7, numero: 'SME-007', tipo: 'Processo', assunto: 'Assunto', responsavel: '',
-      limite1: '2026-07-12', limite2: null, status: 'Tramitado', setor: 'CTRH', classificacao: '',
+      responsavel_id: null,
+      limite1: '2026-07-12', limite1_situacao: 'definido', limite1_justificativa: null,
+      limite2: null, limite2_situacao: 'nao_informado', limite2_justificativa: null,
+      proxima_acao: '', proxima_acao_em: null, link_origem: '', origem: 'legado',
+      status: 'Tramitado', setor: 'CTRH', classificacao: '', deleted_at: null,
+      created_at: '2026-07-01T10:00:00Z', updated_at: '2026-07-12T12:00:00Z',
     }], error: null });
+    const demandasIs = vi.fn(() => ({ order: demandasOrder }));
+    const demandasSelect = vi.fn(() => ({ is: demandasIs, order: demandasOrder }));
+
     const historyOrder = vi.fn().mockResolvedValue({ data: [{
-      id: 2, demanda_id: 7, status_novo: 'Tramitado', setor: 'CTRH',
-      comentario: 'Movimentado', created_at: '2026-07-12T12:00:00Z',
+      id: 2, demanda_id: 7, tipo_evento: 'mudanca_status', status_anterior: null,
+      status_novo: 'Tramitado', setor: 'CTRH', comentario: 'Movimentado',
+      alteracoes: [], created_by: null, created_at: '2026-07-12T12:00:00Z',
     }], error: null });
+    const historySelect = vi.fn(() => ({ order: historyOrder }));
+
     const client = { from: vi.fn((table: string) => ({
-      select: vi.fn(() => ({ order: table === 'sme_demandas' ? demandasOrder : historyOrder })),
+      select: table === 'sme_demandas' ? demandasSelect : historySelect,
     })) };
 
     const data = await new SupabaseDemandasRepository(client as never).load();
 
+    expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('responsavel_id'));
+    expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('created_at'));
+    expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('updated_at'));
+    expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('deleted_at'));
+    expect(demandasIs).toHaveBeenCalledWith('deleted_at', null);
+    expect(historySelect).toHaveBeenCalledWith(expect.stringContaining('tipo_evento'));
+    expect(historySelect).toHaveBeenCalledWith(expect.stringContaining('alteracoes'));
     expect(demandasOrder).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(historyOrder).toHaveBeenCalledWith('created_at', { ascending: false });
-    expect(data.demandas[0]).toEqual(expect.objectContaining({ id: 7, limite1: '12/07/2026' }));
-    expect(data.historico[0]).toEqual(expect.objectContaining({ demandaId: 7 }));
+    expect(data.demandas[0]).toEqual(expect.objectContaining({
+      id: 7,
+      limite1: '12/07/2026',
+      responsavelId: null,
+      origem: 'legado',
+      createdAt: '2026-07-01T10:00:00Z',
+      updatedAt: '2026-07-12T12:00:00Z',
+    }));
+    expect(data.historico[0]).toEqual(expect.objectContaining({
+      demandaId: 7,
+      tipoEvento: 'mudanca_status',
+      alteracoes: [],
+    }));
+  });
+
+  it('recua para o contrato legado quando o schema expandido ainda não está disponível', async () => {
+    const demandaSelectCalls: string[] = [];
+    const historySelectCalls: string[] = [];
+
+    const legacyDemandas = [{
+      id: 8, numero: 'SME-008', tipo: 'Processo', assunto: 'Legado', responsavel: '',
+      limite1: null, limite2: null, status: 'Aguardando Andamento', setor: 'CTRH', classificacao: '',
+    }];
+    const legacyHistory = [{
+      id: 3, demanda_id: 8, status_novo: 'Aguardando Andamento', setor: 'CTRH',
+      comentario: 'Criado', created_at: '2026-07-01T10:00:00Z',
+    }];
+
+    let demandAttempt = 0;
+    let historyAttempt = 0;
+    const client = {
+      from: vi.fn((table: string) => ({
+        select: vi.fn((columns: string) => {
+          if (table === 'sme_demandas') {
+            demandaSelectCalls.push(columns);
+            demandAttempt += 1;
+            const result = demandAttempt === 1
+              ? { data: null, error: { code: 'PGRST204', message: "Could not find the 'responsavel_id' column" } }
+              : { data: legacyDemandas, error: null };
+            return {
+              is: vi.fn(() => ({ order: vi.fn().mockResolvedValue(result) })),
+              order: vi.fn().mockResolvedValue(result),
+            };
+          }
+
+          historySelectCalls.push(columns);
+          historyAttempt += 1;
+          const result = historyAttempt === 1
+            ? { data: null, error: { code: 'PGRST204', message: "Could not find the 'tipo_evento' column" } }
+            : { data: legacyHistory, error: null };
+          return { order: vi.fn().mockResolvedValue(result) };
+        }),
+      })),
+    };
+
+    const data = await new SupabaseDemandasRepository(client as never).load();
+
+    expect(demandaSelectCalls).toHaveLength(2);
+    expect(historySelectCalls).toHaveLength(2);
+    expect(demandaSelectCalls[0]).toContain('responsavel_id');
+    expect(demandaSelectCalls[1]).not.toContain('responsavel_id');
+    expect(historySelectCalls[0]).toContain('tipo_evento');
+    expect(historySelectCalls[1]).not.toContain('tipo_evento');
+    expect(data.demandas[0]).toEqual(expect.objectContaining({
+      id: 8,
+      responsavelId: null,
+      origem: 'legado',
+    }));
+    expect(data.historico[0]).toEqual(expect.objectContaining({
+      demandaId: 8,
+      tipoEvento: 'mudanca_status',
+    }));
   });
 
   it('cria demanda pela RPC atômica com datas do banco', async () => {

@@ -9,7 +9,7 @@ const revokeAnonPath = resolve(migrationsDir, '20260713211616_revoke_anon_operat
 const indexesPath = resolve(migrationsDir, '20260713211703_add_foreign_key_indexes.sql');
 const batchImportPath = resolve(migrationsDir, '20260717002408_batch_import_audit_20260716.sql');
 const batchImportDomainFixPath = resolve(migrationsDir, '20260717003552_batch_import_allow_legacy_classifications.sql');
-const centralWorkExpandPath = resolve(migrationsDir, '20260722090000_central_trabalho_expand.sql');
+const centralWorkExpandPath = resolve(migrationsDir, '20260722101325_20260722090000_central_trabalho_expand.sql');
 
 const readSql = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n').toLowerCase();
 const readOptionalSql = (path: string) => existsSync(path) ? readSql(path) : '';

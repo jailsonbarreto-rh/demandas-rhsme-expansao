@@ -1,6 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../lib/database.types';
-import type { Demanda, LegacyCreateDemandaInput } from '../types';
+import type {
+  CreateDemandaInput,
+  DeleteDemandaInput,
+  Demanda,
+  EditDemandaInput,
+  LegacyCreateDemandaInput,
+  ProgressInput,
+  RestoreDemandaInput,
+  StatusTransitionInput,
+} from '../types';
 import type { AppData, DemandasRepository } from './contracts';
 import {
   toDatabaseDate,
@@ -10,7 +19,6 @@ import {
   type HistoricoRow,
 } from './dataMappers';
 
-type DemandaUpdate = Database['public']['Tables']['sme_demandas']['Update'];
 type QueryError = { code?: string; message: string } | null;
 
 const EXPANDED_DEMANDA_COLUMNS = [
@@ -45,6 +53,15 @@ function isMissingExpandedSchema(error: QueryError): boolean {
     || message.includes('could not find')
     || message.includes('does not exist')
     || message.includes('schema cache');
+}
+
+function isExpandedCreateInput(
+  input: CreateDemandaInput | LegacyCreateDemandaInput,
+): input is CreateDemandaInput {
+  return 'limite1Situacao' in input
+    && 'limite2Situacao' in input
+    && 'proximaAcao' in input
+    && 'proximaAcaoEm' in input;
 }
 
 export class SupabaseDemandasRepository implements DemandasRepository {
@@ -113,34 +130,116 @@ export class SupabaseDemandasRepository implements DemandasRepository {
     return { demandas: [], historico: [] };
   }
 
-  async create(input: LegacyCreateDemandaInput): Promise<void> {
-    const { error } = await this.client.rpc('criar_sme_demanda', {
+  async loadTrash(): Promise<Demanda[]> {
+    const { data, error } = await this.client
+      .from('sme_demandas')
+      .select(EXPANDED_DEMANDA_COLUMNS)
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false });
+    throwIfError(error);
+    return ((data ?? []) as DemandaRow[]).map(toDemanda);
+  }
+
+  async create(input: CreateDemandaInput | LegacyCreateDemandaInput): Promise<void> {
+    if (!isExpandedCreateInput(input)) {
+      const { error } = await this.client.rpc('criar_sme_demanda', {
+        p_numero: input.numero,
+        p_tipo: input.tipo,
+        p_assunto: input.assunto,
+        p_responsavel: input.responsavel,
+        p_limite1: toDatabaseDate(input.limite1),
+        p_limite2: toDatabaseDate(input.limite2),
+        p_status: input.status,
+        p_setor: input.setor,
+        p_classificacao: input.classificacao,
+      });
+      throwIfError(error);
+      return;
+    }
+
+    const { error } = await this.client.rpc('criar_sme_demanda_v2', {
       p_numero: input.numero,
       p_tipo: input.tipo,
       p_assunto: input.assunto,
+      p_responsavel_id: input.responsavelId,
       p_responsavel: input.responsavel,
       p_limite1: toDatabaseDate(input.limite1),
+      p_limite1_situacao: input.limite1Situacao,
+      p_limite1_justificativa: input.limite1Justificativa,
       p_limite2: toDatabaseDate(input.limite2),
+      p_limite2_situacao: input.limite2Situacao,
+      p_limite2_justificativa: input.limite2Justificativa,
+      p_proxima_acao: input.proximaAcao,
+      p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
       p_status: input.status,
       p_setor: input.setor,
       p_classificacao: input.classificacao,
+      p_link_origem: input.linkOrigem,
     });
     throwIfError(error);
   }
 
-  async update(id: number, changes: Partial<Demanda>): Promise<void> {
-    const payload: DemandaUpdate = {};
-    if (changes.numero !== undefined) payload.numero = changes.numero;
-    if (changes.tipo !== undefined) payload.tipo = changes.tipo;
-    if (changes.assunto !== undefined) payload.assunto = changes.assunto;
-    if (changes.responsavel !== undefined) payload.responsavel = changes.responsavel;
-    if (changes.limite1 !== undefined) payload.limite1 = toDatabaseDate(changes.limite1);
-    if (changes.limite2 !== undefined) payload.limite2 = toDatabaseDate(changes.limite2);
-    if (changes.setor !== undefined) payload.setor = changes.setor;
-    if (changes.classificacao !== undefined) payload.classificacao = changes.classificacao;
-
-    const { error } = await this.client.from('sme_demandas').update(payload).eq('id', id);
+  async edit(id: number, input: EditDemandaInput): Promise<void> {
+    const { error } = await this.client.rpc('editar_sme_demanda', {
+      p_demanda_id: id,
+      p_assunto: input.assunto,
+      p_responsavel_id: input.responsavelId,
+      p_responsavel: input.responsavel,
+      p_limite1: toDatabaseDate(input.limite1),
+      p_limite1_situacao: input.limite1Situacao,
+      p_limite1_justificativa: input.limite1Justificativa,
+      p_limite2: toDatabaseDate(input.limite2),
+      p_limite2_situacao: input.limite2Situacao,
+      p_limite2_justificativa: input.limite2Justificativa,
+      p_setor: input.setor,
+      p_classificacao: input.classificacao,
+      p_link_origem: input.linkOrigem,
+      p_proxima_acao: input.proximaAcao,
+      p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
+      p_justificativa: input.justificativa,
+    });
     throwIfError(error);
+  }
+
+  async registerProgress(id: number, input: ProgressInput): Promise<void> {
+    const { error } = await this.client.rpc('registrar_andamento_sme_demanda', {
+      p_demanda_id: id,
+      p_comentario: input.comentario,
+      p_proxima_acao: input.proximaAcao,
+      p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm) ?? '',
+    });
+    throwIfError(error);
+  }
+
+  async transitionStatus(id: number, input: StatusTransitionInput): Promise<void> {
+    const { error } = await this.client.rpc('transicionar_status_sme_demanda', {
+      p_demanda_id: id,
+      p_novo_status: input.status,
+      p_comentario: input.comentario,
+      p_proxima_acao: input.proximaAcao,
+      p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
+    });
+    throwIfError(error);
+  }
+
+  async deleteLogically(id: number, input: DeleteDemandaInput): Promise<void> {
+    const { error } = await this.client.rpc('excluir_sme_demanda', {
+      p_demanda_id: id,
+      p_motivo: input.motivo,
+    });
+    throwIfError(error);
+  }
+
+  async restore(id: number, input: RestoreDemandaInput): Promise<void> {
+    const { error } = await this.client.rpc('restaurar_sme_demanda', {
+      p_demanda_id: id,
+      p_motivo: input.motivo,
+    });
+    throwIfError(error);
+  }
+
+  async update(_id: number, _changes: Partial<Demanda>): Promise<void> {
+    throw new Error('A edição genérica foi descontinuada. Use a edição auditável com justificativa.');
   }
 
   async updateStatus(id: number, status: Demanda['status'], comentario: string): Promise<void> {
@@ -152,9 +251,8 @@ export class SupabaseDemandasRepository implements DemandasRepository {
     throwIfError(error);
   }
 
-  async delete(id: number): Promise<void> {
-    const { error } = await this.client.from('sme_demandas').delete().eq('id', id);
-    throwIfError(error);
+  async delete(_id: number): Promise<void> {
+    throw new Error('A exclusão exige motivo explícito. Use a exclusão lógica auditável.');
   }
 
   subscribe(onRemoteChange: () => void): () => void {

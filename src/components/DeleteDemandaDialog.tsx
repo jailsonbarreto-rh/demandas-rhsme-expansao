@@ -60,7 +60,6 @@ export function DeleteDemandaDialog({
                     {...register('motivo')}
                     aria-invalid={Boolean(errors.motivo)}
                     aria-describedby={errors.motivo ? 'delete-demanda-motivo-error' : undefined}
-                    autoFocus
                   />
                   <FormError id="delete-demanda-motivo-error" message={errors.motivo?.message} />
                 </div>

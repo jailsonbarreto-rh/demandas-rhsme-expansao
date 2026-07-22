@@ -28,14 +28,14 @@ export interface Demanda {
   assunto: string;
   responsavel: string;
   responsavelId: string | null;
-  limite1: string; // dd/mm/aaaa ou vazio
+  limite1: string;
   limite1Situacao: DeadlineState;
   limite1Justificativa: string;
-  limite2: string; // dd/mm/aaaa ou vazio
+  limite2: string;
   limite2Situacao: DeadlineState;
   limite2Justificativa: string;
   proximaAcao: string;
-  proximaAcaoEm: string; // dd/mm/aaaa ou vazio
+  proximaAcaoEm: string;
   linkOrigem: string;
   status: DemandStatus;
   setor: string;
@@ -44,13 +44,10 @@ export interface Demanda {
   deletedAt: string;
   deletedBy: string | null;
   deletionReason: string;
-  createdAt: string; // ISO ou vazio em fixture legada
-  updatedAt: string; // ISO ou vazio em fixture legada
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Contrato temporário de compatibilidade com formulários anteriores aos campos
-// de próxima ação e responsabilidade vinculada. Novos fluxos devem usar
-// CreateDemandaInput e os métodos nomeados do repositório.
 export type LegacyCreateDemandaInput = Pick<
   Demanda,
   | 'numero'
@@ -64,7 +61,7 @@ export type LegacyCreateDemandaInput = Pick<
   | 'classificacao'
 >;
 
-export interface CreateDemandaInput extends Omit<
+export type CreateDemandaInput = Omit<
   Demanda,
   | 'id'
   | 'createdAt'
@@ -73,7 +70,7 @@ export interface CreateDemandaInput extends Omit<
   | 'deletedAt'
   | 'deletedBy'
   | 'deletionReason'
-> {}
+>;
 
 export interface EditDemandaInput {
   assunto: string;
@@ -130,7 +127,7 @@ export interface FieldChange {
 export interface ComentarioHistorico {
   id: number;
   demandaId: number;
-  data_hora: string; // dd/mm/aaaa hh:mm:ss ou ISO
+  data_hora: string;
   tipoEvento: HistoryEventType;
   status_anterior: DemandStatus | '';
   status_novo: DemandStatus;

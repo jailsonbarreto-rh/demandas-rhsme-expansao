@@ -11,7 +11,7 @@ import { FormError } from './ui/FormError';
 interface ModalEditarProps {
   demanda: Demanda;
   onClose: () => void;
-  onSalvar: (demandaId: number, camposAlterados: Partial<Demanda>) => void | boolean | Promise<void | boolean>;
+  onSalvar: (demandaId: number, values: EditarDemandaValues) => void | boolean | Promise<void | boolean>;
 }
 
 export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSalvar }) => {
@@ -29,6 +29,9 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSa
       limite1: demanda.limite1 || '',
       limite2: demanda.limite2 || '',
       setor: demanda.setor || '',
+      proximaAcao: demanda.proximaAcao || '',
+      proximaAcaoEm: demanda.proximaAcaoEm || '',
+      justificativa: '',
     },
   });
 
@@ -80,20 +83,56 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSa
                 name="limite1"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <DateMaskInput id="edit_limite1" label="Limite 1" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
+                  <DateMaskInput id="edit_limite1" label="Prazo interno" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
                 )}
               />
               <Controller
                 name="limite2"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <DateMaskInput id="edit_limite2" label="Limite 2" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
+                  <DateMaskInput id="edit_limite2" label="Prazo final" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
                 )}
               />
 
               <div className="input-container-floating col-full">
                 <input type="text" id="edit_setor" placeholder=" " {...register('setor')} />
                 <label htmlFor="edit_setor">Setor</label>
+              </div>
+
+              {demanda.status !== 'Encerrado' && (
+                <>
+                  <div className="input-container-floating col-full">
+                    <textarea
+                      id="edit_proxima_acao"
+                      placeholder=" "
+                      {...register('proximaAcao')}
+                      className={errors.proximaAcao ? 'field-invalid' : ''}
+                      aria-invalid={Boolean(errors.proximaAcao)}
+                    />
+                    <label htmlFor="edit_proxima_acao">Próxima ação</label>
+                    <FormError message={errors.proximaAcao?.message} />
+                  </div>
+                  <Controller
+                    name="proximaAcaoEm"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <DateMaskInput id="edit_proxima_acao_em" label="Data de acompanhamento" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
+                    )}
+                  />
+                </>
+              )}
+
+              <div className="input-container-floating col-full">
+                <textarea
+                  id="edit_justificativa"
+                  placeholder=" "
+                  {...register('justificativa')}
+                  className={errors.justificativa ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.justificativa)}
+                  aria-describedby={errors.justificativa ? 'edit-justificativa-error' : undefined}
+                />
+                <label htmlFor="edit_justificativa">Justificativa da edição</label>
+                <FormError id="edit-justificativa-error" message={errors.justificativa?.message} />
               </div>
             </div>
           </div>

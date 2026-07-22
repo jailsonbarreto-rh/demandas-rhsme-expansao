@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { demoDemandas as initialDemandas } from '../data/demoDemandas';
-import type { ComentarioHistorico, Demanda } from '../types';
+import type {
+  ComentarioHistorico,
+  Demanda,
+  LegacyCreateDemandaInput,
+} from '../types';
 import { LocalDemandasRepository } from './localDemandasRepository';
 
 class MemoryStorage implements Storage {
@@ -35,7 +39,7 @@ class MemoryStorage implements Storage {
   }
 }
 
-const novaDemanda: Omit<Demanda, 'id'> = {
+const novaDemanda: LegacyCreateDemandaInput = {
   numero: 'SME-PRO-2026/99999',
   tipo: 'Processo',
   assunto: 'Nova demanda',
@@ -52,9 +56,14 @@ function makeHistory(demandas: Demanda[], comentario = 'Histórico preservado'):
     id: demanda.id,
     demandaId: demanda.id,
     data_hora: '01/01/2026, 10:00:00',
+    tipoEvento: 'criacao',
+    status_anterior: '',
     status_novo: demanda.status,
     setor: demanda.setor,
     comentario,
+    autorId: null,
+    autorNome: 'Usuário Demonstração',
+    alteracoes: [],
   }));
 }
 
@@ -104,7 +113,7 @@ describe('LocalDemandasRepository', () => {
   it('redefine para fallback se os dados locais estiverem corrompidos (JSON inválido)', async () => {
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
-    
+
     storage.setItem('demandas_data', '{invalid json}');
     storage.setItem('demandas_history', '{invalid json}');
     const repository = new LocalDemandasRepository(storage, initialDemandas);
@@ -127,10 +136,16 @@ describe('LocalDemandasRepository', () => {
     const demandas = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
     const historico = JSON.parse(storage.getItem('demandas_history')!) as ComentarioHistorico[];
     const nextId = Math.max(...initialDemandas.map((demanda) => demanda.id)) + 1;
-    expect(demandas[0]).toMatchObject({ id: nextId, numero: novaDemanda.numero });
+    expect(demandas[0]).toMatchObject({
+      id: nextId,
+      numero: novaDemanda.numero,
+      origem: 'sistema',
+      limite2Situacao: 'definido',
+    });
     expect(demandas[1]).toEqual(initialDemandas[0]);
     expect(historico[0]).toMatchObject({
       demandaId: nextId,
+      tipoEvento: 'criacao',
       comentario: 'Demanda cadastrada no sistema.',
       status_novo: novaDemanda.status,
       setor: novaDemanda.setor,
@@ -185,6 +200,8 @@ describe('LocalDemandasRepository', () => {
     expect(data.demandas[2]).toMatchObject({ id: target.id, status: 'Encerrado' });
     expect(data.historico[0]).toMatchObject({
       demandaId: target.id,
+      tipoEvento: 'mudanca_status',
+      status_anterior: target.status,
       status_novo: 'Encerrado',
       setor: target.setor,
       comentario: 'Providência concluída.',
@@ -213,7 +230,7 @@ describe('LocalDemandasRepository', () => {
 
     await expect(repository.create({
       ...novaDemanda,
-      numero: initialDemandas[0].numero // número já existente
+      numero: initialDemandas[0].numero,
     })).rejects.toThrow('Já existe uma demanda cadastrada com este número de processo.');
   });
 
@@ -235,15 +252,13 @@ describe('LocalDemandasRepository', () => {
 
   it('redefine dados locais se o array lido possuir chaves ou tipos estruturais inválidos', async () => {
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    
-    // Salva estrutura que é JSON válido mas possui chaves incorretas
+
     storage.setItem('demandas_data', JSON.stringify([{ id: 'texto_em_vez_de_numero', numero: '' }]));
     storage.setItem('demandas_history', JSON.stringify([]));
 
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     const data = await repository.load();
 
-    // Deve carregar fallback consistente sem bloquear a interface.
     expect(data.demandas).toEqual(initialDemandas);
     expect(warning).toHaveBeenCalledTimes(1);
 

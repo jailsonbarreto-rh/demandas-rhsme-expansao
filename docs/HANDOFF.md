@@ -1,113 +1,111 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-22 — Ciclo 3 concluído em banco, GitHub e Production**
+Atualizado em: **2026-07-22 — Ciclo 4 concluído em banco, GitHub e Production**
 
 ## Estado final
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| PR do Ciclo 3 | `#40` — mesclado |
-| Merge | `d219ee73092337e28c95ccd4985f6f5502360963` |
-| Commit operacional de Production | `ec3646316eb25f3d1e6760760f9d6e1b7012d0d1` |
-| Commit atual da `main` | `31a763c23e6904f85baa0b7d16b0252c02b7f7aa` antes deste fechamento documental |
+| PR do Ciclo 4 | `#41` — mesclado |
+| Merge | `91c18b4ce6ff99ac1bf8c7e803e1b917fb718e91` |
+| Commit operacional de Production | `f7af6cbc4df61495bb2519e60ed9dcf227a4ae70` |
+| Commit de restauração do bloqueio | `4b8ba28c46dd6a22a990a75b3e65573601b30d7c` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Deployment do Ciclo 3 | `dpl_EhWSfdubeVoouFbgNQA446UNVXAV` — `READY` |
+| Deployment do Ciclo 4 | `dpl_7UirrHm6KwzqpvSH3KFevXmvnrtk` — `READY` |
 | Bloqueio automático | restaurado |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, saudável |
-| Migration | aplicada, homologada e alinhada ao histórico remoto |
-| Próximo ciclo | Ciclo 4 autorizado |
+| Migrations do Ciclo 4 | aplicadas, homologadas e alinhadas ao histórico remoto |
+| Próximo ciclo | Ciclo 5 autorizado |
 
-O domínio principal responde HTTP 200 e serve o frontend do Ciclo 3. O banco contém o schema expandido e preserva 379 demandas, 385 históricos e 5 perfis.
+O domínio principal responde HTTP 200 e serve o frontend do Ciclo 4. O banco preserva 379 demandas, 385 históricos e 5 perfis; nenhum registro de homologação permaneceu.
 
-## Ciclo 3 — entrega
+## Ciclo 4 — entrega
 
-### Modelo de demandas
+### Operações auditáveis
 
-Foram acrescentados:
+Foram criadas RPCs nomeadas para:
 
-- `responsavel_id`;
-- `proxima_acao` e `proxima_acao_em`;
-- situação e justificativa dos dois prazos;
-- `link_origem` e `origem`;
-- `deleted_at`, `deleted_by` e `deletion_reason`.
+- `criar_sme_demanda_v2`;
+- `editar_sme_demanda`;
+- `registrar_andamento_sme_demanda`;
+- `transicionar_status_sme_demanda`;
+- `excluir_sme_demanda`;
+- `restaurar_sme_demanda`;
+- `listar_perfis_minimos`.
 
-### Modelo de histórico
+Todas as mutações:
 
-Foram acrescentados:
+- validam o papel do usuário no banco;
+- obtêm autoria por `auth.uid()`;
+- bloqueiam a demanda com `FOR UPDATE`;
+- atualizam demanda e histórico na mesma transação;
+- registram o tipo do evento e os campos efetivamente alterados;
+- não dependem de actor id informado pelo navegador.
 
-- `tipo_evento`;
-- `status_anterior`;
-- `alteracoes` em JSON.
+### Experiência do usuário
 
-### Regras aplicadas ao legado
+- demanda ativa exige próxima ação e data de acompanhamento;
+- edição exige justificativa;
+- andamento pode ser registrado sem inventar uma troca de status;
+- transição para o mesmo status é recusada e orienta o uso de andamento;
+- encerramento limpa próxima ação e data;
+- exclusão exige motivo e apenas oculta logicamente o registro;
+- restauração exige motivo e preserva a trilha;
+- busca, filtros, URL, Excel, Realtime, acessibilidade e responsividade foram preservados.
 
-- 379 registros anteriores classificados como `legado`;
-- data existente classificada como `definido`;
-- ausência de data classificada como `nao_informado`;
-- primeiro histórico de cada demanda classificado como `criacao`;
-- seis eventos posteriores classificados como `mudanca_status`;
-- nenhuma autoria, responsabilidade por UUID, justificativa ou status anterior inventado.
+### Exclusão lógica e segurança
 
-### Migration versionada
+A exclusão física deixou de ser uma rota operacional:
 
-```text
-supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
-```
+- `UPDATE` direto nos campos operacionais foi revogado de `authenticated`;
+- `DELETE` direto foi revogado de `authenticated`;
+- a política `editores atualizam demandas` foi removida;
+- a política `administradores ativos excluem demandas` foi removida;
+- exclusão e restauração ocorrem somente pelas RPCs auditáveis;
+- leitores continuam sem permissão de mutação.
 
-O prefixo corresponde à versão registrada pelo Supabase remoto. A migration é aditiva e não remove colunas, funções, grants ou RPCs.
+As APIs v1 permanecem disponíveis temporariamente apenas para compatibilidade, conforme o Plano Mestre. Novos fluxos usam os contratos v2.
 
-## Decisão sem custo adicional
-
-O responsável pelo produto recusou a branch Supabase paga de US$ 0,01344 por hora.
-
-A decisão foi registrada no `ADR-004` e substituída por Supabase efêmero no GitHub Actions. O gate:
-
-1. aplicou as migrations anteriores;
-2. inseriu fixture sintética legada;
-3. aplicou o Ciclo 3;
-4. validou snapshots, backfill, constraints, índices e RPCs v1;
-5. reaplicou a cadeia completa do zero;
-6. destruiu o ambiente.
-
-Nenhum dado real, credencial remota ou recurso pago foi usado.
-
-## Salvaguarda do plano gratuito
-
-Antes da expansão, a migration criou:
+## Migrations versionadas
 
 ```text
-private.cycle3_backup_sme_demandas_20260722
-private.cycle3_backup_sme_historico_20260722
-private.cycle3_backup_perfis_usuarios_20260722
-private.cycle3_backup_manifest_20260722
+supabase/migrations/20260722123530_cycle4_helpers_and_create_v2.sql
+supabase/migrations/20260722123627_cycle4_edit_demand.sql
+supabase/migrations/20260722123713_cycle4_progress_and_status.sql
+supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
+supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
 ```
 
-O manifesto preserva 379 demandas, 385 históricos e 5 perfis. `anon` e `authenticated` não possuem acesso.
-
-Esses snapshots reduzem o risco específico da migration, mas não substituem backup externo contra perda total do projeto. Remover somente por migration posterior após estabilidade confirmada.
+Os prefixos correspondem às versões registradas pelo Supabase remoto. A migration originalmente combinada foi dividida sem alterar seu conteúdo funcional, eliminando drift entre repositório e banco.
 
 ## Evidências finais
 
 ### Aplicação
 
 - instalação pelo lockfile: PASS;
-- auditoria e assinaturas: PASS;
+- auditoria de vulnerabilidades: PASS;
+- assinaturas e proveniência: PASS;
 - lint: PASS;
-- 204 testes: PASS;
-- build e orçamento: PASS;
-- scanner do bundle: PASS;
-- Playwright desktop/mobile: PASS.
+- 221 testes unitários e de integração: PASS;
+- build e orçamento do bundle: PASS;
+- Playwright desktop/mobile: PASS;
+- Preview do SHA final: `READY`, HTTP 200.
 
-### Banco efêmero
+### Supabase efêmero
 
-- aplicação sobre dados legados: PASS;
-- snapshots e manifesto: PASS;
-- backfill: PASS;
-- constraints e índices: PASS;
-- RPCs v1: PASS;
-- replay completo do zero: PASS;
-- destruição do ambiente: PASS.
+- migrations anteriores aplicadas: PASS;
+- usuários sintéticos inseridos: PASS;
+- cinco migrations do Ciclo 4 aplicadas: PASS;
+- editor cria, edita, registra andamento e transiciona: PASS;
+- editor não exclui nem restaura: PASS;
+- administrador exclui e restaura: PASS;
+- autoria por `auth.uid()`: PASS;
+- rollback da mutação quando o histórico falha: PASS;
+- concorrência simples: PASS;
+- `UPDATE` e `DELETE` diretos recusados: PASS;
+- replay completo da cadeia do zero: PASS;
+- ambiente destruído: PASS.
 
 ### Produção
 
@@ -118,41 +116,50 @@ Esses snapshots reduzem o risco específico da migration, mas não substituem ba
 | Perfis | 5 |
 | Duplicidades | 0 |
 | Históricos órfãos | 0 |
-| Origens `legado` | 379 |
-| Prazo interno definido / não informado | 10 / 369 |
-| Prazo final definido / não informado | 25 / 354 |
-| Eventos criação / posteriores | 379 / 6 |
-| Status anteriores inferidos | 0 |
-| Exclusões lógicas | 0 |
-| Checks `NOT VALID` | 5 |
-| Índices do Ciclo 3 | 4 |
+| Exclusões lógicas preexistentes | 0 |
+| RPCs do Ciclo 4 | 7 |
+| Privilégio direto de `UPDATE` | não |
+| Privilégio direto de `DELETE` | não |
+| Políticas físicas antigas | ausentes |
 
-As RPCs v1 foram testadas em transação revertida. Nenhum registro de teste permaneceu no banco.
+O smoke transacional em produção executou criação, edição, andamento, transição, exclusão e restauração. Confirmou autoria, sequência de eventos e bloqueio das escritas diretas. O `ROLLBACK` deixou zero registros de teste e preservou as contagens 379/385/5.
 
-## Compatibilidade e rollback
+## Advisories
 
-- o frontend lê o schema expandido;
-- registros logicamente excluídos ficam fora da carteira;
-- mappers fornecem defaults para linhas antigas;
-- as RPCs v1 permanecem operacionais até o Ciclo 4;
-- busca, filtros, Excel, Realtime, rotas e papéis foram preservados.
+O linter do Supabase informa que as RPCs `SECURITY DEFINER` são executáveis por `authenticated`. Isso é intencional: as funções possuem `search_path` vazio, grants explícitos e validação interna de perfil ativo, editor ou administrador.
 
-Em incidente:
+Permanecem avisos anteriores, não criados pelo Ciclo 4:
 
-- manter schema e snapshots;
-- reverter para o deployment estável anterior;
-- não apagar dados, colunas ou histórico;
-- corrigir o banco somente por nova migration versionada.
+- tabelas privadas de importação com RLS e sem políticas, porque não são acessíveis pelos papéis do aplicativo;
+- proteção contra senhas vazadas desativada no Supabase Auth.
+
+## Rollback
+
+Em incidente de frontend:
+
+- manter RPCs, schema e histórico;
+- reverter para o deployment estável do Ciclo 3;
+- não reabrir escrita direta;
+- não apagar eventos de auditoria.
+
+Em incidente de banco, corrigir somente por nova migration versionada.
 
 ## Próximo ciclo autorizado
 
-**Ciclo 4 — Mutações transacionais, autoria e exclusão lógica.**
+**Ciclo 5 — Responsável vinculado ao login e Minhas demandas.**
 
-Objetivo: criar RPCs v2 auditáveis, registrar autoria por `auth.uid()`, impedir exclusão física e manter compatibilidade durante a transição.
+Objetivo: substituir a dependência de texto livre por identidade de perfil, preservando responsáveis externos e históricos. O ciclo deverá implementar:
+
+- seleção explícita entre responsável interno, externo e não atribuído;
+- carteira “Minhas demandas” baseada em UUID;
+- filtro por responsável com URL compartilhável;
+- relatório de mapeamento do legado;
+- aplicação somente de correspondências aprovadas, nunca de sugestões automáticas ambíguas.
 
 ## Histórico resumido
 
 - **Ciclo 0:** contexto, decisões e linha de base;
 - **Ciclo 1:** retirada dos dados reais do bundle público;
 - **Ciclo 2:** semântica única e filtros tipados;
-- **Ciclo 3:** expansão aditiva, homologação sem custo, aplicação segura e publicação em Production.
+- **Ciclo 3:** expansão aditiva do modelo e aplicação segura;
+- **Ciclo 4:** mutações auditáveis, autoria, andamento, exclusão lógica e bloqueio de escritas diretas.

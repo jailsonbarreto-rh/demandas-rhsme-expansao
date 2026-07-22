@@ -1,15 +1,15 @@
 # Supabase e operação multiusuário
 
-O projeto Supabase de homologação/produção da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, na região `sa-east-1`.
+O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, na região `sa-east-1`.
 
-A aplicação mantém dois modos com limites explícitos:
+A aplicação mantém dois modos:
 
-- `supabase`: persistência compartilhada, autenticação real, RLS e atualização Realtime;
-- `local`: ambiente de desenvolvimento/teste com oito demandas sintéticas; é recusado quando `PROD=true`.
+- `supabase`: persistência compartilhada, autenticação real, RLS e Realtime;
+- `local`: desenvolvimento e testes com oito demandas sintéticas; recusado quando `PROD=true`.
 
 ## 1. Schema e migrations
 
-O repositório contém:
+A cadeia atualmente aplicada é:
 
 ```text
 supabase/migrations/20260707000000_sme_demandas.sql
@@ -17,8 +17,10 @@ supabase/migrations/20260713211616_revoke_anon_operational_rpcs.sql
 supabase/migrations/20260713211703_add_foreign_key_indexes.sql
 supabase/migrations/20260717002408_batch_import_audit_20260716.sql
 supabase/migrations/20260717003552_batch_import_allow_legacy_classifications.sql
-supabase/migrations/20260722090000_central_trabalho_expand.sql
+supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
 ```
+
+O último arquivo preserva no nome a identificação funcional original do Ciclo 3 e usa, como prefixo, a versão efetivamente registrada pelo Supabase remoto.
 
 Para um projeto novo:
 
@@ -28,68 +30,83 @@ npx supabase link --project-ref SEU_PROJECT_REF
 npx supabase db push
 ```
 
-As migrations iniciais criam as tabelas `perfis_usuarios`, `sme_demandas` e `sme_historico`, habilitam RLS e Realtime, instalam as RPCs atômicas e revogam explicitamente a execução anônima das funções privilegiadas.
+As migrations iniciais criam as tabelas `perfis_usuarios`, `sme_demandas` e `sme_historico`, habilitam RLS e Realtime, instalam as RPCs transacionais e revogam a execução anônima das funções privilegiadas.
 
-A migration `20260722090000_central_trabalho_expand.sql`, referente ao Ciclo 3 do Plano Mestre, é **somente aditiva**. Ela acrescenta:
+## 2. Ciclo 3 — expansão aditiva
+
+A migration do Ciclo 3 foi aplicada em produção em 22/07/2026 e é exclusivamente aditiva. Ela acrescentou:
 
 - vínculo opcional de responsável por UUID;
 - próxima ação e data de acompanhamento;
 - situação e justificativa dos dois prazos;
 - link e origem do registro;
 - campos de exclusão lógica;
-- tipo, status anterior e alterações estruturadas no histórico;
+- tipo de evento, status anterior e alterações estruturadas no histórico;
 - checks `NOT VALID`, índices operacionais e gatilhos temporários de compatibilidade com as RPCs v1.
 
-Ela não remove colunas, funções, grants ou RPCs existentes. Os registros atuais são classificados como `legado`; a presença de uma data é a única informação usada para preencher `definido`, e nenhuma autoria, status anterior, responsável ou prazo é inventado.
+Ela não removeu colunas, funções, grants ou RPCs. Os 379 registros existentes foram classificados como `legado`. Uma data foi classificada como `definido` somente quando já existia; a ausência foi classificada como `nao_informado`. Nenhuma autoria, responsabilidade por UUID, justificativa ou status anterior foi inventado.
 
-### 1.1 Ordem segura do Ciclo 3
+### 2.1 Salvaguarda do plano gratuito
 
-A expansão deve respeitar esta ordem:
+A organização utiliza o plano gratuito, sem backup automático acessível. Antes de alterar o contrato público, a própria migration criou snapshots privados de:
 
-1. registrar a linha de base e confirmar o backup restaurável;
-2. testar a migration em banco isolado ou homologação;
-3. validar contagens, duplicidades e relações;
-4. homologar o frontend compatível em Preview;
-5. aplicar a migration versionada com um único executor;
-6. repetir invariantes e smoke de leitura;
-7. publicar o frontend somente depois de o schema expandido estar íntegro.
-
-Não aplicar trechos avulsos no SQL Editor. A migration integral deve permanecer sincronizada com `supabase_migrations.schema_migrations`.
-
-Consultas mínimas após a aplicação:
-
-```sql
-select count(*) from public.sme_demandas;
-select count(*) from public.sme_historico;
-select numero, count(*)
-from public.sme_demandas
-group by numero
-having count(*) > 1;
-select h.id
-from public.sme_historico h
-left join public.sme_demandas d on d.id = h.demanda_id
-where d.id is null;
-select limite1_situacao, count(*)
-from public.sme_demandas
-group by limite1_situacao;
-select limite2_situacao, count(*)
-from public.sme_demandas
-group by limite2_situacao;
+```text
+private.cycle3_backup_sme_demandas_20260722
+private.cycle3_backup_sme_historico_20260722
+private.cycle3_backup_perfis_usuarios_20260722
+private.cycle3_backup_manifest_20260722
 ```
 
-## 2. Dados e usuários iniciais
+Os papéis `anon` e `authenticated` não possuem acesso a essas tabelas. O manifesto preservou as contagens anteriores: 379 demandas, 385 históricos e 5 perfis.
 
-O acervo administrativo original de 50 demandas permanece em `scripts/bootstrap/initial-demandas.json`. Esse arquivo é consumido apenas pelo comando administrativo `npm run bootstrap:supabase`, está fora de `src` e não integra o grafo Vite nem o bundle público.
+Esses snapshots são uma salvaguarda limitada ao risco desta migration. Não substituem backup externo contra perda integral do projeto. Devem ser removidos apenas por migration posterior, depois da estabilidade confirmada.
 
-O bootstrap valida o JSON com schema estrito antes de qualquer acesso remoto, é idempotente por número e é capaz de reparar histórico ausente. Ele não é a fonte autoritativa do estado atual do banco. Na leitura agregada e somente leitura de 22/07/2026, antes da aplicação do Ciclo 3, o projeto remoto continha:
+### 2.2 Homologação sem custo adicional
 
-- 379 demandas;
-- 385 históricos;
-- 5 perfis;
-- nenhum número duplicado;
-- nenhum histórico órfão.
+A migration é testada no GitHub Actions por:
 
-No navegador, o modo local usa exclusivamente `src/data/demoDemandas.ts`, com oito registros identificados pelo prefixo `DEMO-` e usuários de demonstração. As fixtures sintéticas já usam o contrato expandido e normalizam dados antigos do `localStorage` sem recorrer ao acervo real.
+```text
+.github/workflows/supabase-local-migrations.yml
+supabase/tests/cycle3_legacy_fixture.sql
+supabase/tests/cycle3_invariants.sql
+```
+
+O gate inicia um Supabase efêmero, aplica as cinco migrations anteriores, insere dados sintéticos legados, aplica o Ciclo 3, valida snapshots, backfill, constraints, índices e RPCs v1, recria a base do zero e destrói o ambiente ao final.
+
+Nenhum dado real, credencial remota ou branch paga é usado.
+
+## 3. Estado validado após a aplicação
+
+As verificações de produção confirmaram:
+
+| Dimensão | Resultado |
+|---|---:|
+| Demandas | 379 |
+| Históricos | 385 |
+| Perfis | 5 |
+| Números duplicados | 0 |
+| Históricos órfãos | 0 |
+| Registros classificados como `legado` | 379 |
+| Prazo interno definido | 10 |
+| Prazo interno não informado | 369 |
+| Prazo final definido | 25 |
+| Prazo final não informado | 354 |
+| Eventos de criação | 379 |
+| Eventos posteriores | 6 |
+| Status anterior inferido | 0 |
+| Registros excluídos logicamente | 0 |
+| Índices do Ciclo 3 | 4 |
+| Checks `NOT VALID` | 5 |
+
+As RPCs v1 de criação e mudança de status foram testadas dentro de uma transação revertida. O teste confirmou o novo contrato e deixou zero registros de teste na produção.
+
+## 4. Dados e usuários iniciais
+
+O acervo administrativo original de 50 demandas permanece em `scripts/bootstrap/initial-demandas.json`. Esse arquivo é consumido apenas pelo comando administrativo `npm run bootstrap:supabase`, está fora de `src` e não integra o bundle público.
+
+O bootstrap valida o JSON com schema estrito, é idempotente por número e consegue reparar histórico ausente. Ele não é a fonte autoritativa do estado atual do banco.
+
+No navegador, o modo local usa exclusivamente `src/data/demoDemandas.ts`, com oito registros sintéticos identificados por `DEMO-`.
 
 Perfis configurados:
 
@@ -100,22 +117,22 @@ Perfis configurados:
 | `teste@rioeduca.net` | editor | ativo |
 | `ernane.jann@rioeduca.net` | leitor | pendente |
 
-Senhas, chaves secretas e credenciais administrativas não devem ser registradas no Git ou em variáveis expostas ao Vite.
+Senhas, chaves secretas e credenciais administrativas não devem ser registradas no Git nem expostas ao Vite.
 
-## 3. Integração Vercel
+## 5. Integração Vercel
 
-A integração oficial Supabase–Vercel sincroniza automaticamente as variáveis públicas:
+A integração Supabase–Vercel sincroniza as variáveis públicas:
 
 ```dotenv
 SUPABASE_URL=
 SUPABASE_PUBLISHABLE_KEY=
 ```
 
-Ela também pode fornecer os equivalentes `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+Também podem existir os equivalentes `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
-O `vite.config.ts` expõe ao bundle somente essas credenciais públicas. Variáveis como `SUPABASE_SECRET_KEY`, URLs PostgreSQL e senhas permanecem indisponíveis no navegador.
+O `vite.config.ts` expõe ao bundle somente credenciais públicas. Chaves secretas, URLs PostgreSQL e senhas permanecem indisponíveis no navegador.
 
-Quando uma dupla completa de variáveis públicas estiver presente, a aplicação inicia automaticamente no modo Supabase. Também é possível usar configuração explícita:
+Configuração explícita opcional:
 
 ```dotenv
 VITE_APP_MODE=supabase
@@ -123,26 +140,23 @@ VITE_SUPABASE_URL=https://SEU_PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLICA
 ```
 
-Configuração parcial produz erro controlado e nunca faz fallback silencioso.
-Em produção, `VITE_APP_MODE=local` também produz erro controlado, mesmo que variáveis Supabase estejam presentes.
+Configuração parcial produz erro controlado. Em produção, `VITE_APP_MODE=local` também é recusado.
 
-## 4. Compatibilidade durante a expansão
+## 6. Compatibilidade da aplicação
 
-Enquanto a migration do Ciclo 3 ainda não estiver disponível no banco, o repositório remoto tenta o contrato expandido e recua apenas diante de erro inequívoco de coluna ausente ou cache de schema. O fallback usa o mesmo contrato legado já homologado.
+O repositório remoto tenta o contrato expandido e mantém um fallback legado somente para ausência inequívoca de coluna ou cache de schema. Esse fallback não mascara falhas de RLS, autenticação ou rede.
 
-Depois da expansão:
+Com o schema expandido ativo:
 
 - `sme_demandas` é lida com os campos novos e `deleted_at is null`;
 - linhas antigas recebem defaults seguros no mapper;
-- as mutações continuam usando temporariamente as RPCs v1;
-- os gatilhos da migration derivam apenas situação de prazo e tipo de evento necessários à compatibilidade;
-- o Ciclo 4 substituirá essas mutações pelos contratos auditáveis v2.
+- as mutações continuam temporariamente nas RPCs v1;
+- os gatilhos classificam somente situação de prazo e tipo de evento necessários à compatibilidade;
+- o Ciclo 4 substituirá as mutações v1 por contratos auditáveis v2.
 
-Esse mecanismo não deve mascarar erros comuns de RLS, autenticação ou rede: somente ausência do schema expandido autoriza o fallback.
+## 7. Autorizações preservadas
 
-## 5. Critérios já homologados no banco
-
-Foram validados:
+Continuam homologados:
 
 1. administrador consulta e gerencia perfis, edita e exclui demandas;
 2. editor cria e edita por fluxos autorizados, mas não exclui;
@@ -150,15 +164,13 @@ Foram validados:
 4. perfil pendente não acessa dados operacionais;
 5. inserções diretas em demandas e histórico são recusadas;
 6. alteração direta de `status` é recusada;
-7. criação e mudança de status funcionam somente pelas RPCs transacionais;
+7. criação e mudança de status funcionam pelas RPCs transacionais;
 8. a RPC de bootstrap é exclusiva da `service_role`;
-9. a role `anon` não executa RPCs operacionais;
+9. `anon` não executa RPCs operacionais;
 10. o último administrador ativo não pode ser rebaixado nem removido;
-11. Realtime está habilitado para demandas e histórico.
+11. Realtime permanece habilitado para demandas e histórico.
 
-A migration do Ciclo 3 não altera essas autorizações nem revoga APIs. Os novos campos ainda não constituem requisito de mutação funcional neste ciclo.
-
-## 6. Verificação do deployment
+## 8. Verificação e recuperação
 
 Depois de cada alteração consolidada:
 
@@ -167,31 +179,19 @@ npm ci
 npm run check:full
 ```
 
-No deployment Vercel, confirme:
+No deployment Vercel, confirmar:
 
-- login com conta real do Supabase Auth;
-- carregamento do acervo remoto esperado;
-- atualização em outra sessão ou aba via Realtime;
-- diferenças de ações entre administrador, editor e leitor;
-- persistência após sair, atualizar a página e entrar novamente.
+- login com conta real;
+- carregamento do acervo remoto;
+- atualização via Realtime;
+- ações conforme o papel;
+- persistência após sair, atualizar e entrar novamente.
 
-O gate inclui `npm run check:public-bundle`, que compara todos os números do acervo administrativo com todos os arquivos gerados em `dist/assets`. A verificação falha sem imprimir o identificador encontrado.
+O gate inclui scanner contra dados administrativos no bundle público e Playwright em desktop e mobile.
 
-Para o Ciclo 3, o smoke deve ser executado duas vezes quando houver ambiente seguro disponível:
+Em falha de frontend após uma migration aditiva:
 
-1. frontend novo contra schema antigo, comprovando o fallback;
-2. frontend novo contra schema expandido, comprovando os campos novos e o filtro de exclusão lógica.
-
-## 7. Backup e recuperação
-
-Antes de migration material em produção, confirmar no Dashboard um backup restaurável ou produzir dump lógico fora do repositório e do bundle. Registrar data, horário, integridade e local seguro do arquivo sem imprimir dados operacionais nos logs.
-
-O modo local não é mecanismo de rollback de produção. Como a expansão do Ciclo 3 é aditiva, o rollback operacional preferencial é manter as colunas e reverter o frontend para o deployment anterior. Não apagar colunas durante incidente.
-
-Em caso de falha na integração, mantenha o banco intacto, corrija a configuração pública e republique o último commit conhecido como estável no modo Supabase:
-
-```dotenv
-VITE_APP_MODE=supabase
-```
-
-Se `VITE_APP_MODE=local` estiver configurado na Vercel, remova a sobrescrita antes do novo deployment. O modo local continua disponível apenas no servidor de desenvolvimento e nos testes automatizados.
+- manter as colunas novas;
+- reverter para o último deployment estável;
+- não apagar colunas, históricos ou snapshots durante incidente;
+- corrigir o banco somente por nova migration versionada.

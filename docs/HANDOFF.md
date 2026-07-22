@@ -1,69 +1,99 @@
-# Handoff Operacional — Central de Demandas CTRH SME
+# Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: 2026-07-13 — saneamento final do Gate 0 no PR #4
+Atualizado em: **2026-07-21 — execução do Plano Mestre v1.0, Ciclo 0**
 
----
+## Estado da execução
 
-## Norte operacional e status
+| Item | Estado |
+|---|---|
+| Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
+| `main` remota observada | `1b8a61219dddd52edbb62fbe451bcd6ed066388c` |
+| SHA auditado no plano | `ca9c783b` |
+| Branch do Ciclo 0 | `docs/central-trabalho-gate-0` |
+| Produção conhecida | `https://demandas-rhsme-expansao.vercel.app/` |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, ativo e saudável |
+| Plano versionado | SHA-256 `C78B6F7FE840BBFC6B32F401D27B609681C1881CB146B25E72E8905F36AA0B87` |
 
-A infraestrutura visual, o modo local e a camada de integração Supabase estão **prontos para homologação remota**, mas o Gate 0 somente será considerado homologado após a execução da migration e do bootstrap em um projeto Supabase de testes e a aprovação dos testes funcionais de administrador, editor e leitor.
+O Ciclo 0 não altera comportamento, banco, dados ou deployments. Ele torna persistentes o contexto de produto, as decisões fixadas, a ordem de execução e os gates obrigatórios.
 
-- **URL de produção atual:** [demandas-rhsme-expansao.vercel.app](https://demandas-rhsme-expansao.vercel.app)
-- **Repositório GitHub:** [WilsonMPeixoto-2/demandas-rhsme-expansao](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao)
-- **Pull Request ativo:** [#4 — Homologação Gate 0](https://github.com/WilsonMPeixoto-2/demandas-rhsme-expansao/pull/4)
-- **Branch de trabalho:** `homologacao/gate-0`
+## Reconciliação da `main`
 
----
+Entre o SHA auditado e a `main` atual houve somente:
 
-## Entregas do saneamento final
+- remoção do import de `brand-overrides.css` e ajuste de formatação em `src/main.tsx`;
+- restauração de `git.deploymentEnabled: false` em `vercel.json`.
 
-### 1. Banco, RLS e RPCs
+Essas mudanças não afetam os contratos ou arquivos funcionais dos Ciclos 0 e 1. Não foi identificado conflito material com o Plano Mestre.
 
-- Inserção direta em `sme_demandas` e `sme_historico` removida para usuários comuns.
-- Alteração direta da coluna `status` removida; mudanças de status passam pela RPC transacional `atualizar_status_sme_demanda`.
-- Exclusão de demandas restrita a administradores ativos.
-- RPCs de aplicação executadas como `security definer`, com `search_path` vazio e validação interna de permissão.
-- Trigger `private.prevent_no_active_admin()` protege contra a ausência de administrador ativo e serializa alterações concorrentes com advisory lock transacional.
-- RPC `public.bootstrap_importar_demanda` restrita à `service_role`, com inserção atômica de demanda e histórico e reparação de carga incompleta.
+## Linha de base remota
 
-### 2. Bootstrap
+As consultas foram agregadas e somente leitura; nenhum registro operacional foi impresso ou alterado.
 
-- Senhas iniciais distintas por usuário, fornecidas por variáveis de ambiente separadas.
-- Usuários existentes não têm a senha redefinida.
-- Perfis recém-criados pela trigger no estado `leitor/pendente` são promovidos; perfis já personalizados são preservados.
-- Carga inicial não depende da senha pessoal de um administrador.
-- Reexecuções importam somente registros ausentes e podem reparar demanda sem histórico inicial.
+| Dimensão | Plano | Verificação atual | Divergência |
+|---|---:|---:|---:|
+| Demandas | 379 | 379 | 0 |
+| Históricos | 385 | 385 | 0 |
+| Perfis | 5 | 5 | 0 |
+| Vencidas aparentes | 23 | 23 | 0 |
+| Sem prazo final | 354 | 354 | 0 |
+| Sem prazo interno | 369 | 369 | 0 |
+| Somente evento inicial | 376 | 376 | 0 |
+| Status `Tramitado` | 262 | 262 | 0 |
+| Responsáveis textuais distintos | 16 | 16 | 0 |
 
-### 3. Repositórios e interface
+## Gate técnico inicial
 
-- Modo local preserva bases válidas com qualquer quantidade de registros e trata dados estruturais inválidos.
-- Atualizações comuns ignoram `status`; a operação é exclusiva do fluxo de movimentação com histórico.
-- `canEdit` e `canDelete` estão separados, mantendo exclusão apenas para administradores.
-- Loader e banner de erro são globais.
-- Logout limpa abas, filtros, modais, drawer e dados administrativos da sessão anterior.
+| Comando | Resultado |
+|---|---|
+| `npm ci` | PASS |
+| `npm audit --audit-level=high` | PASS, zero vulnerabilidades |
+| `npm audit signatures` | PASS |
+| `npm run lint` | PASS |
+| `npm run test:coverage` | PASS, 33 arquivos e 158 testes |
+| `npm run build` | PASS |
+| `npm run check:bundle` | PASS |
+| `npm run test:e2e` | PASS, 18 testes desktop/mobile |
 
-### 4. Datas e exportação
+## Documentação do Ciclo 0
 
-- `DateMaskInput` utiliza entrada progressiva pelo evento `onChange`, compatível com colagem, mobile e tecnologias assistivas.
-- Modais de criação e edição validam datas no envio.
-- O mapper recusa datas parciais ou inexistentes antes de montar o valor para o banco.
-- CSV utiliza `;`, cabeçalho `sep=;` e neutralização de células com potencial de fórmula.
+- `AGENTS.md`: leitura obrigatória, disciplina de ciclos, validações, proibições e gate de produto.
+- `docs/PRODUCT_CONTEXT.md`: pessoas, dores, cenários, vocabulário, decisões, experiência por papel e regressões proibidas.
+- `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md`: cópia integral conferida por hash.
+- `docs/superpowers/specs/2026-07-22-central-trabalho-ctrh-design.md`: arquitetura, reconciliação, segurança, ordem de entrega e validação.
+- `docs/adr/ADR-001-semantica-status-carteira.md`: seis status e categorias operacionais.
+- `docs/adr/ADR-002-prazos-proxima-acao.md`: três situações de prazo e agenda obrigatória.
+- `docs/adr/ADR-003-historico-e-exclusao-logica.md`: eventos auditáveis e remoção recuperável.
 
-### 5. Validação automatizada
+## Gate de consciência do produto — Ciclo 0
 
-- Testes de regressão cobrem permissões da migration, credenciais do bootstrap, datas inválidas, exclusão do `status` no update comum e validação dos formulários.
-- GitHub Actions executa instalação bloqueada, auditoria de dependências, testes e build de produção.
-- A contagem final de testes e o SHA homologado devem ser confirmados na execução mais recente da CI do PR #4.
+- **Pessoa:** responsável pelo produto e qualquer agente ou pessoa que continue a evolução.
+- **Dor atual:** decisões estavam distribuídas entre código, documentos antigos e histórico de conversa, permitindo reinterpretação de status, prazo e responsabilidade.
+- **Ganho:** a próxima sessão encontra contexto, decisões, exemplos, comandos e paradas no próprio repositório antes de alterar comportamento.
+- **Proteção:** nenhuma busca, rota, dado, permissão, tela, exportação ou comportamento foi modificado.
+- **Prova além dos testes:** a cópia do plano tem hash idêntico; os ADRs não possuem alternativas abertas; os caminhos citados existem; a linha de base do banco foi repetida sem divergência.
 
----
+## Supabase CLI e acesso administrativo
 
-## Próximas etapas obrigatórias
+`npx supabase@2.109.1 init` foi executado, criando `supabase/config.toml` e `supabase/.gitignore` sem segredos. A leitura remota foi realizada pelo conector oficial autenticado do Supabase. O OAuth do CLI em ambiente não interativo exige confirmação humana no navegador; uma janela interativa foi aberta para esse fluxo. O vínculo local deve ser confirmado com:
 
-1. Confirmar CI e Preview verdes sobre o SHA final do PR #4.
-2. Criar projeto Supabase exclusivo de homologação.
-3. Aplicar `supabase/migrations/20260707000000_sme_demandas.sql`.
-4. Executar `npm run bootstrap:supabase` com credenciais privadas e distintas.
-5. Homologar administrador, editor e leitor.
-6. Testar RLS, RPCs, concorrência administrativa, idempotência do bootstrap e Realtime.
-7. Somente após aprovação formal, mesclar o PR #4 na `main`.
-8. Ativar Supabase em Production apenas depois da homologação do Preview.
+```bash
+npx supabase link --project-ref kdhekkzwcokfrpcrsllr
+```
+
+Nenhuma migration foi aplicada no Ciclo 0.
+
+## Vercel
+
+O CLI Vercel 56.4.1 foi autenticado e o diretório local foi vinculado explicitamente a `wilson-m-peixotos-projects/demandas-rhsme-expansao`. Metadados locais, inclusive o token OIDC temporário, permanecem em arquivos ignorados pelo Git. Nenhuma variável de produção ou deployment foi alterado durante a linha de base.
+
+## Próximo ciclo autorizado após merge
+
+**Ciclo 1 — Retirar dados reais do bundle público.**
+
+Precondições:
+
+1. PR do Ciclo 0 aprovado e mesclado, salvo autorização explícita de branch dependente;
+2. nova branch exclusiva para o Ciclo 1;
+3. releitura de `AGENTS.md`, contexto, plano e ADRs;
+4. testes RED do bundle e do bloqueio de modo local em produção;
+5. nenhuma alteração no banco e nenhuma exclusão de deployment histórico.

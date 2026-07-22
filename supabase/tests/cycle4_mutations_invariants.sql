@@ -11,7 +11,7 @@ begin
 end;
 $$;
 
--- Leitor ativo pode consultar o diretório mínimo, mas não executar mutações.
+-- Leitor ativo consulta o diretório mínimo, mas não pode alterar dados.
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', true);
@@ -34,20 +34,14 @@ begin
       'CTRH', 'Diversos', ''
     );
   exception when others then
-    if sqlerrm like 'Acesso negado:%' then
-      v_denied := true;
-    else
-      raise;
-    end if;
+    if sqlerrm like 'Acesso negado:%' then v_denied := true; else raise; end if;
   end;
-  if not v_denied then
-    raise exception 'Ciclo 4: leitor conseguiu criar demanda';
-  end if;
+  if not v_denied then raise exception 'Ciclo 4: leitor conseguiu criar demanda'; end if;
 end;
 $$;
 rollback;
 
--- Editor cria, edita, registra andamento e transiciona.
+-- Editor cria, edita, registra andamento e encerra.
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
@@ -91,7 +85,7 @@ select pg_temp.assert_true(
       and created_by = '22222222-2222-2222-2222-222222222222'
       and updated_by = '22222222-2222-2222-2222-222222222222'
   ),
-  'criação/transição do editor não preservou autoria ou limpeza do encerramento'
+  'criação ou encerramento não preservou autoria e limpeza da próxima ação'
 );
 
 select pg_temp.assert_true(
@@ -101,7 +95,7 @@ select pg_temp.assert_true(
     join public.sme_demandas d on d.id = h.demanda_id
     where d.numero = 'C4-AUDIT-001'
   ) = array['criacao','edicao','andamento','mudanca_status']::text[],
-  'sequência de eventos da mutação auditável está incorreta'
+  'sequência inicial de eventos auditáveis está incorreta'
 );
 
 select pg_temp.assert_true(
@@ -111,10 +105,10 @@ select pg_temp.assert_true(
     where d.numero = 'C4-AUDIT-001'
       and (h.created_by is null or jsonb_typeof(h.alteracoes) <> 'array')
   ),
-  'evento novo ficou sem autor ou sem JSON de alterações'
+  'evento novo ficou sem autor ou sem alterações estruturadas'
 );
 
--- Editor não pode excluir nem restaurar.
+-- Editor não pode excluir.
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
@@ -137,7 +131,7 @@ end;
 $$;
 rollback;
 
--- Administrador exclui logicamente e restaura, mantendo demanda e histórico.
+-- Administrador exclui logicamente e restaura, preservando demanda e histórico.
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
@@ -155,7 +149,7 @@ select pg_temp.assert_true(
       and deleted_at is not null
       and deleted_by = '11111111-1111-1111-1111-111111111111'
   ),
-  'exclusão lógica não registrou metadados administrativos'
+  'exclusão lógica não registrou os metadados administrativos'
 );
 
 select public.restaurar_sme_demanda(
@@ -168,7 +162,9 @@ select pg_temp.assert_true(
   exists (
     select 1 from public.sme_demandas
     where numero = 'C4-AUDIT-001'
-      and deleted_at is null and deleted_by is null and deletion_reason is null
+      and deleted_at is null
+      and deleted_by is null
+      and deletion_reason is null
   ),
   'restauração não limpou os metadados de exclusão'
 );
@@ -183,7 +179,7 @@ select pg_temp.assert_true(
   'exclusão ou restauração apagou ou duplicou a trilha'
 );
 
--- Reabre para testar rollback de auditoria e concorrência sequencial.
+-- Reabre para testar rollback transacional de uma falha na auditoria.
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
@@ -223,6 +219,7 @@ declare
 begin
   select proxima_acao into v_before_action
   from public.sme_demandas where numero = 'C4-AUDIT-001';
+
   begin
     perform public.registrar_andamento_sme_demanda(
       (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
@@ -231,7 +228,10 @@ begin
   exception when others then
     if sqlerrm = 'Falha sintética de auditoria' then v_failed := true; else raise; end if;
   end;
-  if not v_failed then raise exception 'Ciclo 4: falha de histórico não interrompeu a RPC'; end if;
+
+  if not v_failed then
+    raise exception 'Ciclo 4: falha de histórico não interrompeu a RPC';
+  end if;
   if (select proxima_acao from public.sme_demandas where numero = 'C4-AUDIT-001')
      is distinct from v_before_action then
     raise exception 'Ciclo 4: mutação não foi revertida com a falha de histórico';
@@ -243,45 +243,55 @@ rollback;
 drop trigger cycle4_fail_history_marker on public.sme_historico;
 drop function private.cycle4_fail_history_marker();
 
--- Duas edições sequenciais: a última transação precisa vencer e atualizar o timestamp.
+-- Duas edições em transações separadas: a última deve prevalecer e ter timestamp posterior.
+create temporary table cycle4_first_edit_timestamp (
+  updated_at timestamptz not null
+) on commit preserve rows;
+
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
-
-do $$
-declare
-  v_id bigint;
-  v_first timestamptz;
-  v_second timestamptz;
-begin
-  select id into v_id from public.sme_demandas where numero = 'C4-AUDIT-001';
-  perform public.editar_sme_demanda(
-    v_id, 'Primeira edição concorrente', null, 'Equipe externa',
-    date '2026-09-10', 'definido', '', null, 'nao_informado', '',
-    'CTRH', 'Diversos', 'https://example.invalid/processo',
-    'Complementar documentação pendente', date '2026-08-25',
-    'Primeira edição sequencial de teste'
-  );
-  select updated_at into v_first from public.sme_demandas where id = v_id;
-  perform pg_sleep(0.02);
-  perform public.editar_sme_demanda(
-    v_id, 'Segunda edição concorrente', null, 'Equipe externa',
-    date '2026-09-10', 'definido', '', null, 'nao_informado', '',
-    'CTRH', 'Diversos', 'https://example.invalid/processo',
-    'Complementar documentação pendente', date '2026-08-25',
-    'Segunda edição sequencial de teste'
-  );
-  select updated_at into v_second from public.sme_demandas where id = v_id;
-  if v_second <= v_first then
-    raise exception 'Ciclo 4: updated_at não reflete a última transação';
-  end if;
-  if (select assunto from public.sme_demandas where id = v_id) <> 'Segunda edição concorrente' then
-    raise exception 'Ciclo 4: a última edição não prevaleceu';
-  end if;
-end;
-$$;
+select public.editar_sme_demanda(
+  (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
+  'Primeira edição sequencial', null, 'Equipe externa',
+  date '2026-09-10', 'definido', '', null, 'nao_informado', '',
+  'CTRH', 'Diversos', 'https://example.invalid/processo',
+  'Complementar documentação pendente', date '2026-08-25',
+  'Primeira edição sequencial de teste'
+);
+insert into cycle4_first_edit_timestamp
+select updated_at from public.sme_demandas where numero = 'C4-AUDIT-001';
 commit;
+
+select pg_sleep(0.02);
+
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
+select public.editar_sme_demanda(
+  (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
+  'Segunda edição sequencial', null, 'Equipe externa',
+  date '2026-09-10', 'definido', '', null, 'nao_informado', '',
+  'CTRH', 'Diversos', 'https://example.invalid/processo',
+  'Complementar documentação pendente', date '2026-08-25',
+  'Segunda edição sequencial de teste'
+);
+commit;
+
+select pg_temp.assert_true(
+  (select assunto = 'Segunda edição sequencial'
+   from public.sme_demandas where numero = 'C4-AUDIT-001'),
+  'a última edição não prevaleceu'
+);
+select pg_temp.assert_true(
+  (select d.updated_at > t.updated_at
+   from public.sme_demandas d
+   cross join cycle4_first_edit_timestamp t
+   where d.numero = 'C4-AUDIT-001'),
+  'updated_at não reflete a transação mais recente'
+);
 
 select pg_temp.assert_true(
   not exists (
@@ -293,9 +303,7 @@ select pg_temp.assert_true(
 );
 
 select pg_temp.assert_true(
-  not exists (
-    select 1 from public.sme_demandas where numero = 'C4-LEITOR-NEGADO'
-  ),
+  not exists (select 1 from public.sme_demandas where numero = 'C4-LEITOR-NEGADO'),
   'tentativa negada do leitor deixou registro parcial'
 );
 

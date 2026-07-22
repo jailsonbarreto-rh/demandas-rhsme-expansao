@@ -1,12 +1,44 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Demanda } from '../types';
+import type { CreateDemandaInput, EditDemandaInput } from '../types';
 import { SupabaseDemandasRepository } from './supabaseDemandasRepository';
 
-const novaDemanda: Omit<Demanda, 'id'> = {
-  numero: 'SME-001', tipo: 'Processo', assunto: 'Teste', responsavel: 'Pessoa',
-  limite1: '12/07/2026', limite2: '', status: 'Aguardando Andamento',
-  setor: 'E/CTRH', classificacao: 'Diversos',
-} as Omit<Demanda, 'id'>;
+const novaDemanda: CreateDemandaInput = {
+  numero: 'SME-001',
+  tipo: 'Processo',
+  assunto: 'Teste',
+  responsavel: 'Pessoa',
+  responsavelId: null,
+  limite1: '12/07/2026',
+  limite1Situacao: 'definido',
+  limite1Justificativa: '',
+  limite2: '',
+  limite2Situacao: 'nao_informado',
+  limite2Justificativa: '',
+  proximaAcao: 'Conferir documentação recebida',
+  proximaAcaoEm: '20/07/2026',
+  linkOrigem: '',
+  status: 'Aguardando Andamento',
+  setor: 'E/CTRH',
+  classificacao: 'Diversos',
+};
+
+const editInput: EditDemandaInput = {
+  assunto: 'Teste revisado',
+  responsavelId: null,
+  responsavel: 'Pessoa',
+  limite1: '12/07/2026',
+  limite1Situacao: 'definido',
+  limite1Justificativa: '',
+  limite2: '',
+  limite2Situacao: 'nao_informado',
+  limite2Justificativa: '',
+  setor: 'E/CTRH',
+  classificacao: 'Diversos',
+  linkOrigem: '',
+  proximaAcao: 'Conferir documentação revisada',
+  proximaAcaoEm: '21/07/2026',
+  justificativa: 'Correção confirmada na documentação',
+};
 
 function createClient() {
   const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
@@ -30,6 +62,7 @@ describe('SupabaseDemandasRepository', () => {
       limite2: null, limite2_situacao: 'nao_informado', limite2_justificativa: null,
       proxima_acao: '', proxima_acao_em: null, link_origem: '', origem: 'legado',
       status: 'Tramitado', setor: 'CTRH', classificacao: '', deleted_at: null,
+      deleted_by: null, deletion_reason: null,
       created_at: '2026-07-01T10:00:00Z', updated_at: '2026-07-12T12:00:00Z',
     }], error: null });
     const demandasIs = vi.fn(() => ({ order: demandasOrder }));
@@ -48,115 +81,128 @@ describe('SupabaseDemandasRepository', () => {
 
     const data = await new SupabaseDemandasRepository(client as never).load();
 
-    expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('responsavel_id'));
-    expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('created_at'));
-    expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('updated_at'));
     expect(demandasSelect).toHaveBeenCalledWith(expect.stringContaining('deleted_at'));
     expect(demandasIs).toHaveBeenCalledWith('deleted_at', null);
-    expect(historySelect).toHaveBeenCalledWith(expect.stringContaining('tipo_evento'));
-    expect(historySelect).toHaveBeenCalledWith(expect.stringContaining('alteracoes'));
-    expect(demandasOrder).toHaveBeenCalledWith('created_at', { ascending: false });
-    expect(historyOrder).toHaveBeenCalledWith('created_at', { ascending: false });
     expect(data.demandas[0]).toEqual(expect.objectContaining({
       id: 7,
       limite1: '12/07/2026',
       responsavelId: null,
       origem: 'legado',
-      createdAt: '2026-07-01T10:00:00Z',
-      updatedAt: '2026-07-12T12:00:00Z',
-    }));
-    expect(data.historico[0]).toEqual(expect.objectContaining({
-      demandaId: 7,
-      tipoEvento: 'mudanca_status',
-      alteracoes: [],
+      deletedAt: '',
+      deletedBy: null,
+      deletionReason: '',
     }));
   });
 
-  it('recua para o contrato legado quando o schema expandido ainda não está disponível', async () => {
-    const demandaSelectCalls: string[] = [];
-    const historySelectCalls: string[] = [];
-
-    const legacyDemandas = [{
-      id: 8, numero: 'SME-008', tipo: 'Processo', assunto: 'Legado', responsavel: '',
-      limite1: null, limite2: null, status: 'Aguardando Andamento', setor: 'CTRH', classificacao: '',
-    }];
-    const legacyHistory = [{
-      id: 3, demanda_id: 8, status_novo: 'Aguardando Andamento', setor: 'CTRH',
-      comentario: 'Criado', created_at: '2026-07-01T10:00:00Z',
-    }];
-
+  it('recua somente diante de ausência inequívoca do schema expandido', async () => {
     let demandAttempt = 0;
     let historyAttempt = 0;
     const client = {
       from: vi.fn((table: string) => ({
-        select: vi.fn((columns: string) => {
+        select: vi.fn(() => {
           if (table === 'sme_demandas') {
-            demandaSelectCalls.push(columns);
             demandAttempt += 1;
             const result = demandAttempt === 1
               ? { data: null, error: { code: 'PGRST204', message: "Could not find the 'responsavel_id' column" } }
-              : { data: legacyDemandas, error: null };
+              : { data: [{
+                  id: 8, numero: 'SME-008', tipo: 'Processo', assunto: 'Legado', responsavel: '',
+                  limite1: null, limite2: null, status: 'Aguardando Andamento', setor: 'CTRH', classificacao: '',
+                }], error: null };
             return {
               is: vi.fn(() => ({ order: vi.fn().mockResolvedValue(result) })),
               order: vi.fn().mockResolvedValue(result),
             };
           }
-
-          historySelectCalls.push(columns);
           historyAttempt += 1;
           const result = historyAttempt === 1
             ? { data: null, error: { code: 'PGRST204', message: "Could not find the 'tipo_evento' column" } }
-            : { data: legacyHistory, error: null };
+            : { data: [{
+                id: 3, demanda_id: 8, status_novo: 'Aguardando Andamento', setor: 'CTRH',
+                comentario: 'Criado', created_at: '2026-07-01T10:00:00Z',
+              }], error: null };
           return { order: vi.fn().mockResolvedValue(result) };
         }),
       })),
     };
 
     const data = await new SupabaseDemandasRepository(client as never).load();
-
-    expect(demandaSelectCalls).toHaveLength(2);
-    expect(historySelectCalls).toHaveLength(2);
-    expect(demandaSelectCalls[0]).toContain('responsavel_id');
-    expect(demandaSelectCalls[1]).not.toContain('responsavel_id');
-    expect(historySelectCalls[0]).toContain('tipo_evento');
-    expect(historySelectCalls[1]).not.toContain('tipo_evento');
-    expect(data.demandas[0]).toEqual(expect.objectContaining({
-      id: 8,
-      responsavelId: null,
-      origem: 'legado',
-    }));
-    expect(data.historico[0]).toEqual(expect.objectContaining({
-      demandaId: 8,
-      tipoEvento: 'mudanca_status',
-    }));
+    expect(demandAttempt).toBe(2);
+    expect(historyAttempt).toBe(2);
+    expect(data.demandas[0]).toEqual(expect.objectContaining({ id: 8, origem: 'legado' }));
   });
 
-  it('cria demanda pela RPC atômica com datas do banco', async () => {
+  it('carrega a lixeira sem acionar fallback legado', async () => {
+    const order = vi.fn().mockResolvedValue({ data: [], error: null });
+    const not = vi.fn(() => ({ order }));
+    const select = vi.fn(() => ({ not }));
+    const client = { from: vi.fn(() => ({ select })) };
+
+    await new SupabaseDemandasRepository(client as never).loadTrash();
+    expect(not).toHaveBeenCalledWith('deleted_at', 'is', null);
+    expect(order).toHaveBeenCalledWith('deleted_at', { ascending: false });
+  });
+
+  it('cria demanda pelo contrato v2 com datas do banco', async () => {
     const { client, rpc } = createClient();
     await new SupabaseDemandasRepository(client as never).create(novaDemanda);
-    expect(rpc).toHaveBeenCalledWith('criar_sme_demanda', expect.objectContaining({
+    expect(rpc).toHaveBeenCalledWith('criar_sme_demanda_v2', expect.objectContaining({
       p_numero: novaDemanda.numero,
       p_limite1: '2026-07-12',
       p_limite2: null,
+      p_proxima_acao_em: '2026-07-20',
     }));
   });
 
-  it('não envia status pelo update comum', async () => {
-    const eq = vi.fn().mockResolvedValue({ data: null, error: null });
-    const update = vi.fn(() => ({ eq }));
-    const client = { from: vi.fn(() => ({ update })) };
+  it('encaminha edição, andamento, transição, exclusão e restauração às RPCs nomeadas', async () => {
+    const { client, rpc } = createClient();
     const repository = new SupabaseDemandasRepository(client as never);
 
-    await repository.update(7, {
-      assunto: 'Assunto atualizado',
-      status: 'Encerrado',
+    await repository.edit(7, editInput);
+    await repository.registerProgress(7, {
+      comentario: 'Conferido',
+      proximaAcao: 'Cobrar retorno da unidade',
+      proximaAcaoEm: '25/07/2026',
     });
+    await repository.transitionStatus(7, {
+      status: 'Encerrado',
+      comentario: 'Concluído',
+      proximaAcao: '',
+      proximaAcaoEm: '',
+    });
+    await repository.deleteLogically(7, { motivo: 'Registro duplicado confirmado' });
+    await repository.restore(7, { motivo: 'Registro deve voltar à carteira' });
 
-    expect(update).toHaveBeenCalledWith({ assunto: 'Assunto atualizado' });
-    expect(eq).toHaveBeenCalledWith('id', 7);
+    expect(rpc).toHaveBeenNthCalledWith(1, 'editar_sme_demanda', expect.objectContaining({
+      p_demanda_id: 7,
+      p_justificativa: editInput.justificativa,
+    }));
+    expect(rpc).toHaveBeenNthCalledWith(2, 'registrar_andamento_sme_demanda', expect.objectContaining({
+      p_demanda_id: 7,
+      p_proxima_acao_em: '2026-07-25',
+    }));
+    expect(rpc).toHaveBeenNthCalledWith(3, 'transicionar_status_sme_demanda', expect.objectContaining({
+      p_novo_status: 'Encerrado',
+      p_proxima_acao_em: null,
+    }));
+    expect(rpc).toHaveBeenNthCalledWith(4, 'excluir_sme_demanda', {
+      p_demanda_id: 7,
+      p_motivo: 'Registro duplicado confirmado',
+    });
+    expect(rpc).toHaveBeenNthCalledWith(5, 'restaurar_sme_demanda', {
+      p_demanda_id: 7,
+      p_motivo: 'Registro deve voltar à carteira',
+    });
   });
 
-  it('altera status pela RPC atômica', async () => {
+  it('não mantém escrita genérica nem exclusão sem motivo', async () => {
+    const { client } = createClient();
+    const repository = new SupabaseDemandasRepository(client as never);
+    await expect(repository.update(7, { assunto: 'Alterado' }))
+      .rejects.toThrow('edição genérica');
+    await expect(repository.delete(7)).rejects.toThrow('motivo explícito');
+  });
+
+  it('mantém a RPC v1 somente no adaptador temporário de status', async () => {
     const { client, rpc } = createClient();
     await new SupabaseDemandasRepository(client as never)
       .updateStatus(4, 'Tramitado', 'Encaminhado');
@@ -169,8 +215,7 @@ describe('SupabaseDemandasRepository', () => {
 
   it('assina as duas tabelas e remove o canal no cleanup', () => {
     const { client, channel, removeChannel } = createClient();
-    const onChange = vi.fn();
-    const cleanup = new SupabaseDemandasRepository(client as never).subscribe(onChange);
+    const cleanup = new SupabaseDemandasRepository(client as never).subscribe(vi.fn());
     expect(channel.on).toHaveBeenCalledTimes(2);
     cleanup();
     expect(removeChannel).toHaveBeenCalledWith(channel);

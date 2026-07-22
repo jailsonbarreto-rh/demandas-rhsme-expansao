@@ -12,6 +12,43 @@ end;
 $$;
 
 select pg_temp.assert_true(
+  exists (
+    select 1
+    from private.cycle3_backup_manifest_20260722
+    where demandas_count = 2
+      and historico_count = 3
+      and perfis_count = 1
+  ),
+  'manifesto do snapshot anterior à migration não preservou as contagens'
+);
+
+select pg_temp.assert_true(
+  (select count(*) = 2 from private.cycle3_backup_sme_demandas_20260722)
+  and (select count(*) = 3 from private.cycle3_backup_sme_historico_20260722)
+  and (select count(*) = 1 from private.cycle3_backup_perfis_usuarios_20260722),
+  'snapshot privado não contém o estado legado completo'
+);
+
+select pg_temp.assert_true(
+  not has_table_privilege('authenticated', 'private.cycle3_backup_sme_demandas_20260722', 'select')
+  and not has_table_privilege('anon', 'private.cycle3_backup_sme_demandas_20260722', 'select')
+  and not has_table_privilege('authenticated', 'private.cycle3_backup_sme_historico_20260722', 'select')
+  and not has_table_privilege('anon', 'private.cycle3_backup_sme_historico_20260722', 'select'),
+  'snapshot privado ficou acessível aos papéis da aplicação'
+);
+
+select pg_temp.assert_true(
+  not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'private'
+      and table_name = 'cycle3_backup_sme_demandas_20260722'
+      and column_name in ('responsavel_id', 'origem', 'deleted_at')
+  ),
+  'snapshot foi criado depois da expansão e não representa o contrato anterior'
+);
+
+select pg_temp.assert_true(
   (select count(*) = 2 from public.sme_demandas where numero like 'LEGADO-C3-%'),
   'a migration alterou a quantidade de demandas legadas'
 );
@@ -158,4 +195,4 @@ select pg_temp.assert_true(
   'há histórico órfão após a homologação local'
 );
 
-select 'Ciclo 3 homologado em banco efêmero local' as resultado;
+select 'Ciclo 3 homologado em banco efêmero local com snapshot privado' as resultado;

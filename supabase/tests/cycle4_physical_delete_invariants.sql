@@ -19,12 +19,35 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   not exists (
     select 1
+    from unnest(array[
+      'numero',
+      'tipo',
+      'assunto',
+      'responsavel',
+      'limite1',
+      'limite2',
+      'setor',
+      'classificacao'
+    ]) as column_name
+    where has_column_privilege(
+      'authenticated',
+      'public.sme_demandas',
+      column_name,
+      'update'
+    )
+  ),
+  'o papel authenticated ainda possui UPDATE direto sobre colunas operacionais'
+);
+
+select pg_temp.assert_true(
+  not exists (
+    select 1
     from pg_policies
     where schemaname = 'public'
       and tablename = 'sme_demandas'
-      and cmd = 'DELETE'
+      and cmd in ('UPDATE', 'DELETE')
   ),
-  'a política de exclusão física ainda existe'
+  'ainda existe política de UPDATE ou DELETE direto em demandas'
 );
 
 begin;
@@ -34,16 +57,28 @@ select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-1111111
 
 do $$
 declare
-  v_denied boolean := false;
+  v_update_denied boolean := false;
+  v_delete_denied boolean := false;
 begin
+  begin
+    update public.sme_demandas
+    set assunto = assunto
+    where numero = 'C4-AUDIT-001';
+  exception when insufficient_privilege then
+    v_update_denied := true;
+  end;
+
   begin
     delete from public.sme_demandas
     where numero = 'C4-AUDIT-001';
   exception when insufficient_privilege then
-    v_denied := true;
+    v_delete_denied := true;
   end;
 
-  if not v_denied then
+  if not v_update_denied then
+    raise exception 'Ciclo 4: administrador conseguiu executar UPDATE direto';
+  end if;
+  if not v_delete_denied then
     raise exception 'Ciclo 4: administrador conseguiu executar DELETE físico';
   end if;
 end;
@@ -51,8 +86,13 @@ $$;
 rollback;
 
 select pg_temp.assert_true(
-  exists (select 1 from public.sme_demandas where numero = 'C4-AUDIT-001'),
-  'o teste de segurança removeu a demanda auditável'
+  exists (
+    select 1
+    from public.sme_demandas
+    where numero = 'C4-AUDIT-001'
+      and assunto = 'Segunda edição sequencial'
+  ),
+  'o teste de segurança alterou ou removeu a demanda auditável'
 );
 
-select 'Exclusão física bloqueada; somente a RPC lógica permanece disponível' as resultado;
+select 'UPDATE e DELETE diretos bloqueados; somente RPCs auditáveis permanecem disponíveis' as resultado;

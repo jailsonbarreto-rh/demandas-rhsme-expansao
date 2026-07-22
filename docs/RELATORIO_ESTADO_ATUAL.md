@@ -1,10 +1,10 @@
 # Relatório de implementação e estado atual
 
-Data de consolidação: **12 de julho de 2026**
+Data de consolidação: **21 de julho de 2026**
 
 ## Resumo executivo
 
-A Central de Demandas — Expansão está preparada para operar em dois modos. O modo **local** continua ativo por padrão, preservando o site, o login de teste e os dados já salvos no navegador. O modo **Supabase** está implementado e testado, mas permanece desligado até a criação do projeto e o preenchimento das variáveis públicas.
+A Central de Demandas — Expansão opera em produção no modo **Supabase**, no projeto `kdhekkzwcokfrpcrsllr`. O modo **local** permanece disponível somente no desenvolvimento e nos testes, com oito registros sintéticos; builds de produção recusam explicitamente esse modo.
 
 Nenhuma senha, chave secreta ou credencial administrativa foi salva no repositório.
 
@@ -13,10 +13,11 @@ Nenhuma senha, chave secreta ou credencial administrativa foi salva no repositó
 ### Compatibilidade e segurança operacional
 
 - Preservação do login local `teste@rioeduca.net` e da sessão `demandas_user`.
-- Preservação das coleções locais `demandas_data` e `demandas_history`.
-- Seleção explícita de backend por `VITE_APP_MODE`, com `local` como padrão seguro.
-- Build funcional sem qualquer variável Supabase.
-- Rollback imediato para o modo local por variável de ambiente.
+- Preservação das coleções locais `demandas_data` e `demandas_history` apenas no ambiente de demonstração.
+- Seleção explícita de backend por `VITE_APP_MODE`, com `local` como padrão exclusivo do desenvolvimento sem variáveis.
+- Build de produção funcional com a configuração pública oficial do Supabase.
+- Bloqueio de `VITE_APP_MODE=local` quando `PROD=true`.
+- Scanner obrigatório contra a presença de identificadores administrativos em `dist/assets`.
 
 ### Supabase preparado
 
@@ -38,9 +39,9 @@ O script `npm run bootstrap:supabase` está pronto para:
 - preparar `wilson.peixoto@rioeduca.net` como administrador;
 - preparar `jailsonbsilva@rioeduca.net` como administrador;
 - preparar `teste@rioeduca.net` como editor;
-- importar de forma idempotente as 50 demandas iniciais e seus históricos.
+- importar de forma idempotente as 50 demandas do acervo administrativo original e seus históricos.
 
-A senha temporária é recebida apenas pela variável privada `BOOTSTRAP_PASSWORD` em arquivo ignorado pelo Git.
+O acervo fica em `scripts/bootstrap/initial-demandas.json`, fora de `src` e do grafo Vite. As senhas temporárias são recebidas somente pelas variáveis privadas específicas de cada conta em `.env.bootstrap`, arquivo ignorado pelo Git.
 
 ### Interface e experiência do usuário
 
@@ -54,7 +55,7 @@ A senha temporária é recebida apenas pela variável privada `BOOTSTRAP_PASSWOR
 
 ### Qualidade e documentação
 
-- 57 testes automatizados cobrindo configuração, autenticação, repositórios, migração, bootstrap, integração local/Supabase, administração e acessibilidade.
+- 164 testes unitários/de integração e 18 cenários Playwright cobrindo configuração, autenticação, repositórios, migração, bootstrap, integração local/Supabase, administração, busca e acessibilidade.
 - Build TypeScript/Vite aprovado.
 - Auditoria npm sem vulnerabilidades conhecidas.
 - CI configurada para instalar dependências, auditar, testar e gerar o build.
@@ -65,24 +66,16 @@ A senha temporária é recebida apenas pela variável privada `BOOTSTRAP_PASSWOR
 | Ambiente | Estado |
 |---|---|
 | GitHub | Código-fonte, migração, testes e documentação publicados na branch principal |
-| Vercel Production | Modo local; aparência e acesso atual preservados |
-| Supabase | Projeto ainda não criado para esta aplicação |
+| Vercel Production | Modo Supabase; aparência e acesso atuais preservados |
+| Supabase | Projeto `CTRH PROCESSOS` ativo e saudável; linha de base de 379 demandas, 385 históricos e 5 perfis em 21/07/2026 |
 
-## Única etapa externa pendente
+## Controles operacionais atuais
 
-Criar o projeto Supabase na região `sa-east-1` e seguir `docs/SUPABASE_SETUP.md`. A ativação deve ocorrer primeiro em Preview e somente depois em Production.
-
-## Critérios para ativar o Supabase
-
-Antes de trocar Production para `VITE_APP_MODE=supabase`:
-
-1. aplicar a migração;
-2. executar o bootstrap privado;
-3. confirmar RLS e Advisors sem alertas críticos;
-4. testar os três usuários em Preview;
-5. validar CRUD, histórico, administração e Realtime;
-6. manter documentado o rollback para `VITE_APP_MODE=local`.
-
+1. validar alterações em Preview antes de Production;
+2. executar `npm run check:full` antes de publicar;
+3. manter o acervo administrativo fora de `src`;
+4. usar somente o modo Supabase em produção;
+5. recuperar falhas pela correção da configuração ou por um deployment Supabase conhecido como estável, sem fallback local.
 
 ## Busca avançada e encontrabilidade
 

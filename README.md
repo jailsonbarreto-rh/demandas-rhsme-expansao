@@ -7,16 +7,16 @@ Sistema institucional para acompanhamento de demandas de Recursos Humanos da Sec
 
 ## Situação atual
 
-A aplicação opera em produção no modo multiusuário integrado ao Supabase, com autenticação real, persistência compartilhada, RLS, RPCs transacionais e atualização em tempo real. Builds de produção utilizam o projeto Supabase oficial mesmo quando a hospedagem não sincroniza as variáveis públicas; o modo local permanece disponível apenas como mecanismo explícito de contingência e rollback.
+A aplicação opera em produção no modo multiusuário integrado ao Supabase, com autenticação real, persistência compartilhada, RLS, RPCs transacionais e atualização em tempo real. Builds de produção utilizam o projeto Supabase oficial mesmo quando a hospedagem não sincroniza as variáveis públicas. O modo local existe somente para desenvolvimento e testes, usa oito demandas inequivocamente sintéticas e é rejeitado em produção.
 
 O projeto inclui:
 
-- autenticação local compatível com o site atual;
+- autenticação local de desenvolvimento compatível com o site atual;
 - autenticação e perfis pelo Supabase;
 - banco com RLS e níveis `administrador`, `editor` e `leitor`;
-- bootstrap idempotente dos usuários iniciais e das 50 demandas;
+- bootstrap administrativo idempotente dos usuários iniciais e do acervo original, mantido fora do grafo do cliente;
 - Realtime para demandas e histórico;
-- retorno imediato ao modo local por variável de ambiente.
+- verificação automática de que identificadores administrativos não aparecem no bundle público.
 
 ## Executar localmente
 
@@ -28,13 +28,13 @@ copy .env.example .env.local
 npm run dev
 ```
 
-Sem arquivo de ambiente, a aplicação também inicia em modo local.
+Sem arquivo de ambiente, o servidor de desenvolvimento inicia em modo local com dados sintéticos. Um build de produção nunca aceita `VITE_APP_MODE=local`.
 
 ## Validação
 
 ```bash
 npm test
-npm run build
+npm run check:full
 ```
 
 ## Configuração do Supabase

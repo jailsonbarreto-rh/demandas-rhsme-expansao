@@ -89,7 +89,7 @@ export class LocalDemandasRepository implements DemandasRepository {
       data_hora: hojeStr,
       status_novo: demanda.status,
       setor: demanda.setor || 'SME',
-      comentario: 'Demanda importada da planilha inicial.',
+      comentario: 'Demanda sintética carregada no modo de demonstração.',
     }));
     this.saveHistorico();
   }

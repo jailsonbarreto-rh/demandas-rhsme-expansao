@@ -72,13 +72,16 @@ describe('resolveAppConfig', () => {
     });
   });
 
-  it('mantém rollback local explícito mesmo em produção', () => {
+  it('bloqueia modo local quando PROD é verdadeiro', () => {
     expect(resolveAppConfig({
       PROD: true,
       VITE_APP_MODE: 'local',
       SUPABASE_URL: 'https://example.supabase.co',
       SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_example',
-    })).toEqual({ mode: 'local' });
+    })).toEqual({
+      mode: 'invalid',
+      message: 'O modo local não está disponível em produção.',
+    });
   });
 
   it('não faz fallback silencioso quando Supabase explícito foi solicitado sem credenciais no desenvolvimento', () => {

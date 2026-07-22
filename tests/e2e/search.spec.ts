@@ -13,17 +13,17 @@ test('busca avançada encontra campos distribuídos, histórico e número sem po
   await page.getByRole('button', { name: /^demandas$/i }).click();
 
   const search = page.getByRole('combobox', { name: /busca por texto/i });
-  await search.fill('cessao erica 2026');
+  await search.fill('cessao demonstracao 2026');
   await search.press('Enter');
   await expect(page.locator('mark').filter({ hasText: /cessão/i }).first()).toBeVisible();
   await expect(page.getByText(/Encontrado em:/i).first()).toBeVisible();
 
-  await search.fill('000184002702202664');
-  await expect(page.getByRole('button', { name: '000184.002702/2026-64', exact: true })).toBeVisible();
+  await search.fill('DEMOPRO2026001');
+  await expect(page.getByRole('button', { name: 'DEMO-PRO-2026-001', exact: true })).toBeVisible();
 
-  await search.fill('planilha inicial');
+  await search.fill('modo de demonstracao');
   await expect(page.locator('.search-history-snippet').first()).toContainText(
-    'Histórico: Demanda importada da planilha inicial.',
+    'Histórico: Demanda sintética carregada no modo de demonstração.',
   );
 });
 
@@ -32,7 +32,7 @@ test('busca sem resultado exato apresenta sugestões próximas explicadas', asyn
   await page.getByRole('button', { name: /^demandas$/i }).click();
 
   const search = page.getByRole('combobox', { name: /busca por texto/i });
-  await search.fill('cessao erica 2099');
+  await search.fill('cessao demonstracao 2099');
   await search.press('Enter');
 
   await expect(page.locator('.approximate-search-notice')).toContainText(
@@ -40,7 +40,7 @@ test('busca sem resultado exato apresenta sugestões próximas explicadas', asyn
   );
   await expect(page.getByText(/2 de 3 termos/i).first()).toBeVisible();
   await expect(page.locator('.approximate-missing-terms').first()).toContainText('Termo ausente: 2099');
-  await expect(page.getByRole('button', { name: '000184.002702/2026-64', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'DEMO-PRO-2026-001', exact: true })).toBeVisible();
 });
 
 test('buscas recentes, atalho e período funcionam por teclado', async ({ page }) => {
@@ -48,10 +48,10 @@ test('buscas recentes, atalho e período funcionam por teclado', async ({ page }
   await page.getByRole('button', { name: /^demandas$/i }).click();
 
   const search = page.getByRole('combobox', { name: /busca por texto/i });
-  await search.fill('cessao erica 2026');
+  await search.fill('cessao demonstracao 2026');
   await search.press('Enter');
   await search.fill('');
-  await expect(page.getByRole('button', { name: /cessao erica 2026/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /cessao demonstracao 2026/i })).toBeVisible();
 
   await page.getByRole('button', { name: /^visão geral$/i }).click();
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');

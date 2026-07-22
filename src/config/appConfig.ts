@@ -76,6 +76,9 @@ function resolveCredentials(env: PublicEnv, explicitMode?: string): CredentialSo
 export function resolveAppConfig(env: PublicEnv): AppConfig {
   const explicitMode = firstDefined(env.VITE_APP_MODE);
 
+  if (env.PROD === true && explicitMode === 'local') {
+    return { mode: 'invalid', message: 'O modo local não está disponível em produção.' };
+  }
   if (explicitMode === 'local') return { mode: 'local' };
   if (explicitMode && explicitMode !== 'supabase') {
     return { mode: 'invalid', message: `Modo de aplicação inválido: ${explicitMode}.` };

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 
 const requiredEnv = [
   'SUPABASE_URL',
@@ -10,6 +11,28 @@ const requiredEnv = [
   'BOOTSTRAP_JAILSON_PASSWORD',
   'BOOTSTRAP_TESTE_PASSWORD',
 ];
+
+const initialDemandaSchema = z.object({
+  id: z.number().int().positive(),
+  numero: z.string().trim().min(1),
+  tipo: z.enum(['Expediente', 'Processo', 'Outros']),
+  assunto: z.string().trim().min(1),
+  responsavel: z.string(),
+  limite1: z.string(),
+  limite2: z.string(),
+  status: z.enum([
+    'Aguardando Andamento',
+    'Tramitado',
+    'Para Assinatura',
+    'Encerrado',
+    'Sobrestado',
+    'Ajustar',
+  ]),
+  setor: z.string(),
+  classificacao: z.string(),
+}).strict();
+
+const initialDemandasSchema = z.array(initialDemandaSchema).min(1);
 
 export function getBootstrapUsers() {
   return [
@@ -53,9 +76,23 @@ export function readBootstrapEnv(env) {
 
 export function loadInitialDemandas(sourcePath) {
   const source = readFileSync(sourcePath, 'utf8');
-  const match = source.match(/export const initialDemandas:[^=]+=\s*(\[[\s\S]*\]);?\s*$/);
-  if (!match) throw new Error('Não foi possível ler src/data/initialDemandas.ts.');
-  return JSON.parse(match[1]);
+  let parsed;
+
+  try {
+    parsed = JSON.parse(source);
+  } catch {
+    throw new Error('O arquivo administrativo de demandas contém JSON inválido.');
+  }
+
+  const result = initialDemandasSchema.safeParse(parsed);
+  if (!result.success) {
+    const fields = result.error.issues
+      .map((issue) => issue.path.join('.') || 'raiz')
+      .join(', ');
+    throw new Error(`O arquivo administrativo de demandas possui estrutura inválida: ${fields}.`);
+  }
+
+  return result.data;
 }
 
 function toDatabaseDate(value) {
@@ -192,7 +229,7 @@ async function main() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   const here = dirname(fileURLToPath(import.meta.url));
-  const demandas = loadInitialDemandas(resolve(here, '..', 'src', 'data', 'initialDemandas.ts'));
+  const demandas = loadInitialDemandas(resolve(here, 'bootstrap', 'initial-demandas.json'));
   const created = await runBootstrap(client, env, demandas);
   console.log(`Bootstrap concluído: ${getBootstrapUsers().length} perfis preparados e ${created} demandas novas importadas.`);
 }

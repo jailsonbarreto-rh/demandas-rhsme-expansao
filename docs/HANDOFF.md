@@ -1,20 +1,59 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-21 — execução do Plano Mestre v1.0, Ciclo 0**
+Atualizado em: **2026-07-21 — execução do Plano Mestre v1.0, Ciclo 1**
 
 ## Estado da execução
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| `main` remota observada | `1b8a61219dddd52edbb62fbe451bcd6ed066388c` |
+| `main` remota observada | `71794f6` (Ciclo 0 mesclado pelo PR #36) |
 | SHA auditado no plano | `ca9c783b` |
-| Branch do Ciclo 0 | `docs/central-trabalho-gate-0` |
+| Branch do Ciclo 1 | `fix/remover-dados-bundle-ciclo-1` |
 | Produção conhecida | `https://demandas-rhsme-expansao.vercel.app/` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, ativo e saudável |
 | Plano versionado | SHA-256 `C78B6F7FE840BBFC6B32F401D27B609681C1881CB146B25E72E8905F36AA0B87` |
 
-O Ciclo 0 não altera comportamento, banco, dados ou deployments. Ele torna persistentes o contexto de produto, as decisões fixadas, a ordem de execução e os gates obrigatórios.
+O Ciclo 1 retira o acervo administrativo do grafo do cliente, limita o modo local a dados sintéticos de desenvolvimento e bloqueia esse modo em produção. Nenhum registro remoto, migration, variável de produção ou deployment histórico foi alterado durante a implementação local.
+
+## Ciclo 1 — retirada de dados reais do bundle público
+
+- o acervo administrativo original foi movido de `src/data/initialDemandas.ts` para `scripts/bootstrap/initial-demandas.json`;
+- `src/data/demoDemandas.ts` fornece oito registros fictícios com prefixo `DEMO-` e usuários de demonstração;
+- o bootstrap Node lê JSON e valida schema estrito antes de importar;
+- `resolveAppConfig` recusa `VITE_APP_MODE=local` quando `PROD=true`;
+- `scripts/check-public-bundle.mjs` compara os 50 identificadores administrativos com todos os arquivos de `dist/assets` sem imprimir o conteúdo protegido;
+- o gate `check` executa essa varredura depois do build.
+
+### Gate técnico do Ciclo 1
+
+| Comando | Resultado |
+|---|---|
+| testes RED focados | 5 falhas esperadas antes da implementação |
+| testes focados após implementação | PASS, 6 arquivos e 37 testes |
+| `npm run check:full` | PASS |
+| `npm audit --audit-level=high` | PASS, zero vulnerabilidades |
+| `npm audit signatures` | PASS |
+| `npm run lint` | PASS |
+| `npm run test:coverage` | PASS, 35 arquivos e 164 testes |
+| `npm run build` | PASS |
+| `npm run check:bundle` | PASS, crescimento de 7,98%, abaixo do limite de 15% |
+| `npm run check:public-bundle` | PASS, 29 arquivos contra 50 identificadores administrativos |
+| `npm run test:e2e` | PASS, 18 testes desktop/mobile |
+
+### Gate de consciência do produto — Ciclo 1
+
+- **Pessoa:** qualquer visitante não autenticado e os responsáveis pela confidencialidade do acervo administrativo.
+- **Dor atual:** o bundle público incorporava 50 demandas administrativas e a produção podia ser forçada ao modo local.
+- **Ganho:** produção baixa somente o cliente Supabase; desenvolvimento local continua funcional com oito registros sintéticos.
+- **Proteção:** autenticação Supabase, bootstrap privado, busca, exportação Excel, responsividade e contratos de persistência foram preservados.
+- **Prova além dos testes:** a varredura do build comparou todos os números administrativos e aprovou com zero ocorrências.
+
+### Inventário de deployments anteriores
+
+Antes da publicação do Ciclo 1, o CLI da Vercel listou 81 deployments históricos: 52 em estado `Ready`, 27 cancelados e 2 com erro. Todos os 52 deployments servíveis antecedem esta correção e foram classificados como vulneráveis pelo grafo cliente da versão correspondente. A verificação direta do alias de Production confirmou os 50 identificadores administrativos nos três assets referenciados pela página.
+
+Nenhum deployment foi apagado. A remoção dos 52 deployments legados permanece adiada para o Ciclo 13 e depende de autorização destrutiva específica, conforme o Plano Mestre.
 
 ## Reconciliação da `main`
 
@@ -88,12 +127,12 @@ O CLI Vercel 56.4.1 foi autenticado e o diretório local foi vinculado explicita
 
 ## Próximo ciclo autorizado após merge
 
-**Ciclo 1 — Retirar dados reais do bundle público.**
+**Ciclo 2 — Semântica única e filtros tipados.**
 
 Precondições:
 
-1. PR do Ciclo 0 aprovado e mesclado, salvo autorização explícita de branch dependente;
-2. nova branch exclusiva para o Ciclo 1;
+1. PR do Ciclo 1 aprovado e mesclado, salvo autorização explícita de branch dependente;
+2. nova branch exclusiva para o Ciclo 2;
 3. releitura de `AGENTS.md`, contexto, plano e ADRs;
-4. testes RED do bundle e do bloqueio de modo local em produção;
-5. nenhuma alteração no banco e nenhuma exclusão de deployment histórico.
+4. testes RED das regras semânticas e dos filtros tipados;
+5. nenhuma alteração no banco prevista para esse ciclo.

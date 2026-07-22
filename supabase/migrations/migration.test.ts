@@ -151,6 +151,24 @@ describe('migração Supabase', () => {
       expect(existsSync(centralWorkExpandPath)).toBe(true);
     });
 
+    it('cria snapshot privado antes de alterar o contrato público', () => {
+      for (const table of [
+        'cycle3_backup_sme_demandas_20260722',
+        'cycle3_backup_sme_historico_20260722',
+        'cycle3_backup_perfis_usuarios_20260722',
+        'cycle3_backup_manifest_20260722',
+      ]) {
+        expect(centralWorkExpandSql).toContain(`private.${table}`);
+        expect(centralWorkExpandSql).toMatch(new RegExp(`revoke all on table private\\.${table}[\\s\\S]*?from public, anon, authenticated;`));
+      }
+
+      expect(centralWorkExpandSql.indexOf('create table private.cycle3_backup_sme_demandas_20260722'))
+        .toBeLessThan(centralWorkExpandSql.indexOf('alter table public.sme_demandas'));
+      expect(centralWorkExpandSql).toContain('demandas_count bigint not null');
+      expect(centralWorkExpandSql).toContain('historico_count bigint not null');
+      expect(centralWorkExpandSql).toContain('perfis_count bigint not null');
+    });
+
     it('adiciona todos os campos de demandas e histórico sem remover o contrato existente', () => {
       for (const column of [
         'responsavel_id',

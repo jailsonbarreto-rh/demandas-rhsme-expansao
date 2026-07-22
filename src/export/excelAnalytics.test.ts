@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Demanda } from '../types';
+import { DEFAULT_DEMAND_FILTERS } from '../filters/filterTypes';
 import {
   buildExcelAnalytics,
   describeActiveFilters,
@@ -87,16 +88,15 @@ describe('excelAnalytics', () => {
 
   it('descreve o recorte aplicado de forma rastreável', () => {
     expect(describeActiveFilters({
-      busca: 'contrato',
-      tipo: 'Processo',
-      classificacao: 'Todas',
-      status: 'Somente ativos (padrão)',
-      setor: 'CTRH',
+      ...DEFAULT_DEMAND_FILTERS,
+      query: 'contrato',
+      type: 'Processo',
+      sector: 'CTRH',
       quickFilters: { assinatura: true, hoje: false, vencido: true },
     })).toEqual([
       ['Busca', 'contrato'],
       ['Tipo', 'Processo'],
-      ['Status', 'Somente ativos (padrão)'],
+      ['Status', 'Em acompanhamento'],
       ['Setor', 'CTRH'],
       ['Filtros rápidos', 'Para assinatura; Vencidas'],
     ]);

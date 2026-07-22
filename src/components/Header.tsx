@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Demanda } from '../types';
+import { isInFollowUp } from '../domain/workSemantics';
+import type { DemandFilters } from '../filters/filterTypes';
 import { getTodayString, isBeforeToday } from '../utils/date';
 import { BrandLogo } from './BrandLogo';
 
@@ -11,14 +13,14 @@ interface HeaderProps {
   onExportExcel: () => void;
   exportingExcel?: boolean;
   filtrosAtivos: {
-    status: string;
+    status: DemandFilters['status'];
     quickFilters: {
       assinatura: boolean;
       hoje: boolean;
       vencido: boolean;
     }
   };
-  onToggleFiltroStatus: (status: string) => void;
+  onToggleFiltroStatus: (status: DemandFilters['status']) => void;
   onToggleQuickFilter: (filtro: 'assinatura' | 'hoje' | 'vencido') => void;
   canEdit?: boolean;
   appMode?: 'local' | 'supabase';
@@ -54,18 +56,18 @@ export const Header: React.FC<HeaderProps> = ({
   const todayStr = getTodayString();
 
   // Contadores
-  const totalAtivos = demandas.filter(d => d.status !== 'Encerrado').length;
+  const totalEmAcompanhamento = demandas.filter(isInFollowUp).length;
   const totalAssinatura = demandas.filter(d => d.status === 'Para Assinatura').length;
-  const totalHoje = demandas.filter(d => d.status !== 'Encerrado' && d.limite2 === todayStr).length;
-  const totalVencidos = demandas.filter(d => d.status !== 'Encerrado' && d.limite2 && isBeforeToday(d.limite2)).length;
+  const totalHoje = demandas.filter(d => isInFollowUp(d) && d.limite2 === todayStr).length;
+  const totalVencidos = demandas.filter(d => isInFollowUp(d) && d.limite2 && isBeforeToday(d.limite2)).length;
 
   // Determinar se algum filtro rápido está selecionado
   const isQuickFiltroAtivo = filtrosAtivos.quickFilters.assinatura || filtrosAtivos.quickFilters.hoje || filtrosAtivos.quickFilters.vencido;
-  const isCardAtivosSelecionado = filtrosAtivos.status === 'Somente ativos (padrão)' && !isQuickFiltroAtivo;
+  const isCardAtivosSelecionado = filtrosAtivos.status === 'acompanhamento' && !isQuickFiltroAtivo;
 
   // Legenda de Urgência (Contagem de demandas únicas críticas para evitar duplicidade)
   const totalCriticas = demandas.filter(d => 
-    d.status !== 'Encerrado' && (
+    isInFollowUp(d) && (
       d.status === 'Para Assinatura' || 
       d.limite2 === todayStr || 
       (d.limite2 && isBeforeToday(d.limite2))
@@ -160,13 +162,13 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => {
             // Se já estiver ativo, não faz nada (permanece em ativos padrão)
             // Caso contrário, ativa o status de ativos e limpa os filtros rápidos
-            onToggleFiltroStatus('Somente ativos (padrão)');
+            onToggleFiltroStatus('acompanhamento');
           }}
-          title="Exibir todas as demandas ativas"
+          title="Exibir todas as demandas em acompanhamento"
         >
           <div className="stat-info">
-            <h3>Demandas Ativas</h3>
-            <div className="stat-number">{totalAtivos}</div>
+            <h3>Em acompanhamento</h3>
+            <div className="stat-number">{totalEmAcompanhamento}</div>
           </div>
         </button>
 

@@ -1,6 +1,7 @@
 import { createRef, useState } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_DEMAND_FILTERS } from '../filters/filterTypes';
 import { FilterPanel } from './FilterPanel';
 
 const quickFilters = { assinatura: false, hoje: false, vencido: false };
@@ -16,16 +17,7 @@ function Harness({
   onClearRecentSearches?: () => void;
   periodError?: string | null;
 }) {
-  const [filtros, setFiltros] = useState({
-    busca: '',
-    tipo: 'Todos',
-    classificacao: 'Todas',
-    status: 'Somente ativos (padrão)',
-    setor: 'Todos',
-    periodoCampo: 'limite2' as 'limite1' | 'limite2' | 'historico',
-    periodoInicio: '',
-    periodoFim: '',
-  });
+  const [filtros, setFiltros] = useState({ ...DEFAULT_DEMAND_FILTERS });
   const [quick, setQuick] = useState(quickFilters);
   const searchInputRef = createRef<HTMLInputElement>();
 
@@ -48,6 +40,17 @@ function Harness({
 }
 
 describe('FilterPanel — busca avançada', () => {
+  it('usa valores tipados sem alterar o rótulo conhecido do filtro padrão', () => {
+    render(<Harness />);
+
+    expect(screen.getByRole('option', { name: 'Somente ativos (padrão)' }))
+      .toHaveValue('acompanhamento');
+    expect(screen.getByRole('option', { name: 'Todos (exibir tudo)' }))
+      .toHaveValue('todos');
+    expect(screen.getByRole('option', { name: 'Com providência CTRH' }))
+      .toHaveValue('providencia_ctrh');
+  });
+
   it('permite reutilizar e confirmar uma busca recente', () => {
     const onCommitSearch = vi.fn();
     render(<Harness onCommitSearch={onCommitSearch} />);

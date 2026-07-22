@@ -1,20 +1,74 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-21 — execução do Plano Mestre v1.0, Ciclo 1**
+Atualizado em: **2026-07-22 — execução do Plano Mestre v1.0, Ciclo 2**
 
 ## Estado da execução
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| `main` remota observada | `71794f6` (Ciclo 0 mesclado pelo PR #36) |
+| `main` remota observada | `d302c8d` (Ciclo 1 e atualizações seguras do PR #38/Actions) |
 | SHA auditado no plano | `ca9c783b` |
-| Branch do Ciclo 1 | `fix/remover-dados-bundle-ciclo-1` |
+| Branch do Ciclo 2 | `refactor/centralizar-semantica-filtros-ciclo-2` |
 | Produção conhecida | `https://demandas-rhsme-expansao.vercel.app/` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, ativo e saudável |
 | Plano versionado | SHA-256 `C78B6F7FE840BBFC6B32F401D27B609681C1881CB146B25E72E8905F36AA0B87` |
 
-O Ciclo 1 retira o acervo administrativo do grafo do cliente, limita o modo local a dados sintéticos de desenvolvimento e bloqueia esse modo em produção. Nenhum registro remoto, migration, variável de produção ou deployment histórico foi alterado durante a implementação local.
+O Ciclo 2 concentra a semântica operacional dos seis status, tipa o estado de filtros e normaliza a URL sem alterar schema ou dados. Busca exata e aproximada, filtros rápidos, período, exportação Excel e links antigos continuam compatíveis. Nenhum registro remoto, migration ou variável de ambiente foi alterado durante a implementação.
+
+## Ciclo 2 — semântica única e filtros tipados
+
+- `src/domain/workSemantics.ts` é a única fonte para classificar acompanhamento, providência CTRH e encerramento;
+- `src/filters/filterTypes.ts` define o contrato canônico e os valores padrão;
+- `src/filters/filterUrl.ts` migra URLs legadas, ignora valores desconhecidos e serializa somente parâmetros conhecidos;
+- `src/filters/applyDemandFilters.ts` reúne os filtros puros antes da busca exata ou aproximada;
+- o card antes chamado “Demandas Ativas” agora se chama “Em acompanhamento”;
+- indicadores, prazos visuais e Excel usam as mesmas funções de domínio;
+- o Excel permanece em import dinâmico e o bundle público continua sem identificadores administrativos;
+- os esqueletos de carregamento passaram a expor `role=status`, e a auditoria de acessibilidade agora garante movimento reduzido de forma determinística.
+
+### Semântica canônica
+
+| Status | Categoria operacional |
+|---|---|
+| `Aguardando Andamento` | `providencia_ctrh` |
+| `Ajustar` | `providencia_ctrh` |
+| `Para Assinatura` | `providencia_ctrh` |
+| `Tramitado` | `aguardando_retorno` |
+| `Sobrestado` | `monitoramento` |
+| `Encerrado` | `encerrada` |
+
+`Tramitado` e `Sobrestado` permanecem em acompanhamento. Apenas os três primeiros status exigem providência CTRH, e somente `Encerrado` sai do acompanhamento.
+
+### Gate técnico do Ciclo 2
+
+| Comando/evidência | Resultado |
+|---|---|
+| testes RED de domínio, URL e integração | falhas esperadas observadas antes da implementação |
+| testes focados do recorte funcional | PASS, 9 arquivos e 44 testes |
+| regressão de semântica dos esqueletos | RED com 4 falhas; PASS após `role=status` |
+| `rg -F "status !== 'Encerrado'" src --glob '!**/*.test.*'` | zero ocorrências |
+| `npm run check:full` | PASS |
+| `npm audit --audit-level=high` | PASS, zero vulnerabilidades |
+| `npm audit signatures` | PASS, 539 assinaturas e 147 atestações verificadas |
+| `npm run lint` | PASS |
+| `npm run test:coverage` | PASS, 39 arquivos e 189 testes |
+| `npm run build` | PASS |
+| `npm run check:bundle` | PASS, crescimento de 8,58%, abaixo do limite de 15% |
+| `npm run check:public-bundle` | PASS, 28 arquivos contra 50 identificadores administrativos |
+| `npm run test:e2e` | PASS, 18 testes desktop/mobile |
+
+### Gate de consciência do produto — Ciclo 2
+
+- **Pessoas:** administradores, editores e leitores que acompanham a mesma carteira por indicadores, filtros, links e Excel.
+- **Dor atual:** “ativa” era decidida em componentes distintos, enquanto valores de filtro e URL misturavam rótulos de interface com regras de negócio.
+- **Ganho:** uma única classificação determina acompanhamento, providência e encerramento; links antigos são migrados para valores canônicos.
+- **Proteção:** busca aproximada, buscas recentes, filtros rápidos, período, exportação Excel, navegação, acessibilidade e bundle público foram exercitados pelo gate integral.
+- **Prova além dos testes:** a busca estrutural retornou zero comparações operacionais duplicadas e o build público repetiu a varredura dos 50 identificadores administrativos.
+
+### Banco e ambiente
+
+O Ciclo 2 não possui migration. Supabase, dados, grants, variáveis de Vercel e deployments históricos permaneceram intactos.
 
 ## Ciclo 1 — retirada de dados reais do bundle público
 
@@ -57,12 +111,12 @@ Nenhum deployment foi apagado. A remoção dos 52 deployments legados permanece 
 
 ## Reconciliação da `main`
 
-Entre o SHA auditado e a `main` atual houve somente:
+Entre o SHA auditado e a linha de base do Ciclo 0 houve:
 
 - remoção do import de `brand-overrides.css` e ajuste de formatação em `src/main.tsx`;
 - restauração de `git.deploymentEnabled: false` em `vercel.json`.
 
-Essas mudanças não afetam os contratos ou arquivos funcionais dos Ciclos 0 e 1. Não foi identificado conflito material com o Plano Mestre.
+Depois disso, o PR #37 incorporou o Ciclo 1 na `main`, retirando os dados administrativos do bundle público conforme documentado acima. A branch do Ciclo 2 nasceu limpa desse merge (`048a5de`). Durante a execução, o PR #38 atualizou oito dependências seguras de produção e dois commits atualizaram `actions/upload-artifact` e `actions/setup-node`; a branch foi rebaseada sobre essa nova base (`d302c8d`) sem conflito funcional. Não foi identificado conflito material com o Plano Mestre.
 
 ## Linha de base remota
 
@@ -127,12 +181,13 @@ O CLI Vercel 56.4.1 foi autenticado e o diretório local foi vinculado explicita
 
 ## Próximo ciclo autorizado após merge
 
-**Ciclo 2 — Semântica única e filtros tipados.**
+**Ciclo 3 — Expansão aditiva do modelo de dados.**
 
 Precondições:
 
-1. PR do Ciclo 1 aprovado e mesclado, salvo autorização explícita de branch dependente;
-2. nova branch exclusiva para o Ciclo 2;
+1. PR do Ciclo 2 aprovado e mesclado, salvo autorização explícita de branch dependente;
+2. nova branch exclusiva para o Ciclo 3;
 3. releitura de `AGENTS.md`, contexto, plano e ADRs;
-4. testes RED das regras semânticas e dos filtros tipados;
-5. nenhuma alteração no banco prevista para esse ciclo.
+4. snapshot seguro do schema e dos dados antes de qualquer aplicação externa;
+5. testes RED estáticos da migration, dos mappers e dos repositórios;
+6. migration somente aditiva, aplicada em produção apenas depois de Preview compatível, backup confirmado e invariantes aprovadas.

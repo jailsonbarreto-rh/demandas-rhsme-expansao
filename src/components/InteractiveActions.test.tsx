@@ -3,6 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ComentarioHistorico, Demanda } from '../types';
+import { DEFAULT_DEMAND_FILTERS, type DemandFilters } from '../filters/filterTypes';
 import { AtencaoImediata } from './AtencaoImediata';
 import { FilterPanel } from './FilterPanel';
 import { Header } from './Header';
@@ -56,7 +57,7 @@ describe('ações interativas da interface', () => {
         onOpenNovo={onOpenNovo}
         onExportExcel={onExportExcel}
         filtrosAtivos={{
-          status: 'Somente ativos (padrão)',
+          status: 'acompanhamento',
           quickFilters: { assinatura: false, hoje: false, vencido: false },
         }}
         onToggleFiltroStatus={onToggleFiltroStatus}
@@ -70,27 +71,25 @@ describe('ações interativas da interface', () => {
     await user.click(screen.getByRole('button', { name: /^sair$/i }));
     await user.click(screen.getByRole('button', { name: /exportar excel/i }));
     await user.click(screen.getByRole('button', { name: /nova demanda/i }));
-    await user.click(screen.getByRole('button', { name: /demandas ativas/i }));
+    await user.click(screen.getByRole('button', { name: /em acompanhamento/i }));
     await user.click(screen.getByRole('button', { name: /para assinatura/i }));
 
     expect(onLogout).toHaveBeenCalledOnce();
     expect(onExportExcel).toHaveBeenCalledOnce();
     expect(onOpenNovo).toHaveBeenCalledOnce();
-    expect(onToggleFiltroStatus).toHaveBeenCalledWith('Somente ativos (padrão)');
+    expect(onToggleFiltroStatus).toHaveBeenCalledWith('acompanhamento');
     expect(onToggleQuickFilter).toHaveBeenCalledWith('assinatura');
   });
 
   it('expande filtros avançados e limpa todos os filtros ativos', async () => {
     function FilterHarness() {
-      const [filtros, setFiltros] = useState({
-        busca: 'processo',
-        tipo: 'Processo',
-        classificacao: 'Outros',
-        status: 'Todos (exibir tudo)',
-        setor: 'CTRH',
-        periodoCampo: 'limite2' as 'limite1' | 'limite2' | 'historico',
-        periodoInicio: '',
-        periodoFim: '',
+      const [filtros, setFiltros] = useState<DemandFilters>({
+        ...DEFAULT_DEMAND_FILTERS,
+        query: 'processo',
+        type: 'Processo',
+        classification: 'Outros',
+        status: 'todos',
+        sector: 'CTRH',
       });
       const [quickFilters, setQuickFilters] = useState({
         assinatura: true,
@@ -119,7 +118,7 @@ describe('ações interativas da interface', () => {
 
     await user.click(screen.getByRole('button', { name: /limpar filtros/i }));
     expect(screen.getByLabelText(/busca por texto/i)).toHaveValue('');
-    expect(screen.getByLabelText(/^status$/i)).toHaveValue('Somente ativos (padrão)');
+    expect(screen.getByLabelText(/^status$/i)).toHaveValue('acompanhamento');
     expect(screen.getByRole('button', { name: /para assinatura/i })).not.toHaveClass('active');
   });
 

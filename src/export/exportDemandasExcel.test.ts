@@ -3,6 +3,7 @@ import { Workbook } from 'exceljs';
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import type { Demanda } from '../types';
+import { DEFAULT_DEMAND_FILTERS } from '../filters/filterTypes';
 import { buildDemandasWorkbook } from './exportDemandasExcel';
 
 const demandas: Demanda[] = [
@@ -36,11 +37,9 @@ const workbookOptions = {
   demandas,
   userEmail: 'leitor@rioeduca.net',
   filters: {
-    busca: 'SME',
-    tipo: 'Todos',
-    classificacao: 'Todas',
-    status: 'Todos (exibir tudo)',
-    setor: 'Todos',
+    ...DEFAULT_DEMAND_FILTERS,
+    query: 'SME',
+    status: 'todos' as const,
     quickFilters: { assinatura: false, hoje: false, vencido: false },
   },
   generatedAt: new Date(2026, 6, 16, 14, 35, 0),

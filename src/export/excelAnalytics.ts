@@ -1,19 +1,9 @@
 import type { Demanda } from '../types';
+import { isClosed, isInFollowUp } from '../domain/workSemantics';
+import type { DemandFilters, QuickFilters } from '../filters/filterTypes';
 
-export interface ExcelExportFilters {
-  busca: string;
-  tipo: string;
-  classificacao: string;
-  status: string;
-  setor: string;
-  periodoCampo?: 'limite1' | 'limite2' | 'historico';
-  periodoInicio?: string;
-  periodoFim?: string;
-  quickFilters: {
-    assinatura: boolean;
-    hoje: boolean;
-    vencido: boolean;
-  };
+export interface ExcelExportFilters extends DemandFilters {
+  quickFilters: QuickFilters;
 }
 
 export interface DistributionItem {
@@ -154,7 +144,7 @@ export function parseBrazilianDate(value: string | null | undefined): Date | nul
 }
 
 export function getDeadlineInfo(demanda: Demanda, now = new Date()): DeadlineInfo {
-  if (demanda.status === 'Encerrado') {
+  if (isClosed(demanda)) {
     return {
       date: parseBrazilianDate(demanda.limite2),
       daysUntil: null,
@@ -186,7 +176,7 @@ export function getDeadlineInfo(demanda: Demanda, now = new Date()): DeadlineInf
 }
 
 export function buildExcelAnalytics(demandas: Demanda[], now = new Date()): ExcelAnalytics {
-  const active = demandas.filter((demanda) => demanda.status !== 'Encerrado');
+  const active = demandas.filter(isInFollowUp);
   const deadlineInfo = demandas.map((demanda) => getDeadlineInfo(demanda, now));
 
   const deadlineSituation = SITUATION_ORDER.map((label) => {
@@ -223,24 +213,31 @@ export function buildExcelAnalytics(demandas: Demanda[], now = new Date()): Exce
 
 export function describeActiveFilters(filters: ExcelExportFilters): Array<[string, string]> {
   const result: Array<[string, string]> = [];
-  if (filters.busca.trim()) result.push(['Busca', filters.busca.trim()]);
-  if (filters.tipo !== 'Todos') result.push(['Tipo', filters.tipo]);
-  if (filters.classificacao !== 'Todas') result.push(['Classificação', filters.classificacao]);
-  result.push(['Status', filters.status]);
-  if (filters.setor !== 'Todos') result.push(['Setor', filters.setor]);
-  if (filters.periodoInicio || filters.periodoFim) {
+  if (filters.query.trim()) result.push(['Busca', filters.query.trim()]);
+  if (filters.type !== 'Todos') result.push(['Tipo', filters.type]);
+  if (filters.classification !== 'Todas') result.push(['Classificação', filters.classification]);
+  const statusLabel = filters.status === 'acompanhamento'
+    ? 'Em acompanhamento'
+    : filters.status === 'providencia_ctrh'
+      ? 'Com providência CTRH'
+      : filters.status === 'todos'
+        ? 'Todos (exibir tudo)'
+        : filters.status;
+  result.push(['Status', statusLabel]);
+  if (filters.sector !== 'Todos') result.push(['Setor', filters.sector]);
+  if (filters.periodStart || filters.periodEnd) {
     const fieldLabels = {
       limite1: 'Prazo interno',
       limite2: 'Prazo final',
       historico: 'Movimentação do histórico',
+      proxima_acao: 'Próxima ação',
     } as const;
-    const displayDate = (value?: string) => value ? value.split('-').reverse().join('/') : 'sem limite';
-    const field = filters.periodoCampo ?? 'limite2';
-    const description = fieldLabels[field]
+    const displayDate = (value: string) => value ? value.split('-').reverse().join('/') : 'sem limite';
+    const description = fieldLabels[filters.periodField]
       + ': '
-      + displayDate(filters.periodoInicio)
+      + displayDate(filters.periodStart)
       + ' a '
-      + displayDate(filters.periodoFim);
+      + displayDate(filters.periodEnd);
     result.push(['Período', description]);
   }
 

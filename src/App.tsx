@@ -11,12 +11,19 @@ import { FilterPanel } from './components/FilterPanel';
 import { AtencaoImediata } from './components/AtencaoImediata';
 import { VisaoGeral } from './components/VisaoGeral';
 import { AdminSkeleton, AuthSkeleton, DashboardSkeleton, TableSkeleton } from './components/LoadingSkeletons';
-import { getTodayString, isBeforeToday } from './utils/date';
 import { matchDemandSearch } from './search/demandSearch';
 import { rankApproximateDemandSearch } from './search/approximateSearch';
-import { getPeriodValidationError, matchesPeriod, type PeriodField } from './search/periodFilter';
+import { getPeriodValidationError } from './search/periodFilter';
 import { clearRecentSearches, loadRecentSearches, saveRecentSearch } from './search/recentSearches';
 import type { DemandSearchMatch } from './search/searchTypes';
+import { applyDemandBaseFilters } from './filters/applyDemandFilters';
+import {
+  DEFAULT_DEMAND_FILTERS,
+  DEFAULT_QUICK_FILTERS,
+  type DemandFilters,
+  type QuickFilters,
+} from './filters/filterTypes';
+import { parseDemandFilters, serializeDemandFilters } from './filters/filterUrl';
 
 const DemandasTable = lazy(() => import('./components/DemandasTable').then((module) => ({ default: module.DemandasTable })));
 const ModalNovo = lazy(() => import('./components/ModalNovo').then((module) => ({ default: module.ModalNovo })));
@@ -50,21 +57,18 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   // --- Estados do Aplicativo ---
   const demandas = data.demandas;
   const historico = data.historico;
-  const [setoresDisponiveis, setSetoresDisponiveis] = useState<string[]>([]);
+  const setoresDisponiveis = useMemo(() => Array.from(
+    new Set(
+      demandas
+        .map((demanda) => demanda.setor?.trim())
+        .filter((setor): setor is string => Boolean(setor)),
+    ),
+  ).sort(), [demandas]);
   
   // --- Estado de filtros restaurável pela URL ---
-  const [filtros, setFiltros] = useState(() => ({
-    busca: searchParams.get('busca') ?? '',
-    tipo: searchParams.get('tipo') ?? 'Todos',
-    classificacao: searchParams.get('classificacao') ?? 'Todas',
-    status: searchParams.get('status') ?? 'Somente ativos (padrão)',
-    setor: searchParams.get('setor') ?? 'Todos',
-    periodoCampo: (searchParams.get('periodoCampo') as PeriodField | null) ?? 'limite2',
-    periodoInicio: searchParams.get('periodoInicio') ?? '',
-    periodoFim: searchParams.get('periodoFim') ?? '',
-  }));
+  const [filtros, setFiltros] = useState<DemandFilters>(() => parseDemandFilters(searchParams));
 
-  const [quickFilters, setQuickFilters] = useState(() => ({
+  const [quickFilters, setQuickFilters] = useState<QuickFilters>(() => ({
     assinatura: searchParams.get('assinatura') === '1',
     hoje: searchParams.get('hoje') === '1',
     vencido: searchParams.get('vencido') === '1',
@@ -123,15 +127,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
   useEffect(() => {
     if (activeTab !== 'demandas') return;
-    const next = new URLSearchParams();
-    if (filtros.busca) next.set('busca', filtros.busca);
-    if (filtros.tipo !== 'Todos') next.set('tipo', filtros.tipo);
-    if (filtros.classificacao !== 'Todas') next.set('classificacao', filtros.classificacao);
-    if (filtros.status !== 'Somente ativos (padrão)') next.set('status', filtros.status);
-    if (filtros.setor !== 'Todos') next.set('setor', filtros.setor);
-    if (filtros.periodoCampo !== 'limite2') next.set('periodoCampo', filtros.periodoCampo);
-    if (filtros.periodoInicio) next.set('periodoInicio', filtros.periodoInicio);
-    if (filtros.periodoFim) next.set('periodoFim', filtros.periodoFim);
+    const next = serializeDemandFilters(filtros);
     if (quickFilters.assinatura) next.set('assinatura', '1');
     if (quickFilters.hoje) next.set('hoje', '1');
     if (quickFilters.vencido) next.set('vencido', '1');
@@ -196,18 +192,6 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     }
   };
 
-  // Recalcular lista de setores únicos a partir de todas as demandas cadastradas
-  useEffect(() => {
-    const setoresUnicos = Array.from(
-      new Set(
-        demandas
-          .map(d => d.setor?.trim())
-          .filter((s): s is string => !!s)
-      )
-    ).sort();
-    setSetoresDisponiveis(setoresUnicos);
-  }, [demandas]);
-
   const handleLogout = async () => {
     await session.signOut();
     setActiveTab('visao-geral');
@@ -218,21 +202,8 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     setModalStatusAberto(false);
     setModalHistoricoAberto(false);
     setPerfis([]);
-    setFiltros({
-      busca: '',
-      tipo: 'Todos',
-      classificacao: 'Todas',
-      status: 'Somente ativos (padrão)',
-      setor: 'Todos',
-      periodoCampo: 'limite2',
-      periodoInicio: '',
-      periodoFim: '',
-    });
-    setQuickFilters({
-      assinatura: false,
-      hoje: false,
-      vencido: false
-    });
+    setFiltros({ ...DEFAULT_DEMAND_FILTERS });
+    setQuickFilters({ ...DEFAULT_QUICK_FILTERS });
   };
 
   // Criar nova demanda
@@ -292,54 +263,31 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   };
 
   const periodError = getPeriodValidationError({
-    field: filtros.periodoCampo,
-    start: filtros.periodoInicio,
-    end: filtros.periodoFim,
+    field: filtros.periodField,
+    start: filtros.periodStart,
+    end: filtros.periodEnd,
   });
 
   const searchState = useMemo(() => {
-    const todayStr = getTodayString();
-    const baseCandidates = demandas.filter((demanda) => {
-      const algumQuickAtivo = quickFilters.assinatura || quickFilters.hoje || quickFilters.vencido;
-      if (algumQuickAtivo) {
-        const matchQuick = (
-          (quickFilters.assinatura && demanda.status === 'Para Assinatura')
-          || (quickFilters.hoje && demanda.status !== 'Encerrado' && demanda.limite2 === todayStr)
-          || (quickFilters.vencido && demanda.status !== 'Encerrado' && Boolean(demanda.limite2) && isBeforeToday(demanda.limite2))
-        );
-        if (!matchQuick) return false;
-      }
-
-      if (!matchesPeriod(demanda, historico, {
-        field: filtros.periodoCampo,
-        start: filtros.periodoInicio,
-        end: filtros.periodoFim,
-      })) return false;
-
-      if (filtros.tipo !== 'Todos' && demanda.tipo !== filtros.tipo) return false;
-      if (filtros.classificacao !== 'Todas' && demanda.classificacao !== filtros.classificacao) return false;
-      if (filtros.status === 'Somente ativos (padrão)') {
-        if (demanda.status === 'Encerrado') return false;
-      } else if (filtros.status !== 'Todos (exibir tudo)' && demanda.status !== filtros.status) {
-        return false;
-      }
-      if (filtros.setor !== 'Todos' && demanda.setor !== filtros.setor) return false;
-      return true;
+    const baseCandidates = applyDemandBaseFilters(demandas, filtros, {
+      historico,
+      quickFilters,
+      currentUserId: session.user?.id,
     });
 
     const exactMatches = new Map<number, DemandSearchMatch>();
     const exactDemandas = baseCandidates.filter((demanda) => {
-      const match = matchDemandSearch(demanda, historico, filtros.busca);
+      const match = matchDemandSearch(demanda, historico, filtros.query);
       if (!match.matches) return false;
       exactMatches.set(demanda.id, { ...match, matchKind: 'exact' });
       return true;
     });
 
-    if (exactDemandas.length > 0 || !filtros.busca.trim()) {
+    if (exactDemandas.length > 0 || !filtros.query.trim()) {
       return { demandas: exactDemandas, matches: exactMatches, mode: 'exact' as const };
     }
 
-    const approximateResults = rankApproximateDemandSearch(baseCandidates, historico, filtros.busca);
+    const approximateResults = rankApproximateDemandSearch(baseCandidates, historico, filtros.query);
     if (approximateResults.length > 0) {
       return {
         demandas: approximateResults.map((result) => result.demanda),
@@ -349,7 +297,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     }
 
     return { demandas: [], matches: new Map<number, DemandSearchMatch>(), mode: 'empty' as const };
-  }, [demandas, filtros, historico, quickFilters]);
+  }, [demandas, filtros, historico, quickFilters, session.user?.id]);
 
   const demandasFiltradas = searchState.demandas;
   const searchMatches = searchState.matches;
@@ -547,7 +495,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
               <DemandasTable 
                 demandas={demandasFiltradas}
-                searchQuery={filtros.busca}
+                searchQuery={filtros.query}
                 searchMatches={searchMatches}
                 searchResultMode={searchResultMode}
                 canEdit={canEdit}

@@ -11,8 +11,8 @@ async function login(page: Page) {
 test('rotas e filtros preservam o contexto de navegação', async ({ page }) => {
   await login(page);
   await page.getByRole('button', { name: /^demandas$/i }).click();
-  await page.getByLabel(/^status$/i).selectOption('Todos (exibir tudo)');
-  await expect.poll(() => new URL(page.url()).searchParams.get('status')).toBe('Todos (exibir tudo)');
+  await page.getByLabel(/^status$/i).selectOption('todos');
+  await expect.poll(() => new URL(page.url()).searchParams.get('status')).toBe('todos');
 
   const firstRow = page.getByRole('row').nth(1);
   const processNumber = await firstRow.locator('.numero-link').innerText();
@@ -22,5 +22,5 @@ test('rotas e filtros preservam o contexto de navegação', async ({ page }) => 
 
   await page.goBack();
   await expect(page).toHaveURL(/\/demandas\?status=/);
-  await expect(page.getByLabel(/^status$/i)).toHaveValue('Todos (exibir tudo)');
+  await expect(page.getByLabel(/^status$/i)).toHaveValue('todos');
 });

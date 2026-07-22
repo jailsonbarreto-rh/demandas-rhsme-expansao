@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const source = readFileSync(new URL('./database.types.ts', import.meta.url), 'utf8');
+const source = readFileSync(resolve(process.cwd(), 'src/lib/database.types.ts'), 'utf8');
 
 describe('database.types — Ciclo 3', () => {
   it('inclui todos os campos expandidos de sme_demandas', () => {

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const migrationsDir = dirname(fileURLToPath(import.meta.url));
 const sql = readFileSync(
-  resolve(migrationsDir, '20260722120000_block_physical_demand_delete.sql'),
+  resolve(migrationsDir, '20260722123935_cycle4_block_direct_writes.sql'),
   'utf8',
 ).replace(/\r\n/g, '\n').toLowerCase();
 

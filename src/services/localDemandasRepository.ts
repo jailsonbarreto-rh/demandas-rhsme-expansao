@@ -1,10 +1,71 @@
-import type { ComentarioHistorico, Demanda } from '../types';
+import type {
+  ComentarioHistorico,
+  DeadlineState,
+  Demanda,
+  DemandOrigin,
+  LegacyCreateDemandaInput,
+} from '../types';
 import type { AppData, DemandasRepository } from './contracts';
 
 const DEMANDAS_KEY = 'demandas_data';
 const HISTORY_KEY = 'demandas_history';
 
 export type StorageAdapter = Pick<Storage, 'getItem' | 'setItem'>;
+
+function inferDeadlineState(value: unknown, state: unknown): DeadlineState {
+  if (state === 'definido' || state === 'nao_informado' || state === 'nao_se_aplica') {
+    return state;
+  }
+  return typeof value === 'string' && value.trim() ? 'definido' : 'nao_informado';
+}
+
+function normalizeDemanda(value: any, fallbackOrigin: DemandOrigin): Demanda {
+  return {
+    id: value.id,
+    numero: value.numero,
+    tipo: value.tipo,
+    assunto: value.assunto,
+    responsavel: typeof value.responsavel === 'string' ? value.responsavel : '',
+    responsavelId: typeof value.responsavelId === 'string' ? value.responsavelId : null,
+    limite1: typeof value.limite1 === 'string' ? value.limite1 : '',
+    limite1Situacao: inferDeadlineState(value.limite1, value.limite1Situacao),
+    limite1Justificativa: typeof value.limite1Justificativa === 'string'
+      ? value.limite1Justificativa
+      : '',
+    limite2: typeof value.limite2 === 'string' ? value.limite2 : '',
+    limite2Situacao: inferDeadlineState(value.limite2, value.limite2Situacao),
+    limite2Justificativa: typeof value.limite2Justificativa === 'string'
+      ? value.limite2Justificativa
+      : '',
+    proximaAcao: typeof value.proximaAcao === 'string' ? value.proximaAcao : '',
+    proximaAcaoEm: typeof value.proximaAcaoEm === 'string' ? value.proximaAcaoEm : '',
+    linkOrigem: typeof value.linkOrigem === 'string' ? value.linkOrigem : '',
+    status: value.status,
+    setor: typeof value.setor === 'string' ? value.setor : '',
+    classificacao: typeof value.classificacao === 'string' ? value.classificacao : '',
+    origem: value.origem === 'legado' || value.origem === 'sistema'
+      ? value.origem
+      : fallbackOrigin,
+    createdAt: typeof value.createdAt === 'string' ? value.createdAt : '',
+    updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : '',
+  };
+}
+
+function normalizeHistorico(value: any): ComentarioHistorico {
+  return {
+    id: value.id,
+    demandaId: value.demandaId,
+    data_hora: value.data_hora,
+    tipoEvento: value.tipoEvento ?? 'mudanca_status',
+    status_anterior: value.status_anterior ?? '',
+    status_novo: value.status_novo,
+    setor: typeof value.setor === 'string' ? value.setor : '',
+    comentario: value.comentario,
+    autorId: typeof value.autorId === 'string' ? value.autorId : null,
+    autorNome: typeof value.autorNome === 'string' ? value.autorNome : '',
+    alteracoes: Array.isArray(value.alteracoes) ? value.alteracoes : [],
+  };
+}
 
 export class LocalDemandasRepository implements DemandasRepository {
   private demandas: Demanda[] = [];
@@ -15,11 +76,11 @@ export class LocalDemandasRepository implements DemandasRepository {
     private readonly initialDemandas: Demanda[],
   ) {}
 
-  private isValidDemandaArray(arr: any): arr is Demanda[] {
+  private isValidDemandaArray(arr: any): arr is any[] {
     if (!Array.isArray(arr)) return false;
-    return arr.every(d => 
-      d && 
-      typeof d.id === 'number' && 
+    return arr.every(d =>
+      d &&
+      typeof d.id === 'number' &&
       typeof d.numero === 'string' && d.numero.trim() !== '' &&
       typeof d.tipo === 'string' &&
       typeof d.assunto === 'string' &&
@@ -27,11 +88,11 @@ export class LocalDemandasRepository implements DemandasRepository {
     );
   }
 
-  private isValidHistoryArray(arr: any): arr is ComentarioHistorico[] {
+  private isValidHistoryArray(arr: any): arr is any[] {
     if (!Array.isArray(arr)) return false;
-    return arr.every(h => 
-      h && 
-      typeof h.id === 'number' && 
+    return arr.every(h =>
+      h &&
+      typeof h.id === 'number' &&
       typeof h.demandaId === 'number' &&
       typeof h.status_novo === 'string' &&
       typeof h.comentario === 'string'
@@ -57,20 +118,22 @@ export class LocalDemandasRepository implements DemandasRepository {
       if (this.isValidDemandaArray(storedDemandas) && this.isValidHistoryArray(storedHistorico)) {
         const demandaIds = new Set(storedDemandas.map(d => d.id));
         const consistentHistorico = storedHistorico.filter(h => demandaIds.has(h.demandaId));
-        
-        parsedDemandas = storedDemandas;
-        parsedHistorico = consistentHistorico;
+
+        parsedDemandas = storedDemandas.map((demanda) => normalizeDemanda(demanda, 'legado'));
+        parsedHistorico = consistentHistorico.map(normalizeHistorico);
       }
     }
 
     if (parsedDemandas && parsedHistorico) {
       this.demandas = parsedDemandas;
       this.historico = parsedHistorico;
+      this.saveDemandas();
+      this.saveHistorico();
     } else {
       if ((rawDemandas !== null || rawHistorico !== null) && !houveErroParse) {
         console.warn('A base de dados local estava inconsistente ou corrompida. Todos os dados foram redefinidos para os valores padrões de segurança.');
       }
-      this.demandas = this.initialDemandas.map((demanda) => ({ ...demanda }));
+      this.demandas = this.initialDemandas.map((demanda) => normalizeDemanda(demanda, 'sistema'));
       this.saveDemandas();
       this.resetHistoricoFallback();
     }
@@ -87,14 +150,19 @@ export class LocalDemandasRepository implements DemandasRepository {
       id: demanda.id,
       demandaId: demanda.id,
       data_hora: hojeStr,
+      tipoEvento: 'criacao',
+      status_anterior: '',
       status_novo: demanda.status,
       setor: demanda.setor || 'SME',
       comentario: 'Demanda sintética carregada no modo de demonstração.',
+      autorId: null,
+      autorNome: 'Usuário Demonstração',
+      alteracoes: [],
     }));
     this.saveHistorico();
   }
 
-  async create(input: Omit<Demanda, 'id'>): Promise<void> {
+  async create(input: LegacyCreateDemandaInput): Promise<void> {
     if (this.demandas.some(d => d.numero.trim().toLowerCase() === input.numero.trim().toLowerCase())) {
       throw new Error('Já existe uma demanda cadastrada com este número de processo.');
     }
@@ -102,7 +170,22 @@ export class LocalDemandasRepository implements DemandasRepository {
     const id = this.demandas.length > 0
       ? Math.max(...this.demandas.map((demanda) => demanda.id)) + 1
       : 1;
-    const demanda: Demanda = { id, ...input };
+    const now = new Date().toISOString();
+    const demanda: Demanda = {
+      id,
+      ...input,
+      responsavelId: null,
+      limite1Situacao: inferDeadlineState(input.limite1, undefined),
+      limite1Justificativa: '',
+      limite2Situacao: inferDeadlineState(input.limite2, undefined),
+      limite2Justificativa: '',
+      proximaAcao: '',
+      proximaAcaoEm: '',
+      linkOrigem: '',
+      origem: 'sistema',
+      createdAt: now,
+      updatedAt: now,
+    };
 
     this.demandas = [demanda, ...this.demandas];
     this.saveDemandas();
@@ -111,9 +194,14 @@ export class LocalDemandasRepository implements DemandasRepository {
       id: Date.now(),
       demandaId: id,
       data_hora: new Date().toLocaleString('pt-BR'),
+      tipoEvento: 'criacao',
+      status_anterior: '',
       status_novo: input.status,
       setor: input.setor,
       comentario: 'Demanda cadastrada no sistema.',
+      autorId: null,
+      autorNome: 'Usuário Demonstração',
+      alteracoes: [],
     };
     this.historico = [comentario, ...this.historico];
     this.saveHistorico();
@@ -126,9 +214,22 @@ export class LocalDemandasRepository implements DemandasRepository {
     const safeChanges = { ...changes };
     delete safeChanges.status;
 
-    this.demandas = this.demandas.map((demanda) =>
-      demanda.id === id ? { ...demanda, ...safeChanges } : demanda,
-    );
+    this.demandas = this.demandas.map((demanda) => {
+      if (demanda.id !== id) return demanda;
+      const next = { ...demanda, ...safeChanges };
+
+      if (changes.limite1 !== undefined && changes.limite1Situacao === undefined) {
+        next.limite1Situacao = inferDeadlineState(changes.limite1, undefined);
+        next.limite1Justificativa = '';
+      }
+      if (changes.limite2 !== undefined && changes.limite2Situacao === undefined) {
+        next.limite2Situacao = inferDeadlineState(changes.limite2, undefined);
+        next.limite2Justificativa = '';
+      }
+
+      next.updatedAt = new Date().toISOString();
+      return next;
+    });
     this.saveDemandas();
   }
 
@@ -141,7 +242,7 @@ export class LocalDemandasRepository implements DemandasRepository {
     if (!demanda) throw new Error('Demanda não encontrada.');
 
     this.demandas = this.demandas.map((item) =>
-      item.id === id ? { ...item, status } : item,
+      item.id === id ? { ...item, status, updatedAt: new Date().toISOString() } : item,
     );
     this.saveDemandas();
 
@@ -149,9 +250,14 @@ export class LocalDemandasRepository implements DemandasRepository {
       id: Date.now(),
       demandaId: id,
       data_hora: new Date().toLocaleString('pt-BR'),
+      tipoEvento: 'mudanca_status',
+      status_anterior: demanda.status,
       status_novo: status,
       setor: demanda.setor || '—',
       comentario,
+      autorId: null,
+      autorNome: 'Usuário Demonstração',
+      alteracoes: [],
     };
     this.historico = [historico, ...this.historico];
     this.saveHistorico();

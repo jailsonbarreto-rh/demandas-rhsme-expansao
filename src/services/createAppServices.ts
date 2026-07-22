@@ -24,6 +24,7 @@ export class ConfigurationError extends Error {
 
 const localProfilesService: ProfilesService = {
   list: async () => [],
+  listMinimal: async () => [],
   updateAccess: async () => undefined,
 };
 

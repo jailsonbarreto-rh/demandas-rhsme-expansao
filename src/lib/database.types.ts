@@ -129,6 +129,80 @@ export type Database = {
         Args: { p_demanda_id: number; p_novo_status: string; p_comentario: string };
         Returns: undefined;
       };
+      criar_sme_demanda_v2: {
+        Args: {
+          p_numero: string;
+          p_tipo: string;
+          p_assunto: string;
+          p_responsavel_id: string | null;
+          p_responsavel: string;
+          p_limite1: string | null;
+          p_limite1_situacao: DeadlineState;
+          p_limite1_justificativa: string;
+          p_limite2: string | null;
+          p_limite2_situacao: DeadlineState;
+          p_limite2_justificativa: string;
+          p_proxima_acao: string;
+          p_proxima_acao_em: string | null;
+          p_status: DemandStatus;
+          p_setor: string;
+          p_classificacao: string;
+          p_link_origem: string;
+        };
+        Returns: Database['public']['Tables']['sme_demandas']['Row'];
+      };
+      editar_sme_demanda: {
+        Args: {
+          p_demanda_id: number;
+          p_assunto: string;
+          p_responsavel_id: string | null;
+          p_responsavel: string;
+          p_limite1: string | null;
+          p_limite1_situacao: DeadlineState;
+          p_limite1_justificativa: string;
+          p_limite2: string | null;
+          p_limite2_situacao: DeadlineState;
+          p_limite2_justificativa: string;
+          p_setor: string;
+          p_classificacao: string;
+          p_link_origem: string;
+          p_proxima_acao: string;
+          p_proxima_acao_em: string | null;
+          p_justificativa: string;
+        };
+        Returns: Database['public']['Tables']['sme_demandas']['Row'];
+      };
+      registrar_andamento_sme_demanda: {
+        Args: {
+          p_demanda_id: number;
+          p_comentario: string;
+          p_proxima_acao: string;
+          p_proxima_acao_em: string;
+        };
+        Returns: Database['public']['Tables']['sme_demandas']['Row'];
+      };
+      transicionar_status_sme_demanda: {
+        Args: {
+          p_demanda_id: number;
+          p_novo_status: DemandStatus;
+          p_comentario: string;
+          p_proxima_acao: string;
+          p_proxima_acao_em: string | null;
+        };
+        Returns: Database['public']['Tables']['sme_demandas']['Row'];
+      };
+      excluir_sme_demanda: {
+        Args: { p_demanda_id: number; p_motivo: string };
+        Returns: Database['public']['Tables']['sme_demandas']['Row'];
+      };
+      restaurar_sme_demanda: {
+        Args: { p_demanda_id: number; p_motivo: string };
+        Returns: Database['public']['Tables']['sme_demandas']['Row'];
+      };
+      listar_perfis_minimos: {
+        Args: Record<PropertyKey, never>;
+        Returns: Array<{ id: string; nome: string; setor: string }>;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

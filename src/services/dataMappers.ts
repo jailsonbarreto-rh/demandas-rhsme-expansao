@@ -157,6 +157,9 @@ export function toDemanda(row: DemandaRow): Demanda {
     setor: row.setor ?? '',
     classificacao: row.classificacao ?? '',
     origem: row.origem ?? 'legado',
+    deletedAt: row.deleted_at ?? '',
+    deletedBy: row.deleted_by ?? null,
+    deletionReason: row.deletion_reason ?? '',
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
   };

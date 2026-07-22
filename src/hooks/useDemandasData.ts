@@ -2,8 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import type {
   AppUser,
   ComentarioHistorico,
+  CreateDemandaInput,
+  DeleteDemandaInput,
   Demanda,
+  EditDemandaInput,
   LegacyCreateDemandaInput,
+  ProgressInput,
+  RestoreDemandaInput,
+  StatusTransitionInput,
 } from '../types';
 import type { DemandasRepository } from '../services/contracts';
 
@@ -73,8 +79,25 @@ export function useDemandasData(
   }, [reload]);
 
   return {
-    demandas, historico, loading, error, reload,
-    create: (input: LegacyCreateDemandaInput) => mutate(() => repository.create(input)),
+    demandas,
+    historico,
+    loading,
+    error,
+    reload,
+    loadTrash: () => repository.loadTrash(),
+    create: (input: CreateDemandaInput | LegacyCreateDemandaInput) =>
+      mutate(() => repository.create(input)),
+    edit: (id: number, input: EditDemandaInput) => mutate(() => repository.edit(id, input)),
+    registerProgress: (id: number, input: ProgressInput) =>
+      mutate(() => repository.registerProgress(id, input)),
+    transitionStatus: (id: number, input: StatusTransitionInput) =>
+      mutate(() => repository.transitionStatus(id, input)),
+    deleteLogically: (id: number, input: DeleteDemandaInput) =>
+      mutate(() => repository.deleteLogically(id, input)),
+    restore: (id: number, input: RestoreDemandaInput) =>
+      mutate(() => repository.restore(id, input)),
+
+    // Adaptadores temporários para chamadas ainda não migradas nas telas.
     update: (id: number, changes: Partial<Demanda>) => mutate(() => repository.update(id, changes)),
     updateStatus: (id: number, status: Demanda['status'], comentario: string) =>
       mutate(() => repository.updateStatus(id, status, comentario)),

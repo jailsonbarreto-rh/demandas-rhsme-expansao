@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../lib/database.types';
-import type { PerfilUsuario } from '../types';
+import type { PerfilMinimo, PerfilUsuario } from '../types';
 import type { ProfilesService } from './contracts';
 
 export class SupabaseProfilesService implements ProfilesService {
@@ -11,6 +11,12 @@ export class SupabaseProfilesService implements ProfilesService {
       .from('perfis_usuarios')
       .select('id,nome,email,setor,nivel,status')
       .order('nome', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async listMinimal(): Promise<PerfilMinimo[]> {
+    const { data, error } = await this.client.rpc('listar_perfis_minimos');
     if (error) throw error;
     return data ?? [];
   }

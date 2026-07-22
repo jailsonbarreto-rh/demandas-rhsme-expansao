@@ -79,6 +79,9 @@ describe('adaptadores de dados', () => {
       setor: 'CTRH',
       classificacao: 'Consultas',
       origem: 'sistema',
+      deletedAt: '',
+      deletedBy: null,
+      deletionReason: '',
       createdAt: '2026-07-01T10:00:00Z',
       updatedAt: '2026-07-12T12:00:00Z',
     });
@@ -116,6 +119,9 @@ describe('adaptadores de dados', () => {
       setor: '',
       classificacao: '',
       origem: 'legado',
+      deletedAt: '',
+      deletedBy: null,
+      deletionReason: '',
       createdAt: '',
       updatedAt: '',
     });

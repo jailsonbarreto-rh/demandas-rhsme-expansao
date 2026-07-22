@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": {
+      "*": false,
+      "feat/mutacoes-auditaveis-ciclo-4": true
+    }
   },
   "rewrites": [
     { "source": "/demandas", "destination": "/index.html" },

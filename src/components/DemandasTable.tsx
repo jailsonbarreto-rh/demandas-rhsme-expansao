@@ -9,19 +9,19 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import type { Demanda } from '../types';
+import type { DeleteDemandaInput, Demanda } from '../types';
 import type { DemandSearchField, DemandSearchMatch } from '../search/searchTypes';
 import { HighlightedText } from '../search/searchHighlight';
 import { getPrazoFinalSemantics } from '../utils/date';
 import { isClosed } from '../domain/workSemantics';
-import { ConfirmDialog } from './ui/ConfirmDialog';
+import { DeleteDemandaDialog } from './DeleteDemandaDialog';
 
 interface DemandasTableProps {
   demandas: Demanda[];
   onOpenEditar: (demanda: Demanda) => void;
   onOpenStatus: (demanda: Demanda) => void;
   onOpenHistorico: (demanda: Demanda) => void;
-  onExcluir: (id: number) => void;
+  onExcluir: (id: number, input: DeleteDemandaInput) => void | Promise<void>;
   canEdit?: boolean;
   canDelete?: boolean;
   searchQuery?: string;
@@ -362,23 +362,20 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         </div>
       </div>
 
-      <ConfirmDialog
-        open={Boolean(deleteTarget)}
-        title="Excluir demanda?"
-        description={`O processo ${deleteTarget?.numero ?? ''} será removido com seu histórico. Essa ação não poderá ser desfeita.`}
-        confirmLabel="Excluir demanda"
-        destructive
-        onConfirm={() => {
-          if (deleteTarget) onExcluir(deleteTarget.id);
+      <DeleteDemandaDialog
+        demanda={deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onConfirm={async (id, input) => {
+          await onExcluir(id, input);
           setDeleteTarget(null);
         }}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
       />
     </>
   );
 };
 
 function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
-  const icon = direction === 'asc' ? 'fa-arrow-up-short-wide' : direction === 'desc' ? 'fa-arrow-down-wide-short' : 'fa-sort';
-  return <i className={`fa-solid ${icon}`} aria-hidden="true" />;
+  if (direction === 'asc') return <i className="fa-solid fa-sort-up" aria-hidden="true" />;
+  if (direction === 'desc') return <i className="fa-solid fa-sort-down" aria-hidden="true" />;
+  return <i className="fa-solid fa-sort" aria-hidden="true" />;
 }

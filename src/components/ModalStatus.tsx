@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Demanda } from '../types';
+import type { Demanda, StatusTransitionInput } from '../types';
 import { statusDemandaSchema, statusValues, type StatusDemandaValues } from '../validation/demandaSchemas';
+import { DateMaskInput } from './DateMaskInput';
 import { AppDialog } from './ui/AppDialog';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { FormError } from './ui/FormError';
@@ -10,19 +11,27 @@ import { FormError } from './ui/FormError';
 interface ModalStatusProps {
   demanda: Demanda;
   onClose: () => void;
-  onAtualizar: (demandaId: number, novoStatus: Demanda['status'], comentario: string) => void | boolean | Promise<void | boolean>;
+  onAtualizar: (demandaId: number, input: StatusTransitionInput) => void | boolean | Promise<void | boolean>;
 }
 
 export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAtualizar }) => {
   const [confirmClose, setConfirmClose] = useState(false);
   const {
     register,
+    control,
     handleSubmit,
+    watch,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<StatusDemandaValues>({
     resolver: zodResolver(statusDemandaSchema),
-    defaultValues: { status: demanda.status, comentario: '' },
+    defaultValues: {
+      status: demanda.status,
+      comentario: '',
+      proximaAcao: demanda.proximaAcao,
+      proximaAcaoEm: demanda.proximaAcaoEm,
+    },
   });
+  const selectedStatus = watch('status');
 
   const requestClose = () => {
     if (isDirty && !isSubmitting) setConfirmClose(true);
@@ -30,7 +39,7 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
   };
 
   const submit = handleSubmit(async (values) => {
-    await onAtualizar(demanda.id, values.status, values.comentario);
+    await onAtualizar(demanda.id, values);
   });
 
   return (
@@ -51,13 +60,43 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
                 <textarea
                   id="modal_status_comentario"
                   className={`form-control status-comment ${errors.comentario ? 'field-invalid' : ''}`.trim()}
-                  placeholder="Descreva as atualizações realizadas para justificar a mudança de status..."
+                  placeholder="Descreva a movimentação e o motivo da mudança de status..."
                   {...register('comentario')}
                   aria-invalid={Boolean(errors.comentario)}
                   aria-describedby={errors.comentario ? 'status-comentario-error' : undefined}
                 />
                 <FormError id="status-comentario-error" message={errors.comentario?.message} />
               </div>
+              {selectedStatus !== 'Encerrado' && (
+                <>
+                  <div>
+                    <label htmlFor="modal_status_proxima_acao" className="input-label-externa">Próxima ação</label>
+                    <textarea
+                      id="modal_status_proxima_acao"
+                      className={`form-control status-comment ${errors.proximaAcao ? 'field-invalid' : ''}`.trim()}
+                      placeholder="Informe a providência ou verificação seguinte..."
+                      {...register('proximaAcao')}
+                      aria-invalid={Boolean(errors.proximaAcao)}
+                      aria-describedby={errors.proximaAcao ? 'status-proxima-acao-error' : undefined}
+                    />
+                    <FormError id="status-proxima-acao-error" message={errors.proximaAcao?.message} />
+                  </div>
+                  <Controller
+                    name="proximaAcaoEm"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <DateMaskInput
+                        id="modal_status_proxima_acao_em"
+                        label="Data de acompanhamento"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                </>
+              )}
             </div>
           </div>
           <div className="modal-footer">
@@ -75,7 +114,7 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
       <ConfirmDialog
         open={confirmClose}
         title="Descartar alteração de status?"
-        description="O status ou o comentário foram alterados e ainda não foram registrados."
+        description="O status, o comentário ou a próxima ação ainda não foram registrados."
         confirmLabel="Descartar alterações"
         onConfirm={onClose}
         onOpenChange={setConfirmClose}

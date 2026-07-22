@@ -28,13 +28,24 @@ function createServices(signIn = vi.fn().mockResolvedValue(activeUser)) {
       subscribe: vi.fn(() => () => undefined),
     },
     demandas: {
-      load, create,
+      load,
+      loadTrash: vi.fn().mockResolvedValue([]),
+      create,
+      edit: vi.fn().mockResolvedValue(undefined),
+      registerProgress: vi.fn().mockResolvedValue(undefined),
+      transitionStatus: vi.fn().mockResolvedValue(undefined),
+      deleteLogically: vi.fn().mockResolvedValue(undefined),
+      restore: vi.fn().mockResolvedValue(undefined),
       update: vi.fn().mockResolvedValue(undefined),
       updateStatus: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn(() => () => undefined),
     },
-    profiles: { list: vi.fn().mockResolvedValue([]), updateAccess: vi.fn().mockResolvedValue(undefined) },
+    profiles: {
+      list: vi.fn().mockResolvedValue([]),
+      listMinimal: vi.fn().mockResolvedValue([]),
+      updateAccess: vi.fn().mockResolvedValue(undefined),
+    },
   };
   return { services, load, create };
 }
@@ -66,10 +77,15 @@ describe('App no modo Supabase', () => {
     await user.type(screen.getByLabelText('Assunto'), 'Demanda de integração');
     await user.selectOptions(screen.getByLabelText('Status'), 'Aguardando Andamento');
     await user.selectOptions(screen.getByLabelText('Selecione a classificação'), 'Outros');
+    await user.type(screen.getByLabelText('Próxima ação'), 'Conferir documentação recebida');
+    await user.type(screen.getByLabelText('Data de acompanhamento'), '20082026');
     await user.click(screen.getByRole('button', { name: /salvar/i }));
 
     await waitFor(() => expect(create).toHaveBeenCalledWith(expect.objectContaining({
-      numero: 'SME-TESTE-001', assunto: 'Demanda de integração',
+      numero: 'SME-TESTE-001',
+      assunto: 'Demanda de integração',
+      proximaAcao: 'Conferir documentação recebida',
+      proximaAcaoEm: '20/08/2026',
     })));
   });
 

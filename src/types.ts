@@ -28,25 +28,26 @@ export interface Demanda {
   assunto: string;
   responsavel: string;
   responsavelId: string | null;
-  limite1: string; // dd/mm/aaaa ou vazio
+  limite1: string;
   limite1Situacao: DeadlineState;
   limite1Justificativa: string;
-  limite2: string; // dd/mm/aaaa ou vazio
+  limite2: string;
   limite2Situacao: DeadlineState;
   limite2Justificativa: string;
   proximaAcao: string;
-  proximaAcaoEm: string; // dd/mm/aaaa ou vazio
+  proximaAcaoEm: string;
   linkOrigem: string;
   status: DemandStatus;
   setor: string;
   classificacao: string;
   origem: DemandOrigin;
-  createdAt: string; // ISO ou vazio em fixture legada
-  updatedAt: string; // ISO ou vazio em fixture legada
+  deletedAt: string;
+  deletedBy: string | null;
+  deletionReason: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Contrato temporário de compatibilidade com os formulários e RPCs v1.
-// O Ciclo 4 o substituirá pelos inputs de mutação auditáveis do Plano Mestre.
 export type LegacyCreateDemandaInput = Pick<
   Demanda,
   | 'numero'
@@ -59,6 +60,53 @@ export type LegacyCreateDemandaInput = Pick<
   | 'setor'
   | 'classificacao'
 >;
+
+export type CreateDemandaInput = Omit<
+  Demanda,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'origem'
+  | 'deletedAt'
+  | 'deletedBy'
+  | 'deletionReason'
+>;
+
+export interface EditDemandaInput {
+  assunto: string;
+  responsavelId: string | null;
+  responsavel: string;
+  limite1: string;
+  limite1Situacao: DeadlineState;
+  limite1Justificativa: string;
+  limite2: string;
+  limite2Situacao: DeadlineState;
+  limite2Justificativa: string;
+  setor: string;
+  classificacao: string;
+  linkOrigem: string;
+  proximaAcao: string;
+  proximaAcaoEm: string;
+  justificativa: string;
+}
+
+export interface ProgressInput {
+  comentario: string;
+  proximaAcao: string;
+  proximaAcaoEm: string;
+}
+
+export interface StatusTransitionInput extends ProgressInput {
+  status: DemandStatus;
+}
+
+export interface DeleteDemandaInput {
+  motivo: string;
+}
+
+export interface RestoreDemandaInput {
+  motivo: string;
+}
 
 export type HistoryEventType =
   | 'criacao'
@@ -79,7 +127,7 @@ export interface FieldChange {
 export interface ComentarioHistorico {
   id: number;
   demandaId: number;
-  data_hora: string; // dd/mm/aaaa hh:mm:ss ou ISO
+  data_hora: string;
   tipoEvento: HistoryEventType;
   status_anterior: DemandStatus | '';
   status_novo: DemandStatus;
@@ -97,6 +145,12 @@ export interface PerfilUsuario {
   setor: string;
   nivel: 'administrador' | 'editor' | 'leitor';
   status: 'ativo' | 'pendente' | 'inativo';
+}
+
+export interface PerfilMinimo {
+  id: string;
+  nome: string;
+  setor: string;
 }
 
 export interface AppUser {

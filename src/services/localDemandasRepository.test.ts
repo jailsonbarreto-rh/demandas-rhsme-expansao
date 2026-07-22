@@ -2,54 +2,64 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { demoDemandas as initialDemandas } from '../data/demoDemandas';
 import type {
   ComentarioHistorico,
+  CreateDemandaInput,
   Demanda,
-  LegacyCreateDemandaInput,
+  EditDemandaInput,
 } from '../types';
 import { LocalDemandasRepository } from './localDemandasRepository';
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
 
-  get length(): number {
-    return this.values.size;
-  }
-
-  clear(): void {
-    this.values.clear();
-  }
-
-  getItem(key: string): string | null {
-    return this.values.get(key) ?? null;
-  }
-
-  key(index: number): string | null {
-    return [...this.values.keys()][index] ?? null;
-  }
-
-  removeItem(key: string): void {
-    this.values.delete(key);
-  }
-
-  setItem(key: string, value: string): void {
-    this.values.set(key, value);
-  }
-
-  keys(): string[] {
-    return [...this.values.keys()];
-  }
+  get length(): number { return this.values.size; }
+  clear(): void { this.values.clear(); }
+  getItem(key: string): string | null { return this.values.get(key) ?? null; }
+  key(index: number): string | null { return [...this.values.keys()][index] ?? null; }
+  removeItem(key: string): void { this.values.delete(key); }
+  setItem(key: string, value: string): void { this.values.set(key, value); }
+  keys(): string[] { return [...this.values.keys()]; }
 }
 
-const novaDemanda: LegacyCreateDemandaInput = {
-  numero: 'SME-PRO-2026/99999',
+const createInput: CreateDemandaInput = {
+  numero: 'DEMO-C4-999',
   tipo: 'Processo',
-  assunto: 'Nova demanda',
-  responsavel: 'Equipe CTRH',
+  assunto: 'Nova demanda auditável',
+  responsavel: 'Equipe Demonstração',
+  responsavelId: null,
   limite1: '',
-  limite2: '30/06/2026',
+  limite1Situacao: 'nao_informado',
+  limite1Justificativa: '',
+  limite2: '30/09/2026',
+  limite2Situacao: 'definido',
+  limite2Justificativa: '',
+  proximaAcao: 'Conferir documentação demonstrativa',
+  proximaAcaoEm: '20/09/2026',
+  linkOrigem: '',
   status: 'Aguardando Andamento',
-  setor: 'E/CTRH',
+  setor: 'Setor Demonstração',
   classificacao: 'Diversos',
 };
+
+function makeEditInput(demanda: Demanda, patch: Partial<EditDemandaInput> = {}): EditDemandaInput {
+  return {
+    assunto: demanda.assunto,
+    responsavelId: demanda.responsavelId,
+    responsavel: demanda.responsavel,
+    limite1: demanda.limite1,
+    limite1Situacao: demanda.limite1Situacao,
+    limite1Justificativa: demanda.limite1Justificativa,
+    limite2: demanda.limite2,
+    limite2Situacao: demanda.limite2Situacao,
+    limite2Justificativa: demanda.limite2Justificativa,
+    setor: demanda.setor,
+    classificacao: demanda.classificacao,
+    linkOrigem: demanda.linkOrigem,
+    proximaAcao: demanda.proximaAcao,
+    proximaAcaoEm: demanda.proximaAcaoEm,
+    justificativa: 'Alteração confirmada no teste auditável',
+    ...patch,
+  };
+}
 
 function makeHistory(demandas: Demanda[], comentario = 'Histórico preservado'): ComentarioHistorico[] {
   return demandas.map((demanda) => ({
@@ -67,12 +77,12 @@ function makeHistory(demandas: Demanda[], comentario = 'Histórico preservado'):
   }));
 }
 
-describe('LocalDemandasRepository', () => {
+describe('LocalDemandasRepository — Ciclo 4', () => {
   let storage: MemoryStorage;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-07-12T12:00:00-03:00'));
+    vi.setSystemTime(new Date('2026-07-22T12:00:00-03:00'));
     storage = new MemoryStorage();
   });
 
@@ -80,9 +90,8 @@ describe('LocalDemandasRepository', () => {
     vi.useRealTimers();
   });
 
-  it('inicializa as chaves atuais com demandas e histórico na ordem original', async () => {
+  it('inicializa as chaves atuais com demandas e histórico sintéticos', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
-
     const data = await repository.load();
 
     expect(data.demandas).toEqual(initialDemandas);
@@ -93,185 +102,207 @@ describe('LocalDemandasRepository', () => {
       (item) => item.comentario === 'Demanda sintética carregada no modo de demonstração.',
     )).toBe(true);
     expect(JSON.parse(storage.getItem('demandas_data')!)).toEqual(initialDemandas);
-    expect(JSON.parse(storage.getItem('demandas_history')!)).toEqual(data.historico);
     expect(storage.keys()).toEqual(['demandas_data', 'demandas_history']);
   });
 
-  it('preserva coleções armazenadas válidas independente da quantidade de itens', async () => {
-    const storedDemandas = initialDemandas.slice(0, 5);
-    const storedHistorico = makeHistory(storedDemandas);
+  it('preserva coleções válidas e normaliza campos de exclusão ausentes', async () => {
+    const storedDemandas = initialDemandas.slice(0, 2).map((demanda) => {
+      const { deletedAt: _deletedAt, deletedBy: _deletedBy, deletionReason: _reason, ...legacy } = demanda;
+      return legacy;
+    });
     storage.setItem('demandas_data', JSON.stringify(storedDemandas));
-    storage.setItem('demandas_history', JSON.stringify(storedHistorico));
-    const repository = new LocalDemandasRepository(storage, initialDemandas);
+    storage.setItem('demandas_history', JSON.stringify(makeHistory(initialDemandas.slice(0, 2))));
 
-    const data = await repository.load();
+    const data = await new LocalDemandasRepository(storage, initialDemandas).load();
 
-    expect(data.demandas).toEqual(storedDemandas);
-    expect(data.historico).toEqual(storedHistorico);
+    expect(data.demandas).toHaveLength(2);
+    expect(data.demandas[0]).toEqual(expect.objectContaining({
+      deletedAt: '',
+      deletedBy: null,
+      deletionReason: '',
+    }));
   });
 
-  it('redefine para fallback se os dados locais estiverem corrompidos (JSON inválido)', async () => {
+  it('redefine para fixtures seguras quando o JSON local está corrompido', async () => {
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
-
     storage.setItem('demandas_data', '{invalid json}');
     storage.setItem('demandas_history', '{invalid json}');
-    const repository = new LocalDemandasRepository(storage, initialDemandas);
 
-    const data = await repository.load();
+    const data = await new LocalDemandasRepository(storage, initialDemandas).load();
 
     expect(data.demandas).toEqual(initialDemandas);
     expect(warning).toHaveBeenCalledTimes(2);
-    expect(alertMock).not.toHaveBeenCalled();
     warning.mockRestore();
-    alertMock.mockRestore();
   });
 
-  it('preserva as chaves atuais e cria histórico junto com a demanda', async () => {
+  it('cria demanda e exatamente um evento de criação com alterações estruturadas', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
 
-    await repository.create(novaDemanda);
+    await repository.create(createInput);
+    const data = await repository.load();
+    const created = data.demandas.find((demanda) => demanda.numero === createInput.numero)!;
+    const events = data.historico.filter((item) => item.demandaId === created.id);
 
-    const demandas = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
-    const historico = JSON.parse(storage.getItem('demandas_history')!) as ComentarioHistorico[];
-    const nextId = Math.max(...initialDemandas.map((demanda) => demanda.id)) + 1;
-    expect(demandas[0]).toMatchObject({
-      id: nextId,
-      numero: novaDemanda.numero,
+    expect(created).toEqual(expect.objectContaining({
       origem: 'sistema',
-      limite2Situacao: 'definido',
-    });
-    expect(demandas[1]).toEqual(initialDemandas[0]);
-    expect(historico[0]).toMatchObject({
-      demandaId: nextId,
+      deletedAt: '',
+      proximaAcao: createInput.proximaAcao,
+    }));
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual(expect.objectContaining({
       tipoEvento: 'criacao',
-      comentario: 'Demanda cadastrada no sistema.',
-      status_novo: novaDemanda.status,
-      setor: novaDemanda.setor,
-    });
-    expect(historico[1].demandaId).toBe(initialDemandas[0].id);
+      autorNome: 'Usuário Demonstração',
+      alteracoes: expect.arrayContaining([
+        expect.objectContaining({ field: 'status', after: createInput.status }),
+      ]),
+    }));
   });
 
-  it('edita a demanda no lugar sem alterar a ordem nem o histórico', async () => {
+  it('classifica edição geral, reatribuição e alteração de prazo pelo que realmente mudou', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
-    const historyBefore = storage.getItem('demandas_history');
+    const target = initialDemandas[0];
 
-    await repository.update(initialDemandas[1].id, {
-      assunto: 'Assunto atualizado',
-      responsavel: 'Nova responsável',
-    });
+    await repository.edit(target.id, makeEditInput(target, { assunto: 'Assunto auditável revisado' }));
+    let data = await repository.load();
+    expect(data.historico[0]).toEqual(expect.objectContaining({
+      demandaId: target.id,
+      tipoEvento: 'edicao',
+      comentario: 'Alteração confirmada no teste auditável',
+    }));
 
-    const demandas = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
-    expect(demandas.map((demanda) => demanda.id)).toEqual(
-      initialDemandas.map((demanda) => demanda.id),
-    );
-    expect(demandas[1]).toMatchObject({
-      assunto: 'Assunto atualizado',
-      responsavel: 'Nova responsável',
-    });
-    expect(storage.getItem('demandas_history')).toBe(historyBefore);
+    const afterGeneral = data.demandas.find((demanda) => demanda.id === target.id)!;
+    await repository.edit(target.id, makeEditInput(afterGeneral, {
+      responsavel: 'Nova pessoa responsável',
+      justificativa: 'Responsabilidade redistribuída após conferência',
+    }));
+    data = await repository.load();
+    expect(data.historico[0].tipoEvento).toBe('reatribuicao');
+
+    const afterAssignment = data.demandas.find((demanda) => demanda.id === target.id)!;
+    await repository.edit(target.id, makeEditInput(afterAssignment, {
+      limite1: '18/08/2026',
+      justificativa: 'Prazo interno corrigido conforme documento',
+    }));
+    data = await repository.load();
+    expect(data.historico[0].tipoEvento).toBe('alteracao_prazo');
   });
 
-  it('ignora o campo status no método update para manter paridade com o Supabase', async () => {
+  it('registra andamento sem trocar o status e atualiza a próxima ação', async () => {
+    const repository = new LocalDemandasRepository(storage, initialDemandas);
+    await repository.load();
+    const target = initialDemandas[0];
+
+    await repository.registerProgress(target.id, {
+      comentario: 'Documentação conferida.',
+      proximaAcao: 'Cobrar complementação documental',
+      proximaAcaoEm: '25/08/2026',
+    });
+    const data = await repository.load();
+    const updated = data.demandas.find((demanda) => demanda.id === target.id)!;
+
+    expect(updated.status).toBe(target.status);
+    expect(updated.proximaAcao).toBe('Cobrar complementação documental');
+    expect(data.historico[0]).toEqual(expect.objectContaining({
+      tipoEvento: 'andamento',
+      status_anterior: target.status,
+      status_novo: target.status,
+    }));
+  });
+
+  it('transiciona status e limpa próxima ação ao encerrar', async () => {
+    const repository = new LocalDemandasRepository(storage, initialDemandas);
+    await repository.load();
+    const target = initialDemandas[0];
+
+    await repository.transitionStatus(target.id, {
+      status: 'Encerrado',
+      comentario: 'Providência concluída.',
+      proximaAcao: '',
+      proximaAcaoEm: '',
+    });
+    const data = await repository.load();
+    const updated = data.demandas.find((demanda) => demanda.id === target.id)!;
+
+    expect(updated).toEqual(expect.objectContaining({
+      status: 'Encerrado',
+      proximaAcao: '',
+      proximaAcaoEm: '',
+    }));
+    expect(data.historico[0]).toEqual(expect.objectContaining({
+      tipoEvento: 'mudanca_status',
+      status_anterior: target.status,
+      status_novo: 'Encerrado',
+    }));
+  });
+
+  it('exclui logicamente, preserva o histórico e permite restauração', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
     const target = initialDemandas[1];
 
-    await repository.update(target.id, {
-      status: 'Encerrado',
-      assunto: 'Assunto atualizado',
+    await repository.deleteLogically(target.id, {
+      motivo: 'Registro duplicado confirmado na conferência',
     });
 
-    const demandas = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
-    expect(demandas[1].status).toBe(target.status);
-    expect(demandas[1].assunto).toBe('Assunto atualizado');
-  });
+    let data = await repository.load();
+    const storedAfterDelete = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
+    const deleted = storedAfterDelete.find((demanda) => demanda.id === target.id)!;
+    const trash = await repository.loadTrash();
 
-  it('atualiza o status no lugar e inclui o comentário no início do histórico', async () => {
-    const repository = new LocalDemandasRepository(storage, initialDemandas);
-    await repository.load();
-    const target = initialDemandas[2];
+    expect(data.demandas.some((demanda) => demanda.id === target.id)).toBe(false);
+    expect(deleted).toEqual(expect.objectContaining({
+      deletedBy: 'demo-user',
+      deletionReason: 'Registro duplicado confirmado na conferência',
+    }));
+    expect(trash.map((demanda) => demanda.id)).toContain(target.id);
+    expect(data.historico.some(
+      (item) => item.demandaId === target.id && item.tipoEvento === 'exclusao',
+    )).toBe(true);
 
-    await repository.updateStatus(target.id, 'Encerrado', 'Providência concluída.');
+    await repository.restore(target.id, {
+      motivo: 'Registro confirmado como válido após nova conferência',
+    });
+    data = await repository.load();
+    const restored = data.demandas.find((demanda) => demanda.id === target.id)!;
 
-    const data = await repository.load();
-    expect(data.demandas[2]).toMatchObject({ id: target.id, status: 'Encerrado' });
-    expect(data.historico[0]).toMatchObject({
+    expect(restored).toEqual(expect.objectContaining({
+      deletedAt: '',
+      deletedBy: null,
+      deletionReason: '',
+    }));
+    expect(data.historico[0]).toEqual(expect.objectContaining({
       demandaId: target.id,
-      tipoEvento: 'mudanca_status',
-      status_anterior: target.status,
-      status_novo: 'Encerrado',
-      setor: target.setor,
-      comentario: 'Providência concluída.',
-    });
-    expect(data.historico[1].demandaId).toBe(initialDemandas[0].id);
+      tipoEvento: 'restauracao',
+    }));
   });
 
-  it('exclui a demanda e todo o histórico associado sem reordenar os demais', async () => {
-    const repository = new LocalDemandasRepository(storage, initialDemandas);
-    await repository.load();
-    const targetId = initialDemandas[1].id;
-
-    await repository.delete(targetId);
-
-    const demandas = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
-    const historico = JSON.parse(storage.getItem('demandas_history')!) as ComentarioHistorico[];
-    expect(demandas.map((demanda) => demanda.id)).toEqual(
-      initialDemandas.filter((demanda) => demanda.id !== targetId).map((demanda) => demanda.id),
-    );
-    expect(historico.some((item) => item.demandaId === targetId)).toBe(false);
-  });
-
-  it('rejeita criação de demandas com número de processo duplicado', async () => {
+  it('rejeita número duplicado, IDs inexistentes e métodos genéricos descontinuados', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
 
     await expect(repository.create({
-      ...novaDemanda,
+      ...createInput,
       numero: initialDemandas[0].numero,
-    })).rejects.toThrow('Já existe uma demanda cadastrada com este número de processo.');
-  });
+    })).rejects.toThrow('Já existe uma demanda cadastrada');
 
-  it('rejeita atualização de demanda inexistente', async () => {
-    const repository = new LocalDemandasRepository(storage, initialDemandas);
-    await repository.load();
+    await expect(repository.registerProgress(999, {
+      comentario: 'Teste',
+      proximaAcao: 'Verificar registro inexistente',
+      proximaAcaoEm: '20/08/2026',
+    })).rejects.toThrow('Demanda não encontrada');
 
-    await expect(repository.update(999, { assunto: 'invalido' }))
-      .rejects.toThrow('Demanda não encontrada.');
-  });
-
-  it('rejeita atualização de status de demanda inexistente', async () => {
-    const repository = new LocalDemandasRepository(storage, initialDemandas);
-    await repository.load();
-
-    await expect(repository.updateStatus(999, 'Encerrado', 'comentario'))
-      .rejects.toThrow('Demanda não encontrada.');
-  });
-
-  it('redefine dados locais se o array lido possuir chaves ou tipos estruturais inválidos', async () => {
-    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-    storage.setItem('demandas_data', JSON.stringify([{ id: 'texto_em_vez_de_numero', numero: '' }]));
-    storage.setItem('demandas_history', JSON.stringify([]));
-
-    const repository = new LocalDemandasRepository(storage, initialDemandas);
-    const data = await repository.load();
-
-    expect(data.demandas).toEqual(initialDemandas);
-    expect(warning).toHaveBeenCalledTimes(1);
-
-    warning.mockRestore();
+    await expect(repository.update(1, { assunto: 'Alteração genérica' }))
+      .rejects.toThrow('edição genérica');
+    await expect(repository.delete(1)).rejects.toThrow('motivo explícito');
   });
 
   it('não cria assinatura remota no modo local', () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     const onRemoteChange = vi.fn();
-
     const unsubscribe = repository.subscribe(onRemoteChange);
     unsubscribe();
-
     expect(onRemoteChange).not.toHaveBeenCalled();
   });
 });

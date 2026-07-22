@@ -23,7 +23,7 @@ jobs:
     env:
       SUPABASE_TELEMETRY_DISABLED: '1'
       LOCAL_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      CYCLE3_MIGRATION: supabase/migrations/20260722090000_central_trabalho_expand.sql
+      CYCLE3_MIGRATION: supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
 
     steps:
       - name: Checkout repository
@@ -59,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mv /tmp/cycle3-migration/20260722090000_central_trabalho_expand.sql "$CYCLE3_MIGRATION"
+          mv /tmp/cycle3-migration/20260722101325_20260722090000_central_trabalho_expand.sql "$CYCLE3_MIGRATION"
           supabase migration up --local
 
       - name: Validate backfill, constraints and legacy RPC compatibility

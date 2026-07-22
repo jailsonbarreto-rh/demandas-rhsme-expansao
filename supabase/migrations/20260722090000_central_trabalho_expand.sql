@@ -1,6 +1,53 @@
 -- Ciclo 3 — expansão aditiva do modelo da Central de Trabalho CTRH.
 -- Esta migration não remove colunas, funções, grants ou APIs existentes.
 
+-- Salvaguarda operacional para o plano gratuito, que não possui backup automático acessível.
+-- As cópias ficam no schema privado, sem grants para os papéis da aplicação, e preservam
+-- exatamente as colunas e os registros existentes antes da expansão.
+create table private.cycle3_backup_sme_demandas_20260722
+as table public.sme_demandas;
+
+create table private.cycle3_backup_sme_historico_20260722
+as table public.sme_historico;
+
+create table private.cycle3_backup_perfis_usuarios_20260722
+as table public.perfis_usuarios;
+
+create table private.cycle3_backup_manifest_20260722 (
+  captured_at timestamptz not null default now(),
+  demandas_count bigint not null,
+  historico_count bigint not null,
+  perfis_count bigint not null
+);
+
+insert into private.cycle3_backup_manifest_20260722 (
+  demandas_count,
+  historico_count,
+  perfis_count
+)
+select
+  (select count(*) from private.cycle3_backup_sme_demandas_20260722),
+  (select count(*) from private.cycle3_backup_sme_historico_20260722),
+  (select count(*) from private.cycle3_backup_perfis_usuarios_20260722);
+
+revoke all on table private.cycle3_backup_sme_demandas_20260722
+from public, anon, authenticated;
+revoke all on table private.cycle3_backup_sme_historico_20260722
+from public, anon, authenticated;
+revoke all on table private.cycle3_backup_perfis_usuarios_20260722
+from public, anon, authenticated;
+revoke all on table private.cycle3_backup_manifest_20260722
+from public, anon, authenticated;
+
+comment on table private.cycle3_backup_sme_demandas_20260722 is
+  'Snapshot operacional anterior à expansão do Ciclo 3. Remover somente após estabilidade confirmada em ciclo posterior.';
+comment on table private.cycle3_backup_sme_historico_20260722 is
+  'Snapshot operacional anterior à expansão do Ciclo 3. Remover somente após estabilidade confirmada em ciclo posterior.';
+comment on table private.cycle3_backup_perfis_usuarios_20260722 is
+  'Snapshot operacional anterior à expansão do Ciclo 3. Remover somente após estabilidade confirmada em ciclo posterior.';
+comment on table private.cycle3_backup_manifest_20260722 is
+  'Contagens do snapshot operacional anterior à expansão do Ciclo 3.';
+
 alter table public.sme_demandas
   add column if not exists responsavel_id uuid
     references public.perfis_usuarios(id) on delete set null,

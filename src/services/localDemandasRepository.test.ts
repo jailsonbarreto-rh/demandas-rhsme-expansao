@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { initialDemandas } from '../data/initialDemandas';
+import { demoDemandas as initialDemandas } from '../data/demoDemandas';
 import type { ComentarioHistorico, Demanda } from '../types';
 import { LocalDemandasRepository } from './localDemandasRepository';
 
@@ -81,7 +81,7 @@ describe('LocalDemandasRepository', () => {
       initialDemandas.map((demanda) => demanda.id),
     );
     expect(data.historico.every(
-      (item) => item.comentario === 'Demanda importada da planilha inicial.',
+      (item) => item.comentario === 'Demanda sintética carregada no modo de demonstração.',
     )).toBe(true);
     expect(JSON.parse(storage.getItem('demandas_data')!)).toEqual(initialDemandas);
     expect(JSON.parse(storage.getItem('demandas_history')!)).toEqual(data.historico);
@@ -126,10 +126,11 @@ describe('LocalDemandasRepository', () => {
 
     const demandas = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
     const historico = JSON.parse(storage.getItem('demandas_history')!) as ComentarioHistorico[];
-    expect(demandas[0]).toMatchObject({ id: 51, numero: novaDemanda.numero });
+    const nextId = Math.max(...initialDemandas.map((demanda) => demanda.id)) + 1;
+    expect(demandas[0]).toMatchObject({ id: nextId, numero: novaDemanda.numero });
     expect(demandas[1]).toEqual(initialDemandas[0]);
     expect(historico[0]).toMatchObject({
-      demandaId: 51,
+      demandaId: nextId,
       comentario: 'Demanda cadastrada no sistema.',
       status_novo: novaDemanda.status,
       setor: novaDemanda.setor,

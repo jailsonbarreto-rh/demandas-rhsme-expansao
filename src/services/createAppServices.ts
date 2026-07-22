@@ -1,5 +1,5 @@
 import type { AppConfig } from '../config/appConfig';
-import { initialDemandas } from '../data/initialDemandas';
+import { demoDemandas } from '../data/demoDemandas';
 import { getSupabaseClient } from '../lib/supabase';
 import type { AuthService, DemandasRepository, ProfilesService } from './contracts';
 import { LocalAuthService } from './localAuthService';
@@ -33,7 +33,7 @@ export function createAppServices(config: AppConfig, storage: Storage = window.l
     return {
       mode: 'local',
       auth: new LocalAuthService(storage),
-      demandas: new LocalDemandasRepository(storage, initialDemandas),
+      demandas: new LocalDemandasRepository(storage, demoDemandas),
       profiles: localProfilesService,
     };
   }

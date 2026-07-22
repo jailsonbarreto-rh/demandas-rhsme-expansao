@@ -1,6 +1,4 @@
-import { Demanda } from '../types';
-
-export const initialDemandas: Demanda[] = [
+[
   {
     "id": 1,
     "numero": "000100.002864/2026-85",
@@ -601,4 +599,4 @@ export const initialDemandas: Demanda[] = [
     "setor": "E/CTRH",
     "classificacao": "Cessão"
   }
-];
+]

@@ -2,10 +2,10 @@
 
 O projeto Supabase de homologação/produção da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, na região `sa-east-1`.
 
-A aplicação mantém dois modos:
+A aplicação mantém dois modos com limites explícitos:
 
 - `supabase`: persistência compartilhada, autenticação real, RLS e atualização Realtime;
-- `local`: rollback explícito para o armazenamento do navegador.
+- `local`: ambiente de desenvolvimento/teste com oito demandas sintéticas; é recusado quando `PROD=true`.
 
 ## 1. Schema e migrations
 
@@ -29,13 +29,15 @@ As migrations criam as tabelas `perfis_usuarios`, `sme_demandas` e `sme_historic
 
 ## 2. Dados e usuários iniciais
 
-No projeto `kdhekkzwcokfrpcrsllr`, a carga inicial já foi concluída e validada:
+O acervo administrativo original de 50 demandas permanece em `scripts/bootstrap/initial-demandas.json`. Esse arquivo é consumido apenas pelo comando administrativo `npm run bootstrap:supabase`, está fora de `src` e não integra o grafo Vite nem o bundle público.
 
-- 50 demandas;
-- 50 históricos;
-- nenhuma demanda sem histórico;
-- nenhuma duplicidade de número;
-- bootstrap idempotente e capaz de reparar histórico ausente.
+O bootstrap valida o JSON com schema estrito antes de qualquer acesso remoto, é idempotente por número e é capaz de reparar histórico ausente. Ele não é a fonte autoritativa do estado atual do banco. Na leitura agregada e somente leitura de 21/07/2026, o projeto remoto continha:
+
+- 379 demandas;
+- 385 históricos;
+- 5 perfis.
+
+No navegador, o modo local usa exclusivamente `src/data/demoDemandas.ts`, com oito registros identificados pelo prefixo `DEMO-` e usuários de demonstração.
 
 Perfis configurados:
 
@@ -70,6 +72,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLICA
 ```
 
 Configuração parcial produz erro controlado e nunca faz fallback silencioso.
+Em produção, `VITE_APP_MODE=local` também produz erro controlado, mesmo que variáveis Supabase estejam presentes.
 
 ## 4. Critérios já homologados no banco
 
@@ -93,24 +96,25 @@ Depois de cada alteração consolidada:
 
 ```bash
 npm ci
-npm run test
-npm run build
+npm run check:full
 ```
 
 No deployment Vercel, confirme:
 
 - login com conta real do Supabase Auth;
-- carregamento das 50 demandas;
+- carregamento do acervo remoto esperado (379 demandas na linha de base de 21/07/2026);
 - atualização em outra sessão ou aba via Realtime;
 - diferenças de ações entre administrador, editor e leitor;
 - persistência após sair, atualizar a página e entrar novamente.
 
-## 6. Rollback imediato
+O gate inclui `npm run check:public-bundle`, que compara todos os números do acervo administrativo com todos os arquivos gerados em `dist/assets`. A verificação falha sem imprimir o identificador encontrado.
 
-Para retornar temporariamente ao armazenamento local, configure na Vercel:
+## 6. Recuperação de produção
+
+O modo local não é mecanismo de rollback de produção. Em caso de falha na integração, mantenha o banco intacto, corrija a configuração pública e republique o último commit conhecido como estável no modo Supabase:
 
 ```dotenv
-VITE_APP_MODE=local
+VITE_APP_MODE=supabase
 ```
 
-Um novo deployment aplicará o rollback sem alteração de layout. Para reativar o Supabase, remova essa sobrescrita ou defina `VITE_APP_MODE=supabase`.
+Se `VITE_APP_MODE=local` estiver configurado na Vercel, remova a sobrescrita antes do novo deployment. O modo local continua disponível apenas no servidor de desenvolvimento e nos testes automatizados.

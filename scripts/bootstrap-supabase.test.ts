@@ -56,10 +56,17 @@ describe('bootstrap Supabase', () => {
     })).toThrow('devem ser distintas');
   });
 
-  it('carrega as 50 demandas iniciais usadas pelo modo local', () => {
-    const demandas = loadInitialDemandas(resolve(process.cwd(), 'src/data/initialDemandas.ts'));
+  it('carrega as 50 demandas administrativas a partir de JSON fora do cliente', () => {
+    const demandas = loadInitialDemandas(
+      resolve(process.cwd(), 'scripts/bootstrap/initial-demandas.json'),
+    );
     expect(demandas).toHaveLength(50);
     expect(demandas[0]).toEqual(expect.objectContaining({ numero: expect.any(String) }));
+  });
+
+  it('rejeita JSON que não obedece ao schema de demandas', () => {
+    expect(() => loadInitialDemandas(resolve(process.cwd(), 'package.json')))
+      .toThrow('estrutura inválida');
   });
 
   it('chama a RPC para todas as demandas e conta apenas as efetivamente criadas', async () => {

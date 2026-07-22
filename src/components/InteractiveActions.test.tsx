@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ComentarioHistorico, Demanda } from '../types';
 import { DEFAULT_DEMAND_FILTERS, type DemandFilters } from '../filters/filterTypes';
+import { createDemandFixture, createHistoryFixture } from '../test/expandedFixtures';
 import { AtencaoImediata } from './AtencaoImediata';
 import { FilterPanel } from './FilterPanel';
 import { Header } from './Header';
 import { VisaoGeral } from './VisaoGeral';
 
-const demanda: Demanda = {
+const demanda = createDemandFixture({
   id: 1,
   numero: 'SME-001',
   tipo: 'Processo',
@@ -20,16 +20,17 @@ const demanda: Demanda = {
   status: 'Aguardando Andamento',
   setor: 'CTRH',
   classificacao: 'Outros',
-};
+});
 
-const historico: ComentarioHistorico = {
+const historico = createHistoryFixture({
   id: 1,
   demandaId: 1,
   data_hora: '13/07/2026 10:00:00',
   status_novo: 'Aguardando Andamento',
   setor: 'CTRH',
   comentario: 'Registro inicial',
-};
+  tipoEvento: 'criacao',
+});
 
 function todayString() {
   const today = new Date();
@@ -126,7 +127,7 @@ describe('ações interativas da interface', () => {
     const onOpen = vi.fn();
     render(
       <AtencaoImediata
-        demandas={[{ ...demanda, limite2: todayString() }]}
+        demandas={[{ ...demanda, limite2: todayString(), limite2Situacao: 'definido' }]}
         historico={[]}
         onOpenEditar={onOpen}
       />,

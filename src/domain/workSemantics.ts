@@ -1,10 +1,6 @@
-import type { Demanda, DemandStatus } from '../types';
+import type { Demanda, DemandStatus, WorkBucket } from '../types';
 
-export type WorkBucket =
-  | 'providencia_ctrh'
-  | 'aguardando_retorno'
-  | 'monitoramento'
-  | 'encerrada';
+export type { WorkBucket } from '../types';
 
 const WORK_BUCKET_BY_STATUS: Record<DemandStatus, WorkBucket> = {
   'Aguardando Andamento': 'providencia_ctrh',

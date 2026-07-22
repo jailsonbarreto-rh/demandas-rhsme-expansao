@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { ComentarioHistorico, Demanda } from '../types';
+import { createDemandFixture, createHistoryFixture } from '../test/expandedFixtures';
 import { matchDemandSearch } from './demandSearch';
 
-const demanda: Demanda = {
+const demanda = createDemandFixture({
   id: 42,
   numero: 'SME-PRO-2025/001.234',
   tipo: 'Processo',
@@ -13,17 +13,17 @@ const demanda: Demanda = {
   status: 'Aguardando Andamento',
   setor: 'E/CTRH',
   classificacao: 'Movimentação de pessoal',
-};
+});
 
-const historico: ComentarioHistorico[] = [
-  {
+const historico = [
+  createHistoryFixture({
     id: 1,
     demandaId: 42,
     data_hora: '15/07/2026 10:30:00',
     status_novo: 'Ajustar',
     setor: 'E/CTRH',
     comentario: 'Aguardando o contracheque atualizado para prosseguir.',
-  },
+  }),
 ];
 
 describe('matchDemandSearch', () => {

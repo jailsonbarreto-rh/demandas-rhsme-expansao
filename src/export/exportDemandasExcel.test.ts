@@ -2,12 +2,12 @@ import { writeFile } from 'node:fs/promises';
 import { Workbook } from 'exceljs';
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
-import type { Demanda } from '../types';
 import { DEFAULT_DEMAND_FILTERS } from '../filters/filterTypes';
+import { createDemandFixture } from '../test/expandedFixtures';
 import { buildDemandasWorkbook } from './exportDemandasExcel';
 
-const demandas: Demanda[] = [
-  {
+const demandas = [
+  createDemandFixture({
     id: 7,
     numero: 'SME-PRO-2026/00007',
     tipo: 'Processo',
@@ -18,8 +18,8 @@ const demandas: Demanda[] = [
     status: 'Para Assinatura',
     setor: 'CTRH',
     classificacao: 'Administrativa',
-  },
-  {
+  }),
+  createDemandFixture({
     id: 8,
     numero: 'EXP-008',
     tipo: 'Expediente',
@@ -30,7 +30,7 @@ const demandas: Demanda[] = [
     status: 'Encerrado',
     setor: 'GAD',
     classificacao: 'Judicial',
-  },
+  }),
 ];
 
 const workbookOptions = {

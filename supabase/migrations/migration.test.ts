@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -9,14 +9,17 @@ const revokeAnonPath = resolve(migrationsDir, '20260713211616_revoke_anon_operat
 const indexesPath = resolve(migrationsDir, '20260713211703_add_foreign_key_indexes.sql');
 const batchImportPath = resolve(migrationsDir, '20260717002408_batch_import_audit_20260716.sql');
 const batchImportDomainFixPath = resolve(migrationsDir, '20260717003552_batch_import_allow_legacy_classifications.sql');
+const centralWorkExpandPath = resolve(migrationsDir, '20260722101325_20260722090000_central_trabalho_expand.sql');
 
 const readSql = (path: string) => readFileSync(path, 'utf8').replace(/\r\n/g, '\n').toLowerCase();
+const readOptionalSql = (path: string) => existsSync(path) ? readSql(path) : '';
 
 const sql = readSql(migrationPath);
 const revokeAnonSql = readSql(revokeAnonPath);
 const indexesSql = readSql(indexesPath);
 const batchImportSql = readSql(batchImportPath);
 const batchImportDomainFixSql = readSql(batchImportDomainFixPath);
+const centralWorkExpandSql = readOptionalSql(centralWorkExpandPath);
 
 describe('migração Supabase', () => {
   it('protege todas as tabelas públicas com RLS', () => {
@@ -141,5 +144,92 @@ describe('migração Supabase', () => {
       expect(batchImportSql).toContain(value);
       expect(batchImportDomainFixSql).toContain(value);
     }
+  });
+
+  describe('Ciclo 3 — expansão aditiva da Central de Trabalho', () => {
+    it('versiona a migration aditiva prevista no plano', () => {
+      expect(existsSync(centralWorkExpandPath)).toBe(true);
+    });
+
+    it('cria snapshot privado antes de alterar o contrato público', () => {
+      for (const table of [
+        'cycle3_backup_sme_demandas_20260722',
+        'cycle3_backup_sme_historico_20260722',
+        'cycle3_backup_perfis_usuarios_20260722',
+        'cycle3_backup_manifest_20260722',
+      ]) {
+        expect(centralWorkExpandSql).toContain(`private.${table}`);
+        expect(centralWorkExpandSql).toMatch(new RegExp(`revoke all on table private\\.${table}[\\s\\S]*?from public, anon, authenticated;`));
+      }
+
+      expect(centralWorkExpandSql.indexOf('create table private.cycle3_backup_sme_demandas_20260722'))
+        .toBeLessThan(centralWorkExpandSql.indexOf('alter table public.sme_demandas'));
+      expect(centralWorkExpandSql).toContain('demandas_count bigint not null');
+      expect(centralWorkExpandSql).toContain('historico_count bigint not null');
+      expect(centralWorkExpandSql).toContain('perfis_count bigint not null');
+    });
+
+    it('adiciona todos os campos de demandas e histórico sem remover o contrato existente', () => {
+      for (const column of [
+        'responsavel_id',
+        'proxima_acao',
+        'proxima_acao_em',
+        'limite1_situacao',
+        'limite1_justificativa',
+        'limite2_situacao',
+        'limite2_justificativa',
+        'link_origem',
+        'origem',
+        'deleted_at',
+        'deleted_by',
+        'deletion_reason',
+        'tipo_evento',
+        'status_anterior',
+        'alteracoes',
+      ]) {
+        expect(centralWorkExpandSql).toContain(column);
+      }
+    });
+
+    it('classifica o legado sem inventar status anterior', () => {
+      expect(centralWorkExpandSql).toContain("set origem = 'legado'");
+      expect(centralWorkExpandSql).toContain("when limite1 is not null then 'definido'");
+      expect(centralWorkExpandSql).toContain("when limite2 is not null then 'definido'");
+      expect(centralWorkExpandSql).toContain("then 'criacao'");
+      expect(centralWorkExpandSql).toContain("else 'mudanca_status'");
+      expect(centralWorkExpandSql).not.toMatch(/set\s+status_anterior\s*=/);
+    });
+
+    it('cria os checks de consistência como NOT VALID', () => {
+      for (const constraint of [
+        'sme_demandas_limite1_consistencia_check',
+        'sme_demandas_limite2_consistencia_check',
+        'sme_demandas_origem_check',
+        'sme_demandas_exclusao_logica_check',
+        'sme_historico_tipo_evento_check',
+      ]) {
+        expect(centralWorkExpandSql).toMatch(new RegExp(`constraint ${constraint}[\\s\\S]*?not valid`));
+      }
+    });
+
+    it('cria os índices operacionais previstos no plano', () => {
+      for (const indexName of [
+        'sme_demandas_responsavel_abertas_idx',
+        'sme_demandas_proxima_acao_idx',
+        'sme_demandas_status_visivel_idx',
+        'sme_historico_demanda_data_idx',
+      ]) {
+        expect(centralWorkExpandSql).toContain(`create index if not exists ${indexName}`);
+      }
+    });
+
+    it('não executa operações destrutivas nem revoga as APIs legadas', () => {
+      expect(centralWorkExpandSql).not.toMatch(/\bdrop\s+table\b/);
+      expect(centralWorkExpandSql).not.toMatch(/\btruncate\b/);
+      expect(centralWorkExpandSql).not.toMatch(/\bdelete\s+from\b/);
+      expect(centralWorkExpandSql).not.toMatch(/\bdrop\s+function\b/);
+      expect(centralWorkExpandSql).not.toMatch(/revoke[\s\S]*public\.criar_sme_demanda/);
+      expect(centralWorkExpandSql).not.toMatch(/revoke[\s\S]*public\.atualizar_status_sme_demanda/);
+    });
   });
 });

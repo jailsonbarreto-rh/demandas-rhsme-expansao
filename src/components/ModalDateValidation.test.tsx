@@ -1,10 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Demanda } from '../types';
+import { createDemandFixture } from '../test/expandedFixtures';
 import { ModalEditar } from './ModalEditar';
 import { ModalNovo } from './ModalNovo';
 
-const demanda: Demanda = {
+const demanda = createDemandFixture({
   id: 1,
   numero: 'SME-PRO-2026/00001',
   tipo: 'Processo',
@@ -15,7 +15,7 @@ const demanda: Demanda = {
   status: 'Aguardando Andamento',
   setor: 'E/CTRH',
   classificacao: 'Outros',
-};
+});
 
 function fillRequiredNewDemandFields() {
   fireEvent.change(screen.getByLabelText('Tipo'), { target: { value: 'Processo' } });

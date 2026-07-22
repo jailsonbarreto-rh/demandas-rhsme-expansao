@@ -1,193 +1,180 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-22 — execução do Plano Mestre v1.0, Ciclo 2**
+Atualizado em: **2026-07-22 — Ciclo 3 aplicado ao banco; PR e frontend em fechamento**
 
-## Estado da execução
+## Estado atual
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| `main` remota observada | `d302c8d` (Ciclo 1 e atualizações seguras do PR #38/Actions) |
-| SHA auditado no plano | `ca9c783b` |
-| Branch do Ciclo 2 | `refactor/centralizar-semantica-filtros-ciclo-2` |
-| Produção conhecida | `https://demandas-rhsme-expansao.vercel.app/` |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, ativo e saudável |
+| `main` remota | `fc37ba5` — Ciclo 2 |
+| Branch | `feat/expandir-modelo-central-trabalho-ciclo-3` |
+| PR | `#40` — aberto, rascunho e mesclável |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, saudável |
+| Migration do Ciclo 3 | **aplicada e validada em produção** |
+| Frontend de Production | ainda serve o Ciclo 2 até o merge e promoção final |
 | Plano versionado | SHA-256 `C78B6F7FE840BBFC6B32F401D27B609681C1881CB146B25E72E8905F36AA0B87` |
 
-O Ciclo 2 concentra a semântica operacional dos seis status, tipa o estado de filtros e normaliza a URL sem alterar schema ou dados. Busca exata e aproximada, filtros rápidos, período, exportação Excel e links antigos continuam compatíveis. Nenhum registro remoto, migration ou variável de ambiente foi alterado durante a implementação.
+O banco já possui o contrato expandido. A aplicação antiga continua funcionando porque a mudança foi aditiva e preservou as RPCs v1. O trabalho restante do Ciclo 3 é concluir a última CI do nome alinhado da migration, mesclar o PR e promover o Preview validado para Production.
 
-## Ciclo 2 — semântica única e filtros tipados
+## Ciclo 3 — o que foi entregue
 
-- `src/domain/workSemantics.ts` é a única fonte para classificar acompanhamento, providência CTRH e encerramento;
-- `src/filters/filterTypes.ts` define o contrato canônico e os valores padrão;
-- `src/filters/filterUrl.ts` migra URLs legadas, ignora valores desconhecidos e serializa somente parâmetros conhecidos;
-- `src/filters/applyDemandFilters.ts` reúne os filtros puros antes da busca exata ou aproximada;
-- o card antes chamado “Demandas Ativas” agora se chama “Em acompanhamento”;
-- indicadores, prazos visuais e Excel usam as mesmas funções de domínio;
-- o Excel permanece em import dinâmico e o bundle público continua sem identificadores administrativos;
-- os esqueletos de carregamento passaram a expor `role=status`, e a auditoria de acessibilidade agora garante movimento reduzido de forma determinística.
+### Modelo de demandas
 
-### Semântica canônica
+Foram acrescentados:
 
-| Status | Categoria operacional |
-|---|---|
-| `Aguardando Andamento` | `providencia_ctrh` |
-| `Ajustar` | `providencia_ctrh` |
-| `Para Assinatura` | `providencia_ctrh` |
-| `Tramitado` | `aguardando_retorno` |
-| `Sobrestado` | `monitoramento` |
-| `Encerrado` | `encerrada` |
+- `responsavel_id`;
+- `proxima_acao` e `proxima_acao_em`;
+- situação e justificativa dos dois prazos;
+- `link_origem` e `origem`;
+- `deleted_at`, `deleted_by` e `deletion_reason`.
 
-`Tramitado` e `Sobrestado` permanecem em acompanhamento. Apenas os três primeiros status exigem providência CTRH, e somente `Encerrado` sai do acompanhamento.
+### Modelo de histórico
 
-### Gate técnico do Ciclo 2
+Foram acrescentados:
 
-| Comando/evidência | Resultado |
-|---|---|
-| testes RED de domínio, URL e integração | falhas esperadas observadas antes da implementação |
-| testes focados do recorte funcional | PASS, 9 arquivos e 44 testes |
-| regressão de semântica dos esqueletos | RED com 4 falhas; PASS após `role=status` |
-| `rg -F "status !== 'Encerrado'" src --glob '!**/*.test.*'` | zero ocorrências |
-| `npm run check:full` | PASS |
-| `npm audit --audit-level=high` | PASS, zero vulnerabilidades |
-| `npm audit signatures` | PASS, 539 assinaturas e 147 atestações verificadas |
-| `npm run lint` | PASS |
-| `npm run test:coverage` | PASS, 39 arquivos e 189 testes |
-| `npm run build` | PASS |
-| `npm run check:bundle` | PASS, crescimento de 8,58%, abaixo do limite de 15% |
-| `npm run check:public-bundle` | PASS, 28 arquivos contra 50 identificadores administrativos |
-| `npm run test:e2e` | PASS, 18 testes desktop/mobile |
+- `tipo_evento`;
+- `status_anterior`;
+- `alteracoes` em JSON.
 
-### Gate de consciência do produto — Ciclo 2
+### Regras de migração
 
-- **Pessoas:** administradores, editores e leitores que acompanham a mesma carteira por indicadores, filtros, links e Excel.
-- **Dor atual:** “ativa” era decidida em componentes distintos, enquanto valores de filtro e URL misturavam rótulos de interface com regras de negócio.
-- **Ganho:** uma única classificação determina acompanhamento, providência e encerramento; links antigos são migrados para valores canônicos.
-- **Proteção:** busca aproximada, buscas recentes, filtros rápidos, período, exportação Excel, navegação, acessibilidade e bundle público foram exercitados pelo gate integral.
-- **Prova além dos testes:** a busca estrutural retornou zero comparações operacionais duplicadas e o build público repetiu a varredura dos 50 identificadores administrativos.
+- os 379 registros anteriores foram classificados como `legado`;
+- data já existente virou situação `definido`;
+- ausência de data virou `nao_informado`;
+- o primeiro histórico conhecido de cada demanda foi classificado como `criacao`;
+- os seis eventos posteriores foram classificados como `mudanca_status`;
+- nenhuma autoria, responsabilidade por UUID, justificativa ou status anterior foi inventado.
 
-### Banco e ambiente
+### Arquivo versionado
 
-O Ciclo 2 não possui migration. Supabase, dados, grants, variáveis de Vercel e deployments históricos permaneceram intactos.
-
-## Ciclo 1 — retirada de dados reais do bundle público
-
-- o acervo administrativo original foi movido de `src/data/initialDemandas.ts` para `scripts/bootstrap/initial-demandas.json`;
-- `src/data/demoDemandas.ts` fornece oito registros fictícios com prefixo `DEMO-` e usuários de demonstração;
-- o bootstrap Node lê JSON e valida schema estrito antes de importar;
-- `resolveAppConfig` recusa `VITE_APP_MODE=local` quando `PROD=true`;
-- `scripts/check-public-bundle.mjs` compara os 50 identificadores administrativos com todos os arquivos de `dist/assets` sem imprimir o conteúdo protegido;
-- o gate `check` executa essa varredura depois do build.
-
-### Gate técnico do Ciclo 1
-
-| Comando | Resultado |
-|---|---|
-| testes RED focados | 5 falhas esperadas antes da implementação |
-| testes focados após implementação | PASS, 6 arquivos e 37 testes |
-| `npm run check:full` | PASS |
-| `npm audit --audit-level=high` | PASS, zero vulnerabilidades |
-| `npm audit signatures` | PASS |
-| `npm run lint` | PASS |
-| `npm run test:coverage` | PASS, 35 arquivos e 164 testes |
-| `npm run build` | PASS |
-| `npm run check:bundle` | PASS, crescimento de 7,98%, abaixo do limite de 15% |
-| `npm run check:public-bundle` | PASS, 29 arquivos contra 50 identificadores administrativos |
-| `npm run test:e2e` | PASS, 18 testes desktop/mobile |
-
-### Gate de consciência do produto — Ciclo 1
-
-- **Pessoa:** qualquer visitante não autenticado e os responsáveis pela confidencialidade do acervo administrativo.
-- **Dor atual:** o bundle público incorporava 50 demandas administrativas e a produção podia ser forçada ao modo local.
-- **Ganho:** produção baixa somente o cliente Supabase; desenvolvimento local continua funcional com oito registros sintéticos.
-- **Proteção:** autenticação Supabase, bootstrap privado, busca, exportação Excel, responsividade e contratos de persistência foram preservados.
-- **Prova além dos testes:** a varredura do build comparou todos os números administrativos e aprovou com zero ocorrências.
-
-### Inventário de deployments anteriores
-
-Antes da publicação do Ciclo 1, o CLI da Vercel listou 81 deployments históricos: 52 em estado `Ready`, 27 cancelados e 2 com erro. Todos os 52 deployments servíveis antecedem esta correção e foram classificados como vulneráveis pelo grafo cliente da versão correspondente. A verificação direta do alias de Production confirmou os 50 identificadores administrativos nos três assets referenciados pela página.
-
-Nenhum deployment foi apagado. A remoção dos 52 deployments legados permanece adiada para o Ciclo 13 e depende de autorização destrutiva específica, conforme o Plano Mestre.
-
-## Reconciliação da `main`
-
-Entre o SHA auditado e a linha de base do Ciclo 0 houve:
-
-- remoção do import de `brand-overrides.css` e ajuste de formatação em `src/main.tsx`;
-- restauração de `git.deploymentEnabled: false` em `vercel.json`.
-
-Depois disso, o PR #37 incorporou o Ciclo 1 na `main`, retirando os dados administrativos do bundle público conforme documentado acima. A branch do Ciclo 2 nasceu limpa desse merge (`048a5de`). Durante a execução, o PR #38 atualizou oito dependências seguras de produção e dois commits atualizaram `actions/upload-artifact` e `actions/setup-node`; a branch foi rebaseada sobre essa nova base (`d302c8d`) sem conflito funcional. Não foi identificado conflito material com o Plano Mestre.
-
-## Linha de base remota
-
-As consultas foram agregadas e somente leitura; nenhum registro operacional foi impresso ou alterado.
-
-| Dimensão | Plano | Verificação atual | Divergência |
-|---|---:|---:|---:|
-| Demandas | 379 | 379 | 0 |
-| Históricos | 385 | 385 | 0 |
-| Perfis | 5 | 5 | 0 |
-| Vencidas aparentes | 23 | 23 | 0 |
-| Sem prazo final | 354 | 354 | 0 |
-| Sem prazo interno | 369 | 369 | 0 |
-| Somente evento inicial | 376 | 376 | 0 |
-| Status `Tramitado` | 262 | 262 | 0 |
-| Responsáveis textuais distintos | 16 | 16 | 0 |
-
-## Gate técnico inicial
-
-| Comando | Resultado |
-|---|---|
-| `npm ci` | PASS |
-| `npm audit --audit-level=high` | PASS, zero vulnerabilidades |
-| `npm audit signatures` | PASS |
-| `npm run lint` | PASS |
-| `npm run test:coverage` | PASS, 33 arquivos e 158 testes |
-| `npm run build` | PASS |
-| `npm run check:bundle` | PASS |
-| `npm run test:e2e` | PASS, 18 testes desktop/mobile |
-
-## Documentação do Ciclo 0
-
-- `AGENTS.md`: leitura obrigatória, disciplina de ciclos, validações, proibições e gate de produto.
-- `docs/PRODUCT_CONTEXT.md`: pessoas, dores, cenários, vocabulário, decisões, experiência por papel e regressões proibidas.
-- `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md`: cópia integral conferida por hash.
-- `docs/superpowers/specs/2026-07-22-central-trabalho-ctrh-design.md`: arquitetura, reconciliação, segurança, ordem de entrega e validação.
-- `docs/adr/ADR-001-semantica-status-carteira.md`: seis status e categorias operacionais.
-- `docs/adr/ADR-002-prazos-proxima-acao.md`: três situações de prazo e agenda obrigatória.
-- `docs/adr/ADR-003-historico-e-exclusao-logica.md`: eventos auditáveis e remoção recuperável.
-
-## Gate de consciência do produto — Ciclo 0
-
-- **Pessoa:** responsável pelo produto e qualquer agente ou pessoa que continue a evolução.
-- **Dor atual:** decisões estavam distribuídas entre código, documentos antigos e histórico de conversa, permitindo reinterpretação de status, prazo e responsabilidade.
-- **Ganho:** a próxima sessão encontra contexto, decisões, exemplos, comandos e paradas no próprio repositório antes de alterar comportamento.
-- **Proteção:** nenhuma busca, rota, dado, permissão, tela, exportação ou comportamento foi modificado.
-- **Prova além dos testes:** a cópia do plano tem hash idêntico; os ADRs não possuem alternativas abertas; os caminhos citados existem; a linha de base do banco foi repetida sem divergência.
-
-## Supabase CLI e acesso administrativo
-
-`npx supabase@2.109.1 init` foi executado, criando `supabase/config.toml` e `supabase/.gitignore` sem segredos. A leitura remota foi realizada pelo conector oficial autenticado do Supabase. O OAuth do CLI em ambiente não interativo exige confirmação humana no navegador; uma janela interativa foi aberta para esse fluxo. O vínculo local deve ser confirmado com:
-
-```bash
-npx supabase link --project-ref kdhekkzwcokfrpcrsllr
+```text
+supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
 ```
 
-Nenhuma migration foi aplicada no Ciclo 0.
+O prefixo `20260722101325` corresponde à versão registrada pelo Supabase remoto. A parte restante preserva o identificador funcional originalmente definido no Plano Mestre.
 
-## Vercel
+## Decisão sem custo adicional
 
-O CLI Vercel 56.4.1 foi autenticado e o diretório local foi vinculado explicitamente a `wilson-m-peixotos-projects/demandas-rhsme-expansao`. Metadados locais, inclusive o token OIDC temporário, permanecem em arquivos ignorados pelo Git. Nenhuma variável de produção ou deployment foi alterado durante a linha de base.
+O responsável pelo produto recusou a branch Supabase paga de US$ 0,01344 por hora.
 
-## Próximo ciclo autorizado após merge
+A decisão foi registrada no `ADR-004` e substituída por:
 
-**Ciclo 3 — Expansão aditiva do modelo de dados.**
+1. Supabase efêmero no GitHub Actions;
+2. fixture sintética representando dados legados;
+3. aplicação real da migration nesse banco descartável;
+4. testes de backfill, constraints, índices e RPCs v1;
+5. reaplicação da cadeia completa do zero;
+6. destruição automática do ambiente.
 
-Precondições:
+O gate foi aprovado integralmente e não utilizou dados reais, credenciais remotas nem recurso pago.
 
-1. PR do Ciclo 2 aprovado e mesclado, salvo autorização explícita de branch dependente;
-2. nova branch exclusiva para o Ciclo 3;
-3. releitura de `AGENTS.md`, contexto, plano e ADRs;
-4. snapshot seguro do schema e dos dados antes de qualquer aplicação externa;
-5. testes RED estáticos da migration, dos mappers e dos repositórios;
-6. migration somente aditiva, aplicada em produção apenas depois de Preview compatível, backup confirmado e invariantes aprovadas.
+## Salvaguarda do plano gratuito
+
+Como o projeto utiliza o plano gratuito, sem backup automático acessível, a migration criou antes da expansão:
+
+```text
+private.cycle3_backup_sme_demandas_20260722
+private.cycle3_backup_sme_historico_20260722
+private.cycle3_backup_perfis_usuarios_20260722
+private.cycle3_backup_manifest_20260722
+```
+
+Contagens preservadas no manifesto:
+
+- 379 demandas;
+- 385 históricos;
+- 5 perfis.
+
+`anon` e `authenticated` não possuem acesso aos snapshots. Eles são uma salvaguarda limitada ao risco desta migration, não um backup externo contra perda total do projeto. Devem ser removidos somente por migration posterior após estabilidade confirmada.
+
+## Validações concluídas
+
+### CI da aplicação
+
+- instalação pelo lockfile: PASS;
+- auditoria de vulnerabilidades: PASS;
+- assinaturas e proveniência: PASS;
+- lint: PASS;
+- 204 testes: PASS;
+- build: PASS;
+- orçamento e scanner do bundle: PASS;
+- Playwright desktop/mobile: PASS.
+
+### Banco efêmero
+
+- base anterior criada: PASS;
+- fixture legada inserida: PASS;
+- migration aplicada sobre dados existentes: PASS;
+- snapshots e manifesto: PASS;
+- backfill: PASS;
+- constraints e índices: PASS;
+- RPCs v1: PASS;
+- cadeia completa reaplicada do zero: PASS;
+- ambiente destruído: PASS.
+
+### Produção após migration
+
+| Invariante | Resultado |
+|---|---:|
+| Demandas | 379 |
+| Históricos | 385 |
+| Perfis | 5 |
+| Duplicidades | 0 |
+| Históricos órfãos | 0 |
+| Origens `legado` | 379 |
+| Prazo interno definido / não informado | 10 / 369 |
+| Prazo final definido / não informado | 25 / 354 |
+| Eventos criação / posteriores | 379 / 6 |
+| Status anteriores inferidos | 0 |
+| Exclusões lógicas | 0 |
+| Checks `NOT VALID` | 5 |
+| Índices do Ciclo 3 | 4 |
+
+As RPCs v1 foram testadas em transação revertida. Nenhum registro de teste permaneceu no banco e as contagens continuaram 379/385/5.
+
+## Compatibilidade do frontend
+
+- o repositório lê o schema expandido;
+- registros logicamente excluídos ficam fora da carteira operacional;
+- mappers fornecem defaults seguros para linhas antigas;
+- o fallback legado só é usado quando faltam colunas, não para esconder erros de RLS, rede ou autenticação;
+- as telas e mutações atuais continuam usando as RPCs v1 até o Ciclo 4;
+- busca, filtros, Excel, Realtime, rotas e papéis foram preservados.
+
+## Rollback
+
+Em incidente de frontend:
+
+- manter as colunas e snapshots;
+- reverter para o deployment estável do Ciclo 2;
+- não apagar dados ou histórico;
+- corrigir o banco somente por nova migration versionada.
+
+A migration é aditiva e o frontend do Ciclo 2 já foi confirmado compatível com o schema expandido.
+
+## Passos restantes do Ciclo 3
+
+1. concluir CI após o alinhamento final do nome da migration;
+2. confirmar o Preview do mesmo SHA como `READY`;
+3. atualizar o PR nº 40 e promovê-lo para revisão;
+4. mesclar o PR;
+5. promover o artefato validado para Production sem rebuild, quando possível;
+6. restaurar o bloqueio de deployments automáticos;
+7. confirmar domínio, carregamento e invariantes finais;
+8. somente então iniciar o Ciclo 4.
+
+## Próximo ciclo
+
+Depois do fechamento de Production do Ciclo 3:
+
+**Ciclo 4 — Mutações transacionais, autoria e exclusão lógica.**
+
+O ciclo deverá criar RPCs v2 auditáveis, registrar autoria por `auth.uid()`, impedir exclusão física e manter compatibilidade durante a transição.
+
+## Histórico resumido
+
+- **Ciclo 0:** contexto, decisões e linha de base;
+- **Ciclo 1:** retirada dos dados reais do bundle público;
+- **Ciclo 2:** semântica única e filtros tipados;
+- **Ciclo 3:** expansão aditiva do modelo, homologação sem custo e aplicação segura ao Supabase.

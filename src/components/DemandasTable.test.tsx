@@ -1,13 +1,13 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Demanda } from '../types';
+import { createDemandFixture } from '../test/expandedFixtures';
 import { DemandasTable } from './DemandasTable';
 
-const demanda: Demanda = {
+const demanda = createDemandFixture({
   id: 1, numero: 'SME-001', tipo: 'Processo', assunto: 'Assunto', responsavel: 'Pessoa',
   limite1: '', limite2: '', status: 'Aguardando Andamento', setor: 'CTRH', classificacao: 'Outros',
-};
+});
 
 describe('DemandasTable', () => {
   afterEach(cleanup);

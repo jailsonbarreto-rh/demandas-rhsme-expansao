@@ -1,57 +1,67 @@
 import { describe, expect, it } from 'vitest';
-import type { ComentarioHistorico, Demanda } from '../types';
+import { createDemandFixture, createHistoryFixture } from '../test/expandedFixtures';
 import { rankApproximateDemandSearch } from './approximateSearch';
 
-const base: Omit<Demanda, 'id' | 'numero' | 'assunto' | 'responsavel'> = {
-  tipo: 'Processo',
-  limite1: '',
-  limite2: '',
-  status: 'Aguardando Andamento',
-  setor: 'E/CTRH',
-  classificacao: 'Aposentadoria',
-};
-
-const demandas: Demanda[] = [
-  {
-    ...base,
+const demandas = [
+  createDemandFixture({
     id: 1,
     numero: 'SME-PRO-2025/001',
+    tipo: 'Processo',
     assunto: 'Processo de aposentadoria de servidor',
     responsavel: 'Pedro Almeida',
-  },
-  {
-    ...base,
+    limite1: '',
+    limite2: '',
+    status: 'Aguardando Andamento',
+    setor: 'E/CTRH',
+    classificacao: 'Aposentadoria',
+  }),
+  createDemandFixture({
     id: 2,
     numero: 'SME-PRO-2026/002',
+    tipo: 'Processo',
     assunto: 'Processo de aposentadoria de servidor',
     responsavel: 'Maria Souza',
-  },
-  {
-    ...base,
+    limite1: '',
+    limite2: '',
+    status: 'Aguardando Andamento',
+    setor: 'E/CTRH',
+    classificacao: 'Aposentadoria',
+  }),
+  createDemandFixture({
     id: 3,
     numero: 'SME-PRO-2024/003',
+    tipo: 'Processo',
     assunto: 'Processo de aposentadoria de servidor',
     responsavel: 'João Lima',
-  },
-  {
-    ...base,
+    limite1: '',
+    limite2: '',
+    status: 'Aguardando Andamento',
+    setor: 'E/CTRH',
+    classificacao: 'Aposentadoria',
+  }),
+  createDemandFixture({
     id: 4,
     numero: 'SME-PRO-2026/004',
+    tipo: 'Processo',
     assunto: 'Licença para capacitação',
     responsavel: 'Carla Ramos',
+    limite1: '',
+    limite2: '',
+    status: 'Aguardando Andamento',
+    setor: 'E/CTRH',
     classificacao: 'Licença',
-  },
+  }),
 ];
 
-const historico: ComentarioHistorico[] = [
-  {
+const historico = [
+  createHistoryFixture({
     id: 10,
     demandaId: 1,
     data_hora: '10/07/2025 09:00:00',
     status_novo: 'Aguardando Andamento',
     setor: 'E/CTRH',
     comentario: 'Pedro apresentou a documentação de aposentadoria.',
-  },
+  }),
 ];
 
 describe('rankApproximateDemandSearch', () => {

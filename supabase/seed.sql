@@ -1,0 +1,2 @@
+-- Seed local intencionalmente vazio.
+-- Os cenários de homologação do Ciclo 3 são inseridos por scripts dedicados em supabase/tests.

@@ -1,7 +1,29 @@
-import type { Demanda } from '../types';
+import type { Demanda, LegacyCreateDemandaInput } from '../types';
+
+type DemoInput = LegacyCreateDemandaInput & Pick<Demanda, 'id'> & Partial<Pick<
+  Demanda,
+  'proximaAcao' | 'proximaAcaoEm' | 'createdAt' | 'updatedAt'
+>>;
+
+function createDemoDemanda(input: DemoInput): Demanda {
+  return {
+    ...input,
+    responsavelId: null,
+    limite1Situacao: input.limite1 ? 'definido' : 'nao_informado',
+    limite1Justificativa: '',
+    limite2Situacao: input.limite2 ? 'definido' : 'nao_informado',
+    limite2Justificativa: '',
+    proximaAcao: input.proximaAcao ?? '',
+    proximaAcaoEm: input.proximaAcaoEm ?? '',
+    linkOrigem: '',
+    origem: 'sistema',
+    createdAt: input.createdAt ?? '2026-07-01T12:00:00Z',
+    updatedAt: input.updatedAt ?? '2026-07-20T12:00:00Z',
+  };
+}
 
 export const demoDemandas: Demanda[] = [
-  {
+  createDemoDemanda({
     id: 1,
     numero: 'DEMO-PRO-2026-001',
     tipo: 'Processo',
@@ -12,8 +34,10 @@ export const demoDemandas: Demanda[] = [
     status: 'Aguardando Andamento',
     setor: 'Setor Demonstração',
     classificacao: 'Cessão',
-  },
-  {
+    proximaAcao: 'Conferir documentação demonstrativa',
+    proximaAcaoEm: '10/08/2026',
+  }),
+  createDemoDemanda({
     id: 2,
     numero: 'DEMO-EXP-2026-002',
     tipo: 'Expediente',
@@ -24,8 +48,10 @@ export const demoDemandas: Demanda[] = [
     status: 'Ajustar',
     setor: 'Setor Demonstração',
     classificacao: 'Consultas',
-  },
-  {
+    proximaAcao: 'Corrigir cadastro demonstrativo',
+    proximaAcaoEm: '18/08/2026',
+  }),
+  createDemoDemanda({
     id: 3,
     numero: 'DEMO-PRO-2026-003',
     tipo: 'Processo',
@@ -36,8 +62,10 @@ export const demoDemandas: Demanda[] = [
     status: 'Para Assinatura',
     setor: 'Setor Demonstração',
     classificacao: 'Demanda Interna',
-  },
-  {
+    proximaAcao: 'Acompanhar assinatura demonstrativa',
+    proximaAcaoEm: '25/08/2026',
+  }),
+  createDemoDemanda({
     id: 4,
     numero: 'DEMO-EXP-2026-004',
     tipo: 'Expediente',
@@ -48,8 +76,10 @@ export const demoDemandas: Demanda[] = [
     status: 'Tramitado',
     setor: 'Setor Demonstração',
     classificacao: 'Diversos',
-  },
-  {
+    proximaAcao: 'Verificar retorno externo demonstrativo',
+    proximaAcaoEm: '01/09/2026',
+  }),
+  createDemoDemanda({
     id: 5,
     numero: 'DEMO-OUT-2026-005',
     tipo: 'Outros',
@@ -60,8 +90,10 @@ export const demoDemandas: Demanda[] = [
     status: 'Sobrestado',
     setor: 'Setor Demonstração',
     classificacao: 'Outros',
-  },
-  {
+    proximaAcao: 'Revisar condição de sobrestamento',
+    proximaAcaoEm: '15/09/2026',
+  }),
+  createDemoDemanda({
     id: 6,
     numero: 'DEMO-PRO-2026-006',
     tipo: 'Processo',
@@ -72,8 +104,9 @@ export const demoDemandas: Demanda[] = [
     status: 'Encerrado',
     setor: 'Setor Demonstração',
     classificacao: 'Demanda Interna',
-  },
-  {
+    updatedAt: '2026-07-20T15:00:00Z',
+  }),
+  createDemoDemanda({
     id: 7,
     numero: 'DEMO-EXP-2026-007',
     tipo: 'Expediente',
@@ -84,8 +117,10 @@ export const demoDemandas: Demanda[] = [
     status: 'Aguardando Andamento',
     setor: 'Setor Demonstração',
     classificacao: 'Consultas',
-  },
-  {
+    proximaAcao: 'Solicitar documentação demonstrativa',
+    proximaAcaoEm: '20/09/2026',
+  }),
+  createDemoDemanda({
     id: 8,
     numero: 'DEMO-OUT-2026-008',
     tipo: 'Outros',
@@ -96,5 +131,7 @@ export const demoDemandas: Demanda[] = [
     status: 'Aguardando Andamento',
     setor: 'Setor Demonstração',
     classificacao: 'Outros',
-  },
+    proximaAcao: 'Revisar ajuste cadastral demonstrativo',
+    proximaAcaoEm: '01/10/2026',
+  }),
 ];

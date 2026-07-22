@@ -1,12 +1,12 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Demanda } from '../types';
 import type { DemandSearchMatch } from '../search/searchTypes';
+import { createDemandFixture } from '../test/expandedFixtures';
 import { DemandasTable } from './DemandasTable';
 
 afterEach(() => cleanup());
 
-const demanda: Demanda = {
+const demanda = createDemandFixture({
   id: 42,
   numero: 'SME-PRO-2025/001.234',
   tipo: 'Processo',
@@ -17,7 +17,7 @@ const demanda: Demanda = {
   status: 'Aguardando Andamento',
   setor: 'E/CTRH',
   classificacao: 'Movimentação de pessoal',
-};
+});
 
 const match: DemandSearchMatch = {
   matches: true,

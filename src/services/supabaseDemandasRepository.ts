@@ -1,36 +1,119 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../lib/database.types';
-import type { Demanda } from '../types';
+import type { Demanda, LegacyCreateDemandaInput } from '../types';
 import type { AppData, DemandasRepository } from './contracts';
-import { toDatabaseDate, toDemanda, toHistorico } from './dataMappers';
+import {
+  toDatabaseDate,
+  toDemanda,
+  toHistorico,
+  type DemandaRow,
+  type HistoricoRow,
+} from './dataMappers';
 
 type DemandaUpdate = Database['public']['Tables']['sme_demandas']['Update'];
+type QueryError = { code?: string; message: string } | null;
 
-function throwIfError(error: { message: string } | null): void {
+const EXPANDED_DEMANDA_COLUMNS = [
+  'id', 'numero', 'tipo', 'assunto', 'responsavel', 'responsavel_id',
+  'limite1', 'limite1_situacao', 'limite1_justificativa',
+  'limite2', 'limite2_situacao', 'limite2_justificativa',
+  'proxima_acao', 'proxima_acao_em', 'link_origem', 'status', 'setor',
+  'classificacao', 'origem', 'deleted_at', 'deleted_by', 'deletion_reason',
+  'created_at', 'updated_at',
+].join(',');
+
+const LEGACY_DEMANDA_COLUMNS =
+  'id,numero,tipo,assunto,responsavel,limite1,limite2,status,setor,classificacao';
+
+const EXPANDED_HISTORY_COLUMNS = [
+  'id', 'demanda_id', 'tipo_evento', 'status_anterior', 'status_novo',
+  'setor', 'comentario', 'alteracoes', 'created_by', 'created_at',
+].join(',');
+
+const LEGACY_HISTORY_COLUMNS =
+  'id,demanda_id,status_novo,setor,comentario,created_at';
+
+function throwIfError(error: QueryError): void {
   if (error) throw error;
+}
+
+function isMissingExpandedSchema(error: QueryError): boolean {
+  if (!error) return false;
+  const message = error.message.toLowerCase();
+  return error.code === 'PGRST204'
+    || error.code === '42703'
+    || message.includes('could not find')
+    || message.includes('does not exist')
+    || message.includes('schema cache');
 }
 
 export class SupabaseDemandasRepository implements DemandasRepository {
   constructor(private readonly client: SupabaseClient<Database>) {}
 
-  async load(): Promise<AppData> {
+  private async loadExpanded(): Promise<{
+    demandas: DemandaRow[] | null;
+    historico: HistoricoRow[] | null;
+    demandasError: QueryError;
+    historicoError: QueryError;
+  }> {
     const [demandasResult, historicoResult] = await Promise.all([
       this.client.from('sme_demandas')
-        .select('id,numero,tipo,assunto,responsavel,limite1,limite2,status,setor,classificacao')
+        .select(EXPANDED_DEMANDA_COLUMNS)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false }),
       this.client.from('sme_historico')
-        .select('id,demanda_id,status_novo,setor,comentario,created_at')
+        .select(EXPANDED_HISTORY_COLUMNS)
         .order('created_at', { ascending: false }),
     ]);
-    throwIfError(demandasResult.error);
-    throwIfError(historicoResult.error);
+
     return {
-      demandas: (demandasResult.data ?? []).map(toDemanda),
-      historico: (historicoResult.data ?? []).map(toHistorico),
+      demandas: demandasResult.data as DemandaRow[] | null,
+      historico: historicoResult.data as HistoricoRow[] | null,
+      demandasError: demandasResult.error,
+      historicoError: historicoResult.error,
     };
   }
 
-  async create(input: Omit<Demanda, 'id'>): Promise<void> {
+  private async loadLegacy(): Promise<AppData> {
+    const [demandasResult, historicoResult] = await Promise.all([
+      this.client.from('sme_demandas')
+        .select(LEGACY_DEMANDA_COLUMNS)
+        .order('created_at', { ascending: false }),
+      this.client.from('sme_historico')
+        .select(LEGACY_HISTORY_COLUMNS)
+        .order('created_at', { ascending: false }),
+    ]);
+
+    throwIfError(demandasResult.error);
+    throwIfError(historicoResult.error);
+
+    return {
+      demandas: ((demandasResult.data ?? []) as DemandaRow[]).map(toDemanda),
+      historico: ((historicoResult.data ?? []) as HistoricoRow[]).map(toHistorico),
+    };
+  }
+
+  async load(): Promise<AppData> {
+    const expanded = await this.loadExpanded();
+
+    if (!expanded.demandasError && !expanded.historicoError) {
+      return {
+        demandas: (expanded.demandas ?? []).map(toDemanda),
+        historico: (expanded.historico ?? []).map(toHistorico),
+      };
+    }
+
+    if (isMissingExpandedSchema(expanded.demandasError)
+      || isMissingExpandedSchema(expanded.historicoError)) {
+      return this.loadLegacy();
+    }
+
+    throwIfError(expanded.demandasError);
+    throwIfError(expanded.historicoError);
+    return { demandas: [], historico: [] };
+  }
+
+  async create(input: LegacyCreateDemandaInput): Promise<void> {
     const { error } = await this.client.rpc('criar_sme_demanda', {
       p_numero: input.numero,
       p_tipo: input.tipo,

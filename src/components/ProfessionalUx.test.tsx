@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Demanda } from '../types';
+import { createDemandFixture } from '../test/expandedFixtures';
 import { ModalNovo } from './ModalNovo';
 import { DemandasTable } from './DemandasTable';
 
-const base: Demanda = {
+const base = createDemandFixture({
   id: 1,
   numero: 'SME-002',
   tipo: 'Processo',
@@ -16,7 +16,7 @@ const base: Demanda = {
   status: 'Tramitado',
   setor: 'CTRH',
   classificacao: 'Outros',
-};
+});
 
 describe('experiência profissional de formulários e tabela', () => {
   afterEach(() => {
@@ -44,7 +44,7 @@ describe('experiência profissional de formulários e tabela', () => {
   });
 
   it('ordena por processo e pagina a lista', async () => {
-    const demandas = Array.from({ length: 12 }, (_, index): Demanda => ({
+    const demandas = Array.from({ length: 12 }, (_, index) => ({
       ...base,
       id: index + 1,
       numero: `SME-${String(12 - index).padStart(3, '0')}`,

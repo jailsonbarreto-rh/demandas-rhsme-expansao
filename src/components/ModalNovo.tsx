@@ -9,9 +9,13 @@ import { ConfirmDialog } from './ui/ConfirmDialog';
 import { FormError } from './ui/FormError';
 import { classificacaoValues } from '../constants/demandaOptions';
 
+type SaveNewDemandHandler = {
+  bivarianceHack(demanda: LegacyCreateDemandaInput): void | Promise<void>;
+}['bivarianceHack'];
+
 interface ModalNovoProps {
   onClose: () => void;
-  onSalvar: (demanda: LegacyCreateDemandaInput) => void | Promise<void>;
+  onSalvar: SaveNewDemandHandler;
 }
 
 export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {

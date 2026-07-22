@@ -1,23 +1,26 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-22 — Ciclo 3 aplicado ao banco; PR e frontend em fechamento**
+Atualizado em: **2026-07-22 — Ciclo 3 concluído em banco, GitHub e Production**
 
-## Estado atual
+## Estado final
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| `main` remota | `fc37ba5` — Ciclo 2 |
-| Branch | `feat/expandir-modelo-central-trabalho-ciclo-3` |
-| PR | `#40` — aberto, rascunho e mesclável |
+| PR do Ciclo 3 | `#40` — mesclado |
+| Merge | `d219ee73092337e28c95ccd4985f6f5502360963` |
+| Commit operacional de Production | `ec3646316eb25f3d1e6760760f9d6e1b7012d0d1` |
+| Commit atual da `main` | `31a763c23e6904f85baa0b7d16b0252c02b7f7aa` antes deste fechamento documental |
+| Production | `https://demandas-rhsme-expansao.vercel.app/` |
+| Deployment do Ciclo 3 | `dpl_EhWSfdubeVoouFbgNQA446UNVXAV` — `READY` |
+| Bloqueio automático | restaurado |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, saudável |
-| Migration do Ciclo 3 | **aplicada e validada em produção** |
-| Frontend de Production | ainda serve o Ciclo 2 até o merge e promoção final |
-| Plano versionado | SHA-256 `C78B6F7FE840BBFC6B32F401D27B609681C1881CB146B25E72E8905F36AA0B87` |
+| Migration | aplicada, homologada e alinhada ao histórico remoto |
+| Próximo ciclo | Ciclo 4 autorizado |
 
-O banco já possui o contrato expandido. A aplicação antiga continua funcionando porque a mudança foi aditiva e preservou as RPCs v1. O trabalho restante do Ciclo 3 é concluir a última CI do nome alinhado da migration, mesclar o PR e promover o Preview validado para Production.
+O domínio principal responde HTTP 200 e serve o frontend do Ciclo 3. O banco contém o schema expandido e preserva 379 demandas, 385 históricos e 5 perfis.
 
-## Ciclo 3 — o que foi entregue
+## Ciclo 3 — entrega
 
 ### Modelo de demandas
 
@@ -37,41 +40,41 @@ Foram acrescentados:
 - `status_anterior`;
 - `alteracoes` em JSON.
 
-### Regras de migração
+### Regras aplicadas ao legado
 
-- os 379 registros anteriores foram classificados como `legado`;
-- data já existente virou situação `definido`;
-- ausência de data virou `nao_informado`;
-- o primeiro histórico conhecido de cada demanda foi classificado como `criacao`;
-- os seis eventos posteriores foram classificados como `mudanca_status`;
-- nenhuma autoria, responsabilidade por UUID, justificativa ou status anterior foi inventado.
+- 379 registros anteriores classificados como `legado`;
+- data existente classificada como `definido`;
+- ausência de data classificada como `nao_informado`;
+- primeiro histórico de cada demanda classificado como `criacao`;
+- seis eventos posteriores classificados como `mudanca_status`;
+- nenhuma autoria, responsabilidade por UUID, justificativa ou status anterior inventado.
 
-### Arquivo versionado
+### Migration versionada
 
 ```text
 supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
 ```
 
-O prefixo `20260722101325` corresponde à versão registrada pelo Supabase remoto. A parte restante preserva o identificador funcional originalmente definido no Plano Mestre.
+O prefixo corresponde à versão registrada pelo Supabase remoto. A migration é aditiva e não remove colunas, funções, grants ou RPCs.
 
 ## Decisão sem custo adicional
 
 O responsável pelo produto recusou a branch Supabase paga de US$ 0,01344 por hora.
 
-A decisão foi registrada no `ADR-004` e substituída por:
+A decisão foi registrada no `ADR-004` e substituída por Supabase efêmero no GitHub Actions. O gate:
 
-1. Supabase efêmero no GitHub Actions;
-2. fixture sintética representando dados legados;
-3. aplicação real da migration nesse banco descartável;
-4. testes de backfill, constraints, índices e RPCs v1;
-5. reaplicação da cadeia completa do zero;
-6. destruição automática do ambiente.
+1. aplicou as migrations anteriores;
+2. inseriu fixture sintética legada;
+3. aplicou o Ciclo 3;
+4. validou snapshots, backfill, constraints, índices e RPCs v1;
+5. reaplicou a cadeia completa do zero;
+6. destruiu o ambiente.
 
-O gate foi aprovado integralmente e não utilizou dados reais, credenciais remotas nem recurso pago.
+Nenhum dado real, credencial remota ou recurso pago foi usado.
 
 ## Salvaguarda do plano gratuito
 
-Como o projeto utiliza o plano gratuito, sem backup automático acessível, a migration criou antes da expansão:
+Antes da expansão, a migration criou:
 
 ```text
 private.cycle3_backup_sme_demandas_20260722
@@ -80,40 +83,33 @@ private.cycle3_backup_perfis_usuarios_20260722
 private.cycle3_backup_manifest_20260722
 ```
 
-Contagens preservadas no manifesto:
+O manifesto preserva 379 demandas, 385 históricos e 5 perfis. `anon` e `authenticated` não possuem acesso.
 
-- 379 demandas;
-- 385 históricos;
-- 5 perfis.
+Esses snapshots reduzem o risco específico da migration, mas não substituem backup externo contra perda total do projeto. Remover somente por migration posterior após estabilidade confirmada.
 
-`anon` e `authenticated` não possuem acesso aos snapshots. Eles são uma salvaguarda limitada ao risco desta migration, não um backup externo contra perda total do projeto. Devem ser removidos somente por migration posterior após estabilidade confirmada.
+## Evidências finais
 
-## Validações concluídas
-
-### CI da aplicação
+### Aplicação
 
 - instalação pelo lockfile: PASS;
-- auditoria de vulnerabilidades: PASS;
-- assinaturas e proveniência: PASS;
+- auditoria e assinaturas: PASS;
 - lint: PASS;
 - 204 testes: PASS;
-- build: PASS;
-- orçamento e scanner do bundle: PASS;
+- build e orçamento: PASS;
+- scanner do bundle: PASS;
 - Playwright desktop/mobile: PASS.
 
 ### Banco efêmero
 
-- base anterior criada: PASS;
-- fixture legada inserida: PASS;
-- migration aplicada sobre dados existentes: PASS;
+- aplicação sobre dados legados: PASS;
 - snapshots e manifesto: PASS;
 - backfill: PASS;
 - constraints e índices: PASS;
 - RPCs v1: PASS;
-- cadeia completa reaplicada do zero: PASS;
-- ambiente destruído: PASS.
+- replay completo do zero: PASS;
+- destruição do ambiente: PASS.
 
-### Produção após migration
+### Produção
 
 | Invariante | Resultado |
 |---|---:|
@@ -131,50 +127,32 @@ Contagens preservadas no manifesto:
 | Checks `NOT VALID` | 5 |
 | Índices do Ciclo 3 | 4 |
 
-As RPCs v1 foram testadas em transação revertida. Nenhum registro de teste permaneceu no banco e as contagens continuaram 379/385/5.
+As RPCs v1 foram testadas em transação revertida. Nenhum registro de teste permaneceu no banco.
 
-## Compatibilidade do frontend
+## Compatibilidade e rollback
 
-- o repositório lê o schema expandido;
-- registros logicamente excluídos ficam fora da carteira operacional;
-- mappers fornecem defaults seguros para linhas antigas;
-- o fallback legado só é usado quando faltam colunas, não para esconder erros de RLS, rede ou autenticação;
-- as telas e mutações atuais continuam usando as RPCs v1 até o Ciclo 4;
+- o frontend lê o schema expandido;
+- registros logicamente excluídos ficam fora da carteira;
+- mappers fornecem defaults para linhas antigas;
+- as RPCs v1 permanecem operacionais até o Ciclo 4;
 - busca, filtros, Excel, Realtime, rotas e papéis foram preservados.
 
-## Rollback
+Em incidente:
 
-Em incidente de frontend:
-
-- manter as colunas e snapshots;
-- reverter para o deployment estável do Ciclo 2;
-- não apagar dados ou histórico;
+- manter schema e snapshots;
+- reverter para o deployment estável anterior;
+- não apagar dados, colunas ou histórico;
 - corrigir o banco somente por nova migration versionada.
 
-A migration é aditiva e o frontend do Ciclo 2 já foi confirmado compatível com o schema expandido.
-
-## Passos restantes do Ciclo 3
-
-1. concluir CI após o alinhamento final do nome da migration;
-2. confirmar o Preview do mesmo SHA como `READY`;
-3. atualizar o PR nº 40 e promovê-lo para revisão;
-4. mesclar o PR;
-5. promover o artefato validado para Production sem rebuild, quando possível;
-6. restaurar o bloqueio de deployments automáticos;
-7. confirmar domínio, carregamento e invariantes finais;
-8. somente então iniciar o Ciclo 4.
-
-## Próximo ciclo
-
-Depois do fechamento de Production do Ciclo 3:
+## Próximo ciclo autorizado
 
 **Ciclo 4 — Mutações transacionais, autoria e exclusão lógica.**
 
-O ciclo deverá criar RPCs v2 auditáveis, registrar autoria por `auth.uid()`, impedir exclusão física e manter compatibilidade durante a transição.
+Objetivo: criar RPCs v2 auditáveis, registrar autoria por `auth.uid()`, impedir exclusão física e manter compatibilidade durante a transição.
 
 ## Histórico resumido
 
 - **Ciclo 0:** contexto, decisões e linha de base;
 - **Ciclo 1:** retirada dos dados reais do bundle público;
 - **Ciclo 2:** semântica única e filtros tipados;
-- **Ciclo 3:** expansão aditiva do modelo, homologação sem custo e aplicação segura ao Supabase.
+- **Ciclo 3:** expansão aditiva, homologação sem custo, aplicação segura e publicação em Production.

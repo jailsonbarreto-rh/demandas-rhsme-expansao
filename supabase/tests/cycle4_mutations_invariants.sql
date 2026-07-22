@@ -233,6 +233,7 @@ drop function private.cycle4_fail_history_marker();
 create temporary table cycle4_first_edit_timestamp (
   updated_at timestamptz not null
 ) on commit preserve rows;
+grant select, insert on cycle4_first_edit_timestamp to authenticated;
 
 begin;
 set local role authenticated;

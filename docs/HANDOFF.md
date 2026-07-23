@@ -1,29 +1,46 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-23 — Ciclo R0 concluído: rebaseline e Plano Remanescente v2.0**
+Atualizado em: **2026-07-23 — execução suspensa para homologação integral das decisões de produto**
 
 ## Estado atual
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| Plano cronológico vigente | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` |
+| Adendo de autoridade | `docs/execution/ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md` — prevalece sobre a autorização anterior |
+| Plano inventário | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` — não executar |
+| Versão Word editorial | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.docx` |
 | Plano histórico | `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` — preservar; não usar como checklist cronológico |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr` |
 | Linha de base do código | Ciclos originais 0 a 4 concluídos; correção posterior da marca institucional publicada |
 | Ciclo remanescente concluído | R0 — rebaseline documental |
-| Próximo ciclo autorizado | **R1 — Integridade, domínio de dados e concorrência otimista** |
+| Implementação | **SUSPENSA** |
+| Próxima atividade autorizada | **D0 — Auditoria e homologação das decisões de produto** |
+| Próximo ciclo de implementação | Nenhum, até nova aprovação formal |
 
 ## Regra de autoridade
 
-O Plano Remanescente v2.0 substitui o Plano Mestre v1.0 como roteiro cronológico para todas as ferramentas e agentes. O Plano Mestre v1.0 continua sendo fonte histórica das decisões funcionais, mas:
+O Plano Remanescente v2.0.1 permanece como inventário organizado do trabalho remanescente, mas **não constitui autorização para implementação**. A análise do Ciclo R3 revelou múltiplas decisões de produto apresentadas como escopo obrigatório sem homologação explícita. Por determinação do responsável pelo produto, toda execução está suspensa até revisão equivalente de todos os ciclos. O Plano Mestre v1.0 continua sendo fonte histórica das decisões funcionais, mas:
 
 - não se reexecutam os Ciclos 0 a 4;
 - não se inicia o antigo Ciclo 5;
 - não se usa a numeração original dos Ciclos 5 a 13 para decidir a próxima etapa;
-- a execução segue exclusivamente `R1 → R2 → ... → R12`, um ciclo por branch e PR;
-- qualquer mudança de sequência exige decisão expressa do responsável pelo produto e atualização do plano.
+- nenhuma etapa de `R1 → R12` pode ser implementada durante a suspensão;
+- a única atividade autorizada é D0, exclusivamente documental e analítica;
+- a retomada exige decisões homologadas, nova versão do plano, atualização deste handoff e autorização expressa do primeiro ciclo.
+
+## Motivo e alcance da suspensão
+
+O Ciclo R3 contém decisões sobre papéis, visibilidade, atribuição, obrigatoriedade de responsável, comportamento da página pessoal, permissões de leitores e editores, justificativas e tratamento do legado. Essas escolhas alteram o produto e não podem ser convertidas em código apenas por constarem do plano. Há decisões semelhantes em outros ciclos, especialmente R4, R5, R6, R7, R8, R9, R10 e R12.
+
+Até a conclusão de D0:
+
+- não executar migrations;
+- não modificar fluxos, telas, permissões ou regras de negócio;
+- não iniciar R1 sob a justificativa de ser predominantemente técnico;
+- não publicar alterações funcionais;
+- não considerar o PR #43 uma aprovação das decisões de produto; ele organizou o plano, mas sua autorização de execução foi posteriormente revogada.
 
 ## Fotografia reconciliada de produção
 
@@ -93,6 +110,7 @@ O banco e os contratos já suportam partes dos antigos Ciclos 5, 6 e 7, porém i
 Foram consolidados:
 
 - `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` — fonte canônica para agentes;
+- `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.docx` — versão editorial para leitura, arquivo e governança;
 - `AGENTS.md` — ordem obrigatória de leitura e disciplina atualizadas;
 - este `docs/HANDOFF.md` — estado material e próximo ciclo autorizado.
 
@@ -105,23 +123,24 @@ O Plano v2.0 contém:
 - cobertura dos novos achados pós-Supabase;
 - matriz de testes, definição de pronto, condições de parada e formato de relato.
 
-## Próximo ciclo autorizado
+## Próxima atividade autorizada
 
-### R1 — Integridade, domínio de dados e concorrência otimista
+### D0 — Auditoria e homologação das decisões de produto
 
-Objetivo: concluir a robustez estrutural do banco antes de ampliar a experiência e o volume de uso.
+Objetivo: revisar integralmente os Ciclos R1 a R12, identificar todas as decisões que alteram comportamento, regras, permissões, telas, prioridades, métricas ou tratamento de dados e submetê-las ao responsável pelo produto antes de qualquer implementação.
 
-Escopo vinculante resumido:
+Durante D0, a ferramenta deverá:
 
-1. verificar e validar as constraints atualmente `NOT VALID` quando não houver violações;
-2. preservar e testar o índice normalizado existente;
-3. alinhar limites máximos entre banco e Zod;
-4. validar `link_origem` e domínio de classificação;
-5. criar os índices de FK efetivamente necessários;
-6. implementar concorrência otimista usando `updated_at` esperado;
-7. atualizar os tipos Supabase e reproduzir a cadeia de migrations;
-8. preservar contagens, relacionamentos, APIs existentes e frontend compatível;
-9. não revogar RPCs legadas neste ciclo.
+1. decompor cada ciclo em decisões independentes;
+2. explicar cada decisão em linguagem não técnica e por cenário real;
+3. separar necessidade técnica de escolha de produto;
+4. apresentar alternativas, incluindo manter o comportamento atual;
+5. registrar recomendação sem presumir aprovação;
+6. mapear dependências entre decisões de ciclos diferentes;
+7. registrar aprovação, rejeição, alteração ou adiamento;
+8. produzir uma nova versão do plano somente após homologação integral.
+
+Não estão autorizados código, migrations, banco, Vercel, Production ou qualquer implementação de R1 a R12.
 
 ## Condições imediatas de parada
 

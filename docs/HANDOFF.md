@@ -1,165 +1,139 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-22 — Ciclo 4 concluído em banco, GitHub e Production**
+Atualizado em: **2026-07-23 — Ciclo R0 concluído: rebaseline e Plano Remanescente v2.0**
 
-## Estado final
+## Estado atual
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| PR do Ciclo 4 | `#41` — mesclado |
-| Merge | `91c18b4ce6ff99ac1bf8c7e803e1b917fb718e91` |
-| Commit operacional de Production | `f7af6cbc4df61495bb2519e60ed9dcf227a4ae70` |
-| Commit de restauração do bloqueio | `4b8ba28c46dd6a22a990a75b3e65573601b30d7c` |
+| Plano cronológico vigente | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` |
+| Plano histórico | `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` — preservar; não usar como checklist cronológico |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Deployment do Ciclo 4 | `dpl_7UirrHm6KwzqpvSH3KFevXmvnrtk` — `READY` |
-| Bloqueio automático | restaurado |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, saudável |
-| Migrations do Ciclo 4 | aplicadas, homologadas e alinhadas ao histórico remoto |
-| Próximo ciclo | Ciclo 5 autorizado |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr` |
+| Linha de base do código | Ciclos originais 0 a 4 concluídos; correção posterior da marca institucional publicada |
+| Ciclo remanescente concluído | R0 — rebaseline documental |
+| Próximo ciclo autorizado | **R1 — Integridade, domínio de dados e concorrência otimista** |
 
-O domínio principal responde HTTP 200 e serve o frontend do Ciclo 4. O banco preserva 379 demandas, 385 históricos e 5 perfis; nenhum registro de homologação permaneceu.
+## Regra de autoridade
 
-## Ciclo 4 — entrega
+O Plano Remanescente v2.0 substitui o Plano Mestre v1.0 como roteiro cronológico para todas as ferramentas e agentes. O Plano Mestre v1.0 continua sendo fonte histórica das decisões funcionais, mas:
 
-### Operações auditáveis
+- não se reexecutam os Ciclos 0 a 4;
+- não se inicia o antigo Ciclo 5;
+- não se usa a numeração original dos Ciclos 5 a 13 para decidir a próxima etapa;
+- a execução segue exclusivamente `R1 → R2 → ... → R12`, um ciclo por branch e PR;
+- qualquer mudança de sequência exige decisão expressa do responsável pelo produto e atualização do plano.
 
-Foram criadas RPCs nomeadas para:
+## Fotografia reconciliada de produção
 
-- `criar_sme_demanda_v2`;
-- `editar_sme_demanda`;
-- `registrar_andamento_sme_demanda`;
-- `transicionar_status_sme_demanda`;
-- `excluir_sme_demanda`;
-- `restaurar_sme_demanda`;
-- `listar_perfis_minimos`.
+Consulta somente de leitura realizada no rebaseline:
 
-Todas as mutações:
-
-- validam o papel do usuário no banco;
-- obtêm autoria por `auth.uid()`;
-- bloqueiam a demanda com `FOR UPDATE`;
-- atualizam demanda e histórico na mesma transação;
-- registram o tipo do evento e os campos efetivamente alterados;
-- não dependem de actor id informado pelo navegador.
-
-### Experiência do usuário
-
-- demanda ativa exige próxima ação e data de acompanhamento;
-- edição exige justificativa;
-- andamento pode ser registrado sem inventar uma troca de status;
-- transição para o mesmo status é recusada e orienta o uso de andamento;
-- encerramento limpa próxima ação e data;
-- exclusão exige motivo e apenas oculta logicamente o registro;
-- restauração exige motivo e preserva a trilha;
-- busca, filtros, URL, Excel, Realtime, acessibilidade e responsividade foram preservados.
-
-### Exclusão lógica e segurança
-
-A exclusão física deixou de ser uma rota operacional:
-
-- `UPDATE` direto nos campos operacionais foi revogado de `authenticated`;
-- `DELETE` direto foi revogado de `authenticated`;
-- a política `editores atualizam demandas` foi removida;
-- a política `administradores ativos excluem demandas` foi removida;
-- exclusão e restauração ocorrem somente pelas RPCs auditáveis;
-- leitores continuam sem permissão de mutação.
-
-As APIs v1 permanecem disponíveis temporariamente apenas para compatibilidade, conforme o Plano Mestre. Novos fluxos usam os contratos v2.
-
-## Migrations versionadas
-
-```text
-supabase/migrations/20260722123530_cycle4_helpers_and_create_v2.sql
-supabase/migrations/20260722123627_cycle4_edit_demand.sql
-supabase/migrations/20260722123713_cycle4_progress_and_status.sql
-supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
-supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
-```
-
-Os prefixos correspondem às versões registradas pelo Supabase remoto. A migration originalmente combinada foi dividida sem alterar seu conteúdo funcional, eliminando drift entre repositório e banco.
-
-## Evidências finais
-
-### Aplicação
-
-- instalação pelo lockfile: PASS;
-- auditoria de vulnerabilidades: PASS;
-- assinaturas e proveniência: PASS;
-- lint: PASS;
-- 221 testes unitários e de integração: PASS;
-- build e orçamento do bundle: PASS;
-- Playwright desktop/mobile: PASS;
-- Preview do SHA final: `READY`, HTTP 200.
-
-### Supabase efêmero
-
-- migrations anteriores aplicadas: PASS;
-- usuários sintéticos inseridos: PASS;
-- cinco migrations do Ciclo 4 aplicadas: PASS;
-- editor cria, edita, registra andamento e transiciona: PASS;
-- editor não exclui nem restaura: PASS;
-- administrador exclui e restaura: PASS;
-- autoria por `auth.uid()`: PASS;
-- rollback da mutação quando o histórico falha: PASS;
-- concorrência simples: PASS;
-- `UPDATE` e `DELETE` diretos recusados: PASS;
-- replay completo da cadeia do zero: PASS;
-- ambiente destruído: PASS.
-
-### Produção
-
-| Invariante | Resultado |
+| Indicador | Resultado |
 |---|---:|
 | Demandas | 379 |
+| Demandas visíveis | 379 |
+| Demandas logicamente excluídas | 0 |
 | Históricos | 385 |
 | Perfis | 5 |
-| Duplicidades | 0 |
-| Históricos órfãos | 0 |
-| Exclusões lógicas preexistentes | 0 |
-| RPCs do Ciclo 4 | 7 |
-| Privilégio direto de `UPDATE` | não |
-| Privilégio direto de `DELETE` | não |
-| Políticas físicas antigas | ausentes |
+| Demandas de origem `sistema` | 0 |
+| Demandas com `responsavel_id` | 0 |
+| Demandas com responsável textual | 379 |
+| Demandas não encerradas | 377 |
+| Não encerradas sem próxima ação | 377 |
+| Não encerradas sem data de acompanhamento | 377 |
+| Prazo interno `nao_informado` | 369 |
+| Prazo final `nao_informado` | 354 |
+| Prazo marcado `nao_se_aplica` | 0 |
+| Eventos de criação | 379 |
+| Eventos de mudança de status | 6 |
+| Eventos de andamento/edição/reatribuição/exclusão/restauração | 0 |
+| Tabelas de preferências ou visões | 0 |
+| Grupos duplicados após normalização | 0 |
 
-O smoke transacional em produção executou criação, edição, andamento, transição, exclusão e restauração. Confirmou autoria, sequência de eventos e bloqueio das escritas diretas. O `ROLLBACK` deixou zero registros de teste e preservou as contagens 379/385/5.
+## O que já está concluído e não deve ser refeito
 
-## Advisories
+### Ciclos originais 0 a 4
 
-O linter do Supabase informa que as RPCs `SECURITY DEFINER` são executáveis por `authenticated`. Isso é intencional: as funções possuem `search_path` vazio, grants explícitos e validação interna de perfil ativo, editor ou administrador.
+- contexto de produto, plano original, ADRs e instruções de execução;
+- retirada de dados reais do bundle público e bloqueio do modo local em Production;
+- semântica única de carteira e filtros tipados por URL;
+- expansão aditiva do modelo de dados;
+- tipos, mappers, índices e leitura compatível;
+- RPCs auditáveis de criação, edição, andamento, transição, exclusão lógica e restauração;
+- autoria por `auth.uid()` e eventos de histórico;
+- revogação de `UPDATE` e `DELETE` diretos;
+- índice único normalizado do número da demanda;
+- Realtime e compatibilidade temporária com APIs legadas.
 
-Permanecem avisos anteriores, não criados pelo Ciclo 4:
+### Entregas posteriores
 
-- tabelas privadas de importação com RLS e sem políticas, porque não são acessíveis pelos papéis do aplicativo;
-- proteção contra senhas vazadas desativada no Supabase Auth.
+- correção e publicação da logomarca institucional na tela de login;
+- restauração do bloqueio automático de deployments após a publicação.
 
-## Rollback
+## Estruturas prontas, mas ainda sem experiência completa
 
-Em incidente de frontend:
+O banco e os contratos já suportam partes dos antigos Ciclos 5, 6 e 7, porém isso não significa que as funcionalidades estejam entregues ao usuário. Permanecem pendentes, entre outros:
 
-- manter RPCs, schema e histórico;
-- reverter para o deployment estável do Ciclo 3;
-- não reabrir escrita direta;
-- não apagar eventos de auditoria.
+- responsável interno por UUID e “Minhas demandas”;
+- aplicabilidade de prazos e painel de qualidade;
+- saneamento assistido do legado;
+- `ModalAndamento` e prontuário completo;
+- lixeira e restauração pela interface;
+- motor completo de alertas e página Meu Trabalho;
+- sete relatórios parametrizados;
+- painel gerencial compartilhado com o Excel;
+- preferências e visões salvas;
+- recuperação de senha;
+- observabilidade, cabeçalhos de segurança e release reproduzível;
+- contrato final e homologação dos três papéis.
 
-Em incidente de banco, corrigir somente por nova migration versionada.
+## Ciclo R0 — entrega documental
+
+Foram consolidados:
+
+- `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` — fonte canônica para agentes;
+- `AGENTS.md` — ordem obrigatória de leitura e disciplina atualizadas;
+- este `docs/HANDOFF.md` — estado material e próximo ciclo autorizado.
+
+O Plano v2.0 contém:
+
+- reconciliação do plano original com GitHub, Supabase e Production;
+- classificação de cada ciclo original como concluído, preparado, parcial ou não implementado;
+- Ciclos R0 a R12 somente para o trabalho remanescente;
+- cobertura dos 32 requisitos originais;
+- cobertura dos novos achados pós-Supabase;
+- matriz de testes, definição de pronto, condições de parada e formato de relato.
 
 ## Próximo ciclo autorizado
 
-**Ciclo 5 — Responsável vinculado ao login e Minhas demandas.**
+### R1 — Integridade, domínio de dados e concorrência otimista
 
-Objetivo: substituir a dependência de texto livre por identidade de perfil, preservando responsáveis externos e históricos. O ciclo deverá implementar:
+Objetivo: concluir a robustez estrutural do banco antes de ampliar a experiência e o volume de uso.
 
-- seleção explícita entre responsável interno, externo e não atribuído;
-- carteira “Minhas demandas” baseada em UUID;
-- filtro por responsável com URL compartilhável;
-- relatório de mapeamento do legado;
-- aplicação somente de correspondências aprovadas, nunca de sugestões automáticas ambíguas.
+Escopo vinculante resumido:
 
-## Histórico resumido
+1. verificar e validar as constraints atualmente `NOT VALID` quando não houver violações;
+2. preservar e testar o índice normalizado existente;
+3. alinhar limites máximos entre banco e Zod;
+4. validar `link_origem` e domínio de classificação;
+5. criar os índices de FK efetivamente necessários;
+6. implementar concorrência otimista usando `updated_at` esperado;
+7. atualizar os tipos Supabase e reproduzir a cadeia de migrations;
+8. preservar contagens, relacionamentos, APIs existentes e frontend compatível;
+9. não revogar RPCs legadas neste ciclo.
 
-- **Ciclo 0:** contexto, decisões e linha de base;
-- **Ciclo 1:** retirada dos dados reais do bundle público;
-- **Ciclo 2:** semântica única e filtros tipados;
-- **Ciclo 3:** expansão aditiva do modelo e aplicação segura;
-- **Ciclo 4:** mutações auditáveis, autoria, andamento, exclusão lógica e bloqueio de escritas diretas.
+## Condições imediatas de parada
+
+Parar antes de qualquer aplicação em produção se:
+
+- houver violação nas constraints candidatas à validação;
+- surgir classificação não reconhecida sem decisão de produto;
+- replay das migrations divergir do banco remoto;
+- contagens, órfãos ou duplicidades mudarem;
+- o controle de concorrência exigir sobrescrever silenciosamente alterações de outra pessoa;
+- não houver backup legível antes de migration material.
+
+## Rollback da fase atual
+
+Como o Ciclo R0 é documental, o rollback consiste em reverter o PR documental. Isso não altera banco, dados, frontend ou Production. O Plano Mestre v1.0 deve permanecer no repositório mesmo após a consolidação do v2.0.

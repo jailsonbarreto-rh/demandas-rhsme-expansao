@@ -1,45 +1,99 @@
 # Instruções de execução — Central de Demandas CTRH
 
-Estas regras valem para todo trabalho neste repositório. O `Plano_Remanescente_Execucao_CTRH_v2.0.md` está vigente como inventário do trabalho remanescente, porém sua execução está **SUSPENSA**. Nenhum Ciclo R1 a R12 pode ser implementado até a conclusão e aprovação formal da Fase D0 — Auditoria e homologação das decisões de produto. O Plano Mestre v1.0 permanece preservado apenas como registro histórico e fonte das decisões funcionais já fixadas.
+Estas regras valem para todo trabalho neste repositório.
+
+O `Plano_Remanescente_Execucao_CTRH_v2.0.md` permanece como referência organizada do trabalho possível. Ele **não autoriza automaticamente** a implementação de nenhum ciclo ou item.
+
+Toda implementação dos Ciclos R1 a R12 depende de debate prévio e autorização expressa do responsável pelo produto, conforme o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.2.md`.
 
 ## Leitura obrigatória
 
 Antes de interpretar ou alterar qualquer ciclo, leia integralmente, nesta ordem:
 
-1. `docs/execution/ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md`;
+1. `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.2.md`;
 2. `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.0.md`;
-3. `docs/PRODUCT_CONTEXT.md`;
-4. `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md`, apenas como inventário ainda não homologado;
-5. os ADRs de `docs/adr/` aplicáveis ao ciclo;
-6. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
-7. `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente quando for necessário consultar a origem de uma decisão já consolidada.
+3. `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
+4. `docs/PRODUCT_CONTEXT.md`;
+5. `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md`, como referência;
+6. os ADRs de `docs/adr/` aplicáveis ao ciclo;
+7. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
+8. `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente para consultar a origem de uma decisão já consolidada.
+
+O `ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md` é registro histórico e foi superado pela governança ciclo a ciclo.
 
 ## Autoridade e sequência
 
 - Não reexecute os Ciclos 0 a 4 do Plano Mestre v1.0: eles estão encerrados.
-- Não retome a numeração original dos Ciclos 5 a 13 como roteiro de execução.
-- A sequência remanescente `R1 → ... → R12` está bloqueada para implementação.
-- O Ciclo R0 foi concluído pelo rebaseline documental. A única atividade autorizada é a **Fase D0 — Auditoria e homologação das decisões de produto**, conforme `docs/HANDOFF.md`.
-- Em conflito sobre autorização de execução, o Adendo de Suspensão v2.0.1 prevalece sobre o Plano v2.0 e sobre qualquer handoff anterior.
+- Não use a antiga numeração dos Ciclos 5 a 13 para decidir a próxima etapa.
+- Nenhum Ciclo R1 a R12 possui autorização automática de implementação.
+- O processo ocorre sequencialmente: debate, decisão, autorização, implementação e homologação do ciclo atual; depois começa o debate do seguinte.
+- A próxima atividade autorizada deve ser confirmada em `docs/HANDOFF.md`.
 
-## Bloqueio de implementação
+## Fase obrigatória de debate pré-implementação
 
-- Não altere código, migrations, Supabase, Vercel ou Production com base nos Ciclos R1 a R12.
-- Não trate recomendações, exemplos ou critérios do plano como decisões aprovadas.
-- Antes de implementar qualquer item, deve existir decisão expressa do responsável pelo produto registrada no caderno de decisões e incorporada a uma nova versão aprovada do plano.
-- Caso uma solicitação mencione R1 a R12 sem revogação explícita deste bloqueio, pare e informe que o projeto está em homologação de produto.
-- Durante D0, produza somente análises, alternativas, protótipos explicativos e documentação de decisão; não execute mudanças funcionais.
+Antes de qualquer código, migration, banco, Preview ou publicação, decomponha o ciclo em decisões independentes.
 
-## Disciplina de entrega
+Para cada decisão, apresente:
+
+1. como o sistema funciona hoje;
+2. o que mudaria concretamente na tela e na rotina;
+3. quais usuários seriam afetados;
+4. um cenário real de uso;
+5. alternativas possíveis, inclusive manter o comportamento atual;
+6. recomendação, claramente identificada apenas como recomendação;
+7. impactos positivos e negativos;
+8. dependências com decisões de outros ciclos;
+9. dificuldade e custo de reverter depois;
+10. decisão expressa do responsável: aprovar, rejeitar, alterar ou adiar.
+
+Classifique cada item como:
+
+- necessidade técnica;
+- preservação do que já existe;
+- decisão anteriormente confirmada;
+- nova decisão proposta;
+- melhoria opcional;
+- questão ainda aberta.
+
+Não basta obter aprovação do título ou do objetivo geral do ciclo. A aprovação deve alcançar os comportamentos concretos que serão implementados.
+
+## Formação da autorização
+
+Depois do debate:
+
+1. consolide decisões aprovadas, alteradas, adiadas, rejeitadas e pendentes;
+2. escreva a regra final de cada item aprovado;
+3. apresente o escopo exato de implementação;
+4. obtenha autorização expressa para implementar a consolidação;
+5. registre as decisões em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
+6. somente então crie a branch funcional.
+
+Silêncio, ausência de objeção, recomendação técnica, texto do plano ou autorização para continuar analisando não equivalem a autorização de implementação.
+
+## Limite da autorização
+
+Implemente somente o que foi discutido e registrado.
+
+Não:
+
+- complete lacunas por conta própria;
+- escolha silenciosamente uma alternativa de produto;
+- amplie o escopo por conveniência;
+- antecipe decisões de outro ciclo;
+- modifique permissões, obrigatoriedades, padrões, cálculos, telas ou tratamento de dados não debatidos.
+
+Se surgir uma nova decisão durante a implementação, pare o item afetado, explique a questão e aguarde decisão expressa. O restante poderá prosseguir apenas se for independente e seguro.
+
+## Disciplina de entrega funcional
 
 - Trabalhe sempre em branch própria; nunca desenvolva diretamente na `main`.
-- Execute um único ciclo publicável por branch e PR. Só inicie o seguinte após merge ou autorização explícita para uma cadeia de branches.
+- Execute um único ciclo publicável por branch e PR, salvo autorização expressa diferente.
 - Confirme `main`, SHA remoto, migrations aplicadas e worktree limpo antes de criar a branch.
-- Registre antes de implementar: pessoa afetada, dor concreta, cenário real, resultado esperado e comportamento protegido.
 - Para mudanças de comportamento, escreva ou atualize testes primeiro e registre a falha RED esperada.
-- Implemente a menor solução completa, valide o fluxo real, revise o diff, atualize a documentação, crie commit atômico, publique a branch, abra PR e homologue o Preview no mesmo SHA.
-- Não misture ciclos, refatorações oportunistas ou mudanças externas não exigidas pelo ciclo.
-- Ao concluir cada ciclo, atualize `docs/HANDOFF.md` e declare expressamente o próximo ciclo autorizado.
+- Implemente a menor solução completa do escopo aprovado.
+- Não misture ciclos, refatorações oportunistas ou mudanças não autorizadas.
+- Publique Preview no mesmo SHA do PR e homologue o fluxo real.
+- Ao concluir o ciclo, atualize `docs/HANDOFF.md` e o registro de decisões.
 
 ## Validação obrigatória
 
@@ -56,34 +110,21 @@ npm run check:bundle
 npm run test:e2e
 ```
 
-`npm run check:full` consolida o gate atual. Execute também os gates específicos do ciclo, como `check:public-bundle`, E2E Supabase, replay de migrations, axe, inspeção de relatórios e testes de capacidade, quando aplicáveis. Nenhum teste pode ser removido, omitido ou ignorado para obter aprovação.
+`npm run check:full` consolida o gate atual. Execute também gates específicos do ciclo. Nenhum teste pode ser removido, omitido ou ignorado para obter aprovação.
 
-## Regras de produto e dados
+## Regras permanentes de produto e dados
 
-- Supabase é a fonte de verdade em produção. O modo local existe apenas para desenvolvimento e testes com dados totalmente sintéticos.
+- Supabase é a fonte de verdade em produção. O modo local existe apenas para desenvolvimento e testes com dados sintéticos.
 - Nunca coloque dados reais, segredos, senhas, chaves administrativas ou conteúdo operacional em código cliente, fixtures públicas, logs, screenshots, PRs ou artefatos de teste.
-- Preserve busca avançada, exportação Excel, acessibilidade, responsividade, perfis, RLS, Realtime, rotas e contexto de navegação, salvo mudança expressamente ordenada pelo Plano v2.0.
-- Não trate `Tramitado` como `Encerrado`; ausência de prazo não é atraso; “Minhas demandas” usa UUID, nunca aproximação de nomes.
+- Preserve busca, Excel, acessibilidade, responsividade, perfis, RLS, Realtime, rotas e contexto de navegação, salvo mudança expressamente aprovada.
+- Não trate `Tramitado` como `Encerrado`; ausência de prazo não é atraso.
 - Não invente prazo, responsável, justificativa, autoria ou evento histórico.
 - Não reintroduza `UPDATE` ou `DELETE` direto nas tabelas operacionais.
-- Não recrie o índice normalizado de número, a semântica centralizada, o schema expandido ou as RPCs v2 já implantadas; preserve-os e evolua-os apenas quando o ciclo exigir.
-- Não revogue as RPCs legadas antes do Ciclo R12 e da homologação integral do frontend compatível.
-- Não crie status, bibliotecas de busca, gráficos, estado global, notificações, infraestrutura paralela ou rankings de produtividade fora do contrato.
-- Não substitua ExcelJS, Supabase, React Router, TanStack Table, React Hook Form ou Zod sem autorização formal.
+- Não recrie estruturas já implantadas sem necessidade aprovada.
 - Não apague dados, histórico, backups ou deployments sem inventário e autorização destrutiva específica.
-
-## Gate de consciência do produto
-
-Antes da implementação, responda concretamente:
-
-1. Quem usa a entrega?
-2. Que dificuldade enfrenta hoje?
-3. Como a entrega reduz tempo, ambiguidade, risco ou retrabalho?
-4. Qual comportamento existente não pode regredir?
-5. Como o ganho será comprovado além dos testes?
-
-Depois da implementação, confirme se o fluxo ficou mais curto ou claro, se a próxima ação é compreensível, se o contexto foi preservado, se os dados e limitações estão explícitos e se a solução evita controle paralelo.
 
 ## Paradas e relato
 
-Respeite integralmente as condições de parada da seção 11 do Plano v2.0. Ao concluir cada ciclo, use o formato da seção 12, registrando ciclo, branch, commits, PR, Preview e SHA, pessoa/dor/cenário, entregas, escopo excluído, arquivos e migrations, testes RED, gate técnico, E2E, acessibilidade, impacto em dados, homologação de produto, rollback, riscos, Production e próximo ciclo autorizado.
+Pare quando uma lacuna afetar comportamento, regra, permissão, tela, cálculo, dado ou experiência do usuário e ainda não houver decisão expressa.
+
+Ao concluir cada ciclo, registre: decisões aprovadas, escopo implementado e excluído, branch, commits, PR, Preview e SHA, testes, migrations, impacto em dados, acessibilidade, homologação, rollback, riscos e próximo debate autorizado.

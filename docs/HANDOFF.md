@@ -1,50 +1,84 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **2026-07-23 — execução suspensa para homologação integral das decisões de produto**
+Atualizado em: **23 de julho de 2026 — governança ciclo a ciclo estabelecida**
 
 ## Estado atual
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| Adendo de autoridade | `docs/execution/ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md` — prevalece sobre a autorização anterior |
-| Plano inventário | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` — não executar |
-| Versão Word editorial | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.docx` |
-| Plano histórico | `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` — preservar; não usar como checklist cronológico |
+| Plano de referência | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` |
+| Regra de autoridade vigente | `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.2.md` |
+| Protocolo de decisão | `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.0.md` |
+| Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
+| Adendo de suspensão integral | Superado; preservado apenas como histórico |
+| Plano Mestre v1.0 | Histórico; não usar como checklist cronológico |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr` |
-| Linha de base do código | Ciclos originais 0 a 4 concluídos; correção posterior da marca institucional publicada |
-| Ciclo remanescente concluído | R0 — rebaseline documental |
-| Implementação | **SUSPENSA** |
-| Próxima atividade autorizada | **D0 — Auditoria e homologação das decisões de produto** |
-| Próximo ciclo de implementação | Nenhum, até nova aprovação formal |
+| Linha de base do código | Ciclos originais 0 a 4 concluídos |
+| Próxima atividade autorizada | **Análise e debate pré-implementação do Ciclo R1** |
+| Implementação do R1 | **Não autorizada ainda** |
 
-## Regra de autoridade
+## Regra de governança
 
-O Plano Remanescente v2.0.1 permanece como inventário organizado do trabalho remanescente, mas **não constitui autorização para implementação**. A análise do Ciclo R3 revelou múltiplas decisões de produto apresentadas como escopo obrigatório sem homologação explícita. Por determinação do responsável pelo produto, toda execução está suspensa até revisão equivalente de todos os ciclos. O Plano Mestre v1.0 continua sendo fonte histórica das decisões funcionais, mas:
+O Plano Remanescente v2.0 permanece salvo como referência do trabalho possível, mas seus itens não são decisões automaticamente aprovadas.
 
-- não se reexecutam os Ciclos 0 a 4;
-- não se inicia o antigo Ciclo 5;
-- não se usa a numeração original dos Ciclos 5 a 13 para decidir a próxima etapa;
-- nenhuma etapa de `R1 → R12` pode ser implementada durante a suspensão;
-- a única atividade autorizada é D0, exclusivamente documental e analítica;
-- a retomada exige decisões homologadas, nova versão do plano, atualização deste handoff e autorização expressa do primeiro ciclo.
+Cada ciclo deverá seguir esta sequência:
 
-## Motivo e alcance da suspensão
+```text
+analisar o estado atual
+→ desmontar o ciclo em decisões independentes
+→ explicar em linguagem leiga e de produto
+→ apresentar alternativas, impactos e recomendação
+→ receber decisões: aprovar, rejeitar, alterar ou adiar
+→ consolidar o escopo aprovado
+→ receber autorização expressa de implementação
+→ implementar e testar
+→ homologar o resultado
+→ iniciar o debate do ciclo seguinte
+```
 
-O Ciclo R3 contém decisões sobre papéis, visibilidade, atribuição, obrigatoriedade de responsável, comportamento da página pessoal, permissões de leitores e editores, justificativas e tratamento do legado. Essas escolhas alteram o produto e não podem ser convertidas em código apenas por constarem do plano. Há decisões semelhantes em outros ciclos, especialmente R4, R5, R6, R7, R8, R9, R10 e R12.
+Não é necessário decidir antecipadamente todos os ciclos. A revisão acontece ciclo por ciclo.
 
-Até a conclusão de D0:
+## Conteúdo obrigatório do debate
 
-- não executar migrations;
-- não modificar fluxos, telas, permissões ou regras de negócio;
-- não iniciar R1 sob a justificativa de ser predominantemente técnico;
-- não publicar alterações funcionais;
-- não considerar o PR #43 uma aprovação das decisões de produto; ele organizou o plano, mas sua autorização de execução foi posteriormente revogada.
+Para cada decisão independente, a ferramenta deverá apresentar:
+
+1. como o sistema funciona hoje;
+2. o que mudaria concretamente na tela e na rotina;
+3. quais usuários seriam afetados;
+4. um cenário real de uso;
+5. alternativas possíveis, inclusive manter o comportamento atual;
+6. recomendação identificada apenas como recomendação;
+7. impactos positivos e negativos;
+8. dependências com decisões de outros ciclos;
+9. dificuldade e custo de reverter depois;
+10. decisão expressa do responsável: aprovar, rejeitar, alterar ou adiar.
+
+Cada item deverá ser classificado como:
+
+- necessidade técnica;
+- preservação do que já existe;
+- decisão anteriormente confirmada;
+- nova decisão proposta;
+- melhoria opcional;
+- questão ainda aberta.
+
+## Limite da autorização
+
+A aprovação do objetivo geral de um ciclo não aprova automaticamente todos os seus itens.
+
+A implementação somente poderá começar depois que:
+
+- as decisões tiverem sido debatidas;
+- as retificações tiverem sido incorporadas;
+- o escopo final tiver sido apresentado;
+- o responsável pelo produto tiver autorizado expressamente a implementação;
+- as decisões tiverem sido registradas no repositório.
+
+Se surgir uma nova decisão durante a implementação, o item afetado deverá parar e retornar ao debate. O restante só poderá continuar se for independente e seguro.
 
 ## Fotografia reconciliada de produção
-
-Consulta somente de leitura realizada no rebaseline:
 
 | Indicador | Resultado |
 |---|---:|
@@ -61,98 +95,45 @@ Consulta somente de leitura realizada no rebaseline:
 | Não encerradas sem data de acompanhamento | 377 |
 | Prazo interno `nao_informado` | 369 |
 | Prazo final `nao_informado` | 354 |
-| Prazo marcado `nao_se_aplica` | 0 |
-| Eventos de criação | 379 |
-| Eventos de mudança de status | 6 |
 | Eventos de andamento/edição/reatribuição/exclusão/restauração | 0 |
 | Tabelas de preferências ou visões | 0 |
 | Grupos duplicados após normalização | 0 |
 
 ## O que já está concluído e não deve ser refeito
 
-### Ciclos originais 0 a 4
-
-- contexto de produto, plano original, ADRs e instruções de execução;
-- retirada de dados reais do bundle público e bloqueio do modo local em Production;
-- semântica única de carteira e filtros tipados por URL;
+- contexto de produto, plano original e ADRs;
+- retirada de dados reais do bundle público;
+- bloqueio do modo local em Production;
+- semântica central e filtros tipados por URL;
 - expansão aditiva do modelo de dados;
 - tipos, mappers, índices e leitura compatível;
 - RPCs auditáveis de criação, edição, andamento, transição, exclusão lógica e restauração;
-- autoria por `auth.uid()` e eventos de histórico;
+- autoria por `auth.uid()` e histórico;
 - revogação de `UPDATE` e `DELETE` diretos;
-- índice único normalizado do número da demanda;
-- Realtime e compatibilidade temporária com APIs legadas.
-
-### Entregas posteriores
-
-- correção e publicação da logomarca institucional na tela de login;
-- restauração do bloqueio automático de deployments após a publicação.
-
-## Estruturas prontas, mas ainda sem experiência completa
-
-O banco e os contratos já suportam partes dos antigos Ciclos 5, 6 e 7, porém isso não significa que as funcionalidades estejam entregues ao usuário. Permanecem pendentes, entre outros:
-
-- responsável interno por UUID e “Minhas demandas”;
-- aplicabilidade de prazos e painel de qualidade;
-- saneamento assistido do legado;
-- `ModalAndamento` e prontuário completo;
-- lixeira e restauração pela interface;
-- motor completo de alertas e página Meu Trabalho;
-- sete relatórios parametrizados;
-- painel gerencial compartilhado com o Excel;
-- preferências e visões salvas;
-- recuperação de senha;
-- observabilidade, cabeçalhos de segurança e release reproduzível;
-- contrato final e homologação dos três papéis.
-
-## Ciclo R0 — entrega documental
-
-Foram consolidados:
-
-- `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md` — fonte canônica para agentes;
-- `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.docx` — versão editorial para leitura, arquivo e governança;
-- `AGENTS.md` — ordem obrigatória de leitura e disciplina atualizadas;
-- este `docs/HANDOFF.md` — estado material e próximo ciclo autorizado.
-
-O Plano v2.0 contém:
-
-- reconciliação do plano original com GitHub, Supabase e Production;
-- classificação de cada ciclo original como concluído, preparado, parcial ou não implementado;
-- Ciclos R0 a R12 somente para o trabalho remanescente;
-- cobertura dos 32 requisitos originais;
-- cobertura dos novos achados pós-Supabase;
-- matriz de testes, definição de pronto, condições de parada e formato de relato.
+- índice único normalizado do número;
+- Realtime e compatibilidade temporária com APIs legadas;
+- correção da logomarca institucional.
 
 ## Próxima atividade autorizada
 
-### D0 — Auditoria e homologação das decisões de produto
+### Debate pré-implementação do Ciclo R1
 
-Objetivo: revisar integralmente os Ciclos R1 a R12, identificar todas as decisões que alteram comportamento, regras, permissões, telas, prioridades, métricas ou tratamento de dados e submetê-las ao responsável pelo produto antes de qualquer implementação.
+A ferramenta pode:
 
-Durante D0, a ferramenta deverá:
+- examinar o estado atual do código e do banco;
+- separar necessidades técnicas de decisões de produto;
+- explicar cada item em linguagem leiga;
+- demonstrar efeitos em telas, fluxos, permissões, dados e rotina;
+- apresentar alternativas, impactos e recomendações;
+- preparar a matriz para decisão.
 
-1. decompor cada ciclo em decisões independentes;
-2. explicar cada decisão em linguagem não técnica e por cenário real;
-3. separar necessidade técnica de escolha de produto;
-4. apresentar alternativas, incluindo manter o comportamento atual;
-5. registrar recomendação sem presumir aprovação;
-6. mapear dependências entre decisões de ciclos diferentes;
-7. registrar aprovação, rejeição, alteração ou adiamento;
-8. produzir uma nova versão do plano somente após homologação integral.
+A ferramenta não pode ainda:
 
-Não estão autorizados código, migrations, banco, Vercel, Production ou qualquer implementação de R1 a R12.
+- alterar código funcional;
+- criar ou aplicar migrations;
+- modificar Supabase;
+- modificar Vercel;
+- publicar em Production;
+- presumir a aprovação de qualquer item do R1.
 
-## Condições imediatas de parada
-
-Parar antes de qualquer aplicação em produção se:
-
-- houver violação nas constraints candidatas à validação;
-- surgir classificação não reconhecida sem decisão de produto;
-- replay das migrations divergir do banco remoto;
-- contagens, órfãos ou duplicidades mudarem;
-- o controle de concorrência exigir sobrescrever silenciosamente alterações de outra pessoa;
-- não houver backup legível antes de migration material.
-
-## Rollback da fase atual
-
-Como o Ciclo R0 é documental, o rollback consiste em reverter o PR documental. Isso não altera banco, dados, frontend ou Production. O Plano Mestre v1.0 deve permanecer no repositório mesmo após a consolidação do v2.0.
+A implementação do R1 somente será autorizada depois do debate, das retificações, do registro das decisões e da autorização expressa do escopo consolidado.

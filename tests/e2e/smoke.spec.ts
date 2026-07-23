@@ -24,6 +24,14 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   await page.goto('/');
   await expect(page).toHaveTitle(/Fluxo CTRH/i);
   await expect(page.getByRole('button', { name: /acessar sistema/i })).toBeVisible();
+
+  const institutionalMark = page.locator('img.brand-endorsement-image:visible');
+  await expect(institutionalMark).toHaveCount(1);
+  await expect.poll(async () => institutionalMark.evaluate((image) => {
+    const element = image as HTMLImageElement;
+    return element.complete && element.naturalWidth > 0;
+  })).toBe(true);
+
   await expectNoHorizontalOverflow(page);
 
   await page.getByPlaceholder('usuario@rioeduca.net').fill('teste@rioeduca.net');

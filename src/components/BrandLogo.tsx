@@ -11,9 +11,7 @@ export function BrandLogo({
   showEndorsement = false,
   className = '',
 }: BrandLogoProps) {
-  const endorsementSrc = tone === 'inverse'
-    ? '/prefeitura-rio-educacao-negativo.png'
-    : '/prefeitura-rio-educacao-positivo.png';
+  const endorsementSrc = '/prefeitura-rio-educacao.svg';
 
   return (
     <div className={`brand-lockup brand-lockup--${variant} brand-lockup--${tone} ${className}`.trim()}>

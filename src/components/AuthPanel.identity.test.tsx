@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthPanel } from './AuthPanel';
 
 describe('AuthPanel — identidade única do produto', () => {
-  it('usa Fluxo CTRH, elimina o nome legado e carrega os ativos institucionais corretos', () => {
+  it('usa Fluxo CTRH, elimina o nome legado e carrega o ativo institucional publicado', () => {
     render(
       <AuthPanel
         mode="supabase"
@@ -21,7 +21,7 @@ describe('AuthPanel — identidade única do produto', () => {
       name: 'Prefeitura do Rio de Janeiro — Educação',
     });
     expect(endorsements).toHaveLength(2);
-    expect(endorsements[0]).toHaveAttribute('src', '/prefeitura-rio-educacao-negativo.png');
-    expect(endorsements[1]).toHaveAttribute('src', '/prefeitura-rio-educacao-positivo.png');
+    expect(endorsements[0]).toHaveAttribute('src', '/prefeitura-rio-educacao.svg');
+    expect(endorsements[1]).toHaveAttribute('src', '/prefeitura-rio-educacao.svg');
   });
 });

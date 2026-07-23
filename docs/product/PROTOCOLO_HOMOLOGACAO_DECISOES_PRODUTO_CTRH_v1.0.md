@@ -1,84 +1,122 @@
-# PROTOCOLO DE HOMOLOGAÇÃO DAS DECISÕES DE PRODUTO — CTRH
+# PROTOCOLO DE DEBATE E APROVAÇÃO DAS DECISÕES DE PRODUTO — CTRH
 
-**Versão:** 1.0  
-**Status:** VIGENTE — FASE D0  
-**Finalidade:** impedir que escolhas de produto sejam implementadas como se fossem requisitos técnicos já aprovados.
+**Versão:** 1.1  
+**Status:** VIGENTE — GOVERNANÇA CICLO A CICLO  
+**Finalidade:** garantir que nenhuma mudança de produto seja implementada antes de ser compreendida, debatida e aprovada expressamente pelo responsável pelo produto.
 
 ## 1. Regra central
 
-Nenhum item dos Ciclos R1 a R12 pode ser implementado enquanto a decisão de produto correspondente não estiver explicada em linguagem operacional e aprovada expressamente pelo responsável pelo produto.
+O Plano Remanescente CTRH permanece salvo como referência organizada do trabalho possível. Ele não autoriza automaticamente a implementação de nenhum ciclo ou item.
+
+Antes de cada Ciclo R1 a R12, a ferramenta deverá desmontar o ciclo em decisões independentes, explicar cada uma em linguagem não técnica e submetê-la ao responsável pelo produto. A implementação somente poderá começar após concordância expressa ou após a proposta ter sido retificada e então aprovada.
+
+Não é necessário revisar antecipadamente todos os ciclos. O procedimento é sequencial: debate, aprovação, implementação e homologação do ciclo atual; depois começa o debate do ciclo seguinte.
 
 ## 2. Unidade de análise
 
-Cada ciclo será decomposto em decisões independentes. Não basta aprovar o título ou o objetivo geral do ciclo. A aprovação deverá alcançar os comportamentos concretos que mudam:
+A unidade de aprovação é a **decisão concreta**, não o título, o objetivo geral nem o conjunto abstrato do ciclo.
+
+Devem ser tratadas separadamente as mudanças que afetem:
 
 - o que aparece na tela;
-- quem pode ver;
-- quem pode fazer;
+- como o usuário navega ou executa uma tarefa;
+- quem pode ver determinada informação;
+- quem pode executar determinada ação;
 - o que passa a ser obrigatório;
-- quais informações são armazenadas;
-- como alertas, prioridades e métricas são calculados;
-- como dados antigos são tratados;
-- quais padrões são assumidos automaticamente.
+- quais informações são armazenadas ou exibidas;
+- como alertas, prioridades, filtros, relatórios e métricas são calculados;
+- como os dados antigos serão preservados, classificados ou saneados;
+- quais comportamentos serão assumidos automaticamente pelo sistema.
 
-## 3. Classificação obrigatória
+## 3. Explicações obrigatórias para cada decisão
 
-Cada item receberá uma das seguintes classificações:
+Para cada decisão independente, a ferramenta deverá apresentar:
 
-| Classe | Significado | Exige aprovação de produto? |
-|---|---|---:|
-| TÉCNICA | Integridade, segurança, performance ou manutenção sem alterar regra de negócio observável. | Não, salvo impacto operacional relevante. |
-| PRESERVAÇÃO | Mantém comportamento já existente e aprovado. | Não, mas exige evidência da fonte. |
-| DECISÃO CONFIRMADA | Escolha já aprovada em documento ou conversa identificável. | Não novamente, salvo mudança de contexto. |
-| DECISÃO PROPOSTA | Escolha nova apresentada pelo plano. | Sim. |
-| OPÇÃO | Melhoria dispensável ou alternativa de desenho. | Sim, inclusive para excluir. |
-| QUESTÃO ABERTA | Falta informação para definir comportamento. | Sim. |
+1. **Como o sistema funciona hoje.**
+2. **O que mudaria concretamente na tela e na rotina.**
+3. **Quais usuários seriam afetados.**
+4. **Um cenário real de uso no CTRH.**
+5. **Alternativas possíveis**, incluindo manter o comportamento atual quando viável.
+6. **Recomendação da ferramenta**, claramente identificada apenas como recomendação.
+7. **Impactos positivos e negativos.**
+8. **Dependências com decisões de outros ciclos.**
+9. **Dificuldade e custo de reverter a decisão depois.**
+10. **Decisão expressa do responsável pelo produto:** aprovar, rejeitar, alterar ou adiar.
 
-## 4. Ficha de cada decisão
+Quando texto não for suficiente para demonstrar uma mudança visual, de navegação ou de fluxo, deverão ser apresentados esquemas, fluxos ou protótipos explicativos antes da decisão.
 
-Para cada decisão proposta, apresentar:
+## 4. Classificação obrigatória dos itens
 
-1. **Pergunta de decisão** — uma escolha clara, sem jargão técnico.
-2. **Situação atual** — como o sistema funciona hoje.
-3. **Mudança prática** — o que o usuário verá ou fará de forma diferente.
-4. **Perfis afetados** — administrador, editor, leitor ou público específico.
-5. **Cenário real** — exemplo de rotina do CTRH.
-6. **Alternativas** — incluindo manter o comportamento atual quando viável.
-7. **Recomendação** — fundamentada, mas não presumida como aprovada.
-8. **Impactos** — operação, dados, segurança, usabilidade, relatórios e manutenção.
-9. **Dependências** — decisões de outros ciclos que mudam conforme a escolha.
-10. **Reversibilidade** — facilidade e custo de mudar depois.
-11. **Decisão do responsável** — aprovada, rejeitada, alterada ou adiada.
-12. **Redação final para o plano** — regra objetiva que o executor deverá seguir.
+Cada item do ciclo deverá ser classificado como:
 
-## 5. Ordem de revisão
+| Classe | Significado | Tratamento |
+|---|---|---|
+| **NECESSIDADE TÉCNICA** | Correção de integridade, segurança, desempenho ou manutenção que não altera por si só a regra de produto. | Explicar efeitos e riscos; aprovação específica quando houver impacto perceptível ou escolha relevante. |
+| **PRESERVAÇÃO DO EXISTENTE** | Mantém comportamento já existente e aprovado. | Apresentar evidência do comportamento preservado. |
+| **DECISÃO ANTERIORMENTE CONFIRMADA** | Regra já aprovada em conversa ou documento identificável. | Citar a fonte e confirmar que o contexto não mudou. |
+| **NOVA DECISÃO PROPOSTA** | Comportamento novo introduzido pelo plano ou pela análise. | Exige debate e decisão expressa. |
+| **MELHORIA OPCIONAL** | Melhoria útil, mas dispensável ao objetivo essencial do ciclo. | Exige decisão para incluir, adiar ou excluir. |
+| **QUESTÃO AINDA ABERTA** | Não há informação suficiente ou existem alternativas relevantes. | Não implementar até decisão expressa. |
 
-A revisão ocorrerá ciclo por ciclo, mas deverá identificar dependências cruzadas antes da aprovação final:
+Uma recomendação tecnicamente razoável nunca deve ser apresentada como decisão anteriormente aprovada.
 
-1. R1 e R2 — distinguir infraestrutura técnica de impactos observáveis;
-2. R3 — responsabilidade, carteira pessoal e visibilidade;
-3. R4 — prazos, obrigatoriedades e saneamento;
-4. R5 — andamento, histórico, lixeira e ações;
-5. R6 — página inicial, prioridades e alertas;
-6. R7 — relatórios, finalidades e permissões;
-7. R8 — métricas, interpretações e limites analíticos;
-8. R9 — preferências, padrões por papel e persistência;
-9. R10 — acesso, recuperação e comunicação;
-10. R11 — experiência de erro, monitoramento e release;
-11. R12 — matriz final de permissões e critérios de entrada em produção.
+## 5. Resultado possível da análise
 
-## 6. Gate de saída da Fase D0
+O responsável pelo produto poderá classificar cada decisão como:
 
-A Fase D0 somente termina quando:
+- **APROVADA** — pode integrar o escopo de implementação;
+- **ALTERADA** — a proposta deverá ser reescrita conforme a retificação e apresentada para confirmação;
+- **ADIADA** — permanece fora do ciclo atual, sem implementação;
+- **REJEITADA** — deve ser retirada do plano executável;
+- **PENDENTE** — exige informação, exemplo ou protótipo adicional.
 
-- todos os ciclos tiverem inventário completo de decisões;
-- nenhuma decisão proposta permanecer apresentada como requisito aprovado;
-- decisões adiadas estiverem explicitamente excluídas da primeira versão;
-- dependências e contradições estiverem resolvidas;
-- o plano for reescrito com linguagem inequívoca;
-- o responsável pelo produto aprovar a versão revisada;
-- `AGENTS.md` e `docs/HANDOFF.md` autorizarem nominalmente o primeiro ciclo.
+A ausência de resposta, o silêncio, a aprovação do objetivo geral ou a autorização para continuar o debate não equivalem a aprovação da decisão.
 
-## 7. Proibição de execução silenciosa
+## 6. Formação do escopo autorizado
 
-A ferramenta não pode preencher lacunas escolhendo a alternativa que considere tecnicamente melhor. Quando uma lacuna afetar o produto, deverá parar e apresentar a decisão ao responsável.
+Depois do debate, a ferramenta deverá apresentar uma consolidação contendo:
+
+- decisões aprovadas;
+- redação final de cada regra;
+- decisões alteradas e sua versão final;
+- itens adiados;
+- itens rejeitados;
+- questões ainda pendentes;
+- arquivos, telas, regras e dados afetados;
+- critérios de aceite correspondentes.
+
+A implementação somente poderá começar após autorização expressa para implementar essa consolidação.
+
+A decisão e o escopo autorizado deverão ser registrados em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` antes da criação da branch funcional.
+
+## 7. Novas decisões descobertas durante a implementação
+
+A autorização vale apenas para o que foi discutido e registrado.
+
+Se durante a implementação surgir uma nova escolha de produto, consequência não apresentada ou necessidade de ampliar o escopo, a ferramenta deverá:
+
+1. parar o item afetado;
+2. explicar a nova questão nos mesmos termos deste protocolo;
+3. aguardar decisão expressa;
+4. atualizar o registro antes de continuar.
+
+O restante do escopo já aprovado poderá prosseguir somente quando for independente e seguro.
+
+## 8. Sequência de cada ciclo
+
+```text
+Análise do estado atual
+→ decomposição em decisões independentes
+→ explicação em linguagem leiga e de produto
+→ debate e retificações
+→ decisão expressa item a item
+→ consolidação do escopo autorizado
+→ autorização expressa de implementação
+→ implementação, testes e Preview
+→ homologação do resultado
+→ debate do ciclo seguinte
+```
+
+## 9. Proibição de execução silenciosa
+
+Nenhuma ferramenta pode completar lacunas escolhendo a alternativa que considere melhor, antecipar decisões de outro ciclo ou transformar uma recomendação em requisito obrigatório. Quando a lacuna afetar o produto, deve explicá-la e aguardar decisão.

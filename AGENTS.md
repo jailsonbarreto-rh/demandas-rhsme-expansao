@@ -1,24 +1,34 @@
 # Instruções de execução — Central de Demandas CTRH
 
-Estas regras valem para todo trabalho neste repositório. O `Plano_Remanescente_Execucao_CTRH_v2.0.md` é o contrato cronológico vigente e prevalece sobre atalhos técnicos. O Plano Mestre v1.0 permanece preservado apenas como registro histórico e fonte das decisões funcionais já fixadas.
+Estas regras valem para todo trabalho neste repositório. O `Plano_Remanescente_Execucao_CTRH_v2.0.md` está vigente como inventário do trabalho remanescente, porém sua execução está **SUSPENSA**. Nenhum Ciclo R1 a R12 pode ser implementado até a conclusão e aprovação formal da Fase D0 — Auditoria e homologação das decisões de produto. O Plano Mestre v1.0 permanece preservado apenas como registro histórico e fonte das decisões funcionais já fixadas.
 
 ## Leitura obrigatória
 
 Antes de interpretar ou alterar qualquer ciclo, leia integralmente, nesta ordem:
 
-1. `docs/PRODUCT_CONTEXT.md`;
-2. `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md`;
-3. os ADRs de `docs/adr/` aplicáveis ao ciclo;
-4. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
-5. `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente quando for necessário consultar a origem de uma decisão já consolidada.
+1. `docs/execution/ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md`;
+2. `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.0.md`;
+3. `docs/PRODUCT_CONTEXT.md`;
+4. `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.0.md`, apenas como inventário ainda não homologado;
+5. os ADRs de `docs/adr/` aplicáveis ao ciclo;
+6. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
+7. `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente quando for necessário consultar a origem de uma decisão já consolidada.
 
 ## Autoridade e sequência
 
 - Não reexecute os Ciclos 0 a 4 do Plano Mestre v1.0: eles estão encerrados.
 - Não retome a numeração original dos Ciclos 5 a 13 como roteiro de execução.
-- Execute exclusivamente a sequência remanescente `R0 → R1 → ... → R12` definida no Plano v2.0.
-- O Ciclo R0 foi concluído pelo rebaseline documental. O próximo ciclo autorizado deve ser confirmado em `docs/HANDOFF.md`.
-- Em conflito entre documentos, prevalece a ordem de precedência definida na seção 1.2 do Plano v2.0.
+- A sequência remanescente `R1 → ... → R12` está bloqueada para implementação.
+- O Ciclo R0 foi concluído pelo rebaseline documental. A única atividade autorizada é a **Fase D0 — Auditoria e homologação das decisões de produto**, conforme `docs/HANDOFF.md`.
+- Em conflito sobre autorização de execução, o Adendo de Suspensão v2.0.1 prevalece sobre o Plano v2.0 e sobre qualquer handoff anterior.
+
+## Bloqueio de implementação
+
+- Não altere código, migrations, Supabase, Vercel ou Production com base nos Ciclos R1 a R12.
+- Não trate recomendações, exemplos ou critérios do plano como decisões aprovadas.
+- Antes de implementar qualquer item, deve existir decisão expressa do responsável pelo produto registrada no caderno de decisões e incorporada a uma nova versão aprovada do plano.
+- Caso uma solicitação mencione R1 a R12 sem revogação explícita deste bloqueio, pare e informe que o projeto está em homologação de produto.
+- Durante D0, produza somente análises, alternativas, protótipos explicativos e documentação de decisão; não execute mudanças funcionais.
 
 ## Disciplina de entrega
 
@@ -76,4 +86,4 @@ Depois da implementação, confirme se o fluxo ficou mais curto ou claro, se a p
 
 ## Paradas e relato
 
-Respeite integralmente as condições de parada da seção 10 do Plano v2.0. Ao concluir cada ciclo, use o formato da seção 11, registrando ciclo, branch, commits, PR, Preview e SHA, pessoa/dor/cenário, entregas, escopo excluído, arquivos e migrations, testes RED, gate técnico, E2E, acessibilidade, impacto em dados, homologação de produto, rollback, riscos, Production e próximo ciclo autorizado.
+Respeite integralmente as condições de parada da seção 11 do Plano v2.0. Ao concluir cada ciclo, use o formato da seção 12, registrando ciclo, branch, commits, PR, Preview e SHA, pessoa/dor/cenário, entregas, escopo excluído, arquivos e migrations, testes RED, gate técnico, E2E, acessibilidade, impacto em dados, homologação de produto, rollback, riscos, Production e próximo ciclo autorizado.

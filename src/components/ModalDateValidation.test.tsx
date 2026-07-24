@@ -38,7 +38,7 @@ describe('validação de datas nos modais', () => {
   it('impede criar demanda com data parcial e apresenta erro junto ao campo', async () => {
     const onSalvar = vi.fn();
     const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
-    render(<ModalNovo onClose={vi.fn()} onSalvar={onSalvar} />);
+    render(<ModalNovo responsaveis={[]} onClose={vi.fn()} onSalvar={onSalvar} />);
     fillRequiredNewDemandFields();
     fireEvent.change(screen.getByLabelText('Prazo interno'), { target: { value: '12/07' } });
 
@@ -51,7 +51,7 @@ describe('validação de datas nos modais', () => {
 
   it('impede criar demanda com data inexistente', async () => {
     const onSalvar = vi.fn();
-    render(<ModalNovo onClose={vi.fn()} onSalvar={onSalvar} />);
+    render(<ModalNovo responsaveis={[]} onClose={vi.fn()} onSalvar={onSalvar} />);
     fillRequiredNewDemandFields();
     fireEvent.change(screen.getByLabelText('Prazo final'), { target: { value: '31/02/2026' } });
 
@@ -63,7 +63,7 @@ describe('validação de datas nos modais', () => {
 
   it('permite criar demanda com datas válidas e próxima ação', async () => {
     const onSalvar = vi.fn();
-    render(<ModalNovo onClose={vi.fn()} onSalvar={onSalvar} />);
+    render(<ModalNovo responsaveis={[]} onClose={vi.fn()} onSalvar={onSalvar} />);
     fillRequiredNewDemandFields();
     fireEvent.change(screen.getByLabelText('Prazo interno'), { target: { value: '12/07/2026' } });
     fireEvent.change(screen.getByLabelText('Prazo final'), { target: { value: '30/07/2026' } });
@@ -71,6 +71,7 @@ describe('validação de datas nos modais', () => {
     fireEvent.submit(screen.getByRole('button', { name: /^salvar$/i }).closest('form')!);
 
     await waitFor(() => expect(onSalvar).toHaveBeenCalledWith(expect.objectContaining({
+      responsavelId: '',
       limite1: '12/07/2026',
       limite2: '30/07/2026',
       proximaAcao: 'Conferir documentação recebida',
@@ -80,7 +81,7 @@ describe('validação de datas nos modais', () => {
 
   it('valida datas também na edição auditável', async () => {
     const onSalvar = vi.fn();
-    render(<ModalEditar demanda={demanda} onClose={vi.fn()} onSalvar={onSalvar} />);
+    render(<ModalEditar demanda={demanda} responsaveis={[]} onClose={vi.fn()} onSalvar={onSalvar} />);
     fireEvent.change(screen.getByLabelText('Prazo final'), { target: { value: '31/04/2026' } });
     fireEvent.change(screen.getByLabelText('Justificativa da edição'), {
       target: { value: 'Correção confirmada na conferência documental' },

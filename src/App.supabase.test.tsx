@@ -260,18 +260,22 @@ describe('App no modo Supabase', () => {
     render(<App services={services} />);
     await fillLogin(user);
 
-    expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
-    expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
-    expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
-    expectHeaderCount('Filtrar por demandas vencidas', 2);
+    await waitFor(() => {
+      expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
+      expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
+      expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
+      expectHeaderCount('Filtrar por demandas vencidas', 2);
+    });
 
     await user.click(screen.getByRole('button', { name: /^minhas demandas$/i }));
     await waitFor(() => expect(window.location.pathname).toBe('/minhas-demandas'));
 
-    expectHeaderCount('Exibir todas as demandas em acompanhamento', 4);
-    expectHeaderCount('Filtrar por demandas aguardando assinatura', 1);
-    expectHeaderCount('Filtrar por demandas com prazo hoje', 1);
-    expectHeaderCount('Filtrar por demandas vencidas', 1);
+    await waitFor(() => {
+      expectHeaderCount('Exibir todas as demandas em acompanhamento', 4);
+      expectHeaderCount('Filtrar por demandas aguardando assinatura', 1);
+      expectHeaderCount('Filtrar por demandas com prazo hoje', 1);
+      expectHeaderCount('Filtrar por demandas vencidas', 1);
+    });
 
     await user.click(screen.getByTitle('Filtrar por demandas aguardando assinatura'));
 
@@ -282,10 +286,12 @@ describe('App no modo Supabase', () => {
     await user.click(screen.getByRole('button', { name: 'Ver todas as demandas' }));
     await waitFor(() => expect(window.location.pathname).toBe('/demandas'));
 
-    expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
-    expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
-    expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
-    expectHeaderCount('Filtrar por demandas vencidas', 2);
+    await waitFor(() => {
+      expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
+      expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
+      expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
+      expectHeaderCount('Filtrar por demandas vencidas', 2);
+    });
     expect(await screen.findByText('Assinatura da equipe')).toBeVisible();
   });
 

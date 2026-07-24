@@ -98,17 +98,30 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const isDemandWorkspace = activeTab === 'demandas' || activeTab === 'minhas-demandas';
   const currentWorkspacePath = activeTab === 'minhas-demandas' ? '/minhas-demandas' : '/demandas';
   const drawerAberto = /^\/(demandas|minhas-demandas)\/\d+$/.test(location.pathname);
+  const legacyPersonalUrl = location.pathname === '/demandas' && searchParams.get('escopo') === 'meu';
 
-  const navigateToWorkspace = (scope: DemandFilters['scope']) => {
+  const navigateToWorkspace = (
+    scope: DemandFilters['scope'],
+    filterPatch: Partial<DemandFilters> = {},
+    nextQuickFilters: QuickFilters = quickFilters,
+  ) => {
     const nextFilters: DemandFilters = {
       ...filtros,
+      ...filterPatch,
       scope,
-      responsibleId: scope === 'meu' ? 'todos' : filtros.responsibleId,
+      responsibleId: scope === 'meu'
+        ? 'todos'
+        : filterPatch.responsibleId ?? filtros.responsibleId,
     };
+    const nextParams = serializeDemandFilters(nextFilters);
+    if (nextQuickFilters.assinatura) nextParams.set('assinatura', '1');
+    if (nextQuickFilters.hoje) nextParams.set('hoje', '1');
+    if (nextQuickFilters.vencido) nextParams.set('vencido', '1');
+
     setFiltros(nextFilters);
     navigate({
       pathname: scope === 'meu' ? '/minhas-demandas' : '/demandas',
-      search: serializeDemandFilters(nextFilters).toString(),
+      search: nextParams.toString(),
     });
   };
 
@@ -129,21 +142,21 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   };
 
   useEffect(() => {
-    if (location.pathname !== '/demandas' || searchParams.get('escopo') !== 'meu') return;
+    if (!legacyPersonalUrl) return;
     const legacyParams = new URLSearchParams(searchParams);
     legacyParams.delete('escopo');
     navigate({ pathname: '/minhas-demandas', search: legacyParams.toString() }, { replace: true });
-  }, [location.pathname, navigate, searchParams]);
+  }, [legacyPersonalUrl, navigate, searchParams]);
 
   useEffect(() => {
-    if (!isDemandWorkspace) return;
+    if (!isDemandWorkspace || legacyPersonalUrl) return;
     const nextScope: DemandFilters['scope'] = activeTab === 'minhas-demandas' ? 'meu' : 'equipe';
     setFiltros((current) => {
       const responsibleId = nextScope === 'meu' ? 'todos' : current.responsibleId;
       if (current.scope === nextScope && current.responsibleId === responsibleId) return current;
       return { ...current, scope: nextScope, responsibleId };
     });
-  }, [activeTab, isDemandWorkspace]);
+  }, [activeTab, isDemandWorkspace, legacyPersonalUrl]);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [recentSearches, setRecentSearches] = useState(() => loadRecentSearches());
@@ -185,13 +198,13 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
 
   useEffect(() => {
-    if (!isDemandWorkspace) return;
+    if (!isDemandWorkspace || legacyPersonalUrl) return;
     const next = serializeDemandFilters(filtros);
     if (quickFilters.assinatura) next.set('assinatura', '1');
     if (quickFilters.hoje) next.set('hoje', '1');
     if (quickFilters.vencido) next.set('vencido', '1');
     if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
-  }, [filtros, isDemandWorkspace, quickFilters, searchParams, setSearchParams]);
+  }, [filtros, isDemandWorkspace, legacyPersonalUrl, quickFilters, searchParams, setSearchParams]);
 
   useEffect(() => {
     const match = /^\/(demandas|minhas-demandas)\/(\d+)$/.exec(location.pathname);
@@ -421,6 +434,12 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     return { demandas: [], matches: new Map<number, DemandSearchMatch>(), mode: 'empty' as const };
   }, [demandas, filtros, historico, quickFilters, session.user?.id]);
 
+  const workspaceDemandas = useMemo(
+    () => activeTab === 'minhas-demandas'
+      ? demandas.filter((demanda) => demanda.responsavelId === session.user?.id)
+      : demandas,
+    [activeTab, demandas, session.user?.id],
+  );
   const demandasFiltradas = searchState.demandas;
   const searchMatches = searchState.matches;
   const searchResultMode = searchState.mode;
@@ -488,13 +507,14 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             quickFilters,
           }}
           onToggleFiltroStatus={(novoStatus) => {
-            setFiltros((previous) => ({ ...previous, status: novoStatus }));
-            setQuickFilters({ assinatura: false, hoje: false, vencido: false });
-            navigateToWorkspace(targetScopeForHeaderFilters);
+            const resetQuickFilters = { ...DEFAULT_QUICK_FILTERS };
+            setQuickFilters(resetQuickFilters);
+            navigateToWorkspace(targetScopeForHeaderFilters, { status: novoStatus }, resetQuickFilters);
           }}
           onToggleQuickFilter={(filtro) => {
-            setQuickFilters((previous) => ({ ...previous, [filtro]: !previous[filtro] }));
-            navigateToWorkspace(targetScopeForHeaderFilters);
+            const nextQuickFilters = { ...quickFilters, [filtro]: !quickFilters[filtro] };
+            setQuickFilters(nextQuickFilters);
+            navigateToWorkspace(targetScopeForHeaderFilters, {}, nextQuickFilters);
           }}
           canEdit={canEdit}
           appMode={appServices.mode}
@@ -602,7 +622,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                 />
 
                 <AtencaoImediata
-                  demandas={demandasFiltradas}
+                  demandas={workspaceDemandas}
                   historico={historico}
                   onOpenEditar={openDemand}
                 />
@@ -614,7 +634,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   setQuickFilters={setQuickFilters}
                   setoresDisponiveis={setoresDisponiveis}
                   totalExibidos={demandasFiltradas.length}
-                  totalGeral={demandas.length}
+                  totalGeral={workspaceDemandas.length}
                   searchInputRef={searchInputRef}
                   recentSearches={recentSearches}
                   onCommitSearch={handleCommitSearch}

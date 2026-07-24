@@ -6,6 +6,7 @@ import type {
   DeleteDemandaInput,
   Demanda,
   EditDemandaInput,
+  PerfilMinimo,
   PerfilUsuario,
   StatusTransitionInput,
 } from './types';
@@ -55,6 +56,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const data = useDemandasData(appServices.demandas, session.user, appServices.mode === 'supabase');
   const userEmail = session.user?.email ?? '';
   const [perfis, setPerfis] = useState<PerfilUsuario[]>([]);
+  const [responsaveisDisponiveis, setResponsaveisDisponiveis] = useState<PerfilMinimo[]>([]);
   const canAccessAdmin = appServices.mode === 'local'
     || (session.user?.perfil.nivel === 'administrador' && session.user.perfil.status === 'ativo');
   const canEdit = appServices.mode === 'local'
@@ -155,6 +157,24 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   };
 
   useEffect(() => {
+    if (!userEmail) {
+      setResponsaveisDisponiveis([]);
+      return;
+    }
+    let active = true;
+    void appServices.profiles.listMinimal()
+      .then((items) => {
+        if (active) setResponsaveisDisponiveis(items);
+      })
+      .catch((reason: unknown) => {
+        if (active) toast.error(reason instanceof Error
+          ? reason.message
+          : 'Não foi possível carregar os responsáveis cadastrados.');
+      });
+    return () => { active = false; };
+  }, [appServices, userEmail]);
+
+  useEffect(() => {
     if (appServices.mode !== 'supabase' || !canAccessAdmin || activeTab !== 'admin') return;
     let active = true;
     void appServices.profiles.list()
@@ -204,17 +224,22 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     setModalStatusAberto(false);
     setModalHistoricoAberto(false);
     setPerfis([]);
+    setResponsaveisDisponiveis([]);
     setFiltros({ ...DEFAULT_DEMAND_FILTERS });
     setQuickFilters({ ...DEFAULT_QUICK_FILTERS });
   };
 
+  const findResponsavel = (responsavelId: string) => responsaveisDisponiveis
+    .find((perfil) => perfil.id === responsavelId);
+
   const handleSalvarNovaDemanda = async (values: DemandaFormValues) => {
+    const responsavelSelecionado = findResponsavel(values.responsavelId);
     const input: CreateDemandaInput = {
       numero: values.numero,
       tipo: values.tipo,
       assunto: values.assunto,
-      responsavel: values.responsavel,
-      responsavelId: null,
+      responsavel: responsavelSelecionado?.nome ?? '',
+      responsavelId: responsavelSelecionado?.id ?? null,
       limite1: values.limite1,
       limite1Situacao: values.limite1 ? 'definido' : 'nao_informado',
       limite1Justificativa: '',
@@ -245,10 +270,12 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       return false;
     }
 
+    const responsavelSelecionado = findResponsavel(values.responsavelId);
+    const preserveLegacy = !current.responsavelId && !values.responsavelId;
     const input: EditDemandaInput = {
       assunto: values.assunto,
-      responsavelId: current.responsavelId,
-      responsavel: values.responsavel,
+      responsavelId: responsavelSelecionado?.id ?? null,
+      responsavel: responsavelSelecionado?.nome ?? (preserveLegacy ? current.responsavel : ''),
       limite1: values.limite1,
       limite1Situacao: values.limite1 ? 'definido' : 'nao_informado',
       limite1Justificativa: '',
@@ -548,6 +575,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
       {modalNovoAberto && (
         <ModalNovo
+          responsaveis={responsaveisDisponiveis}
           onClose={() => setModalNovoAberto(false)}
           onSalvar={handleSalvarNovaDemanda}
         />
@@ -556,18 +584,23 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       {modalEditarAberto && demandaSelecionada && (
         <ModalEditar
           demanda={demandaSelecionada}
+          responsaveis={responsaveisDisponiveis}
           onClose={() => {
             setModalEditarAberto(false);
             if (!drawerAberto) setDemandaSelecionada(null);
           }}
           onSalvar={async (id, values) => {
-            if (!await handleSalvarEdicaoDemanda(id, values)) return;
+            const current = demandas.find((demanda) => demanda.id === id);
+            if (!current || !await handleSalvarEdicaoDemanda(id, values)) return;
+            const selected = findResponsavel(values.responsavelId);
+            const preserveLegacy = !current.responsavelId && !values.responsavelId;
             setModalEditarAberto(false);
             if (drawerAberto) {
               setDemandaSelecionada(prev => prev ? {
                 ...prev,
                 assunto: values.assunto,
-                responsavel: values.responsavel,
+                responsavelId: selected?.id ?? null,
+                responsavel: selected?.nome ?? (preserveLegacy ? current.responsavel : ''),
                 limite1: values.limite1,
                 limite2: values.limite2,
                 setor: values.setor,

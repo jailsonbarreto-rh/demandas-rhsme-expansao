@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { BrowserRouter, useInRouterContext, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, useInRouterContext, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Toaster, toast } from 'sonner';
 import type {
   CreateDemandaInput,

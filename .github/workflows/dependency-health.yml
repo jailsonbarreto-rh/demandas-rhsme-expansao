@@ -19,6 +19,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Package production source
+        uses: actions/upload-artifact@v7
+        with:
+          name: production-source
+          path: |
+            package.json
+            package-lock.json
+            index.html
+            vercel.json
+            vite.config.ts
+            vitest.config.ts
+            playwright.config.ts
+            eslint.config.js
+            tsconfig*.json
+            public
+            src
+            scripts
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Set up Node.js 24
         uses: actions/setup-node@v7
         with:

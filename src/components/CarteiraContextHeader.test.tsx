@@ -16,11 +16,12 @@ describe('CarteiraContextHeader', () => {
     expect(onSwitch).toHaveBeenCalledOnce();
   });
 
-  it('apresenta a carteira pessoal e oferece retorno à geral', () => {
+  it('apresenta a carteira pessoal e identifica claramente o retorno à equipe', () => {
     render(<CarteiraContextHeader mode="pessoal" onSwitch={vi.fn()} />);
 
     expect(screen.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
     expect(screen.getByText('Acompanhe sua carteira de processos.')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Ver todas as demandas' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Demandas Equipe CTRH' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Ver todas as demandas' })).not.toBeInTheDocument();
   });
 });

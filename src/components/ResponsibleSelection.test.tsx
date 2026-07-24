@@ -18,6 +18,24 @@ const responsaveis: PerfilMinimo[] = [
   },
 ];
 
+function demandWith(responsavel: string, responsavelId: string | null) {
+  return createDemandFixture({
+    id: 1,
+    numero: 'SME-PRO-2026/00001',
+    tipo: 'Processo',
+    assunto: 'Assunto em análise',
+    responsavel,
+    responsavelId,
+    limite1: '',
+    limite2: '',
+    status: 'Aguardando Andamento',
+    setor: 'E/CTRH',
+    classificacao: 'Outros',
+    proximaAcao: 'Conferir documentação recebida',
+    proximaAcaoEm: '20/08/2026',
+  });
+}
+
 describe('seleção oficial de responsável', () => {
   afterEach(cleanup);
 
@@ -37,10 +55,7 @@ describe('seleção oficial de responsável', () => {
   });
 
   it('mantém responsável legado como informação e não como opção livre', () => {
-    const legacy = createDemandFixture({
-      responsavel: 'Vanessa Migrado',
-      responsavelId: null,
-    });
+    const legacy = demandWith('Vanessa Migrado', null);
 
     render(
       <ModalEditar
@@ -51,16 +66,13 @@ describe('seleção oficial de responsável', () => {
       />,
     );
 
-    expect(screen.getByText(/responsável legado: vanessa migrado/i)).toBeVisible();
+    expect(screen.getByDisplayValue('Responsável legado: Vanessa Migrado')).toBeVisible();
     expect(screen.getByRole('combobox', { name: 'Responsável' })).toHaveValue('');
     expect(screen.queryByRole('textbox', { name: 'Responsável' })).not.toBeInTheDocument();
   });
 
   it('pré-seleciona o UUID oficial na edição de demanda vinculada', () => {
-    const linked = createDemandFixture({
-      responsavel: responsaveis[0].nome,
-      responsavelId: responsaveis[0].id,
-    });
+    const linked = demandWith(responsaveis[0].nome, responsaveis[0].id);
 
     render(
       <ModalEditar
@@ -72,6 +84,6 @@ describe('seleção oficial de responsável', () => {
     );
 
     expect(screen.getByRole('combobox', { name: 'Responsável' })).toHaveValue(responsaveis[0].id);
-    expect(screen.queryByText(/responsável legado/i)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/responsável legado/i)).not.toBeInTheDocument();
   });
 });

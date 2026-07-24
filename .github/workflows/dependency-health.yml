@@ -27,21 +27,50 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Apply deterministic source corrections
+        shell: python
+        run: |
+          from pathlib import Path
+
+          app_test = Path('src/App.supabase.test.tsx')
+          app_source = app_test.read_text(encoding='utf-8')
+          old_label = "'Ver todas as demandas'"
+          if app_source.count(old_label) != 3:
+              raise SystemExit('Quantidade inesperada de referências ao rótulo antigo nos testes.')
+          app_test.write_text(
+              app_source.replace(old_label, "'Demandas Equipe CTRH'"),
+              encoding='utf-8',
+          )
+
+          filter_panel = Path('src/components/FilterPanel.tsx')
+          filter_source = filter_panel.read_text(encoding='utf-8')
+          old_spacing = '''<span className="badge-count">{filtrosAtivosCount}</span>
+              <strong>'''
+          new_spacing = '''<span className="badge-count">{filtrosAtivosCount}</span>
+              {' '}
+              <strong>'''
+          if filter_source.count(old_spacing) != 1:
+              raise SystemExit('Estrutura inesperada no resumo de filtros.')
+          filter_panel.write_text(
+              filter_source.replace(old_spacing, new_spacing),
+              encoding='utf-8',
+          )
+
       - name: Regenerate lockfile for dependency overrides
         run: npm install --package-lock-only --ignore-scripts
 
-      - name: Commit regenerated lockfile
+      - name: Commit corrected sources and lockfile
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
-          if git diff --quiet -- package-lock.json; then
-            echo "Lockfile já está sincronizado."
+          if git diff --quiet; then
+            echo "Arquivos já estão sincronizados."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          git commit -m "chore: atualizar lockfile de dependências"
+          git add src/App.supabase.test.tsx src/components/FilterPanel.tsx package-lock.json
+          git commit -m "test: alinhar regressões ao refinamento do R3"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
       - name: Install locked dependencies

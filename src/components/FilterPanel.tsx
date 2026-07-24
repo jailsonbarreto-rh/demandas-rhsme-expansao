@@ -94,8 +94,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   return (
     <div className="filters-panel">
       {filtros.scope === 'meu' && (
-        <div className="personal-scope-banner" role="status">
-          <div className="personal-scope-label">
+        <div className="personal-scope-banner">
+          <div className="personal-scope-label" role="status" aria-live="polite">
             <i className="fa-solid fa-user-check" aria-hidden="true" />
             <strong>Minhas demandas</strong>
           </div>

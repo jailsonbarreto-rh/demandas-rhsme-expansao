@@ -29,18 +29,18 @@ O bloco não exibirá contadores, indicadores adicionais, listas prévias, expli
 Ao acionar `Acessar minha carteira`, o sistema deverá:
 
 1. abrir a rota de demandas;
-2. aplicar o escopo pessoal já previsto pelo modelo de filtros;
-3. utilizar o UUID do usuário autenticado como referência;
+2. aplicar `DemandFilters.scope = 'meu'`;
+3. utilizar o UUID do usuário autenticado como `currentUserId` no mecanismo de filtragem já existente;
 4. exibir apenas demandas cujo `responsavel_id` corresponda ao usuário conectado;
 5. manter os demais filtros disponíveis para refinamento adicional.
 
-A URL deverá representar o estado do filtro para preservar recarregamento, navegação e compartilhamento interno da rota.
+A URL deverá registrar `escopo=meu`, utilizando a serialização existente, para preservar recarregamento, navegação e compartilhamento interno da rota.
 
 ## 4. Estado visual na tela de demandas
 
 Quando o escopo pessoal estiver ativo, a tela de demandas deverá indicar claramente `Minhas demandas` como filtro aplicado.
 
-O usuário deverá conseguir retornar à carteira geral da equipe por uma ação visível de limpeza ou troca de escopo, sem perder as regras atuais dos demais filtros.
+O usuário deverá conseguir retornar à carteira geral da equipe por uma ação visível de limpeza ou troca de escopo, preservando os valores atuais dos demais filtros.
 
 Não será criada uma segunda tela, uma lista paralela ou um novo conjunto de regras de consulta.
 
@@ -85,10 +85,12 @@ A implementação deverá reutilizar:
 
 - o UUID da sessão autenticada;
 - `DemandFilters.scope = 'meu'`;
-- `DemandFilters.responsibleId` quando necessário para coerência da filtragem;
+- `ApplyDemandFiltersContext.currentUserId`;
 - `applyDemandBaseFilters`;
-- serialização e leitura dos filtros pela URL;
+- `parseDemandFilters` e `serializeDemandFilters`;
 - a rota existente `/demandas`.
+
+Não será necessário definir `responsibleId` para abrir a carteira pessoal: o escopo `meu`, combinado com `currentUserId`, já realiza a associação oficial por UUID.
 
 A apresentação visual deverá ficar isolada em componente próprio ou em uma unidade claramente delimitada dentro da Visão geral, sem ampliar desnecessariamente a responsabilidade de `App.tsx`.
 
@@ -98,7 +100,7 @@ A implementação deverá comprovar:
 
 1. renderização do bloco na primeira tela;
 2. presença exata dos três textos aprovados;
-3. navegação para a rota de demandas com escopo pessoal;
+3. navegação para `/demandas?escopo=meu` sem apagar filtros que devam ser preservados;
 4. filtragem pelo UUID do usuário autenticado;
 5. exclusão de demandas de outros usuários e de registros sem UUID;
 6. possibilidade de retornar à carteira da equipe;

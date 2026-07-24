@@ -28,7 +28,7 @@ describe('experiência profissional de formulários e tabela', () => {
 
   it('apresenta validação contextual sem usar alertas nativos', async () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
-    render(<ModalNovo onClose={vi.fn()} onSalvar={vi.fn()} />);
+    render(<ModalNovo responsaveis={[]} onClose={vi.fn()} onSalvar={vi.fn()} />);
 
     fireEvent.submit(screen.getByRole('button', { name: /^salvar$/i }).closest('form')!);
 
@@ -38,7 +38,7 @@ describe('experiência profissional de formulários e tabela', () => {
   });
 
   it('oferece as classificações legadas válidas no cadastro', () => {
-    render(<ModalNovo onClose={vi.fn()} onSalvar={vi.fn()} />);
+    render(<ModalNovo responsaveis={[]} onClose={vi.fn()} onSalvar={vi.fn()} />);
 
     const classificacao = screen.getByLabelText('Selecione a classificação');
     expect(within(classificacao).getByRole('option', { name: 'Permuta' })).toBeInTheDocument();

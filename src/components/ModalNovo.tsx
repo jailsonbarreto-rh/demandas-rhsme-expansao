@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { PerfilMinimo } from '../types';
 import { demandaFormSchema, type DemandaFormValues, statusValues, tipoValues } from '../validation/demandaSchemas';
 import { DateMaskInput } from './DateMaskInput';
 import { AppDialog } from './ui/AppDialog';
@@ -9,12 +10,17 @@ import { FormError } from './ui/FormError';
 import { classificacaoValues } from '../constants/demandaOptions';
 
 interface ModalNovoProps {
+  responsaveis: PerfilMinimo[];
   onClose: () => void;
   onSalvar: (demanda: DemandaFormValues) => void | Promise<void>;
 }
 
-export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
+export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onSalvar }) => {
   const [confirmClose, setConfirmClose] = useState(false);
+  const responsaveisOrdenados = useMemo(
+    () => [...responsaveis].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+    [responsaveis],
+  );
   const {
     register,
     control,
@@ -26,7 +32,7 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
       tipo: undefined,
       numero: '',
       assunto: '',
-      responsavel: '',
+      responsavelId: '',
       limite1: '',
       limite2: '',
       status: undefined,
@@ -96,8 +102,22 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ onClose, onSalvar }) => {
               </div>
 
               <div className="input-container-floating col-full">
-                <input type="text" id="novo-responsavel" placeholder=" " {...register('responsavel')} />
+                <select
+                  id="novo-responsavel"
+                  {...register('responsavelId')}
+                  className={errors.responsavelId ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.responsavelId)}
+                  aria-describedby={errors.responsavelId ? 'novo-responsavel-error' : undefined}
+                >
+                  <option value="">Sem responsável definido</option>
+                  {responsaveisOrdenados.map((perfil) => (
+                    <option key={perfil.id} value={perfil.id}>
+                      {perfil.setor ? `${perfil.nome} — ${perfil.setor}` : perfil.nome}
+                    </option>
+                  ))}
+                </select>
                 <label htmlFor="novo-responsavel">Responsável</label>
+                <FormError id="novo-responsavel-error" message={errors.responsavelId?.message} />
               </div>
 
               <Controller

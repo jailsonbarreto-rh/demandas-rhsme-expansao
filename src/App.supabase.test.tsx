@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppServices } from './services/createAppServices';
 import { AccessPendingError } from './services/errors';
-import type { AppUser } from './types';
+import type { AppUser, PerfilMinimo } from './types';
 import { App } from './App';
 
 const activeUser: AppUser = {
@@ -15,9 +15,16 @@ const activeUser: AppUser = {
   },
 };
 
+const officialResponsible: PerfilMinimo = {
+  id: '11111111-1111-4111-8111-111111111111',
+  nome: 'ERICA VALIM DE ALMEIDA HOLANDA',
+  setor: 'E/CTRH',
+};
+
 function createServices(signIn = vi.fn().mockResolvedValue(activeUser)) {
   const load = vi.fn().mockResolvedValue({ demandas: [], historico: [] });
   const create = vi.fn().mockResolvedValue(undefined);
+  const listMinimal = vi.fn().mockResolvedValue([officialResponsible]);
   const services: AppServices = {
     mode: 'supabase',
     auth: {
@@ -43,11 +50,11 @@ function createServices(signIn = vi.fn().mockResolvedValue(activeUser)) {
     },
     profiles: {
       list: vi.fn().mockResolvedValue([]),
-      listMinimal: vi.fn().mockResolvedValue([]),
+      listMinimal,
       updateAccess: vi.fn().mockResolvedValue(undefined),
     },
   };
-  return { services, load, create };
+  return { services, load, create, listMinimal };
 }
 
 async function fillLogin(user: ReturnType<typeof userEvent.setup>) {
@@ -62,19 +69,21 @@ describe('App no modo Supabase', () => {
     vi.unstubAllGlobals();
   });
 
-  it('carrega dados depois do login ativo e usa o repositório remoto no cadastro', async () => {
+  it('carrega dados e perfis depois do login e grava o responsável oficial', async () => {
     const user = userEvent.setup();
-    const { services, load, create } = createServices();
+    const { services, load, create, listMinimal } = createServices();
     render(<App services={services} />);
     await fillLogin(user);
     expect(await screen.findByRole('button', { name: /nova demanda/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /administração/i })).not.toBeInTheDocument();
     await waitFor(() => expect(load).toHaveBeenCalled());
+    await waitFor(() => expect(listMinimal).toHaveBeenCalled());
 
     await user.click(screen.getByRole('button', { name: /nova demanda/i }));
     await user.selectOptions(await screen.findByLabelText('Tipo'), 'Processo');
     await user.type(screen.getByLabelText('Número'), 'SME-TESTE-001');
     await user.type(screen.getByLabelText('Assunto'), 'Demanda de integração');
+    await user.selectOptions(screen.getByLabelText('Responsável'), officialResponsible.id);
     await user.selectOptions(screen.getByLabelText('Status'), 'Aguardando Andamento');
     await user.selectOptions(screen.getByLabelText('Selecione a classificação'), 'Outros');
     await user.type(screen.getByLabelText('Próxima ação'), 'Conferir documentação recebida');
@@ -84,6 +93,8 @@ describe('App no modo Supabase', () => {
     await waitFor(() => expect(create).toHaveBeenCalledWith(expect.objectContaining({
       numero: 'SME-TESTE-001',
       assunto: 'Demanda de integração',
+      responsavelId: officialResponsible.id,
+      responsavel: officialResponsible.nome,
       proximaAcao: 'Conferir documentação recebida',
       proximaAcaoEm: '20/08/2026',
     })));

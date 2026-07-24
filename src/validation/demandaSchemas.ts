@@ -6,6 +6,11 @@ const optionalDate = z.string().trim().refine(
   'Informe uma data válida no formato dd/mm/aaaa.',
 );
 
+const optionalProfileId = z.string().trim().refine(
+  (value) => value === '' || z.string().uuid().safeParse(value).success,
+  'Selecione um responsável cadastrado.',
+);
+
 export const tipoValues = ['Expediente', 'Processo', 'Outros'] as const;
 export const statusValues = [
   'Aguardando Andamento',
@@ -41,7 +46,7 @@ export const demandaFormSchema = z.object({
   tipo: z.enum(tipoValues, { error: 'Informe o tipo da demanda.' }),
   numero: z.string().trim().min(1, 'Informe o número do processo ou documento.'),
   assunto: z.string().trim().min(1, 'Informe o assunto da demanda.'),
-  responsavel: z.string().trim(),
+  responsavelId: optionalProfileId,
   limite1: optionalDate,
   limite2: optionalDate,
   status: z.enum(statusValues, { error: 'Informe o status da demanda.' }),
@@ -53,7 +58,7 @@ export const demandaFormSchema = z.object({
 
 export const editarDemandaSchema = z.object({
   assunto: z.string().trim().min(1, 'Informe o assunto da demanda.'),
-  responsavel: z.string().trim(),
+  responsavelId: optionalProfileId,
   limite1: optionalDate,
   limite2: optionalDate,
   setor: z.string().trim(),

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Demanda } from '../types';
+import type { Demanda, PerfilMinimo } from '../types';
 import { editarDemandaSchema, type EditarDemandaValues } from '../validation/demandaSchemas';
 import { DateMaskInput } from './DateMaskInput';
 import { AppDialog } from './ui/AppDialog';
@@ -10,12 +10,20 @@ import { FormError } from './ui/FormError';
 
 interface ModalEditarProps {
   demanda: Demanda;
+  responsaveis: PerfilMinimo[];
   onClose: () => void;
   onSalvar: (demandaId: number, values: EditarDemandaValues) => void | boolean | Promise<void | boolean>;
 }
 
-export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSalvar }) => {
+export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis, onClose, onSalvar }) => {
   const [confirmClose, setConfirmClose] = useState(false);
+  const responsaveisOrdenados = useMemo(
+    () => [...responsaveis].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+    [responsaveis],
+  );
+  const responsavelLegado = !demanda.responsavelId && demanda.responsavel.trim()
+    ? demanda.responsavel.trim()
+    : '';
   const {
     register,
     control,
@@ -25,7 +33,7 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSa
     resolver: zodResolver(editarDemandaSchema),
     defaultValues: {
       assunto: demanda.assunto,
-      responsavel: demanda.responsavel || '',
+      responsavelId: demanda.responsavelId ?? '',
       limite1: demanda.limite1 || '',
       limite2: demanda.limite2 || '',
       setor: demanda.setor || '',
@@ -74,9 +82,35 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, onClose, onSa
                 <FormError id="edit-assunto-error" message={errors.assunto?.message} />
               </div>
 
+              {responsavelLegado && (
+                <div className="input-container-floating col-full read-only-field">
+                  <input
+                    type="text"
+                    id="edit_responsavel_legado"
+                    className="form-control"
+                    value={`Responsável legado: ${responsavelLegado}`}
+                    readOnly
+                  />
+                </div>
+              )}
+
               <div className="input-container-floating col-full">
-                <input type="text" id="edit_responsavel" placeholder=" " {...register('responsavel')} />
+                <select
+                  id="edit_responsavel"
+                  {...register('responsavelId')}
+                  className={errors.responsavelId ? 'field-invalid' : ''}
+                  aria-invalid={Boolean(errors.responsavelId)}
+                  aria-describedby={errors.responsavelId ? 'edit-responsavel-error' : undefined}
+                >
+                  <option value="">Sem responsável definido</option>
+                  {responsaveisOrdenados.map((perfil) => (
+                    <option key={perfil.id} value={perfil.id}>
+                      {perfil.setor ? `${perfil.nome} — ${perfil.setor}` : perfil.nome}
+                    </option>
+                  ))}
+                </select>
                 <label htmlFor="edit_responsavel">Responsável</label>
+                <FormError id="edit-responsavel-error" message={errors.responsavelId?.message} />
               </div>
 
               <Controller

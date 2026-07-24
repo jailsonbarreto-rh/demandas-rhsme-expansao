@@ -79,7 +79,59 @@ Cada item deverá ser classificado como:
 
 Se durante a implementação surgir uma escolha de produto, consequência ou ampliação não apresentada no debate, o item afetado deverá parar e voltar ao responsável pelo produto. O restante do escopo poderá prosseguir apenas se for independente e seguro.
 
-## 3. Modelo de registro de decisão do ciclo
+## 3. Decisões do Ciclo R3
+
+### R3-D01 — Identidade oficial do responsável
+
+**Data:** 23 de julho de 2026  
+**Classificação:** nova decisão proposta  
+**Decisão:** APROVADA.
+
+O responsável por uma demanda passa a ser identificado oficialmente pelo UUID de um usuário cadastrado no Supabase Auth e em `perfis_usuarios`. O nome textual permanece apenas como fotografia legível da identidade vinculada.
+
+### R3-D02 — Seleção restrita a usuários cadastrados
+
+**Data:** 23 de julho de 2026  
+**Classificação:** nova decisão proposta  
+**Decisão:** APROVADA.
+
+Novas demandas e futuras reatribuições não aceitam nome digitado livremente. O responsável é selecionado entre todos os usuários cadastrados, independentemente de serem administradores, editores ou leitores e independentemente do status do perfil. A regra existente que permite demanda sem responsável é preservada.
+
+### R3-D03 — Permissões existentes preservadas
+
+**Data:** 23 de julho de 2026  
+**Classificação:** preservação do que já existe  
+**Decisão:** APROVADA.
+
+A mudança de identificação do responsável não altera quem pode criar, editar, consultar, excluir ou administrar usuários. Papéis, status, permissões e políticas de acesso permanecem como estavam.
+
+### R3-D04 — Migração dos responsáveis históricos
+
+**Data:** 23 de julho de 2026  
+**Classificação:** necessidade técnica  
+**Decisão:** APROVADA.
+
+As formas textuais `Erica`, `Giselle`, `Sabrina`, `Thiago`, `Jaqueline`, `Jailson`, `Jessica`, `Beth` e `Helena`, inclusive suas ocorrências com sufixo `Migrado`, serão vinculadas aos respectivos perfis oficiais. `Jaqueline IHA` será vinculada a Jaqueline Lima Ximenes Melo.
+
+A migração abrange 378 demandas e registra eventos auditáveis de reatribuição.
+
+### R3-D05 — Preservação de Vanessa Migrado
+
+**Data:** 23 de julho de 2026  
+**Classificação:** preservação do que já existe  
+**Decisão:** APROVADA.
+
+A única ocorrência `Vanessa Migrado` continuará preservada como informação histórica, com `responsavel_id` nulo, enquanto não existir perfil oficial cadastrado para Vanessa. Editar outros campos dessa demanda não poderá apagar nem substituir silenciosamente essa informação.
+
+### R3-D06 — Coerência obrigatória no servidor
+
+**Data:** 23 de julho de 2026  
+**Classificação:** necessidade técnica  
+**Decisão:** APROVADA.
+
+Quando houver `responsavel_id`, o banco validará a existência do usuário e derivará o nome diretamente do perfil. O cliente não poderá criar divergência entre UUID e nome. A proteção será aplicada nas RPCs e por gatilho de banco, sem modificar outras regras de negócio.
+
+## 4. Modelo de registro de decisão do ciclo
 
 Para cada decisão, registrar:
 
@@ -99,13 +151,13 @@ Para cada decisão, registrar:
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 4. Controle por ciclo
+## 5. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
-| R1 | Pendente | Não | Não | Próxima atividade: explicação e debate |
+| R1 | Pendente | Não | Não | Aguardando debate |
 | R2 | Não iniciado | Não | Não | Futuro |
-| R3 | Parcialmente discutido, sem aprovação integral | Não | Não | Futuro |
+| R3 | Concluído para responsáveis oficiais | Sim | Sim | Implementação e homologação em andamento |
 | R4 | Não iniciado | Não | Não | Futuro |
 | R5 | Não iniciado | Não | Não | Futuro |
 | R6 | Não iniciado | Não | Não | Futuro |

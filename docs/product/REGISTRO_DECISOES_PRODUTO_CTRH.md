@@ -160,6 +160,21 @@ A carteira geral e a carteira pessoal passam a ser áreas distintas e permanente
 
 A alteração é exclusivamente de navegação e apresentação. Não modifica Supabase, dados, permissões, papéis ou demais regras de negócio.
 
+### R3-D09 — Indicadores contextuais por carteira
+
+**Data:** 24 de julho de 2026  
+**Classificação:** nova decisão proposta  
+**Decisão:** APROVADA.
+
+Os indicadores superiores devem refletir a carteira atualmente aberta:
+
+- na Visão geral e em `/demandas`, `Em acompanhamento`, `Para assinatura`, `Vencem hoje`, `Vencidas` e a quantidade de providências imediatas usam a carteira completa;
+- em `/minhas-demandas`, os mesmos indicadores usam somente demandas vinculadas ao UUID autenticado;
+- clicar em qualquer indicador preserva a carteira ativa e aplica o filtro apenas dentro dela;
+- alternar entre carteira geral e pessoal recalcula imediatamente as quantidades.
+
+A decisão não cria novas categorias, regras de prazo ou critérios de responsabilidade. Ela somente aplica as regras já existentes à coleção delimitada pela rota ativa.
+
 ## 4. Modelo de registro de decisão do ciclo
 
 Para cada decisão, registrar:
@@ -186,7 +201,7 @@ Para cada decisão, registrar:
 |---|---|---|---|---|
 | R1 | Pendente | Não | Não | Aguardando debate |
 | R2 | Não iniciado | Não | Não | Futuro |
-| R3 | Concluído para responsáveis oficiais e navegação das carteiras | Sim | Sim | Implementado em Production; aguardando homologação visual e funcional do responsável pelo produto |
+| R3 | Concluído para responsáveis oficiais, navegação e indicadores contextuais | Sim | Sim | Implementado em Production; aguardando homologação do refinamento final |
 | R4 | Não iniciado | Não | Não | Futuro |
 | R5 | Não iniciado | Não | Não | Futuro |
 | R6 | Não iniciado | Não | Não | Futuro |

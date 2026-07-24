@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **24 de julho de 2026 — navegação das carteiras do R3 em Production**
+Atualizado em: **24 de julho de 2026 — indicadores contextuais do R3 em Production**
 
 ## Estado atual
 
@@ -9,10 +9,10 @@ Atualizado em: **24 de julho de 2026 — navegação das carteiras do R3 em Prod
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrsllr` |
-| Código funcional publicado | `0173eb946133845b5c6da3604673bf4ac81ddadb` — PR #50 |
+| Código funcional publicado | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
-| Linha de base funcional | Ciclos originais 0 a 4 concluídos; responsáveis oficiais e navegação das carteiras do R3 implementados |
-| Atividade atual | **Homologação visual e funcional da nova navegação pelo responsável do produto** |
+| Linha de base funcional | Ciclos originais 0 a 4 concluídos; responsáveis oficiais, navegação das carteiras e indicadores contextuais do R3 implementados |
+| Atividade atual | **Homologação do refinamento final dos indicadores pelo responsável do produto** |
 | Próximo ciclo | Não autorizado até a homologação e nova decisão expressa |
 
 ## Identidade oficial dos responsáveis
@@ -35,8 +35,16 @@ Atualizado em: **24 de julho de 2026 — navegação das carteiras do R3 em Prod
 - URLs antigas com `escopo=meu` são redirecionadas para `/minhas-demandas`, preservando os demais filtros.
 - Os detalhes de demanda preservam a carteira de origem na rota.
 - Demandas sem UUID, inclusive `Vanessa Migrado`, não aparecem na carteira pessoal.
-- O callout grande e o banner que apresentavam `Minhas demandas` como filtro foram removidos.
 - Nenhuma migration, tabela, função ou dado do Supabase foi alterado nesta revisão.
+
+## Indicadores contextuais publicados
+
+- `Em acompanhamento`, `Para assinatura`, `Vencem hoje` e `Vencidas` usam a carteira completa na Visão geral e em `/demandas`.
+- Em `/minhas-demandas`, os quatro indicadores usam somente demandas cujo `responsavel_id` corresponde ao UUID autenticado.
+- A quantidade de demandas com providência imediata segue o mesmo contexto da carteira ativa.
+- Os cliques nos indicadores preservam a carteira aberta e aplicam o filtro somente dentro dela.
+- Ao alternar entre carteira pessoal e geral, as quantidades são recalculadas imediatamente.
+- A lógica existente do cabeçalho foi preservada; apenas a coleção de entrada passou a ser a carteira delimitada pela rota.
 
 ## Fotografia reconciliada de Production
 
@@ -51,29 +59,32 @@ Atualizado em: **24 de julho de 2026 — navegação das carteiras do R3 em Prod
 
 ## Segurança de dependências
 
-- O React Router 7.18.1 foi substituído pelo pacote principal `react-router` 8.3.0 após uma nova vulnerabilidade alta ser detectada pelo `npm audit`.
+- O React Router 7.18.1 foi substituído pelo pacote principal `react-router` 8.3.0 após uma vulnerabilidade alta ser detectada pelo `npm audit`.
 - O lockfile foi regenerado pelo próprio npm.
 - A auditoria de vulnerabilidades e a verificação de assinaturas e proveniência foram aprovadas.
-- O workflow agora preserva o relatório de `npm audit` como artefato para rastreabilidade.
+- O workflow preserva o relatório de `npm audit` como artefato para rastreabilidade.
 
 ## Validação realizada
 
+- auditoria de dependências e assinaturas aprovada;
 - análise estática aprovada;
 - testes unitários, integração e cobertura aprovados;
 - build e orçamento do bundle aprovados;
 - testes Playwright desktop e mobile aprovados;
-- cenários cobertos: cartão pessoal, aba permanente, alternância geral ↔ pessoal, limpeza de filtros, indicadores rápidos, detalhes e URL legada;
-- Preview `dpl_2RimMsjqEnZYT6sGwQoaYbce7LAb` validado em estado `READY`;
-- Production `dpl_Ej7wPRRaLhHAfF153e9Pnc3RfcTP` validada em estado `READY`;
-- domínio oficial e rewrites `/minhas-demandas` e `/minhas-demandas/:id` validados com resposta HTTP 200.
+- cenário contextual validado com contagens distintas para carteira geral e pessoal;
+- filtro `Para assinatura` validado dentro das duas carteiras;
+- Preview `dpl_269KLitdSkMVa6DUNHArpWbUG8Q5` validado em estado `READY`;
+- Production `dpl_44HusLjkHEJxpKtvWQFfrgJmXvNR` validada em estado `READY`;
+- domínio oficial validado com resposta HTTP 200.
 
 ## Publicação e segurança operacional
 
 - PR de responsáveis oficiais: `#46`.
 - PR do primeiro acesso visual: `#48`.
 - PR da navegação definitiva das carteiras: `#50`.
+- PR dos indicadores contextuais: `#52`.
 - O deploy automático foi habilitado somente durante a publicação controlada e restaurado para bloqueado no encerramento.
 
 ## Regra de continuidade
 
-A próxima ação é a homologação visual e funcional em Production pelo responsável do produto. Nenhum novo ciclo ou ampliação funcional está autorizado automaticamente.
+A próxima ação é a homologação visual e funcional do refinamento dos indicadores em Production. Nenhum novo ciclo ou ampliação funcional está autorizado automaticamente.

@@ -45,11 +45,11 @@ describe('experiência profissional de formulários e tabela', () => {
     expect(within(classificacao).getByRole('option', { name: 'Diversos' })).toBeInTheDocument();
   });
 
-  it('ordena por processo e pagina a lista', async () => {
-    const demandas = Array.from({ length: 12 }, (_, index) => ({
+  it('ordena por processo e inicia a paginação em 50 resultados, com opção de 100', async () => {
+    const demandas = Array.from({ length: 62 }, (_, index) => ({
       ...base,
       id: index + 1,
-      numero: `SME-${String(12 - index).padStart(3, '0')}`,
+      numero: `SME-${String(62 - index).padStart(3, '0')}`,
       assunto: `Assunto ${index + 1}`,
     }));
 
@@ -68,9 +68,16 @@ describe('experiência profissional de formulários e tabela', () => {
     const firstRow = screen.getAllByRole('row')[1];
     expect(within(firstRow).getByText('SME-001')).toBeVisible();
 
-    expect(screen.getByText(/1–10 de 12 resultados/i)).toBeVisible();
+    const pageSize = screen.getByRole('combobox', { name: 'Resultados por página' });
+    expect(pageSize).toHaveValue('50');
+    expect(within(pageSize).getByRole('option', { name: '10' })).toBeInTheDocument();
+    expect(within(pageSize).getByRole('option', { name: '25' })).toBeInTheDocument();
+    expect(within(pageSize).getByRole('option', { name: '50' })).toBeInTheDocument();
+    expect(within(pageSize).getByRole('option', { name: '100' })).toBeInTheDocument();
+
+    expect(screen.getByText(/1–50 de 62 resultados/i)).toBeVisible();
     await user.click(screen.getByRole('button', { name: /próxima página/i }));
-    expect(screen.getByText(/11–12 de 12 resultados/i)).toBeVisible();
+    expect(screen.getByText(/51–62 de 62 resultados/i)).toBeVisible();
   });
 
   it('solicita motivo e preservação institucional antes da exclusão lógica', async () => {

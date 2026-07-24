@@ -114,7 +114,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   searchResultMode = 'exact',
 }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
   const [deleteTarget, setDeleteTarget] = useState<Demanda | null>(null);
   const columnHelper = createColumnHelper<Demanda>();
 
@@ -347,7 +347,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           <label className="page-size-control">
             Exibir
             <select value={pagination.pageSize} onChange={(event) => table.setPageSize(Number(event.target.value))} aria-label="Resultados por página">
-              {[10, 25, 50].map((size) => <option key={size} value={size}>{size}</option>)}
+              {[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
             </select>
           </label>
           <div className="pagination-actions">

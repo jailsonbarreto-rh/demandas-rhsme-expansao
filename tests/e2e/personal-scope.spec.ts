@@ -20,10 +20,10 @@ test('cartão, aba e alternador conectam as duas carteiras', async ({ page }) =>
   await expect(page).toHaveURL(/\/minhas-demandas(?:\?|$)/);
   await expect(page.getByRole('button', { name: /^minhas demandas$/i })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Ver todas as demandas' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Demandas Equipe CTRH' })).toBeVisible();
   await expect(personalCard).toHaveAttribute('aria-pressed', 'true');
 
-  await page.getByRole('button', { name: 'Ver todas as demandas' }).click();
+  await page.getByRole('button', { name: 'Demandas Equipe CTRH' }).click();
 
   await expect(page).toHaveURL(/\/demandas(?:\?|$)/);
   await expect(page.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');

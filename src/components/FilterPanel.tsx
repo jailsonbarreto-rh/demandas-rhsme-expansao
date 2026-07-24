@@ -314,16 +314,22 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         </div>
       </div>
 
-      <div className="filters-summary-row">
+      <div
+        className={`filters-summary-row ${filtrosAtivosCount > 0 ? 'has-active-filters' : ''}`}
+        data-testid="filters-summary-row"
+      >
         <div className="filters-active-summary" aria-live="polite">
           {filtrosAtivosCount > 0 && (
-            <>
+            <div className="filters-active-state" data-testid="active-filters-state">
+              <i className="fa-solid fa-filter" aria-hidden="true" />
               <span className="badge-count">{filtrosAtivosCount}</span>
-              <span>{filtrosAtivosCount === 1 ? 'filtro ativo' : 'filtros ativos'}</span>
-              <span style={{ color: '#cbd5e1', margin: '0 4px' }}>•</span>
-            </>
+              {' '}
+              <strong>{filtrosAtivosCount === 1 ? 'filtro ativo' : 'filtros ativos'}</strong>
+            </div>
           )}
-          <span>{totalExibidos === totalGeral ? `${totalGeral} demandas` : `${totalExibidos} de ${totalGeral} demandas`}</span>
+          <span className="filters-results-summary">
+            {totalExibidos === totalGeral ? `${totalGeral} demandas` : `${totalExibidos} de ${totalGeral} demandas`}
+          </span>
         </div>
 
         {filtrosAtivosCount > 0 && (

@@ -239,9 +239,9 @@ describe('App no modo Supabase', () => {
     expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
     expect(screen.queryByText('Demanda sem responsável oficial')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^minhas demandas$/i })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('button', { name: 'Ver todas as demandas' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Demandas Equipe CTRH' })).toBeVisible();
 
-    await user.click(screen.getByRole('button', { name: 'Ver todas as demandas' }));
+    await user.click(screen.getByRole('button', { name: 'Demandas Equipe CTRH' }));
 
     await waitFor(() => expect(window.location.pathname).toBe('/demandas'));
     expect(await screen.findByText('Demanda de outro usuário')).toBeVisible();
@@ -283,7 +283,7 @@ describe('App no modo Supabase', () => {
     expect(screen.queryAllByText('Assinatura da equipe')).toHaveLength(0);
     expect(window.location.pathname).toBe('/minhas-demandas');
 
-    await user.click(screen.getByRole('button', { name: 'Ver todas as demandas' }));
+    await user.click(screen.getByRole('button', { name: 'Demandas Equipe CTRH' }));
     await waitFor(() => expect(window.location.pathname).toBe('/demandas'));
 
     await waitFor(() => {

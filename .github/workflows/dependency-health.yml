@@ -31,30 +31,36 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           app_test = Path('src/App.supabase.test.tsx')
           app_source = app_test.read_text(encoding='utf-8')
           old_label = "'Ver todas as demandas'"
-          if app_source.count(old_label) != 3:
-              raise SystemExit('Quantidade inesperada de referências ao rótulo antigo nos testes.')
-          app_test.write_text(
-              app_source.replace(old_label, "'Demandas Equipe CTRH'"),
-              encoding='utf-8',
-          )
+          new_label = "'Demandas Equipe CTRH'"
+          old_count = app_source.count(old_label)
+          if old_count not in (0, 3):
+              raise SystemExit(f'Quantidade inesperada do rótulo antigo: {old_count}.')
+          if old_count:
+              app_source = app_source.replace(old_label, new_label)
+          if app_source.count(new_label) < 3:
+              raise SystemExit('As três regressões não usam o novo rótulo.')
+          app_test.write_text(app_source, encoding='utf-8')
 
           filter_panel = Path('src/components/FilterPanel.tsx')
           filter_source = filter_panel.read_text(encoding='utf-8')
-          old_spacing = '''<span className="badge-count">{filtrosAtivosCount}</span>
-              <strong>'''
-          new_spacing = '''<span className="badge-count">{filtrosAtivosCount}</span>
-              {' '}
-              <strong>'''
-          if filter_source.count(old_spacing) != 1:
-              raise SystemExit('Estrutura inesperada no resumo de filtros.')
-          filter_panel.write_text(
-              filter_source.replace(old_spacing, new_spacing),
-              encoding='utf-8',
-          )
+          spacing_marker = "{' '}"
+          if spacing_marker not in filter_source:
+              pattern = re.compile(
+                  r'(<span className="badge-count">\{filtrosAtivosCount\}</span>)(\s*)(<strong>)'
+              )
+              filter_source, replacements = pattern.subn(
+                  r"\1\n              {' '}\2\3",
+                  filter_source,
+                  count=1,
+              )
+              if replacements != 1:
+                  raise SystemExit('Estrutura inesperada no resumo de filtros.')
+          filter_panel.write_text(filter_source, encoding='utf-8')
 
       - name: Regenerate lockfile for dependency overrides
         run: npm install --package-lock-only --ignore-scripts

@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **24 de julho de 2026 — carteira pessoal do R3 em Production**
+Atualizado em: **24 de julho de 2026 — navegação das carteiras do R3 em Production**
 
 ## Estado atual
 
@@ -8,33 +8,35 @@ Atualizado em: **24 de julho de 2026 — carteira pessoal do R3 em Production**
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr` |
-| Código funcional publicado | `1316cc764f974a539a4002a627036acd5334eb47` — PR #48 |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrsllr` |
+| Código funcional publicado | `0173eb946133845b5c6da3604673bf4ac81ddadb` — PR #50 |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
-| Linha de base funcional | Ciclos originais 0 a 4 concluídos; responsáveis oficiais e carteira pessoal do R3 implementados |
-| Atividade atual | **Homologação visual e funcional do R3 pelo responsável do produto** |
+| Linha de base funcional | Ciclos originais 0 a 4 concluídos; responsáveis oficiais e navegação das carteiras do R3 implementados |
+| Atividade atual | **Homologação visual e funcional da nova navegação pelo responsável do produto** |
 | Próximo ciclo | Não autorizado até a homologação e nova decisão expressa |
 
-## Implementação R3 concluída
+## Identidade oficial dos responsáveis
 
 - `responsavel_id` é a identidade oficial do responsável.
 - Novas demandas e edições usam seleção de usuários cadastrados; texto livre não é aceito.
 - RPCs e gatilho impedem divergência entre UUID e nome.
-- 378 demandas históricas foram vinculadas aos perfis oficiais.
+- 378 demandas históricas permanecem vinculadas aos perfis oficiais.
 - `Vanessa Migrado` permanece preservada como única informação histórica sem UUID.
-- As permissões, papéis, status e demais regras de negócio foram preservados.
+- Permissões, papéis, status e demais regras de negócio foram preservados.
 
-## Carteira pessoal publicada
+## Navegação das carteiras publicada
 
-- A primeira tela exibe um bloco central destacado imediatamente abaixo de `Atenção agora`.
-- Conteúdo exato: `Minhas demandas`, `Acompanhe sua carteira de processos.` e `Acessar minha carteira`.
-- O bloco não possui contadores, listas prévias ou textos adicionais.
-- A ação abre `/demandas?escopo=meu`.
-- A filtragem usa exclusivamente o UUID do usuário autenticado.
-- Demandas de outros usuários e registros sem UUID não aparecem na carteira pessoal.
-- A listagem indica `Minhas demandas` e oferece `Ver carteira da equipe`.
-- Os demais filtros permanecem disponíveis para refinamento.
-- Não houve alteração no Supabase nesta entrega de interface.
+- `/demandas` representa a carteira completa da equipe.
+- `/minhas-demandas` representa somente as demandas vinculadas ao UUID do usuário autenticado.
+- A navegação principal possui aba permanente `Minhas demandas`.
+- O cabeçalho exibe um cartão compacto e destacado para acesso direto à carteira pessoal.
+- As duas carteiras possuem cabeçalho contextual e ação visível para alternância direta.
+- `Limpar filtros` limpa somente critérios de pesquisa e nunca troca a carteira atual.
+- URLs antigas com `escopo=meu` são redirecionadas para `/minhas-demandas`, preservando os demais filtros.
+- Os detalhes de demanda preservam a carteira de origem na rota.
+- Demandas sem UUID, inclusive `Vanessa Migrado`, não aparecem na carteira pessoal.
+- O callout grande e o banner que apresentavam `Minhas demandas` como filtro foram removidos.
+- Nenhuma migration, tabela, função ou dado do Supabase foi alterado nesta revisão.
 
 ## Fotografia reconciliada de Production
 
@@ -47,21 +49,29 @@ Atualizado em: **24 de julho de 2026 — carteira pessoal do R3 em Production**
 | Perfis | 13 |
 | Divergências UUID–nome | 0 |
 
+## Segurança de dependências
+
+- O React Router 7.18.1 foi substituído pelo pacote principal `react-router` 8.3.0 após uma nova vulnerabilidade alta ser detectada pelo `npm audit`.
+- O lockfile foi regenerado pelo próprio npm.
+- A auditoria de vulnerabilidades e a verificação de assinaturas e proveniência foram aprovadas.
+- O workflow agora preserva o relatório de `npm audit` como artefato para rastreabilidade.
+
 ## Validação realizada
 
 - análise estática aprovada;
 - testes unitários, integração e cobertura aprovados;
 - build e orçamento do bundle aprovados;
-- testes Playwright aprovados em desktop e mobile, incluindo o fluxo da carteira pessoal;
-- Preview Vercel validado em estado `READY`;
-- Production validada no domínio oficial;
-- nenhuma migration ou arquivo Supabase alterado pela entrega `Minhas demandas`.
+- testes Playwright desktop e mobile aprovados;
+- cenários cobertos: cartão pessoal, aba permanente, alternância geral ↔ pessoal, limpeza de filtros, indicadores rápidos, detalhes e URL legada;
+- Preview `dpl_2RimMsjqEnZYT6sGwQoaYbce7LAb` validado em estado `READY`;
+- Production `dpl_Ej7wPRRaLhHAfF153e9Pnc3RfcTP` validada em estado `READY`;
+- domínio oficial e rewrites `/minhas-demandas` e `/minhas-demandas/:id` validados com resposta HTTP 200.
 
 ## Publicação e segurança operacional
 
 - PR de responsáveis oficiais: `#46`.
-- PR da carteira pessoal: `#48`.
-- Deployment de Production da carteira pessoal: `dpl_8LkvK6yJufmyQErbvkb9tamFTFt8`, estado `READY`.
+- PR do primeiro acesso visual: `#48`.
+- PR da navegação definitiva das carteiras: `#50`.
 - O deploy automático foi habilitado somente durante a publicação controlada e restaurado para bloqueado no encerramento.
 
 ## Regra de continuidade

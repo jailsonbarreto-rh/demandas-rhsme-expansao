@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppServices } from './services/createAppServices';
 import { AccessPendingError } from './services/errors';
-import type { AppUser, PerfilMinimo } from './types';
+import type { AppUser, ComentarioHistorico, Demanda, PerfilMinimo } from './types';
+import { createMinimalDemandFixture } from './test/expandedFixtures';
 import { App } from './App';
 
 const activeUser: AppUser = {
@@ -21,8 +22,11 @@ const officialResponsible: PerfilMinimo = {
   setor: 'E/CTRH',
 };
 
-function createServices(signIn = vi.fn().mockResolvedValue(activeUser)) {
-  const load = vi.fn().mockResolvedValue({ demandas: [], historico: [] });
+function createServices(
+  signIn = vi.fn().mockResolvedValue(activeUser),
+  initialData: { demandas: Demanda[]; historico: ComentarioHistorico[] } = { demandas: [], historico: [] },
+) {
+  const load = vi.fn().mockResolvedValue(initialData);
   const create = vi.fn().mockResolvedValue(undefined);
   const listMinimal = vi.fn().mockResolvedValue([officialResponsible]);
   const services: AppServices = {
@@ -66,6 +70,7 @@ async function fillLogin(user: ReturnType<typeof userEvent.setup>) {
 describe('App no modo Supabase', () => {
   afterEach(() => {
     cleanup();
+    window.history.replaceState({}, '', '/');
     vi.unstubAllGlobals();
   });
 
@@ -98,6 +103,51 @@ describe('App no modo Supabase', () => {
       proximaAcao: 'Conferir documentação recebida',
       proximaAcaoEm: '20/08/2026',
     })));
+  });
+
+  it('abre Minhas demandas e exibe somente registros do UUID autenticado', async () => {
+    const ownDemand = createMinimalDemandFixture({
+      id: 1,
+      numero: 'SME-OWN-001',
+      assunto: 'Demanda do usuário conectado',
+      responsavel: 'Teste',
+      responsavelId: activeUser.id,
+      status: 'Aguardando Andamento',
+    });
+    const otherDemand = createMinimalDemandFixture({
+      id: 2,
+      numero: 'SME-OTHER-001',
+      assunto: 'Demanda de outro usuário',
+      responsavel: 'Outra pessoa',
+      responsavelId: 'user-2',
+      status: 'Aguardando Andamento',
+    });
+    const legacyDemand = createMinimalDemandFixture({
+      id: 3,
+      numero: 'SME-LEGACY-001',
+      assunto: 'Demanda sem responsável oficial',
+      responsavel: 'Vanessa Migrado',
+      responsavelId: null,
+      status: 'Aguardando Andamento',
+    });
+    const { services } = createServices(undefined, {
+      demandas: [ownDemand, otherDemand, legacyDemand],
+      historico: [],
+    });
+    const user = userEvent.setup();
+
+    render(<App services={services} />);
+    await fillLogin(user);
+    await user.click(await screen.findByRole('button', { name: 'Acessar minha carteira' }));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/demandas');
+      expect(window.location.search).toContain('escopo=meu');
+    });
+    expect(await screen.findByText('Demanda do usuário conectado')).toBeVisible();
+    expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
+    expect(screen.queryByText('Demanda sem responsável oficial')).not.toBeInTheDocument();
+    expect(screen.getByText('Minhas demandas')).toBeVisible();
   });
 
   it('mantém perfil pendente na tela de login', async () => {

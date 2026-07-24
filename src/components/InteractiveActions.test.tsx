@@ -47,6 +47,7 @@ describe('ações interativas da interface', () => {
     const onLogout = vi.fn();
     const onOpenNovo = vi.fn();
     const onExportExcel = vi.fn();
+    const onOpenMinhasDemandas = vi.fn();
     const onToggleFiltroStatus = vi.fn();
     const onToggleQuickFilter = vi.fn();
 
@@ -57,6 +58,8 @@ describe('ações interativas da interface', () => {
         onLogout={onLogout}
         onOpenNovo={onOpenNovo}
         onExportExcel={onExportExcel}
+        onOpenMinhasDemandas={onOpenMinhasDemandas}
+        personalWorkspaceActive={false}
         filtrosAtivos={{
           status: 'acompanhamento',
           quickFilters: { assinatura: false, hoje: false, vencido: false },
@@ -74,12 +77,37 @@ describe('ações interativas da interface', () => {
     await user.click(screen.getByRole('button', { name: /nova demanda/i }));
     await user.click(screen.getByRole('button', { name: /em acompanhamento/i }));
     await user.click(screen.getByRole('button', { name: /para assinatura/i }));
+    await user.click(screen.getByRole('button', { name: /minhas demandas.*acompanhe sua carteira/i }));
 
     expect(onLogout).toHaveBeenCalledOnce();
     expect(onExportExcel).toHaveBeenCalledOnce();
     expect(onOpenNovo).toHaveBeenCalledOnce();
     expect(onToggleFiltroStatus).toHaveBeenCalledWith('acompanhamento');
     expect(onToggleQuickFilter).toHaveBeenCalledWith('assinatura');
+    expect(onOpenMinhasDemandas).toHaveBeenCalledOnce();
+  });
+
+  it('comunica visualmente quando a carteira pessoal está ativa', () => {
+    render(
+      <Header
+        userEmail="admin@rioeduca.net"
+        demandas={[demanda]}
+        onLogout={vi.fn()}
+        onOpenNovo={vi.fn()}
+        onExportExcel={vi.fn()}
+        onOpenMinhasDemandas={vi.fn()}
+        personalWorkspaceActive
+        filtrosAtivos={{
+          status: 'acompanhamento',
+          quickFilters: { assinatura: false, hoje: false, vencido: false },
+        }}
+        onToggleFiltroStatus={vi.fn()}
+        onToggleQuickFilter={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /minhas demandas.*acompanhe sua carteira/i }))
+      .toHaveAttribute('aria-pressed', 'true');
   });
 
   it('expande filtros avançados e limpa todos os filtros ativos', async () => {
@@ -144,7 +172,6 @@ describe('ações interativas da interface', () => {
         demandas={[demanda]}
         historico={[historico]}
         onOpenEditar={onOpen}
-        onOpenMinhasDemandas={vi.fn()}
         renderAtencaoImediata={() => null}
       />,
     );

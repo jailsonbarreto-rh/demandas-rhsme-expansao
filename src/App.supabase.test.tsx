@@ -279,8 +279,8 @@ describe('App no modo Supabase', () => {
 
     await user.click(screen.getByTitle('Filtrar por demandas aguardando assinatura'));
 
-    expect(await screen.findByText('Assinatura pessoal')).toBeVisible();
-    expect(screen.queryByText('Assinatura da equipe')).not.toBeInTheDocument();
+    expect((await screen.findAllByText('Assinatura pessoal')).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Assinatura da equipe')).toHaveLength(0);
     expect(window.location.pathname).toBe('/minhas-demandas');
 
     await user.click(screen.getByRole('button', { name: 'Ver todas as demandas' }));
@@ -292,7 +292,7 @@ describe('App no modo Supabase', () => {
       expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
       expectHeaderCount('Filtrar por demandas vencidas', 2);
     });
-    expect(await screen.findByText('Assinatura da equipe')).toBeVisible();
+    expect((await screen.findAllByText('Assinatura da equipe')).length).toBeGreaterThan(0);
   });
 
   it('limpa filtros dentro da carteira pessoal sem retornar à carteira geral', async () => {

@@ -184,6 +184,29 @@ describe('App no modo Supabase', () => {
     expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
   });
 
+  it('aplica o cartão de status sem sair da carteira pessoal nem restaurar estado antigo', async () => {
+    const { services } = createServices(undefined, {
+      demandas: createPortfolioData(),
+      historico: [],
+    });
+    const user = userEvent.setup();
+
+    render(<App services={services} />);
+    await fillLogin(user);
+    await user.click(await screen.findByRole('button', { name: /^minhas demandas$/i }));
+    await waitFor(() => expect(window.location.pathname).toBe('/minhas-demandas'));
+
+    await user.selectOptions(screen.getByLabelText(/^status$/i), 'todos');
+    await waitFor(() => expect(window.location.search).toContain('status=todos'));
+    await user.click(screen.getByRole('button', { name: /em acompanhamento/i }));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/minhas-demandas');
+      expect(window.location.search).not.toContain('status=');
+      expect(screen.getByLabelText(/^status$/i)).toHaveValue('acompanhamento');
+    });
+  });
+
   it('mantém perfil pendente na tela de login', async () => {
     const signIn = vi.fn().mockRejectedValue(new AccessPendingError());
     const { services, load } = createServices(signIn);

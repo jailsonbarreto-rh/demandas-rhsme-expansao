@@ -157,7 +157,7 @@ Para cada decisão, registrar:
 |---|---|---|---|---|
 | R1 | Pendente | Não | Não | Aguardando debate |
 | R2 | Não iniciado | Não | Não | Futuro |
-| R3 | Concluído para responsáveis oficiais | Sim | Sim | Implementação e homologação em andamento |
+| R3 | Concluído para responsáveis oficiais | Sim | Sim | Implementado em Production; aguardando homologação do responsável pelo produto |
 | R4 | Não iniciado | Não | Não | Futuro |
 | R5 | Não iniciado | Não | Não | Futuro |
 | R6 | Não iniciado | Não | Não | Futuro |

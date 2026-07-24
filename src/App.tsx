@@ -495,7 +495,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       <div className="app-container">
         <Header
           userEmail={userEmail}
-          demandas={demandas}
+          demandas={workspaceDemandas}
           onLogout={handleLogout}
           onOpenNovo={() => setModalNovoAberto(true)}
           onExportExcel={handleExportExcel}

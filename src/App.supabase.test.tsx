@@ -1,10 +1,11 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppServices } from './services/createAppServices';
 import { AccessPendingError } from './services/errors';
 import type { AppUser, ComentarioHistorico, Demanda, PerfilMinimo } from './types';
 import { createMinimalDemandFixture } from './test/expandedFixtures';
+import { getTodayString } from './utils/date';
 import { App } from './App';
 
 const activeUser: AppUser = {
@@ -95,6 +96,92 @@ function createPortfolioData() {
   return [ownDemand, otherDemand, legacyDemand];
 }
 
+function formatDate(date: Date) {
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+function createContextualDashboardData() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayString = formatDate(yesterday);
+  const todayString = getTodayString();
+
+  return [
+    createMinimalDemandFixture({
+      id: 11,
+      numero: 'SME-OWN-ACTIVE',
+      assunto: 'Ativa pessoal',
+      responsavel: 'Teste',
+      responsavelId: activeUser.id,
+      status: 'Aguardando Andamento',
+    }),
+    createMinimalDemandFixture({
+      id: 12,
+      numero: 'SME-OWN-SIGN',
+      assunto: 'Assinatura pessoal',
+      responsavel: 'Teste',
+      responsavelId: activeUser.id,
+      status: 'Para Assinatura',
+    }),
+    createMinimalDemandFixture({
+      id: 13,
+      numero: 'SME-OWN-TODAY',
+      assunto: 'Prazo hoje pessoal',
+      responsavel: 'Teste',
+      responsavelId: activeUser.id,
+      status: 'Aguardando Andamento',
+      limite2: todayString,
+    }),
+    createMinimalDemandFixture({
+      id: 14,
+      numero: 'SME-OWN-OVERDUE',
+      assunto: 'Vencida pessoal',
+      responsavel: 'Teste',
+      responsavelId: activeUser.id,
+      status: 'Aguardando Andamento',
+      limite2: yesterdayString,
+    }),
+    createMinimalDemandFixture({
+      id: 21,
+      numero: 'SME-TEAM-ACTIVE',
+      assunto: 'Ativa da equipe',
+      responsavel: 'Outra pessoa',
+      responsavelId: 'user-2',
+      status: 'Aguardando Andamento',
+    }),
+    createMinimalDemandFixture({
+      id: 22,
+      numero: 'SME-TEAM-SIGN',
+      assunto: 'Assinatura da equipe',
+      responsavel: 'Outra pessoa',
+      responsavelId: 'user-2',
+      status: 'Para Assinatura',
+    }),
+    createMinimalDemandFixture({
+      id: 23,
+      numero: 'SME-TEAM-TODAY',
+      assunto: 'Prazo hoje da equipe',
+      responsavel: 'Outra pessoa',
+      responsavelId: 'user-2',
+      status: 'Aguardando Andamento',
+      limite2: todayString,
+    }),
+    createMinimalDemandFixture({
+      id: 24,
+      numero: 'SME-TEAM-OVERDUE',
+      assunto: 'Vencida da equipe',
+      responsavel: 'Outra pessoa',
+      responsavelId: 'user-2',
+      status: 'Aguardando Andamento',
+      limite2: yesterdayString,
+    }),
+  ];
+}
+
+function expectHeaderCount(title: string, count: number) {
+  expect(within(screen.getByTitle(title)).getByText(String(count))).toBeVisible();
+}
+
 describe('App no modo Supabase', () => {
   afterEach(() => {
     cleanup();
@@ -161,6 +248,51 @@ describe('App no modo Supabase', () => {
     expect(screen.getByText('Demanda sem responsável oficial')).toBeVisible();
     expect(screen.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('button', { name: 'Ver minhas demandas' })).toBeVisible();
+  });
+
+  it('atualiza os indicadores e seus filtros conforme a carteira ativa', async () => {
+    const { services } = createServices(undefined, {
+      demandas: createContextualDashboardData(),
+      historico: [],
+    });
+    const user = userEvent.setup();
+
+    render(<App services={services} />);
+    await fillLogin(user);
+
+    await waitFor(() => {
+      expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
+      expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
+      expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
+      expectHeaderCount('Filtrar por demandas vencidas', 2);
+    });
+
+    await user.click(screen.getByRole('button', { name: /^minhas demandas$/i }));
+    await waitFor(() => expect(window.location.pathname).toBe('/minhas-demandas'));
+
+    await waitFor(() => {
+      expectHeaderCount('Exibir todas as demandas em acompanhamento', 4);
+      expectHeaderCount('Filtrar por demandas aguardando assinatura', 1);
+      expectHeaderCount('Filtrar por demandas com prazo hoje', 1);
+      expectHeaderCount('Filtrar por demandas vencidas', 1);
+    });
+
+    await user.click(screen.getByTitle('Filtrar por demandas aguardando assinatura'));
+
+    expect((await screen.findAllByText('Assinatura pessoal')).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Assinatura da equipe')).toHaveLength(0);
+    expect(window.location.pathname).toBe('/minhas-demandas');
+
+    await user.click(screen.getByRole('button', { name: 'Ver todas as demandas' }));
+    await waitFor(() => expect(window.location.pathname).toBe('/demandas'));
+
+    await waitFor(() => {
+      expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
+      expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
+      expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
+      expectHeaderCount('Filtrar por demandas vencidas', 2);
+    });
+    expect((await screen.findAllByText('Assinatura da equipe')).length).toBeGreaterThan(0);
   });
 
   it('limpa filtros dentro da carteira pessoal sem retornar à carteira geral', async () => {

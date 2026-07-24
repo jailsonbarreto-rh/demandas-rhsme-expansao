@@ -67,6 +67,34 @@ async function fillLogin(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole('button', { name: /acessar sistema/i }));
 }
 
+function createPortfolioData() {
+  const ownDemand = createMinimalDemandFixture({
+    id: 1,
+    numero: 'SME-OWN-001',
+    assunto: 'Demanda do usuário conectado',
+    responsavel: 'Teste',
+    responsavelId: activeUser.id,
+    status: 'Aguardando Andamento',
+  });
+  const otherDemand = createMinimalDemandFixture({
+    id: 2,
+    numero: 'SME-OTHER-001',
+    assunto: 'Demanda de outro usuário',
+    responsavel: 'Outra pessoa',
+    responsavelId: 'user-2',
+    status: 'Aguardando Andamento',
+  });
+  const legacyDemand = createMinimalDemandFixture({
+    id: 3,
+    numero: 'SME-LEGACY-001',
+    assunto: 'Demanda sem responsável oficial',
+    responsavel: 'Vanessa Migrado',
+    responsavelId: null,
+    status: 'Aguardando Andamento',
+  });
+  return [ownDemand, otherDemand, legacyDemand];
+}
+
 describe('App no modo Supabase', () => {
   afterEach(() => {
     cleanup();
@@ -105,49 +133,55 @@ describe('App no modo Supabase', () => {
     })));
   });
 
-  it('abre Minhas demandas e exibe somente registros do UUID autenticado', async () => {
-    const ownDemand = createMinimalDemandFixture({
-      id: 1,
-      numero: 'SME-OWN-001',
-      assunto: 'Demanda do usuário conectado',
-      responsavel: 'Teste',
-      responsavelId: activeUser.id,
-      status: 'Aguardando Andamento',
-    });
-    const otherDemand = createMinimalDemandFixture({
-      id: 2,
-      numero: 'SME-OTHER-001',
-      assunto: 'Demanda de outro usuário',
-      responsavel: 'Outra pessoa',
-      responsavelId: 'user-2',
-      status: 'Aguardando Andamento',
-    });
-    const legacyDemand = createMinimalDemandFixture({
-      id: 3,
-      numero: 'SME-LEGACY-001',
-      assunto: 'Demanda sem responsável oficial',
-      responsavel: 'Vanessa Migrado',
-      responsavelId: null,
-      status: 'Aguardando Andamento',
-    });
+  it('alterna explicitamente entre a carteira pessoal e a carteira geral', async () => {
     const { services } = createServices(undefined, {
-      demandas: [ownDemand, otherDemand, legacyDemand],
+      demandas: createPortfolioData(),
       historico: [],
     });
     const user = userEvent.setup();
 
     render(<App services={services} />);
     await fillLogin(user);
-    await user.click(await screen.findByRole('button', { name: 'Acessar minha carteira' }));
+    await user.click(await screen.findByRole('button', {
+      name: /minhas demandas.*acompanhe sua carteira de processos/i,
+    }));
 
-    await waitFor(() => {
-      expect(window.location.pathname).toBe('/demandas');
-      expect(window.location.search).toContain('escopo=meu');
-    });
+    await waitFor(() => expect(window.location.pathname).toBe('/minhas-demandas'));
+    expect(window.location.search).not.toContain('escopo');
     expect(await screen.findByText('Demanda do usuário conectado')).toBeVisible();
     expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
     expect(screen.queryByText('Demanda sem responsável oficial')).not.toBeInTheDocument();
-    expect(screen.getByText('Minhas demandas')).toBeVisible();
+    expect(screen.getByRole('button', { name: /^minhas demandas$/i })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Ver todas as demandas' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Ver todas as demandas' }));
+
+    await waitFor(() => expect(window.location.pathname).toBe('/demandas'));
+    expect(await screen.findByText('Demanda de outro usuário')).toBeVisible();
+    expect(screen.getByText('Demanda sem responsável oficial')).toBeVisible();
+    expect(screen.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Ver minhas demandas' })).toBeVisible();
+  });
+
+  it('limpa filtros dentro da carteira pessoal sem retornar à carteira geral', async () => {
+    const { services } = createServices(undefined, {
+      demandas: createPortfolioData(),
+      historico: [],
+    });
+    const user = userEvent.setup();
+
+    render(<App services={services} />);
+    await fillLogin(user);
+    await user.click(await screen.findByRole('button', { name: /^minhas demandas$/i }));
+    await waitFor(() => expect(window.location.pathname).toBe('/minhas-demandas'));
+
+    await user.type(screen.getByLabelText(/busca por texto/i), 'usuário');
+    await user.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+    expect(window.location.pathname).toBe('/minhas-demandas');
+    expect(screen.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
+    expect(await screen.findByText('Demanda do usuário conectado')).toBeVisible();
+    expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
   });
 
   it('mantém perfil pendente na tela de login', async () => {

@@ -29,7 +29,19 @@ jobs:
         run: npm ci
 
       - name: Audit dependency vulnerabilities
-        run: npm audit --audit-level=high
+        shell: bash
+        run: |
+          set -o pipefail
+          npm audit --audit-level=high 2>&1 | tee npm-audit-report.txt
+
+      - name: Upload dependency audit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-audit-report
+          path: npm-audit-report.txt
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Verify registry signatures and provenance
         run: npm audit signatures

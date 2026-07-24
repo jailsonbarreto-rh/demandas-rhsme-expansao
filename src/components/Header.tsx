@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Demanda } from '../types';
 import { isInFollowUp } from '../domain/workSemantics';
 import type { DemandFilters } from '../filters/filterTypes';
@@ -11,6 +11,8 @@ interface HeaderProps {
   onLogout: () => void;
   onOpenNovo: () => void;
   onExportExcel: () => void;
+  onOpenMinhasDemandas: () => void;
+  personalWorkspaceActive: boolean;
   exportingExcel?: boolean;
   filtrosAtivos: {
     status: DemandFilters['status'];
@@ -18,7 +20,7 @@ interface HeaderProps {
       assinatura: boolean;
       hoje: boolean;
       vencido: boolean;
-    }
+    };
   };
   onToggleFiltroStatus: (status: DemandFilters['status']) => void;
   onToggleQuickFilter: (filtro: 'assinatura' | 'hoje' | 'vencido') => void;
@@ -26,22 +28,23 @@ interface HeaderProps {
   appMode?: 'local' | 'supabase';
 }
 
-export const Header: React.FC<HeaderProps> = ({ 
-  userEmail, 
-  demandas, 
+export const Header: React.FC<HeaderProps> = ({
+  userEmail,
+  demandas,
   onLogout,
   onOpenNovo,
   onExportExcel,
+  onOpenMinhasDemandas,
+  personalWorkspaceActive,
   exportingExcel = false,
   filtrosAtivos,
   onToggleFiltroStatus,
   onToggleQuickFilter,
   canEdit = true,
-  appMode = 'local'
+  appMode = 'local',
 }) => {
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
-  // Define o timestamp da última atualização (inicialização da sessão)
   useEffect(() => {
     const now = new Date();
     const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
@@ -51,72 +54,69 @@ export const Header: React.FC<HeaderProps> = ({
     const horas = String(now.getHours()).padStart(2, '0');
     const minutos = String(now.getMinutes()).padStart(2, '0');
     setLastUpdate(`${dia} ${mes} ${ano}, ${horas}:${minutos}`);
-  }, [demandas]); // Atualiza o timestamp se houver mudança nas demandas
+  }, [demandas]);
 
   const todayStr = getTodayString();
-
-  // Contadores
   const totalEmAcompanhamento = demandas.filter(isInFollowUp).length;
-  const totalAssinatura = demandas.filter(d => d.status === 'Para Assinatura').length;
-  const totalHoje = demandas.filter(d => isInFollowUp(d) && d.limite2 === todayStr).length;
-  const totalVencidos = demandas.filter(d => isInFollowUp(d) && d.limite2 && isBeforeToday(d.limite2)).length;
+  const totalAssinatura = demandas.filter((demanda) => demanda.status === 'Para Assinatura').length;
+  const totalHoje = demandas.filter((demanda) => isInFollowUp(demanda) && demanda.limite2 === todayStr).length;
+  const totalVencidos = demandas.filter(
+    (demanda) => isInFollowUp(demanda) && demanda.limite2 && isBeforeToday(demanda.limite2),
+  ).length;
 
-  // Determinar se algum filtro rápido está selecionado
-  const isQuickFiltroAtivo = filtrosAtivos.quickFilters.assinatura || filtrosAtivos.quickFilters.hoje || filtrosAtivos.quickFilters.vencido;
+  const isQuickFiltroAtivo = filtrosAtivos.quickFilters.assinatura
+    || filtrosAtivos.quickFilters.hoje
+    || filtrosAtivos.quickFilters.vencido;
   const isCardAtivosSelecionado = filtrosAtivos.status === 'acompanhamento' && !isQuickFiltroAtivo;
 
-  // Legenda de Urgência (Contagem de demandas únicas críticas para evitar duplicidade)
-  const totalCriticas = demandas.filter(d => 
-    isInFollowUp(d) && (
-      d.status === 'Para Assinatura' || 
-      d.limite2 === todayStr || 
-      (d.limite2 && isBeforeToday(d.limite2))
+  const totalCriticas = demandas.filter((demanda) => (
+    isInFollowUp(demanda) && (
+      demanda.status === 'Para Assinatura'
+      || demanda.limite2 === todayStr
+      || (demanda.limite2 && isBeforeToday(demanda.limite2))
     )
-  ).length;
+  )).length;
   const legendaCriticas = totalCriticas > 0
     ? `${totalCriticas} ${totalCriticas === 1 ? 'demanda exige' : 'demandas exigem'} providência imediata.`
     : 'Todas as demandas de prazo crítico estão em dia.';
 
   return (
     <header className="header-container">
-      {/* 1. Faixa institucional: marca única do produto */}
       <div className="institucional-bar">
         <div className="inst-left header-brand-row">
           <BrandLogo variant="full" />
         </div>
-        
+
         <div className="inst-right">
-          {/* Usuário Logado */}
           <div className="inst-meta-item inst-user">
-            <i className="fa-solid fa-user-circle"></i>
+            <i className="fa-solid fa-user-circle" aria-hidden="true" />
             <span>{userEmail}</span>
           </div>
 
-          {/* Última Atualização */}
-          <div className="inst-meta-item inst-timestamp" title="Momento em que os dados locais da sessão do app foram carregados ou recarregados">
-            <i className="fa-solid fa-rotate"></i>
+          <div
+            className="inst-meta-item inst-timestamp"
+            title="Momento em que os dados locais da sessão do app foram carregados ou recarregados"
+          >
+            <i className="fa-solid fa-rotate" aria-hidden="true" />
             <span>Atualizado: {lastUpdate}</span>
           </div>
 
-          {/* Badge de Ambiente */}
           <div className="inst-badge-ambiente">
             {appMode === 'supabase' ? 'Base Compartilhada — Supabase' : 'Ambiente Local (LocalStorage)'}
           </div>
 
-          {/* Botão Sair */}
-          <button 
+          <button
             type="button"
-            className="btn-logout-link" 
-            onClick={onLogout} 
+            className="btn-logout-link"
+            onClick={onLogout}
             title="Sair do sistema"
           >
-            <i className="fa-solid fa-right-from-bracket"></i>
+            <i className="fa-solid fa-right-from-bracket" aria-hidden="true" />
             <span>Sair</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Título da página e ações globais */}
       <div className="title-action-row">
         <div className="title-area">
           <h1>Painel de Demandas</h1>
@@ -124,10 +124,9 @@ export const Header: React.FC<HeaderProps> = ({
             Acompanhamento de processos, expedientes, prazos e providências.
           </p>
         </div>
-        
+
         <div className="header-global-actions">
-          {/* Ação Secundária: Exportar Excel */}
-          <button 
+          <button
             type="button"
             className="btn btn-export-excel"
             onClick={onExportExcel}
@@ -135,35 +134,32 @@ export const Header: React.FC<HeaderProps> = ({
             aria-busy={exportingExcel}
             title="Exportar os dados filtrados em um relatório Excel analítico"
           >
-            <i className={`fa-solid ${exportingExcel ? 'fa-spinner fa-spin' : 'fa-file-excel'}`}></i>
+            <i
+              className={`fa-solid ${exportingExcel ? 'fa-spinner fa-spin' : 'fa-file-excel'}`}
+              aria-hidden="true"
+            />
             <span>{exportingExcel ? 'Gerando Excel…' : 'Exportar Excel'}</span>
           </button>
 
-          {/* Ação Primária: Nova Demanda */}
           {canEdit && (
-            <button 
+            <button
               type="button"
-              className="btn btn-primary btn-nova-demanda-header" 
+              className="btn btn-primary btn-nova-demanda-header"
               onClick={onOpenNovo}
               title="Cadastrar nova demanda"
             >
-              <i className="fa-solid fa-plus"></i>
+              <i className="fa-solid fa-plus" aria-hidden="true" />
               <span>Nova demanda</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* 3. Cards de Indicadores (Estilo Editorial com Frisos Coloridos e Acionáveis) */}
       <div className="stats-grid">
-        <button 
-          type="button" 
+        <button
+          type="button"
           className={`stat-card total-card ${isCardAtivosSelecionado ? 'active' : ''}`}
-          onClick={() => {
-            // Se já estiver ativo, não faz nada (permanece em ativos padrão)
-            // Caso contrário, ativa o status de ativos e limpa os filtros rápidos
-            onToggleFiltroStatus('acompanhamento');
-          }}
+          onClick={() => onToggleFiltroStatus('acompanhamento')}
           title="Exibir todas as demandas em acompanhamento"
         >
           <div className="stat-info">
@@ -172,8 +168,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </button>
 
-        <button 
-          type="button" 
+        <button
+          type="button"
           className={`stat-card assinatura-card ${filtrosAtivos.quickFilters.assinatura ? 'active' : ''}`}
           onClick={() => onToggleQuickFilter('assinatura')}
           title="Filtrar por demandas aguardando assinatura"
@@ -184,8 +180,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </button>
 
-        <button 
-          type="button" 
+        <button
+          type="button"
           className={`stat-card hoje-card ${filtrosAtivos.quickFilters.hoje ? 'active' : ''}`}
           onClick={() => onToggleQuickFilter('hoje')}
           title="Filtrar por demandas com prazo hoje"
@@ -196,8 +192,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </button>
 
-        <button 
-          type="button" 
+        <button
+          type="button"
           className={`stat-card vencido-card ${filtrosAtivos.quickFilters.vencido ? 'active' : ''}`}
           onClick={() => onToggleQuickFilter('vencido')}
           title="Filtrar por demandas vencidas"
@@ -207,11 +203,31 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="stat-number">{totalVencidos}</div>
           </div>
         </button>
+
+        <button
+          type="button"
+          className={`stat-card personal-workspace-card ${personalWorkspaceActive ? 'active' : ''}`}
+          onClick={onOpenMinhasDemandas}
+          aria-pressed={personalWorkspaceActive}
+          aria-label="Minhas demandas. Acompanhe sua carteira de processos."
+          title="Abrir a carteira de processos atribuída a você"
+        >
+          <span className="personal-workspace-card-icon" aria-hidden="true">
+            <i className="fa-solid fa-folder-open" />
+          </span>
+          <span className="personal-workspace-card-copy">
+            <strong>Minhas demandas</strong>
+            <small>Acompanhe sua carteira de processos.</small>
+          </span>
+          <i className="fa-solid fa-arrow-right personal-workspace-card-arrow" aria-hidden="true" />
+        </button>
       </div>
 
-      {/* Legenda de Urgência */}
       <div className="urgency-legend" role="status" aria-live="polite">
-        <i className={`fa-solid ${totalCriticas > 0 ? 'fa-triangle-exclamation' : 'fa-circle-check'}`}></i>
+        <i
+          className={`fa-solid ${totalCriticas > 0 ? 'fa-triangle-exclamation' : 'fa-circle-check'}`}
+          aria-hidden="true"
+        />
         <span>{legendaCriticas}</span>
       </div>
     </header>

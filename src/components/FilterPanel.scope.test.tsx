@@ -12,30 +12,42 @@ import { FilterPanel } from './FilterPanel';
 function ScopeHarness() {
   const [filtros, setFiltros] = React.useState<DemandFilters>({
     ...DEFAULT_DEMAND_FILTERS,
+    query: 'processo',
     scope: 'meu',
   });
-  const [quickFilters, setQuickFilters] = React.useState({ ...DEFAULT_QUICK_FILTERS });
+  const [quickFilters, setQuickFilters] = React.useState({
+    ...DEFAULT_QUICK_FILTERS,
+    assinatura: true,
+  });
 
   return (
-    <FilterPanel
-      filtros={filtros}
-      setFiltros={setFiltros}
-      quickFilters={quickFilters}
-      setQuickFilters={setQuickFilters}
-      setoresDisponiveis={[]}
-      totalExibidos={2}
-      totalGeral={10}
-    />
+    <>
+      <output data-testid="scope-atual">{filtros.scope}</output>
+      <FilterPanel
+        filtros={filtros}
+        setFiltros={setFiltros}
+        quickFilters={quickFilters}
+        setQuickFilters={setQuickFilters}
+        setoresDisponiveis={[]}
+        totalExibidos={2}
+        totalGeral={10}
+      />
+    </>
   );
 }
 
-describe('FilterPanel no escopo pessoal', () => {
-  it('indica Minhas demandas e permite voltar para a equipe', async () => {
+describe('FilterPanel e o contexto de carteira', () => {
+  it('limpa filtros sem alterar a carteira definida pela rota', async () => {
     const user = userEvent.setup();
     render(<ScopeHarness />);
 
-    expect(screen.getByText('Minhas demandas')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Ver carteira da equipe' }));
     expect(screen.queryByText('Minhas demandas')).not.toBeInTheDocument();
+    expect(screen.getByTestId('scope-atual')).toHaveTextContent('meu');
+
+    await user.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+    expect(screen.getByLabelText(/busca por texto/i)).toHaveValue('');
+    expect(screen.getByRole('button', { name: /para assinatura/i })).not.toHaveClass('active');
+    expect(screen.getByTestId('scope-atual')).toHaveTextContent('meu');
   });
 });

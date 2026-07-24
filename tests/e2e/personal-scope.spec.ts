@@ -8,17 +8,33 @@ async function login(page: Page) {
   await expect(page.getByRole('button', { name: /sair/i })).toBeVisible();
 }
 
-test('dashboard abre e identifica a carteira pessoal', async ({ page }) => {
+test('cartão, aba e alternador conectam as duas carteiras', async ({ page }) => {
   await login(page);
 
+  const personalCard = page.getByRole('button', {
+    name: /minhas demandas.*acompanhe sua carteira de processos/i,
+  });
+  await expect(personalCard).toBeVisible();
+  await personalCard.click();
+
+  await expect(page).toHaveURL(/\/minhas-demandas(?:\?|$)/);
+  await expect(page.getByRole('button', { name: /^minhas demandas$/i })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
-  await expect(page.getByText('Acompanhe sua carteira de processos.')).toBeVisible();
-  await page.getByRole('button', { name: 'Acessar minha carteira' }).click();
+  await expect(page.getByRole('button', { name: 'Ver todas as demandas' })).toBeVisible();
+  await expect(personalCard).toHaveAttribute('aria-pressed', 'true');
 
-  await expect.poll(() => new URL(page.url()).searchParams.get('escopo')).toBe('meu');
-  await expect(page.getByText('Minhas demandas')).toBeVisible();
+  await page.getByRole('button', { name: 'Ver todas as demandas' }).click();
 
-  await page.getByRole('button', { name: 'Ver carteira da equipe' }).click();
-  await expect.poll(() => new URL(page.url()).searchParams.get('escopo')).toBeNull();
-  await expect(page.getByRole('button', { name: 'Ver carteira da equipe' })).toHaveCount(0);
+  await expect(page).toHaveURL(/\/demandas(?:\?|$)/);
+  await expect(page.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { name: 'Todas as demandas' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ver minhas demandas' })).toBeVisible();
+
+  await page.getByRole('button', { name: /^minhas demandas$/i }).click();
+  await expect(page).toHaveURL(/\/minhas-demandas(?:\?|$)/);
+
+  await page.getByLabel(/busca por texto/i).fill('processo');
+  await page.getByRole('button', { name: 'Limpar filtros' }).click();
+  await expect(page).toHaveURL(/\/minhas-demandas(?:\?|$)/);
+  await expect(page.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
 });

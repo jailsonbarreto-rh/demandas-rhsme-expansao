@@ -63,7 +63,6 @@ export function serializeDemandFilters(filters: DemandFilters): URLSearchParams 
   if (filters.status !== 'acompanhamento') params.set('status', filters.status);
   if (filters.sector !== 'Todos') params.set('setor', filters.sector);
   if (filters.responsibleId !== 'todos') params.set('responsavelId', filters.responsibleId);
-  if (filters.scope !== 'equipe') params.set('escopo', filters.scope);
   if (filters.periodField !== 'limite2') params.set('periodoCampo', filters.periodField);
   if (filters.periodStart) params.set('periodoInicio', filters.periodStart);
   if (filters.periodEnd) params.set('periodoFim', filters.periodEnd);

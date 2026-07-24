@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { BrowserRouter, useInRouterContext, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, useInRouterContext, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Toaster, toast } from 'sonner';
 import type {
   CreateDemandaInput,
@@ -16,6 +16,7 @@ import { useAppSession } from './hooks/useAppSession';
 import { useDemandasData } from './hooks/useDemandasData';
 import { createAppServices, type AppServices } from './services/createAppServices';
 import { Header } from './components/Header';
+import { CarteiraContextHeader } from './components/CarteiraContextHeader';
 import { FilterPanel } from './components/FilterPanel';
 import { AtencaoImediata } from './components/AtencaoImediata';
 import { VisaoGeral } from './components/VisaoGeral';
@@ -42,6 +43,8 @@ const ModalHistorico = lazy(() => import('./components/ModalHistorico').then((mo
 const AdminPanel = lazy(() => import('./components/AdminPanel').then((module) => ({ default: module.AdminPanel })));
 const DemandDetailDrawer = lazy(() => import('./components/DemandDetailDrawer').then((module) => ({ default: module.DemandDetailDrawer })));
 const AuthPanel = lazy(() => import('./components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
+
+type ActiveTab = 'visao-geral' | 'demandas' | 'minhas-demandas' | 'admin';
 
 interface AppProps {
   services?: AppServices;
@@ -74,35 +77,86 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     ),
   ).sort(), [demandas]);
 
-  const [filtros, setFiltros] = useState<DemandFilters>(() => parseDemandFilters(searchParams));
+  const [filtros, setFiltros] = useState<DemandFilters>(() => {
+    const parsed = parseDemandFilters(searchParams);
+    if (location.pathname.startsWith('/minhas-demandas')) return { ...parsed, scope: 'meu' };
+    return parsed;
+  });
   const [quickFilters, setQuickFilters] = useState<QuickFilters>(() => ({
     assinatura: searchParams.get('assinatura') === '1',
     hoje: searchParams.get('hoje') === '1',
     vencido: searchParams.get('vencido') === '1',
   }));
 
-  const activeTab: 'visao-geral' | 'demandas' | 'admin' = location.pathname.startsWith('/admin')
+  const activeTab: ActiveTab = location.pathname.startsWith('/admin')
     ? 'admin'
-    : location.pathname.startsWith('/demandas')
-      ? 'demandas'
-      : 'visao-geral';
-  const drawerAberto = /^\/demandas\/\d+$/.test(location.pathname);
-  const setActiveTab = (tab: 'visao-geral' | 'demandas' | 'admin') => {
-    const target = tab === 'visao-geral' ? '/' : tab === 'admin' ? '/admin' : '/demandas';
-    navigate({ pathname: target, search: tab === 'demandas' ? searchParams.toString() : '' });
-  };
-  const setDrawerAberto = (open: boolean) => {
-    if (!open) navigate({ pathname: '/demandas', search: searchParams.toString() });
-  };
-  const handleOpenMinhasDemandas = () => {
+    : location.pathname.startsWith('/minhas-demandas')
+      ? 'minhas-demandas'
+      : location.pathname.startsWith('/demandas')
+        ? 'demandas'
+        : 'visao-geral';
+  const isDemandWorkspace = activeTab === 'demandas' || activeTab === 'minhas-demandas';
+  const currentWorkspacePath = activeTab === 'minhas-demandas' ? '/minhas-demandas' : '/demandas';
+  const drawerAberto = /^\/(demandas|minhas-demandas)\/\d+$/.test(location.pathname);
+  const legacyPersonalUrl = location.pathname === '/demandas' && searchParams.get('escopo') === 'meu';
+
+  const navigateToWorkspace = (
+    scope: DemandFilters['scope'],
+    filterPatch: Partial<DemandFilters> = {},
+    nextQuickFilters: QuickFilters = quickFilters,
+  ) => {
     const nextFilters: DemandFilters = {
       ...filtros,
-      scope: 'meu',
-      responsibleId: 'todos',
+      ...filterPatch,
+      scope,
+      responsibleId: scope === 'meu'
+        ? 'todos'
+        : filterPatch.responsibleId ?? filtros.responsibleId,
     };
+    const nextParams = serializeDemandFilters(nextFilters);
+    if (nextQuickFilters.assinatura) nextParams.set('assinatura', '1');
+    if (nextQuickFilters.hoje) nextParams.set('hoje', '1');
+    if (nextQuickFilters.vencido) nextParams.set('vencido', '1');
+
     setFiltros(nextFilters);
-    navigate({ pathname: '/demandas', search: serializeDemandFilters(nextFilters).toString() });
+    navigate({
+      pathname: scope === 'meu' ? '/minhas-demandas' : '/demandas',
+      search: nextParams.toString(),
+    });
   };
+
+  const setActiveTab = (tab: ActiveTab) => {
+    if (tab === 'demandas') {
+      navigateToWorkspace('equipe');
+      return;
+    }
+    if (tab === 'minhas-demandas') {
+      navigateToWorkspace('meu');
+      return;
+    }
+    navigate({ pathname: tab === 'admin' ? '/admin' : '/', search: '' });
+  };
+
+  const setDrawerAberto = (open: boolean) => {
+    if (!open) navigate({ pathname: currentWorkspacePath, search: searchParams.toString() });
+  };
+
+  useEffect(() => {
+    if (!legacyPersonalUrl) return;
+    const legacyParams = new URLSearchParams(searchParams);
+    legacyParams.delete('escopo');
+    navigate({ pathname: '/minhas-demandas', search: legacyParams.toString() }, { replace: true });
+  }, [legacyPersonalUrl, navigate, searchParams]);
+
+  useEffect(() => {
+    if (!isDemandWorkspace || legacyPersonalUrl) return;
+    const nextScope: DemandFilters['scope'] = activeTab === 'minhas-demandas' ? 'meu' : 'equipe';
+    setFiltros((current) => {
+      const responsibleId = nextScope === 'meu' ? 'todos' : current.responsibleId;
+      if (current.scope === nextScope && current.responsibleId === responsibleId) return current;
+      return { ...current, scope: nextScope, responsibleId };
+    });
+  }, [activeTab, isDemandWorkspace, legacyPersonalUrl]);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [recentSearches, setRecentSearches] = useState(() => loadRecentSearches());
@@ -113,15 +167,18 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'k') return;
       event.preventDefault();
       setSearchFocusRequested(true);
-      navigate({ pathname: '/demandas', search: searchParams.toString() });
+      navigate({
+        pathname: activeTab === 'minhas-demandas' ? '/minhas-demandas' : '/demandas',
+        search: searchParams.toString(),
+      });
     };
 
     window.addEventListener('keydown', handleSearchShortcut);
     return () => window.removeEventListener('keydown', handleSearchShortcut);
-  }, [navigate, searchParams]);
+  }, [activeTab, navigate, searchParams]);
 
   useEffect(() => {
-    if (!searchFocusRequested || activeTab !== 'demandas' || data.loading) return;
+    if (!searchFocusRequested || !isDemandWorkspace || data.loading) return;
     const frame = window.requestAnimationFrame(() => {
       const input = searchInputRef.current;
       if (!input) return;
@@ -130,7 +187,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       setSearchFocusRequested(false);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeTab, data.loading, searchFocusRequested]);
+  }, [data.loading, isDemandWorkspace, searchFocusRequested]);
 
   const [modalNovoAberto, setModalNovoAberto] = useState<boolean>(false);
   const [demandaSelecionada, setDemandaSelecionada] = useState<Demanda | null>(null);
@@ -141,28 +198,28 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
 
   useEffect(() => {
-    if (activeTab !== 'demandas') return;
+    if (!isDemandWorkspace || legacyPersonalUrl) return;
     const next = serializeDemandFilters(filtros);
     if (quickFilters.assinatura) next.set('assinatura', '1');
     if (quickFilters.hoje) next.set('hoje', '1');
     if (quickFilters.vencido) next.set('vencido', '1');
     if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
-  }, [activeTab, filtros, quickFilters, searchParams, setSearchParams]);
+  }, [filtros, isDemandWorkspace, legacyPersonalUrl, quickFilters, searchParams, setSearchParams]);
 
   useEffect(() => {
-    const match = /^\/demandas\/(\d+)$/.exec(location.pathname);
+    const match = /^\/(demandas|minhas-demandas)\/(\d+)$/.exec(location.pathname);
     if (!match || demandas.length === 0) return;
-    const selected = demandas.find((demanda) => demanda.id === Number(match[1]));
+    const selected = demandas.find((demanda) => demanda.id === Number(match[2]));
     if (selected) setDemandaSelecionada(selected);
     else {
       toast.error('A demanda informada não foi encontrada.');
-      navigate({ pathname: '/demandas', search: searchParams.toString() }, { replace: true });
+      navigate({ pathname: `/${match[1]}`, search: searchParams.toString() }, { replace: true });
     }
   }, [demandas, location.pathname, navigate, searchParams]);
 
   const openDemand = (demanda: Demanda) => {
     setDemandaSelecionada(demanda);
-    navigate({ pathname: `/demandas/${demanda.id}`, search: searchParams.toString() });
+    navigate({ pathname: `${currentWorkspacePath}/${demanda.id}`, search: searchParams.toString() });
   };
 
   useEffect(() => {
@@ -198,14 +255,16 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     id: string,
     patch: Partial<Pick<PerfilUsuario, 'nivel' | 'status' | 'setor'>>,
   ) => {
-    const perfilAlvo = perfis.find(p => p.id === id);
+    const perfilAlvo = perfis.find((perfil) => perfil.id === id);
     const eraAdminAtivo = perfilAlvo && perfilAlvo.nivel === 'administrador' && perfilAlvo.status === 'ativo';
     const vaiDeixarDeSer =
       (patch.nivel !== undefined && patch.nivel !== 'administrador')
       || (patch.status !== undefined && patch.status !== 'ativo');
 
     if (eraAdminAtivo && vaiDeixarDeSer) {
-      const outrosAdminsAtivos = perfis.filter(p => p.id !== id && p.nivel === 'administrador' && p.status === 'ativo').length;
+      const outrosAdminsAtivos = perfis.filter(
+        (perfil) => perfil.id !== id && perfil.nivel === 'administrador' && perfil.status === 'ativo',
+      ).length;
       if (outrosAdminsAtivos === 0) {
         toast.error('Ação bloqueada: o sistema não pode ficar sem nenhum administrador ativo.');
         return false;
@@ -225,8 +284,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
   const handleLogout = async () => {
     await session.signOut();
-    setActiveTab('visao-geral');
-    setDrawerAberto(false);
+    navigate({ pathname: '/', search: '' });
     setDemandaSelecionada(null);
     setModalNovoAberto(false);
     setModalEditarAberto(false);
@@ -376,6 +434,12 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     return { demandas: [], matches: new Map<number, DemandSearchMatch>(), mode: 'empty' as const };
   }, [demandas, filtros, historico, quickFilters, session.user?.id]);
 
+  const workspaceDemandas = useMemo(
+    () => activeTab === 'minhas-demandas'
+      ? demandas.filter((demanda) => demanda.responsavelId === session.user?.id)
+      : demandas,
+    [activeTab, demandas, session.user?.id],
+  );
   const demandasFiltradas = searchState.demandas;
   const searchMatches = searchState.matches;
   const searchResultMode = searchState.mode;
@@ -424,255 +488,279 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     );
   }
 
+  const targetScopeForHeaderFilters: DemandFilters['scope'] = activeTab === 'minhas-demandas' ? 'meu' : 'equipe';
+
   return (
-    <Suspense fallback={activeTab === 'admin' ? <AdminSkeleton /> : activeTab === 'demandas' ? <TableSkeleton /> : null}>
-    <div className="app-container">
-      <Header
-        userEmail={userEmail}
-        demandas={demandas}
-        onLogout={handleLogout}
-        onOpenNovo={() => setModalNovoAberto(true)}
-        onExportExcel={handleExportExcel}
-        exportingExcel={exportandoExcel}
-        filtrosAtivos={{
-          status: filtros.status,
-          quickFilters,
-        }}
-        onToggleFiltroStatus={(novoStatus) => {
-          setFiltros(prev => ({ ...prev, status: novoStatus }));
-          setQuickFilters({ assinatura: false, hoje: false, vencido: false });
-          setActiveTab('demandas');
-        }}
-        onToggleQuickFilter={(filtro) => {
-          setQuickFilters(prev => ({ ...prev, [filtro]: !prev[filtro] }));
-          setActiveTab('demandas');
-        }}
-        canEdit={canEdit}
-        appMode={appServices.mode}
-      />
+    <Suspense fallback={activeTab === 'admin' ? <AdminSkeleton /> : isDemandWorkspace ? <TableSkeleton /> : null}>
+      <div className="app-container">
+        <Header
+          userEmail={userEmail}
+          demandas={demandas}
+          onLogout={handleLogout}
+          onOpenNovo={() => setModalNovoAberto(true)}
+          onExportExcel={handleExportExcel}
+          onOpenMinhasDemandas={() => navigateToWorkspace('meu')}
+          personalWorkspaceActive={activeTab === 'minhas-demandas'}
+          exportingExcel={exportandoExcel}
+          filtrosAtivos={{
+            status: filtros.status,
+            quickFilters,
+          }}
+          onToggleFiltroStatus={(novoStatus) => {
+            const resetQuickFilters = { ...DEFAULT_QUICK_FILTERS };
+            setQuickFilters(resetQuickFilters);
+            navigateToWorkspace(targetScopeForHeaderFilters, { status: novoStatus }, resetQuickFilters);
+          }}
+          onToggleQuickFilter={(filtro) => {
+            const nextQuickFilters = { ...quickFilters, [filtro]: !quickFilters[filtro] };
+            setQuickFilters(nextQuickFilters);
+            navigateToWorkspace(targetScopeForHeaderFilters, {}, nextQuickFilters);
+          }}
+          canEdit={canEdit}
+          appMode={appServices.mode}
+        />
 
-      <nav className="nav-tabs">
-        <button
-          type="button"
-          className={`nav-tab-link ${activeTab === 'visao-geral' ? 'active' : ''}`}
-          aria-current={activeTab === 'visao-geral' ? 'page' : undefined}
-          onClick={() => setActiveTab('visao-geral')}
-          title="Ver o resumo e indicadores do CTRH"
-        >
-          <i className="fa-solid fa-chart-pie" />
-          <span>Visão geral</span>
-        </button>
-
-        <button
-          type="button"
-          className={`nav-tab-link ${activeTab === 'demandas' ? 'active' : ''}`}
-          aria-current={activeTab === 'demandas' ? 'page' : undefined}
-          onClick={() => setActiveTab('demandas')}
-          title="Ver a listagem e pesquisar processos operacionais"
-        >
-          <i className="fa-solid fa-list-check" />
-          <span>Demandas</span>
-        </button>
-
-        {canAccessAdmin && (
+        <nav className="nav-tabs" aria-label="Áreas do sistema">
           <button
             type="button"
-            className={`nav-tab-link ${activeTab === 'admin' ? 'active' : ''}`}
-            aria-current={activeTab === 'admin' ? 'page' : undefined}
-            onClick={() => setActiveTab('admin')}
-            title="Ver e gerenciar configurações e perfis de servidores"
+            className={`nav-tab-link ${activeTab === 'visao-geral' ? 'active' : ''}`}
+            aria-current={activeTab === 'visao-geral' ? 'page' : undefined}
+            onClick={() => setActiveTab('visao-geral')}
+            title="Ver o resumo e indicadores do CTRH"
           >
-            <i className="fa-solid fa-sliders" />
-            <span>Administração</span>
+            <i className="fa-solid fa-chart-pie" aria-hidden="true" />
+            <span>Visão geral</span>
           </button>
-        )}
-      </nav>
 
-      {data.error && (
-        <div style={{ padding: '0 24px', marginTop: '20px' }}>
-          <div className="alert-error-banner" style={{
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fee2e2',
-            borderLeft: '4px solid #ef4444',
-            borderRadius: '8px',
-            padding: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            color: '#991b1b',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-          }}>
-            <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '1.125rem', color: '#ef4444' }} />
-            <div><strong>Erro de Conectividade:</strong> {data.error}</div>
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === 'demandas' ? 'active' : ''}`}
+            aria-current={activeTab === 'demandas' ? 'page' : undefined}
+            onClick={() => setActiveTab('demandas')}
+            title="Ver a carteira completa da equipe"
+          >
+            <i className="fa-solid fa-list-check" aria-hidden="true" />
+            <span>Demandas</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === 'minhas-demandas' ? 'active' : ''}`}
+            aria-current={activeTab === 'minhas-demandas' ? 'page' : undefined}
+            onClick={() => setActiveTab('minhas-demandas')}
+            title="Ver somente as demandas atribuídas a você"
+          >
+            <i className="fa-solid fa-folder-open" aria-hidden="true" />
+            <span>Minhas demandas</span>
+          </button>
+
+          {canAccessAdmin && (
+            <button
+              type="button"
+              className={`nav-tab-link ${activeTab === 'admin' ? 'active' : ''}`}
+              aria-current={activeTab === 'admin' ? 'page' : undefined}
+              onClick={() => setActiveTab('admin')}
+              title="Ver e gerenciar configurações e perfis de servidores"
+            >
+              <i className="fa-solid fa-sliders" aria-hidden="true" />
+              <span>Administração</span>
+            </button>
+          )}
+        </nav>
+
+        {data.error && (
+          <div style={{ padding: '0 24px', marginTop: '20px' }}>
+            <div className="alert-error-banner" style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fee2e2',
+              borderLeft: '4px solid #ef4444',
+              borderRadius: '8px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              color: '#991b1b',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}>
+              <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '1.125rem', color: '#ef4444' }} />
+              <div><strong>Erro de Conectividade:</strong> {data.error}</div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {data.loading ? (
-        activeTab === 'visao-geral' ? <DashboardSkeleton /> : activeTab === 'admin' ? <AdminSkeleton /> : <TableSkeleton />
-      ) : (
-        <>
-          {activeTab === 'visao-geral' && (
-            <div key="visao-geral" className="route-transition">
-              <VisaoGeral
-                demandas={demandas}
-                historico={historico}
-                onOpenEditar={openDemand}
-                onOpenMinhasDemandas={handleOpenMinhasDemandas}
-                renderAtencaoImediata={() => (
-                  <AtencaoImediata
-                    demandas={demandas}
-                    historico={historico}
-                    onOpenEditar={openDemand}
-                  />
-                )}
-              />
-            </div>
-          )}
+        {data.loading ? (
+          activeTab === 'visao-geral'
+            ? <DashboardSkeleton />
+            : activeTab === 'admin'
+              ? <AdminSkeleton />
+              : <TableSkeleton />
+        ) : (
+          <>
+            {activeTab === 'visao-geral' && (
+              <div key="visao-geral" className="route-transition">
+                <VisaoGeral
+                  demandas={demandas}
+                  historico={historico}
+                  onOpenEditar={openDemand}
+                  renderAtencaoImediata={() => (
+                    <AtencaoImediata
+                      demandas={demandas}
+                      historico={historico}
+                      onOpenEditar={openDemand}
+                    />
+                  )}
+                />
+              </div>
+            )}
 
-          {activeTab === 'demandas' && (
-            <div key="demandas" className="route-transition">
-              <AtencaoImediata
-                demandas={demandas}
-                historico={historico}
-                onOpenEditar={openDemand}
-              />
+            {isDemandWorkspace && (
+              <div key={activeTab} className="route-transition">
+                <CarteiraContextHeader
+                  mode={activeTab === 'minhas-demandas' ? 'pessoal' : 'geral'}
+                  onSwitch={() => navigateToWorkspace(activeTab === 'minhas-demandas' ? 'equipe' : 'meu')}
+                />
 
-              <FilterPanel
-                filtros={filtros}
-                setFiltros={setFiltros}
-                quickFilters={quickFilters}
-                setQuickFilters={setQuickFilters}
-                setoresDisponiveis={setoresDisponiveis}
-                totalExibidos={demandasFiltradas.length}
-                totalGeral={demandas.length}
-                searchInputRef={searchInputRef}
-                recentSearches={recentSearches}
-                onCommitSearch={handleCommitSearch}
-                onClearRecentSearches={handleClearRecentSearches}
-                periodError={periodError}
-              />
+                <AtencaoImediata
+                  demandas={workspaceDemandas}
+                  historico={historico}
+                  onOpenEditar={openDemand}
+                />
 
-              <DemandasTable
-                demandas={demandasFiltradas}
-                searchQuery={filtros.query}
-                searchMatches={searchMatches}
-                searchResultMode={searchResultMode}
-                canEdit={canEdit}
-                canDelete={canDelete}
-                onOpenEditar={openDemand}
-                onOpenStatus={(demanda) => {
-                  setDemandaSelecionada(demanda);
-                  setModalStatusAberto(true);
-                }}
-                onOpenHistorico={(demanda) => {
-                  setDemandaSelecionada(demanda);
-                  setModalHistoricoAberto(true);
-                }}
-                onExcluir={handleExcluirDemanda}
-              />
-            </div>
-          )}
+                <FilterPanel
+                  filtros={filtros}
+                  setFiltros={setFiltros}
+                  quickFilters={quickFilters}
+                  setQuickFilters={setQuickFilters}
+                  setoresDisponiveis={setoresDisponiveis}
+                  totalExibidos={demandasFiltradas.length}
+                  totalGeral={workspaceDemandas.length}
+                  searchInputRef={searchInputRef}
+                  recentSearches={recentSearches}
+                  onCommitSearch={handleCommitSearch}
+                  onClearRecentSearches={handleClearRecentSearches}
+                  periodError={periodError}
+                />
 
-          {activeTab === 'admin' && canAccessAdmin && (
-            appServices.mode === 'supabase'
-              ? <AdminPanel perfis={perfis} onUpdatePerfil={handleUpdatePerfil} />
-              : <AdminPanel />
-          )}
-        </>
-      )}
+                <DemandasTable
+                  demandas={demandasFiltradas}
+                  searchQuery={filtros.query}
+                  searchMatches={searchMatches}
+                  searchResultMode={searchResultMode}
+                  canEdit={canEdit}
+                  canDelete={canDelete}
+                  onOpenEditar={openDemand}
+                  onOpenStatus={(demanda) => {
+                    setDemandaSelecionada(demanda);
+                    setModalStatusAberto(true);
+                  }}
+                  onOpenHistorico={(demanda) => {
+                    setDemandaSelecionada(demanda);
+                    setModalHistoricoAberto(true);
+                  }}
+                  onExcluir={handleExcluirDemanda}
+                />
+              </div>
+            )}
 
-      {modalNovoAberto && (
-        <ModalNovo
-          responsaveis={responsaveisDisponiveis}
-          onClose={() => setModalNovoAberto(false)}
-          onSalvar={handleSalvarNovaDemanda}
-        />
-      )}
+            {activeTab === 'admin' && canAccessAdmin && (
+              appServices.mode === 'supabase'
+                ? <AdminPanel perfis={perfis} onUpdatePerfil={handleUpdatePerfil} />
+                : <AdminPanel />
+            )}
+          </>
+        )}
 
-      {modalEditarAberto && demandaSelecionada && (
-        <ModalEditar
-          demanda={demandaSelecionada}
-          responsaveis={responsaveisDisponiveis}
-          onClose={() => {
-            setModalEditarAberto(false);
-            if (!drawerAberto) setDemandaSelecionada(null);
-          }}
-          onSalvar={async (id, values) => {
-            const current = demandas.find((demanda) => demanda.id === id);
-            if (!current || !await handleSalvarEdicaoDemanda(id, values)) return;
-            const selected = findResponsavel(values.responsavelId);
-            const preserveLegacy = !current.responsavelId && !values.responsavelId;
-            setModalEditarAberto(false);
-            if (drawerAberto) {
-              setDemandaSelecionada(prev => prev ? {
-                ...prev,
-                assunto: values.assunto,
-                responsavelId: selected?.id ?? null,
-                responsavel: selected?.nome ?? (preserveLegacy ? current.responsavel : ''),
-                limite1: values.limite1,
-                limite2: values.limite2,
-                setor: values.setor,
-                proximaAcao: prev.status === 'Encerrado' ? '' : values.proximaAcao,
-                proximaAcaoEm: prev.status === 'Encerrado' ? '' : values.proximaAcaoEm,
-              } : null);
-            } else {
-              setDemandaSelecionada(null);
-            }
-          }}
-        />
-      )}
+        {modalNovoAberto && (
+          <ModalNovo
+            responsaveis={responsaveisDisponiveis}
+            onClose={() => setModalNovoAberto(false)}
+            onSalvar={handleSalvarNovaDemanda}
+          />
+        )}
 
-      {modalStatusAberto && demandaSelecionada && (
-        <ModalStatus
-          demanda={demandaSelecionada}
-          onClose={() => {
-            setModalStatusAberto(false);
-            if (!drawerAberto) setDemandaSelecionada(null);
-          }}
-          onAtualizar={async (id, input) => {
-            if (!await handleAtualizarStatus(id, input)) return;
-            setModalStatusAberto(false);
-            if (drawerAberto) {
-              setDemandaSelecionada(prev => prev ? {
-                ...prev,
-                status: input.status,
-                proximaAcao: input.status === 'Encerrado' ? '' : input.proximaAcao,
-                proximaAcaoEm: input.status === 'Encerrado' ? '' : input.proximaAcaoEm,
-              } : null);
-            } else {
-              setDemandaSelecionada(null);
-            }
-          }}
-        />
-      )}
+        {modalEditarAberto && demandaSelecionada && (
+          <ModalEditar
+            demanda={demandaSelecionada}
+            responsaveis={responsaveisDisponiveis}
+            onClose={() => {
+              setModalEditarAberto(false);
+              if (!drawerAberto) setDemandaSelecionada(null);
+            }}
+            onSalvar={async (id, values) => {
+              const current = demandas.find((demanda) => demanda.id === id);
+              if (!current || !await handleSalvarEdicaoDemanda(id, values)) return;
+              const selected = findResponsavel(values.responsavelId);
+              const preserveLegacy = !current.responsavelId && !values.responsavelId;
+              setModalEditarAberto(false);
+              if (drawerAberto) {
+                setDemandaSelecionada((previous) => previous ? {
+                  ...previous,
+                  assunto: values.assunto,
+                  responsavelId: selected?.id ?? null,
+                  responsavel: selected?.nome ?? (preserveLegacy ? current.responsavel : ''),
+                  limite1: values.limite1,
+                  limite2: values.limite2,
+                  setor: values.setor,
+                  proximaAcao: previous.status === 'Encerrado' ? '' : values.proximaAcao,
+                  proximaAcaoEm: previous.status === 'Encerrado' ? '' : values.proximaAcaoEm,
+                } : null);
+              } else {
+                setDemandaSelecionada(null);
+              }
+            }}
+          />
+        )}
 
-      {modalHistoricoAberto && demandaSelecionada && (
-        <ModalHistorico
+        {modalStatusAberto && demandaSelecionada && (
+          <ModalStatus
+            demanda={demandaSelecionada}
+            onClose={() => {
+              setModalStatusAberto(false);
+              if (!drawerAberto) setDemandaSelecionada(null);
+            }}
+            onAtualizar={async (id, input) => {
+              if (!await handleAtualizarStatus(id, input)) return;
+              setModalStatusAberto(false);
+              if (drawerAberto) {
+                setDemandaSelecionada((previous) => previous ? {
+                  ...previous,
+                  status: input.status,
+                  proximaAcao: input.status === 'Encerrado' ? '' : input.proximaAcao,
+                  proximaAcaoEm: input.status === 'Encerrado' ? '' : input.proximaAcaoEm,
+                } : null);
+              } else {
+                setDemandaSelecionada(null);
+              }
+            }}
+          />
+        )}
+
+        {modalHistoricoAberto && demandaSelecionada && (
+          <ModalHistorico
+            demanda={demandaSelecionada}
+            historico={historico}
+            onClose={() => {
+              setModalHistoricoAberto(false);
+              if (!drawerAberto) setDemandaSelecionada(null);
+            }}
+          />
+        )}
+
+        <DemandDetailDrawer
           demanda={demandaSelecionada}
           historico={historico}
+          open={drawerAberto}
+          nestedDialogOpen={drawerBloqueadoPorModal}
+          canEdit={canEdit}
           onClose={() => {
-            setModalHistoricoAberto(false);
-            if (!drawerAberto) setDemandaSelecionada(null);
+            setDrawerAberto(false);
+            setDemandaSelecionada(null);
           }}
+          onEdit={() => setModalEditarAberto(true)}
+          onStatus={() => setModalStatusAberto(true)}
         />
-      )}
-
-      <DemandDetailDrawer
-        demanda={demandaSelecionada}
-        historico={historico}
-        open={drawerAberto}
-        nestedDialogOpen={drawerBloqueadoPorModal}
-        canEdit={canEdit}
-        onClose={() => {
-          setDrawerAberto(false);
-          setDemandaSelecionada(null);
-        }}
-        onEdit={() => setModalEditarAberto(true)}
-        onStatus={() => setModalStatusAberto(true)}
-      />
-    </div>
+      </div>
     </Suspense>
   );
 };

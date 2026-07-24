@@ -11,6 +11,8 @@ describe('Header — identidade única do produto', () => {
         onLogout={vi.fn()}
         onOpenNovo={vi.fn()}
         onExportExcel={vi.fn()}
+        onOpenMinhasDemandas={vi.fn()}
+        personalWorkspaceActive={false}
         filtrosAtivos={{
           status: 'acompanhamento',
           quickFilters: { assinatura: false, hoje: false, vencido: false },
@@ -27,6 +29,7 @@ describe('Header — identidade única do produto', () => {
     expect(screen.queryByText('Central de Demandas')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Painel de Demandas' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /em acompanhamento/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /minhas demandas.*acompanhe sua carteira/i })).toBeInTheDocument();
     expect(screen.queryByText('Demandas Ativas')).not.toBeInTheDocument();
   });
 });

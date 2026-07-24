@@ -31,7 +31,7 @@ describe('adaptador de filtros na URL', () => {
     expect(serializeDemandFilters(filters).has('comando')).toBe(false);
   });
 
-  it('preserva todos os filtros conhecidos no round-trip', () => {
+  it('preserva os filtros conhecidos no round-trip sem transformar a carteira em parâmetro', () => {
     const filters: DemandFilters = {
       query: 'cessão temporária',
       type: 'Processo',
@@ -46,7 +46,16 @@ describe('adaptador de filtros na URL', () => {
       alert: 'prazo_final_vencido',
     };
 
-    expect(parseDemandFilters(serializeDemandFilters(filters))).toEqual(filters);
+    const serialized = serializeDemandFilters(filters);
+    expect(serialized.has('escopo')).toBe(false);
+    expect(parseDemandFilters(serialized)).toEqual({ ...filters, scope: 'equipe' });
+  });
+
+  it('ainda reconhece o escopo legado durante a leitura', () => {
+    const filters = parseDemandFilters(new URLSearchParams('escopo=meu&status=todos'));
+
+    expect(filters.scope).toBe('meu');
+    expect(filters.status).toBe('todos');
   });
 
   it('não serializa os valores padrão na URL', () => {

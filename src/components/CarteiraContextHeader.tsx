@@ -22,7 +22,7 @@ const COPY: Record<CarteiraMode, {
   pessoal: {
     title: 'Minhas demandas',
     description: 'Acompanhe sua carteira de processos.',
-    action: 'Ver todas as demandas',
+    action: 'Demandas Equipe CTRH',
     icon: 'fa-folder-open',
   },
 };

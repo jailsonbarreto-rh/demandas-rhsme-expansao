@@ -144,6 +144,7 @@ describe('ações interativas da interface', () => {
         demandas={[demanda]}
         historico={[historico]}
         onOpenEditar={onOpen}
+        onOpenMinhasDemandas={vi.fn()}
         renderAtencaoImediata={() => null}
       />,
     );

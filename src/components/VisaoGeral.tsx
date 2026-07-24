@@ -1,12 +1,10 @@
 import React from 'react';
-import { Demanda, ComentarioHistorico } from '../types';
-import { MinhasDemandasCallout } from './MinhasDemandasCallout';
+import { ComentarioHistorico, Demanda } from '../types';
 
 interface VisaoGeralProps {
   demandas: Demanda[];
   historico: ComentarioHistorico[];
   onOpenEditar: (demanda: Demanda) => void;
-  onOpenMinhasDemandas: () => void;
   renderAtencaoImediata: () => React.ReactNode;
 }
 
@@ -14,7 +12,6 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
   demandas,
   historico,
   onOpenEditar,
-  onOpenMinhasDemandas,
   renderAtencaoImediata,
 }) => {
   const total = demandas.length;
@@ -67,7 +64,6 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
   return (
     <div className="visao-geral-container" style={{ animation: 'fadeIn 0.4s ease-out forwards' }}>
       {renderAtencaoImediata()}
-      <MinhasDemandasCallout onOpen={onOpenMinhasDemandas} />
 
       <div className="dashboard-row">
         <div className="dashboard-col-card">

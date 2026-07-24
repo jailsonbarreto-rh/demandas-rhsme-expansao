@@ -56,23 +56,24 @@ O alternador terá aparência de cabeçalho de área, não de filtro. A ação m
 - demandas sem `responsavel_id`, incluindo `Vanessa Migrado`, não aparecem em nenhuma carteira pessoal;
 - a exportação Excel respeita a carteira atual e os filtros aplicados.
 
-## 6. Acesso destacado no dashboard
+## 6. Acesso destacado no cabeçalho
 
-O bloco grande criado anteriormente será substituído por um cartão compacto de acesso pessoal dentro da área de indicadores do cabeçalho.
+O bloco grande criado anteriormente será substituído por um quinto cartão compacto dentro da mesma grade dos indicadores.
 
 Características:
 
 - título `Minhas demandas`;
 - texto `Acompanhe sua carteira de processos.`;
-- ícone de pasta;
-- ação visual explícita;
+- ícone de pasta e seta de acesso;
 - fundo azul institucional suave, borda e sombra diferenciadas dos indicadores numéricos;
 - sem contagem, para não duplicar indicadores nem gerar ambiguidade sobre ativos/encerrados;
 - clique em qualquer área do cartão abre `/minhas-demandas`;
-- em desktop, o cartão ocupará uma posição própria logo abaixo da faixa de indicadores, alinhado ao bloco de `Vencem hoje`/área central sem criar uma segunda tela inteira;
-- em telas menores, ocupará toda a largura e seguirá a ordem natural após os indicadores.
+- permanece visível em todas as áreas autenticadas, permitindo acesso direto também a partir da carteira geral;
+- apresenta estado ativo quando a rota pessoal estiver aberta;
+- a grade responsiva poderá mantê-lo na primeira linha ou quebrá-lo para a linha seguinte, inclusive abaixo da região de `Vencem hoje`, conforme a largura disponível;
+- em telas menores, ocupa a largura disponível seguindo a ordem natural dos indicadores.
 
-O cartão é um atalho de descoberta; a aba permanente é o mecanismo principal de navegação.
+O cartão é um atalho permanente e visualmente destacado; a aba é o mecanismo estrutural principal de navegação.
 
 ## 7. Remoções
 
@@ -87,10 +88,10 @@ O cartão é um atalho de descoberta; a aba permanente é o mecanismo principal 
 
 Receberá:
 
-- `activeWorkspace: 'geral' | 'pessoal' | null`;
-- `onOpenMinhasDemandas`;
+- `personalWorkspaceActive: boolean`;
+- `onOpenMinhasDemandas: () => void`.
 
-Renderizará o cartão compacto de acesso pessoal somente na `Visão geral`, evitando repetição nas telas de carteira.
+Renderizará o cartão compacto na grade de indicadores e comunicará seu estado ativo.
 
 ### `CarteiraContextHeader`
 
@@ -117,13 +118,13 @@ Será a autoridade de rotas e escopo:
 - alternador com título semântico e botão acessível por teclado;
 - foco visível;
 - textos explícitos, sem depender apenas de cor ou ícone;
-- cartão do dashboard implementado como botão semântico;
+- cartão do cabeçalho implementado como botão semântico;
 - ordem de tabulação correspondente à ordem visual.
 
 ## 10. Responsividade
 
 - quatro abas podem quebrar ou rolar horizontalmente sem reduzir excessivamente as áreas de toque;
-- cartão pessoal ocupa largura total em mobile;
+- cartão pessoal participa da grade responsiva e ocupa largura total quando necessário;
 - alternador interno empilha texto e ação em telas estreitas;
 - a tabela e os filtros mantêm o comportamento responsivo atual.
 
@@ -135,7 +136,7 @@ Será a autoridade de rotas e escopo:
 - alternância geral ↔ pessoal preserva filtros e troca o conjunto de dados;
 - `Limpar filtros` não troca de rota nem de carteira;
 - URL legada `?escopo=meu` redireciona corretamente;
-- cartão do dashboard abre a carteira pessoal;
+- cartão do cabeçalho abre a carteira pessoal e indica o estado ativo;
 - demandas sem UUID não aparecem na carteira pessoal;
 - exportação usa o conjunto da carteira atual;
 - smoke tests desktop e mobile validam navegação, foco e responsividade.

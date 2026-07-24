@@ -94,6 +94,15 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const setDrawerAberto = (open: boolean) => {
     if (!open) navigate({ pathname: '/demandas', search: searchParams.toString() });
   };
+  const handleOpenMinhasDemandas = () => {
+    const nextFilters: DemandFilters = {
+      ...filtros,
+      scope: 'meu',
+      responsibleId: 'todos',
+    };
+    setFiltros(nextFilters);
+    navigate({ pathname: '/demandas', search: serializeDemandFilters(nextFilters).toString() });
+  };
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [recentSearches, setRecentSearches] = useState(() => loadRecentSearches());
@@ -450,7 +459,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
           onClick={() => setActiveTab('visao-geral')}
           title="Ver o resumo e indicadores do CTRH"
         >
-          <i className="fa-solid fa-chart-pie"></i>
+          <i className="fa-solid fa-chart-pie" />
           <span>Visão geral</span>
         </button>
 
@@ -461,7 +470,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
           onClick={() => setActiveTab('demandas')}
           title="Ver a listagem e pesquisar processos operacionais"
         >
-          <i className="fa-solid fa-list-check"></i>
+          <i className="fa-solid fa-list-check" />
           <span>Demandas</span>
         </button>
 
@@ -473,7 +482,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             onClick={() => setActiveTab('admin')}
             title="Ver e gerenciar configurações e perfis de servidores"
           >
-            <i className="fa-solid fa-sliders"></i>
+            <i className="fa-solid fa-sliders" />
             <span>Administração</span>
           </button>
         )}
@@ -494,7 +503,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             fontSize: '0.875rem',
             fontWeight: 500,
           }}>
-            <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '1.125rem', color: '#ef4444' }}></i>
+            <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '1.125rem', color: '#ef4444' }} />
             <div><strong>Erro de Conectividade:</strong> {data.error}</div>
           </div>
         </div>
@@ -510,6 +519,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                 demandas={demandas}
                 historico={historico}
                 onOpenEditar={openDemand}
+                onOpenMinhasDemandas={handleOpenMinhasDemandas}
                 renderAtencaoImediata={() => (
                   <AtencaoImediata
                     demandas={demandas}

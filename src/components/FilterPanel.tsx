@@ -83,6 +83,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   if (filtros.classification !== 'Todas') filtrosAtivosCount += 1;
   if (filtros.status !== 'acompanhamento') filtrosAtivosCount += 1;
   if (filtros.sector !== 'Todos') filtrosAtivosCount += 1;
+  if (filtros.scope === 'meu') filtrosAtivosCount += 1;
   if (filtros.periodStart || filtros.periodEnd) filtrosAtivosCount += 1;
   if (quickFilters.assinatura) filtrosAtivosCount += 1;
   if (quickFilters.hoje) filtrosAtivosCount += 1;
@@ -92,6 +93,22 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
   return (
     <div className="filters-panel">
+      {filtros.scope === 'meu' && (
+        <div className="personal-scope-banner" role="status">
+          <div className="personal-scope-label">
+            <i className="fa-solid fa-user-check" aria-hidden="true" />
+            <strong>Minhas demandas</strong>
+          </div>
+          <button
+            type="button"
+            className="personal-scope-reset"
+            onClick={() => setFiltros((current) => ({ ...current, scope: 'equipe' }))}
+          >
+            Ver carteira da equipe
+          </button>
+        </div>
+      )}
+
       <div className="filters-header" style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
         <div className="filters-quick-buttons" aria-label="Filtros rápidos">
           <button

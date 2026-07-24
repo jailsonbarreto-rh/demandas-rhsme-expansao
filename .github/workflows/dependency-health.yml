@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit-test-build-browser:
@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v7
@@ -28,13 +30,19 @@ jobs:
       - name: Regenerate lockfile for dependency overrides
         run: npm install --package-lock-only --ignore-scripts
 
-      - name: Upload regenerated lockfile
-        uses: actions/upload-artifact@v7
-        with:
-          name: regenerated-package-lock
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 2
+      - name: Commit regenerated lockfile
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "Lockfile já está sincronizado."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: atualizar lockfile de dependências"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
       - name: Install locked dependencies
         run: npm ci

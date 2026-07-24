@@ -52,7 +52,7 @@ Para cada decisão independente, deverão ser apresentados:
 3. quais usuários seriam afetados;
 4. um cenário real de uso;
 5. alternativas possíveis, inclusive manter o comportamento atual;
-6. recomendação da ferramenta, identificada apenas como recomendação;
+6. recomendação identificada apenas como recomendação;
 7. impactos positivos e negativos;
 8. dependências com decisões de outros ciclos;
 9. dificuldade e custo de reverter depois;
@@ -131,6 +131,16 @@ A única ocorrência `Vanessa Migrado` continuará preservada como informação 
 
 Quando houver `responsavel_id`, o banco validará a existência do usuário e derivará o nome diretamente do perfil. O cliente não poderá criar divergência entre UUID e nome. A proteção será aplicada nas RPCs e por gatilho de banco, sem modificar outras regras de negócio.
 
+### R3-D07 — Acesso visual à carteira pessoal
+
+**Data:** 24 de julho de 2026  
+**Classificação:** nova decisão proposta  
+**Decisão:** APROVADA.
+
+A primeira tela exibirá, imediatamente abaixo de `Atenção agora`, um bloco central destacado com o título `Minhas demandas`, o subtítulo `Acompanhe sua carteira de processos.` e o botão `Acessar minha carteira`.
+
+A ação abrirá a rota existente de demandas com `escopo=meu`, usando exclusivamente o UUID do usuário autenticado. A listagem indicará visualmente o escopo pessoal e oferecerá ação para retornar à carteira da equipe. Não serão exibidos contadores, listas prévias ou textos adicionais no bloco, e nenhuma regra de banco, permissão ou negócio adjacente será alterada.
+
 ## 4. Modelo de registro de decisão do ciclo
 
 Para cada decisão, registrar:
@@ -157,7 +167,7 @@ Para cada decisão, registrar:
 |---|---|---|---|---|
 | R1 | Pendente | Não | Não | Aguardando debate |
 | R2 | Não iniciado | Não | Não | Futuro |
-| R3 | Concluído para responsáveis oficiais | Sim | Sim | Implementado em Production; aguardando homologação do responsável pelo produto |
+| R3 | Concluído para responsáveis oficiais e carteira pessoal | Sim | Sim | Responsáveis oficiais em Production; acesso `Minhas demandas` em publicação controlada |
 | R4 | Não iniciado | Não | Não | Futuro |
 | R5 | Não iniciado | Não | Não | Futuro |
 | R6 | Não iniciado | Não | Não | Futuro |

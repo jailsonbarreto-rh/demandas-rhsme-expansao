@@ -1,0 +1,102 @@
+.minhas-demandas-callout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 28px 30px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.minhas-demandas-callout-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: rgba(47, 111, 165, 0.1);
+  color: var(--accent-color);
+  font-size: 1.25rem;
+}
+
+.minhas-demandas-callout-copy {
+  min-width: 0;
+}
+
+.minhas-demandas-callout-copy h2 {
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.minhas-demandas-callout-copy p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.minhas-demandas-callout-action {
+  min-height: 44px;
+  padding-inline: 20px;
+  white-space: nowrap;
+}
+
+.personal-scope-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -4px -4px 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(47, 111, 165, 0.24);
+  border-radius: var(--radius-md);
+  background: rgba(47, 111, 165, 0.06);
+}
+
+.personal-scope-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary-color);
+}
+
+.personal-scope-label i {
+  color: var(--accent-color);
+}
+
+.personal-scope-reset {
+  border: 0;
+  background: transparent;
+  color: var(--accent-hover);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.personal-scope-reset:hover {
+  color: var(--primary-color);
+}
+
+@media (max-width: 640px) {
+  .minhas-demandas-callout {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    padding: 22px 18px;
+  }
+
+  .minhas-demandas-callout-action {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .personal-scope-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

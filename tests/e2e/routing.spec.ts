@@ -18,9 +18,20 @@ test('rotas e filtros preservam o contexto de navegação', async ({ page }) => 
   const processNumber = await firstRow.locator('.numero-link').innerText();
   await firstRow.getByRole('button', { name: /^abrir$/i }).click();
   await expect(page).toHaveURL(/\/demandas\/\d+\?/);
-  await expect(page.getByRole('heading', { name: new RegExp(processNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })).toBeVisible();
+  await expect(page.getByRole('heading', {
+    name: new RegExp(processNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  })).toBeVisible();
 
   await page.goBack();
   await expect(page).toHaveURL(/\/demandas\?status=/);
   await expect(page.getByLabel(/^status$/i)).toHaveValue('todos');
+});
+
+test('URL legada de escopo pessoal migra para a rota própria', async ({ page }) => {
+  await login(page);
+  await page.goto('/demandas?escopo=meu&status=todos');
+
+  await expect(page).toHaveURL(/\/minhas-demandas\?status=todos$/);
+  await expect(page.getByRole('button', { name: /^minhas demandas$/i })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
 });

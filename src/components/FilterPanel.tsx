@@ -323,6 +323,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <div className="filters-active-state" data-testid="active-filters-state">
               <i className="fa-solid fa-filter" aria-hidden="true" />
               <span className="badge-count">{filtrosAtivosCount}</span>
+              {' '}
               <strong>{filtrosAtivosCount === 1 ? 'filtro ativo' : 'filtros ativos'}</strong>
             </div>
           )}

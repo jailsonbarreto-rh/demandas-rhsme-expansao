@@ -499,34 +499,46 @@ begin
 end;
 $$;
 
--- Confirma que todos os perfis necessários existem antes de tocar nas demandas.
+-- Exige perfis apenas quando há demandas legadas correspondentes a migrar.
 do $$
 declare
   v_missing integer;
 begin
-  with expected(email) as (
+  with mappings(legacy_name, email) as (
     values
-      ('ericaholanda@rioeduca.net'),
-      ('gisellefiquene@rioeduca.net'),
-      ('sabrinaandrade@rioeduca.net'),
-      ('thiago.freitas@rioeduca.net'),
-      ('jaquelinemelo007@rioeduca.net'),
-      ('jailsonbsilva@rioeduca.net'),
-      ('jessica.aguiar@rioeduca.net'),
-      ('elisabethmoraes@rioeduca.net'),
-      ('helenasilva@rioeduca.net')
+      ('Erica', 'ericaholanda@rioeduca.net'),
+      ('Erica Migrado', 'ericaholanda@rioeduca.net'),
+      ('Giselle', 'gisellefiquene@rioeduca.net'),
+      ('Giselle Migrado', 'gisellefiquene@rioeduca.net'),
+      ('Sabrina', 'sabrinaandrade@rioeduca.net'),
+      ('Thiago', 'thiago.freitas@rioeduca.net'),
+      ('Thiago Migrado', 'thiago.freitas@rioeduca.net'),
+      ('Jaqueline', 'jaquelinemelo007@rioeduca.net'),
+      ('Jaqueline Migrado', 'jaquelinemelo007@rioeduca.net'),
+      ('Jaqueline IHA', 'jaquelinemelo007@rioeduca.net'),
+      ('Jailson', 'jailsonbsilva@rioeduca.net'),
+      ('Jessica', 'jessica.aguiar@rioeduca.net'),
+      ('Beth', 'elisabethmoraes@rioeduca.net'),
+      ('Beth Migrado', 'elisabethmoraes@rioeduca.net'),
+      ('Helena', 'helenasilva@rioeduca.net')
   )
   select count(*) into v_missing
-  from expected e
-  where not exists (
+  from mappings m
+  where exists (
     select 1
-    from public.perfis_usuarios p
-    join auth.users u on u.id = p.id
-    where lower(p.email) = e.email
-  );
+    from public.sme_demandas d
+    where d.responsavel_id is null
+      and d.responsavel = m.legacy_name
+  )
+    and not exists (
+      select 1
+      from public.perfis_usuarios p
+      join auth.users u on u.id = p.id
+      where lower(p.email) = m.email
+    );
 
   if v_missing <> 0 then
-    raise exception 'Migração R3 interrompida: % perfis oficiais não foram encontrados.', v_missing;
+    raise exception 'Migração R3 interrompida: % perfis oficiais necessários não foram encontrados.', v_missing;
   end if;
 end;
 $$;
@@ -610,7 +622,7 @@ where d.id = t.id
 
 alter table public.sme_demandas enable trigger sme_demandas_touch_updated_at;
 
--- Invariantes finais da migração autorizada.
+-- Invariantes aplicáveis tanto à produção quanto a bancos vazios de homologação.
 do $$
 begin
   if exists (
@@ -631,9 +643,13 @@ begin
     raise exception 'Migração R3 incompleta: ainda existem responsáveis autorizados sem UUID.';
   end if;
 
-  if (select count(*) from public.sme_demandas
-      where responsavel = 'Vanessa Migrado' and responsavel_id is null) <> 1 then
-    raise exception 'Migração R3 interrompida: a informação Vanessa Migrado não foi preservada corretamente.';
+  if exists (
+    select 1
+    from public.sme_demandas
+    where responsavel = 'Vanessa Migrado'
+      and responsavel_id is not null
+  ) then
+    raise exception 'Migração R3 interrompida: a informação Vanessa Migrado foi vinculada indevidamente.';
   end if;
 
   if exists (

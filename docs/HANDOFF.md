@@ -9,9 +9,9 @@ Atualizado em: **25 de julho de 2026 — reconciliação documental pós-R3 conc
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrsllr` |
-| `main` documental | `e4359230e08506262ce383395b33814d96d3f572` — merge do PR #55 |
+| Marco documental | Reconciliação pós-R3 mesclada pelo PR #55; Handoff alinhado após o merge |
 | Último Production documentado | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
-| Reconciliação documental | PR #55 mesclado após gate integral aprovado |
+| Reconciliação documental | Concluída após gate integral aprovado |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
 | Plano vigente | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` |
 | Atividade atual autorizada | Debate pré-implementação do R1 |

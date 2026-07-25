@@ -7,16 +7,39 @@ Sistema institucional para acompanhamento de demandas de Recursos Humanos da Sec
 
 ## Situação atual
 
-A aplicação opera em produção no modo multiusuário integrado ao Supabase, com autenticação real, persistência compartilhada, RLS, RPCs transacionais e atualização em tempo real. Builds de produção utilizam o projeto Supabase oficial mesmo quando a hospedagem não sincroniza as variáveis públicas. O modo local existe somente para desenvolvimento e testes, usa oito demandas inequivocamente sintéticas e é rejeitado em produção.
+A aplicação opera em produção no modo multiusuário integrado ao Supabase, com autenticação real, persistência compartilhada, RLS, RPCs transacionais e atualização em tempo real. O modo local existe somente para desenvolvimento e testes, usa dados inequivocamente sintéticos e é rejeitado em produção.
 
-O projeto inclui:
+O estado funcional atual inclui:
 
-- autenticação local de desenvolvimento compatível com o site atual;
-- autenticação e perfis pelo Supabase;
-- banco com RLS e níveis `administrador`, `editor` e `leitor`;
-- bootstrap administrativo idempotente dos usuários iniciais e do acervo original, mantido fora do grafo do cliente;
-- Realtime para demandas e histórico;
-- verificação automática de que identificadores administrativos não aparecem no bundle público.
+- responsáveis oficiais vinculados por UUID;
+- 378 demandas históricas vinculadas aos perfis oficiais;
+- preservação de uma informação histórica sem UUID (`Vanessa Migrado`);
+- novas demandas e reatribuições sem nome livre ou responsável externo;
+- carteira da equipe em `/demandas`;
+- carteira pessoal por UUID em `/minhas-demandas`;
+- indicadores contextuais conforme a carteira aberta;
+- filtros, paginação visual e rotas profundas preservando o contexto;
+- mutações auditáveis preparadas no Supabase.
+
+A sequência de evolução retoma R1 e R2 antes de R4 e R5. Nenhum ciclo está automaticamente autorizado.
+
+## Governança e documentação
+
+Antes de alterar código, banco ou comportamento, leia `AGENTS.md`.
+
+As referências vigentes são:
+
+- [Registro de Decisões](docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md);
+- [Contexto do Produto](docs/PRODUCT_CONTEXT.md);
+- [Plano Remanescente v2.1](docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md);
+- [Adendo de Governança v2.0.3](docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md);
+- [Protocolo de Decisões v1.2](docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.2.md);
+- [Política de Sincronização Documental](docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md);
+- [Handoff Operacional](docs/HANDOFF.md).
+
+Toda alteração de regra de negócio, lógica, permissão, obrigatoriedade, cálculo, dado ou rota deve atualizar no mesmo PR todos os documentos vigentes afetados. Código correto com documentação divergente não constitui entrega concluída.
+
+Planos e especificações anteriores permanecem apenas como registros históricos no Git e não podem restaurar regras posteriormente alteradas.
 
 ## Executar localmente
 
@@ -39,10 +62,8 @@ npm run check:full
 
 ## Configuração do Supabase
 
-Consulte o guia [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md). A chave secreta de bootstrap nunca deve ser configurada no frontend nem rastreada pelo Git.
+Consulte [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md). Chaves secretas nunca devem ser configuradas no frontend nem rastreadas pelo Git.
 
-## Relatório do projeto
+## Relatório e estado operacional
 
-O histórico consolidado do trabalho entregue e o estado atual dos ambientes estão em [docs/RELATORIO_ESTADO_ATUAL.md](docs/RELATORIO_ESTADO_ATUAL.md).
-
-<!-- deployment-retry: 2026-07-14T06:53:00Z -->
+O estado mais recente dos ambientes e a próxima atividade autorizada estão em [docs/HANDOFF.md](docs/HANDOFF.md). Relatórios antigos permanecem históricos e não substituem o Handoff atual.

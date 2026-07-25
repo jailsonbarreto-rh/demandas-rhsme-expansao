@@ -1,6 +1,11 @@
 # Contexto do Produto — Central de Demandas CTRH
 
-Este documento é a referência operacional para decisões de produto. O contrato completo de execução está em `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md`; os ADRs de `docs/adr/` registram decisões arquiteturais vinculantes.
+**Estado documental:** vigente após as decisões R3-D01 a R3-D10.  
+**Atualizado em:** 25 de julho de 2026.
+
+Este documento é a referência operacional para a semântica atual do produto. Decisões expressamente aprovadas estão em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`; a sequência remanescente está em `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`; a governança está no Adendo e no Protocolo vigentes indicados por `AGENTS.md`.
+
+Versões anteriores dos planos e especificações são registros históricos. Não restauram regras posteriormente alteradas.
 
 ## Propósito
 
@@ -15,7 +20,8 @@ O uso principal ocorre em desktop, com consultas rápidas e verificação de pra
 Ao final do plano, o sistema oferece:
 
 - início personalizado por login e papel;
-- carteira “Minhas demandas” baseada no UUID do perfil;
+- carteira da equipe em `/demandas`;
+- carteira “Minhas demandas” em `/minhas-demandas`, baseada exclusivamente no UUID do perfil;
 - separação entre acompanhamento, providência CTRH, espera externa, sobrestamento e encerramento;
 - próxima ação e data de acompanhamento para toda demanda nova ou movimentada que não esteja encerrada;
 - alertas completos, consolidados e preventivos;
@@ -24,7 +30,7 @@ Ao final do plano, o sistema oferece:
 - andamento separado de mudança de status;
 - histórico com autoria, momento, conteúdo, justificativa e antes/depois;
 - reatribuição rastreada e exclusão lógica recuperável;
-- busca avançada com responsável, escopo pessoal e link profundo;
+- busca avançada com responsável oficial, carteira pessoal e link profundo;
 - sete modelos Excel parametrizados;
 - painel gerencial de estoque, risco, carga e fluxo, acompanhado de cobertura e limitações;
 - preferências e visões salvas por usuário;
@@ -41,6 +47,8 @@ Ficam fora do escopo: ranking competitivo, avaliação de desempenho, workflow d
 - Supabase é a fonte de verdade em produção.
 - O modo local serve apenas a desenvolvimento e testes com dados sintéticos.
 - A interface usa vocabulário administrativo conhecido pela equipe, sem jargão de software imposto.
+- O Registro de Decisões é a fonte das regras expressamente aprovadas.
+- Código, banco e documentos vigentes devem descrever a mesma regra.
 
 ## Pessoas e necessidades
 
@@ -58,7 +66,7 @@ Precisa encontrar um processo e compreender situação, responsabilidade, prazo 
 
 ### Responsável pelo produto
 
-Precisa confiar que a evolução responde ao trabalho real, preserva decisões anteriores, evita complexidade sem retorno e não transforma lacunas em conclusões falsas. Qualidade de produto e correção técnica são gates independentes.
+Precisa confiar que a evolução responde ao trabalho real, preserva decisões anteriores, evita complexidade sem retorno e não transforma lacunas em conclusões falsas. Qualidade de produto, correção técnica e coerência documental são gates independentes.
 
 ## Dores concretas
 
@@ -67,11 +75,12 @@ Precisa confiar que a evolução responde ao trabalho real, preserva decisões a
 3. Falta de resposta imediata para “o que está comigo?” e “o que faço hoje?”.
 4. Prazos percebidos apenas quando já são críticos.
 5. Status sem indicação da próxima providência.
-6. Responsáveis em texto livre, com grafias e abreviações diferentes.
+6. Responsáveis historicamente registrados em texto livre, com grafias e abreviações diferentes.
 7. Edições e reatribuições invisíveis no histórico.
 8. Relatórios que exigem filtragem, cópia e formatação manual.
 9. Indicadores aparentemente precisos baseados em baixa cobertura.
 10. Risco de a Central virar mais um lugar para alimentar, sem substituir controles paralelos.
+11. Risco de documentação antiga induzir ferramentas ou pessoas a desfazer decisões posteriores.
 
 ## Trabalhos que o produto deve realizar
 
@@ -123,19 +132,24 @@ O gestor escolhe modelo e recorte e recebe Excel com resumo, base e rastreabilid
 
 ### O legado está incompleto
 
-Uma demanda antiga sem prazo ou vínculo de responsável continua consultável. O sistema não inventa dados nem chama o item de vencido; identifica a lacuna e leva o administrador à fila de saneamento.
+Uma demanda antiga sem prazo ou vínculo oficial de responsável continua consultável. O sistema não inventa dados nem chama o item de vencido; identifica a lacuna e leva o administrador à fila de saneamento.
+
+### Uma regra foi alterada
+
+A decisão é registrada, implementada e sincronizada nos documentos vigentes no mesmo trabalho. Um plano ou relatório histórico permanece preservado, mas não volta a ser usado como regra atual.
 
 ## Princípios de produto
 
 - **Ação antes de contemplação:** trabalho e risco aparecem antes de gráficos.
 - **Próxima ação antes de status isolado:** status sem providência é insuficiente.
 - **Menor atrito compatível com qualidade:** campos e confirmações existem quando evitam erro material ou geram informação útil.
-- **Contexto preservado:** abrir, editar, registrar andamento e voltar mantém filtros, busca, rota e escopo.
+- **Contexto preservado:** abrir, editar, registrar andamento e voltar mantém filtros, busca, rota e carteira.
 - **Uma fonte de verdade:** dados operacionais ficam no Supabase; Excel e preferências não viram bases paralelas.
 - **Transparência sobre qualidade:** vazio não vira zero, inferência não vira fato e volume não vira desempenho.
 - **Segurança proporcional:** autenticação não é contornada e dados reais não são entregues antes do login.
 - **Continuidade institucional:** autoria e histórico permitem que outra pessoa compreenda a demanda.
 - **Familiaridade:** usar Processo, Responsável, Prazo interno, Prazo final, Próxima ação, Andamento, Tramitado e Encerrado.
+- **Coerência documental:** mudança de regra só está concluída quando código, banco e documentos vigentes concordam.
 
 ## Decisões funcionais fixadas
 
@@ -173,19 +187,25 @@ Cada prazo é `definido` com data, `nao_informado` sem data e com pendência de 
 
 ### Próxima ação
 
-Toda demanda não encerrada criada ou movimentada após a ativação exige descrição objetiva com cinco caracteres úteis, data de acompanhamento e responsabilidade interna ou não atribuição explícita. Em `Tramitado`, descreve a verificação de retorno; em `Sobrestado`, a condição ou revisão. Encerramento limpa os campos por RPC. O legado incompleto entra na fila de saneamento e precisa ser completado na próxima movimentação pertinente.
+Toda demanda não encerrada criada ou movimentada após a ativação exige descrição objetiva com cinco caracteres úteis, data de acompanhamento e responsável oficial ou ausência explícita de responsável. Em `Tramitado`, descreve a verificação de retorno; em `Sobrestado`, a condição ou revisão. Encerramento limpa os campos por RPC. O legado incompleto entra na fila de saneamento e precisa ser completado na próxima movimentação pertinente.
 
 Consulte `docs/adr/ADR-002-prazos-proxima-acao.md`.
 
 ### Responsabilidade
 
-`responsavel_id` é a identidade operacional. O texto `responsavel` continua como snapshot e compatibilidade legada.
+`responsavel_id` é a identidade operacional oficial. O texto `responsavel` é snapshot legível e compatibilidade legada.
 
-- Interno: UUID preenchido e nome atualizado pela RPC.
-- Externo: UUID nulo e texto livre explícito.
-- Não atribuído: UUID nulo e texto vazio.
-- “Minhas demandas”: comparação exclusiva do UUID com o usuário autenticado.
-- Migração: somente correspondência normalizada exata e unívoca pode ser sugerida; aplicação exige mapa aprovado.
+- **Responsável oficial:** UUID de usuário cadastrado e nome derivado no servidor.
+- **Não atribuído:** UUID nulo e texto vazio; continua permitido, mas integra a qualidade de dados.
+- **Informação legada sem UUID:** pode ser preservada sem virar opção de novo cadastro ou reatribuição.
+- **Responsável externo ou nome livre:** não é opção vigente para novas demandas ou futuras reatribuições.
+- **“Minhas demandas”:** comparação exclusiva do UUID com o usuário autenticado.
+- **Carteira da equipe:** `/demandas`.
+- **Carteira pessoal:** `/minhas-demandas`.
+- **Compatibilidade:** `escopo=meu` redireciona para `/minhas-demandas`, preservando os demais filtros.
+- **Exceção conhecida:** `Vanessa Migrado` permanece como informação histórica sem UUID até nova decisão expressa.
+
+As decisões R3-D01 a R3-D09 prevalecem sobre descrições anteriores de responsável externo ou carteira pessoal por parâmetro.
 
 ### Eventos e exclusão
 
@@ -215,7 +235,7 @@ Prioridade:
 4. assinatura: Para Assinatura sem evento há três dias ou mais;
 5. parada: Providência CTRH sem evento há sete dias ou mais;
 6. aguardando retorno: Tramitado sem evento há quinze dias ou mais;
-7. cadastro incompleto: sem responsável, prazo não informado ou próxima ação.
+7. cadastro incompleto: sem responsável oficial, prazo não informado ou próxima ação.
 
 Uma demanda com vários sinais aparece uma vez, pela severidade mais alta, e preserva sinais adicionais como chips textuais. Ordenação: severidade, data mais antiga, maior tempo parado e número.
 
@@ -231,7 +251,8 @@ Uma demanda com vários sinais aparece uma vez, pela severidade mais alta, e pre
 - Tempo no status: desde o último evento de mudança de status.
 - Tempo médio: apenas origem sistema, com criação e encerramento após o novo histórico.
 - Cobertura de prazo: definido ou marcado não aplicável.
-- Cobertura de responsabilidade: UUID interno ou responsável externo explícito.
+- Cobertura de responsabilidade: UUID oficial vinculado.
+- Lacuna de responsabilidade: UUID nulo, inclusive informação textual legada preservada.
 - Cobertura de histórico: evento além da criação.
 
 “Ranking de responsáveis” é proibido; usar **distribuição da carteira por responsável**. Métricas com baixa cobertura exibem a limitação.
@@ -250,18 +271,20 @@ Início padrão “Meu trabalho” com carteira própria, próximas ações, atr
 
 Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar filtros e exportar modelos permitidos. Não recebe controles de mutação.
 
-### Rotas-alvo
+### Rotas vigentes e rotas-alvo
 
-| Rota | Finalidade | Acesso |
-|---|---|---|
-| `/` | início personalizado | autenticados |
-| `/demandas` | busca, filtros e lista | autenticados |
-| `/demandas/:id` | prontuário e link profundo | autenticados |
-| `/relatorios` | Central de Relatórios | autenticados, por papel |
-| `/admin` | perfis e parâmetros | administrador |
-| `/admin/qualidade-dados` | saneamento | administrador |
-| `/admin/lixeira` | exclusões recuperáveis | administrador |
-| `/redefinir-senha` | nova senha | sessão de recuperação |
+| Rota | Finalidade | Acesso | Estado |
+|---|---|---|---|
+| `/` | início e visão geral atual; futuramente início personalizado | autenticados | vigente |
+| `/demandas` | carteira completa da equipe, busca e filtros | autenticados | vigente |
+| `/minhas-demandas` | carteira pessoal por UUID, busca e filtros | autenticados | vigente |
+| `/demandas/:id` | detalhe/prontuário preservando a carteira da equipe | autenticados | vigente; prontuário ainda evoluirá |
+| `/minhas-demandas/:id` | detalhe/prontuário preservando a carteira pessoal | autenticados | vigente; prontuário ainda evoluirá |
+| `/relatorios` | Central de Relatórios | autenticados, por papel | futura |
+| `/admin` | perfis e parâmetros | administrador | vigente parcialmente |
+| `/admin/qualidade-dados` | saneamento | administrador | futura |
+| `/admin/lixeira` | exclusões recuperáveis | administrador | futura |
+| `/redefinir-senha` | nova senha | sessão de recuperação | futura |
 
 ### Hierarquia de “Meu trabalho”
 
@@ -271,6 +294,8 @@ Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar f
 4. Próximas ações cronológicas.
 5. Visões rápidas: Minhas, Vencidas, Próximas, Para assinatura e Paradas.
 6. Últimas movimentações relevantes.
+
+“Minhas demandas” é a carteira pessoal completa. “Meu trabalho” será a agenda priorizada; não são superfícies equivalentes.
 
 Gráficos nunca antecedem a fila de ação.
 
@@ -282,10 +307,13 @@ Gráficos nunca antecedem a fila de ação.
 - Sugestão aproximada explicada e destaque sem injeção de HTML.
 - Buscas recentes e atalho `Ctrl/Command+K`.
 - Filtros e demanda preservados na URL.
+- Carteira de origem preservada ao abrir e fechar uma demanda.
+- `/demandas` e `/minhas-demandas` permanecem áreas distintas.
 - Excel sem macros e com neutralização de formula injection.
 - RLS, RPCs, Realtime e três papéis.
 - Modais acessíveis, confirmação de descarte e drawer navegável.
 - Responsividade desktop e mobile.
+- Responsabilidade oficial por UUID sem reintrodução de nome livre.
 
 ## Antipadrões
 
@@ -295,13 +323,16 @@ Uma implementação está errada se:
 - força troca de status apenas para registrar trabalho;
 - mostra somente um item por categoria de alerta;
 - considera Tramitado concluído ou ausência de prazo atrasada;
-- personaliza por nome textual;
+- personaliza ou forma carteira por nome textual;
+- reintroduz responsável externo ou nome livre sem nova decisão expressa;
+- trata `scope=meu` como arquitetura principal em vez da rota `/minhas-demandas`;
 - coloca gráficos antes da ação;
 - sugere produtividade individual por volume;
 - usa recorte diferente entre tela e relatório;
-- perde filtros ou rota ao abrir e fechar demanda;
+- perde filtros, rota ou carteira ao abrir e fechar demanda;
 - aplica saneamento repetitivo sem dry-run;
 - cria notificações ou arquitetura mais complexas que o trabalho exige;
+- usa documento histórico para desfazer decisão posterior;
 - passa tecnicamente, mas incentiva planilha paralela.
 
 ## Indicadores de sucesso
@@ -316,6 +347,7 @@ Uma implementação está errada se:
 - Nenhum dado real entregue a usuário não autenticado.
 - Redução progressiva de “não informado” e “não atribuído”.
 - Abandono de planilhas operacionais paralelas para a rotina coberta.
+- Nenhuma regra implantada permanece contradita por documento vigente.
 
 Esses indicadores avaliam o produto, nunca pessoas.
 
@@ -335,6 +367,7 @@ Depois da implementação, confirmar na tela, papel e cenário afetados:
 2. se o usuário entende a próxima ação;
 3. se o contexto de navegação foi preservado;
 4. se dados e limitações são confiáveis e explícitos;
-5. se existe risco de estimular controle paralelo.
+5. se existe risco de estimular controle paralelo;
+6. se os documentos vigentes descrevem exatamente a regra entregue.
 
-Quando o plano não define um detalhe, derive a menor decisão reversível a partir deste contexto. Duas opções plausíveis com efeitos substancialmente diferentes exigem parada e decisão do responsável pelo produto.
+Toda mudança deve cumprir a `POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`. Quando o plano não define um detalhe, derive apenas a menor decisão reversível que não altere comportamento substancial. Duas opções plausíveis com efeitos diferentes exigem parada e decisão do responsável pelo produto.

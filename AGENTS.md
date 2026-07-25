@@ -67,7 +67,10 @@ Classifique cada item como:
 - decisão anteriormente confirmada;
 - nova decisão proposta;
 - melhoria opcional;
-- questão ainda aberta.
+- questão ainda aberta;
+- reconciliação documental.
+
+Reconciliação documental corrige documentos que divergem de decisão já aprovada; não reabre silenciosamente o mérito da regra.
 
 Não basta obter aprovação do título ou do objetivo geral do ciclo. A aprovação deve alcançar os comportamentos concretos que serão implementados.
 

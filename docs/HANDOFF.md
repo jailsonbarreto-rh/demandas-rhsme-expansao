@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **25 de julho de 2026 — PR #55 de reconciliação documental pós-R3**
+Atualizado em: **25 de julho de 2026 — reconciliação documental pós-R3 concluída**
 
 ## Estado atual
 
@@ -9,14 +9,13 @@ Atualizado em: **25 de julho de 2026 — PR #55 de reconciliação documental p�
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrsllr` |
-| `main` usada como base documental | `967a727d25fcbae848a7556da510e9387581f7b7` |
+| `main` documental | `e4359230e08506262ce383395b33814d96d3f572` — merge do PR #55 |
 | Último Production documentado | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
-| Branch documental | `docs/sincronizar-regras-pos-r3` |
-| Pull request | `#55 — docs: reconciliar regras vigentes após o R3` |
+| Reconciliação documental | PR #55 mesclado após gate integral aprovado |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
-| Plano vigente proposto | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` |
-| Atividade atual | Revisão e homologação do PR documental #55 |
-| Próxima atividade | Debate pré-implementação do R1, somente após merge e homologação desta correção documental |
+| Plano vigente | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` |
+| Atividade atual autorizada | Debate pré-implementação do R1 |
+| Implementação funcional autorizada | Nenhuma; depende de nova aprovação expressa |
 
 ## Decisões vigentes de responsabilidade
 
@@ -39,7 +38,7 @@ Atualizado em: **25 de julho de 2026 — PR #55 de reconciliação documental p�
 - Detalhes preservam carteira, filtros e rota de origem.
 - Indicadores contextuais usam a carteira atualmente aberta.
 
-## Reconciliação documental do PR #55
+## Reconciliação documental concluída no PR #55
 
 Foram instituídos ou atualizados:
 
@@ -56,6 +55,8 @@ Foram instituídos ou atualizados:
 - `.github/pull_request_template.md`.
 
 Planos, adendos, protocolo e especificação anteriores potencialmente conflitantes foram marcados como históricos e apontam para seus substitutos. A íntegra original permanece recuperável no histórico Git, inclusive no commit-base `967a727d25fcbae848a7556da510e9387581f7b7`.
+
+O PR #55 foi aprovado pelo workflow oficial em todas as etapas: auditoria de dependências, assinaturas e proveniência, análise estática, testes e cobertura, build, orçamento do bundle e testes Playwright.
 
 ## Política permanente de documentação
 
@@ -86,9 +87,9 @@ A entrega não está concluída quando apenas o código e os testes estão corre
 
 | Ciclo | Estado |
 |---|---|
-| R1 | próximo debate; implementação não autorizada |
+| R1 | debate pré-implementação autorizado; implementação não autorizada |
 | R2 | pendente após R1 |
-| R3 | implementado e preservado |
+| R3 | implementado, documentado e preservado |
 | R4 | pendente após R1, R2 e R3 |
 | R5 | suspenso até R4 |
 | R6–R12 | futuros |
@@ -109,13 +110,13 @@ A execução cronológica retoma R1 e R2. O R3 não deve ser desfeito nem reexec
 
 ## Publicação e segurança operacional
 
-O PR #55 é exclusivamente documental:
+A reconciliação do PR #55 foi exclusivamente documental:
 
-- não altera frontend, banco, migrations, RLS, Auth, Realtime ou dados;
-- não exige deployment de Preview ou Production;
-- não autoriza execução funcional de R1 ou qualquer ciclo posterior;
-- mantém o bloqueio de deploy automático vigente.
+- não alterou frontend, banco, migrations, RLS, Auth, Realtime ou dados;
+- não exigiu deployment de Preview ou Production;
+- não autorizou execução funcional de R1 ou qualquer ciclo posterior;
+- manteve o bloqueio de deploy automático vigente.
 
 ## Regra de continuidade
 
-Depois do merge e da homologação do PR #55, o próximo trabalho permitido é analisar e debater o R1 item a item. A implementação do R1 dependerá de nova autorização expressa sobre o escopo consolidado.
+A próxima atividade permitida é analisar e debater o R1 item a item. A implementação do R1 dependerá de consolidação das decisões e nova autorização expressa.

@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **25 de julho de 2026 — reconciliação documental pós-R3**
+Atualizado em: **25 de julho de 2026 — PR #55 de reconciliação documental pós-R3**
 
 ## Estado atual
 
@@ -8,13 +8,14 @@ Atualizado em: **25 de julho de 2026 — reconciliação documental pós-R3**
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr` |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrsllr` |
 | `main` usada como base documental | `967a727d25fcbae848a7556da510e9387581f7b7` |
 | Último Production documentado | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
-| Branch atual | `docs/sincronizar-regras-pos-r3` |
+| Branch documental | `docs/sincronizar-regras-pos-r3` |
+| Pull request | `#55 — docs: reconciliar regras vigentes após o R3` |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
-| Plano vigente | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` |
-| Atividade atual | Sincronização das regras vigentes após R3 e instituição do gate documental permanente |
+| Plano vigente proposto | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` |
+| Atividade atual | Revisão e homologação do PR documental #55 |
 | Próxima atividade | Debate pré-implementação do R1, somente após merge e homologação desta correção documental |
 
 ## Decisões vigentes de responsabilidade
@@ -38,7 +39,7 @@ Atualizado em: **25 de julho de 2026 — reconciliação documental pós-R3**
 - Detalhes preservam carteira, filtros e rota de origem.
 - Indicadores contextuais usam a carteira atualmente aberta.
 
-## Reconciliação documental desta revisão
+## Reconciliação documental do PR #55
 
 Foram instituídos ou atualizados:
 
@@ -51,9 +52,10 @@ Foram instituídos ou atualizados:
 - `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`;
 - `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
 - `docs/SUPABASE_SETUP.md`;
+- `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
 - `.github/pull_request_template.md`.
 
-Planos e especificações anteriores potencialmente conflitantes foram marcados como históricos. A íntegra original permanece no histórico Git.
+Planos, adendos, protocolo e especificação anteriores potencialmente conflitantes foram marcados como históricos e apontam para seus substitutos. A íntegra original permanece recuperável no histórico Git, inclusive no commit-base `967a727d25fcbae848a7556da510e9387581f7b7`.
 
 ## Política permanente de documentação
 
@@ -107,13 +109,13 @@ A execução cronológica retoma R1 e R2. O R3 não deve ser desfeito nem reexec
 
 ## Publicação e segurança operacional
 
-Esta revisão é exclusivamente documental:
+O PR #55 é exclusivamente documental:
 
 - não altera frontend, banco, migrations, RLS, Auth, Realtime ou dados;
-- não exige deployment de Production;
+- não exige deployment de Preview ou Production;
 - não autoriza execução funcional de R1 ou qualquer ciclo posterior;
 - mantém o bloqueio de deploy automático vigente.
 
 ## Regra de continuidade
 
-Depois do merge desta correção documental, o próximo trabalho permitido é analisar e debater o R1 item a item. A implementação do R1 dependerá de nova autorização expressa sobre o escopo consolidado.
+Depois do merge e da homologação do PR #55, o próximo trabalho permitido é analisar e debater o R1 item a item. A implementação do R1 dependerá de nova autorização expressa sobre o escopo consolidado.

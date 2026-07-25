@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **24 de julho de 2026 — indicadores contextuais do R3 em Production**
+Atualizado em: **25 de julho de 2026 — reconciliação documental pós-R3**
 
 ## Estado atual
 
@@ -8,43 +8,65 @@ Atualizado em: **24 de julho de 2026 — indicadores contextuais do R3 em Produc
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrsllr` |
-| Código funcional publicado | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr` |
+| `main` usada como base documental | `967a727d25fcbae848a7556da510e9387581f7b7` |
+| Último Production documentado | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
+| Branch atual | `docs/sincronizar-regras-pos-r3` |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
-| Linha de base funcional | Ciclos originais 0 a 4 concluídos; responsáveis oficiais, navegação das carteiras e indicadores contextuais do R3 implementados |
-| Atividade atual | **Homologação do refinamento final dos indicadores pelo responsável do produto** |
-| Próximo ciclo | Não autorizado até a homologação e nova decisão expressa |
+| Plano vigente | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` |
+| Atividade atual | Sincronização das regras vigentes após R3 e instituição do gate documental permanente |
+| Próxima atividade | Debate pré-implementação do R1, somente após merge e homologação desta correção documental |
 
-## Identidade oficial dos responsáveis
+## Decisões vigentes de responsabilidade
 
 - `responsavel_id` é a identidade oficial do responsável.
-- Novas demandas e edições usam seleção de usuários cadastrados; texto livre não é aceito.
-- RPCs e gatilho impedem divergência entre UUID e nome.
+- Novas demandas e futuras reatribuições selecionam usuário cadastrado por UUID ou permanecem sem responsável.
+- Responsável externo e nome livre não são opções atuais.
+- O nome textual vinculado a UUID é derivado pelo servidor.
+- Informação textual legada sem UUID pode ser preservada sem virar opção futura.
 - 378 demandas históricas permanecem vinculadas aos perfis oficiais.
-- `Vanessa Migrado` permanece preservada como única informação histórica sem UUID.
-- Permissões, papéis, status e demais regras de negócio foram preservados.
+- `Vanessa Migrado` permanece como única informação histórica conhecida sem UUID.
+- Demandas sem UUID não aparecem em carteira pessoal.
 
-## Navegação das carteiras publicada
+## Navegação vigente
 
 - `/demandas` representa a carteira completa da equipe.
-- `/minhas-demandas` representa somente as demandas vinculadas ao UUID do usuário autenticado.
-- A navegação principal possui aba permanente `Minhas demandas`.
-- O cabeçalho exibe um cartão compacto e destacado para acesso direto à carteira pessoal.
-- As duas carteiras possuem cabeçalho contextual e ação visível para alternância direta.
-- `Limpar filtros` limpa somente critérios de pesquisa e nunca troca a carteira atual.
-- URLs antigas com `escopo=meu` são redirecionadas para `/minhas-demandas`, preservando os demais filtros.
-- Os detalhes de demanda preservam a carteira de origem na rota.
-- Demandas sem UUID, inclusive `Vanessa Migrado`, não aparecem na carteira pessoal.
-- Nenhuma migration, tabela, função ou dado do Supabase foi alterado nesta revisão.
+- `/minhas-demandas` representa somente demandas vinculadas ao UUID autenticado.
+- `escopo=meu` existe somente como compatibilidade legada e redireciona para `/minhas-demandas`.
+- As duas carteiras possuem cabeçalho contextual e alternância direta.
+- `Limpar filtros` não troca a carteira.
+- Detalhes preservam carteira, filtros e rota de origem.
+- Indicadores contextuais usam a carteira atualmente aberta.
 
-## Indicadores contextuais publicados
+## Reconciliação documental desta revisão
 
-- `Em acompanhamento`, `Para assinatura`, `Vencem hoje` e `Vencidas` usam a carteira completa na Visão geral e em `/demandas`.
-- Em `/minhas-demandas`, os quatro indicadores usam somente demandas cujo `responsavel_id` corresponde ao UUID autenticado.
-- A quantidade de demandas com providência imediata segue o mesmo contexto da carteira ativa.
-- Os cliques nos indicadores preservam a carteira aberta e aplicam o filtro somente dentro dela.
-- Ao alternar entre carteira pessoal e geral, as quantidades são recalculadas imediatamente.
-- A lógica existente do cabeçalho foi preservada; apenas a coleção de entrada passou a ser a carteira delimitada pela rota.
+Foram instituídos ou atualizados:
+
+- `AGENTS.md`;
+- `README.md`;
+- `docs/PRODUCT_CONTEXT.md`;
+- `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`;
+- `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md`;
+- `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.2.md`;
+- `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`;
+- `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
+- `docs/SUPABASE_SETUP.md`;
+- `.github/pull_request_template.md`.
+
+Planos e especificações anteriores potencialmente conflitantes foram marcados como históricos. A íntegra original permanece no histórico Git.
+
+## Política permanente de documentação
+
+Toda alteração concreta de lógica, regra de negócio, permissão, obrigatoriedade, modelo de dados, cálculo, rota ou comportamento visível deve atualizar no mesmo PR todos os documentos vigentes afetados.
+
+A entrega não está concluída quando apenas o código e os testes estão corretos. Também é necessário:
+
+1. registrar a decisão;
+2. sincronizar Product Context, plano, AGENTS, ADRs e documentação técnica;
+3. atualizar este Handoff;
+4. marcar textos históricos conflitantes;
+5. pesquisar no repositório por orientações antigas;
+6. preencher o checklist documental do PR.
 
 ## Fotografia reconciliada de Production
 
@@ -52,39 +74,46 @@ Atualizado em: **24 de julho de 2026 — indicadores contextuais do R3 em Produc
 |---|---:|
 | Demandas | 379 |
 | Demandas vinculadas a perfil oficial | 378 |
-| `Vanessa Migrado` com UUID nulo | 1 |
+| Informação histórica sem UUID | 1 |
 | Históricos | 764 |
 | Perfis | 13 |
 | Divergências UUID–nome | 0 |
+| Links de origem cadastrados | 0 |
 
-## Segurança de dependências
+## Estado dos ciclos
 
-- O React Router 7.18.1 foi substituído pelo pacote principal `react-router` 8.3.0 após uma vulnerabilidade alta ser detectada pelo `npm audit`.
-- O lockfile foi regenerado pelo próprio npm.
-- A auditoria de vulnerabilidades e a verificação de assinaturas e proveniência foram aprovadas.
-- O workflow preserva o relatório de `npm audit` como artefato para rastreabilidade.
+| Ciclo | Estado |
+|---|---|
+| R1 | próximo debate; implementação não autorizada |
+| R2 | pendente após R1 |
+| R3 | implementado e preservado |
+| R4 | pendente após R1, R2 e R3 |
+| R5 | suspenso até R4 |
+| R6–R12 | futuros |
 
-## Validação realizada
+A execução cronológica retoma R1 e R2. O R3 não deve ser desfeito nem reexecutado.
 
-- auditoria de dependências e assinaturas aprovada;
-- análise estática aprovada;
-- testes unitários, integração e cobertura aprovados;
-- build e orçamento do bundle aprovados;
-- testes Playwright desktop e mobile aprovados;
-- cenário contextual validado com contagens distintas para carteira geral e pessoal;
-- filtro `Para assinatura` validado dentro das duas carteiras;
-- Preview `dpl_269KLitdSkMVa6DUNHArpWbUG8Q5` validado em estado `READY`;
-- Production `dpl_44HusLjkHEJxpKtvWQFfrgJmXvNR` validada em estado `READY`;
-- domínio oficial validado com resposta HTTP 200.
+## Pendências estruturantes reconhecidas
+
+- cinco constraints ainda `NOT VALID`;
+- concorrência otimista ausente;
+- carregamento integral de demandas e histórico;
+- paginação apenas visual;
+- recargas integrais após mutações e Realtime;
+- E2E Supabase ainda a estruturar;
+- semântica do campo `setor` ainda aberta;
+- R4 ainda não entregue como experiência completa;
+- R5 não autorizado.
 
 ## Publicação e segurança operacional
 
-- PR de responsáveis oficiais: `#46`.
-- PR do primeiro acesso visual: `#48`.
-- PR da navegação definitiva das carteiras: `#50`.
-- PR dos indicadores contextuais: `#52`.
-- O deploy automático foi habilitado somente durante a publicação controlada e restaurado para bloqueado no encerramento.
+Esta revisão é exclusivamente documental:
+
+- não altera frontend, banco, migrations, RLS, Auth, Realtime ou dados;
+- não exige deployment de Production;
+- não autoriza execução funcional de R1 ou qualquer ciclo posterior;
+- mantém o bloqueio de deploy automático vigente.
 
 ## Regra de continuidade
 
-A próxima ação é a homologação visual e funcional do refinamento dos indicadores em Production. Nenhum novo ciclo ou ampliação funcional está autorizado automaticamente.
+Depois do merge desta correção documental, o próximo trabalho permitido é analisar e debater o R1 item a item. A implementação do R1 dependerá de nova autorização expressa sobre o escopo consolidado.

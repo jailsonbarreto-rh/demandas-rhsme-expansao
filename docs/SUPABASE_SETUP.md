@@ -1,26 +1,43 @@
 # Supabase e operação multiusuário
 
+**Atualizado em:** 25 de julho de 2026  
+**Estado:** vigente após as migrations auditáveis e o R3.
+
 O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, na região `sa-east-1`.
 
 A aplicação mantém dois modos:
 
 - `supabase`: persistência compartilhada, autenticação real, RLS e Realtime;
-- `local`: desenvolvimento e testes com oito demandas sintéticas; recusado quando `PROD=true`.
+- `local`: desenvolvimento e testes com dados sintéticos; recusado quando `PROD=true`.
 
-## 1. Schema e migrations
+## 1. Fonte de verdade e autoridade documental
 
-A cadeia atualmente aplicada é:
+Supabase é a fonte de verdade dos dados operacionais em produção.
 
-```text
-supabase/migrations/20260707000000_sme_demandas.sql
-supabase/migrations/20260713211616_revoke_anon_operational_rpcs.sql
-supabase/migrations/20260713211703_add_foreign_key_indexes.sql
-supabase/migrations/20260717002408_batch_import_audit_20260716.sql
-supabase/migrations/20260717003552_batch_import_allow_legacy_classifications.sql
-supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
-```
+Regras de produto não devem ser inferidas apenas do schema ou de uma migration histórica. Consulte, nesta ordem:
 
-O último arquivo preserva no nome a identificação funcional original do Ciclo 3 e usa, como prefixo, a versão efetivamente registrada pelo Supabase remoto.
+1. `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
+2. `docs/PRODUCT_CONTEXT.md`;
+3. `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`;
+4. `docs/HANDOFF.md`.
+
+Toda alteração de schema, RPC, RLS, Auth ou Realtime deve cumprir a `POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`.
+
+## 2. Migrations
+
+A cadeia versionada está em `supabase/migrations/` e deve ser aplicada exclusivamente pelos arquivos do repositório, na ordem dos prefixos.
+
+Os marcos principais atualmente aplicados são:
+
+1. criação de perfis, demandas, histórico, RLS, Realtime e RPCs iniciais;
+2. revogação de execução anônima e índices de chaves estrangeiras;
+3. importação e auditoria do legado;
+4. expansão aditiva do modelo com prazos semânticos, próxima ação, origem, exclusão lógica e eventos estruturados;
+5. RPCs auditáveis de criação, edição, andamento, transição, exclusão e restauração;
+6. grants e contratos administrativos necessários;
+7. R3 de responsáveis oficiais por UUID e coerência UUID–nome.
+
+Não mantenha neste documento uma lista manual considerada mais autoritativa que o próprio diretório. Antes de qualquer migration, confirme os arquivos existentes, o histórico remoto e o estado de `main`.
 
 Para um projeto novo:
 
@@ -30,168 +47,170 @@ npx supabase link --project-ref SEU_PROJECT_REF
 npx supabase db push
 ```
 
-As migrations iniciais criam as tabelas `perfis_usuarios`, `sme_demandas` e `sme_historico`, habilitam RLS e Realtime, instalam as RPCs transacionais e revogam a execução anônima das funções privilegiadas.
+## 3. Estado atual do domínio
 
-## 2. Ciclo 3 — expansão aditiva
+### 3.1 Demandas
 
-A migration do Ciclo 3 foi aplicada em produção em 22/07/2026 e é exclusivamente aditiva. Ela acrescentou:
+`public.sme_demandas` inclui, entre outros:
 
-- vínculo opcional de responsável por UUID;
+- número, tipo, assunto e classificação;
+- `responsavel_id` e snapshot textual `responsavel`;
+- prazo interno e final com situação e justificativa;
 - próxima ação e data de acompanhamento;
-- situação e justificativa dos dois prazos;
-- link e origem do registro;
-- campos de exclusão lógica;
-- tipo de evento, status anterior e alterações estruturadas no histórico;
-- checks `NOT VALID`, índices operacionais e gatilhos temporários de compatibilidade com as RPCs v1.
+- status e setor;
+- link e origem;
+- autoria e timestamps;
+- metadados de exclusão lógica.
 
-Ela não removeu colunas, funções, grants ou RPCs. Os 379 registros existentes foram classificados como `legado`. Uma data foi classificada como `definido` somente quando já existia; a ausência foi classificada como `nao_informado`. Nenhuma autoria, responsabilidade por UUID, justificativa ou status anterior foi inventado.
+### 3.2 Histórico
 
-### 2.1 Salvaguarda do plano gratuito
+`public.sme_historico` preserva:
 
-A organização utiliza o plano gratuito, sem backup automático acessível. Antes de alterar o contrato público, a própria migration criou snapshots privados de:
+- demanda;
+- tipo de evento;
+- status anterior e resultante;
+- setor;
+- comentário ou justificativa;
+- alterações estruturadas antes/depois;
+- autoria e data.
 
-```text
-private.cycle3_backup_sme_demandas_20260722
-private.cycle3_backup_sme_historico_20260722
-private.cycle3_backup_perfis_usuarios_20260722
-private.cycle3_backup_manifest_20260722
-```
-
-Os papéis `anon` e `authenticated` não possuem acesso a essas tabelas. O manifesto preservou as contagens anteriores: 379 demandas, 385 históricos e 5 perfis.
-
-Esses snapshots são uma salvaguarda limitada ao risco desta migration. Não substituem backup externo contra perda integral do projeto. Devem ser removidos apenas por migration posterior, depois da estabilidade confirmada.
-
-### 2.2 Homologação sem custo adicional
-
-A migration é testada no GitHub Actions por:
+Tipos oficiais:
 
 ```text
-.github/workflows/supabase-local-migrations.yml
-supabase/tests/cycle3_legacy_fixture.sql
-supabase/tests/cycle3_invariants.sql
+criacao
+andamento
+mudanca_status
+edicao
+reatribuicao
+alteracao_prazo
+exclusao
+restauracao
 ```
 
-O gate inicia um Supabase efêmero, aplica as cinco migrations anteriores, insere dados sintéticos legados, aplica o Ciclo 3, valida snapshots, backfill, constraints, índices e RPCs v1, recria a base do zero e destrói o ambiente ao final.
+### 3.3 Responsabilidade após o R3
 
-Nenhum dado real, credencial remota ou branch paga é usado.
+A regra vigente é:
 
-## 3. Estado validado após a aplicação
+- `responsavel_id` identifica oficialmente o responsável;
+- o nome é derivado do perfil no servidor;
+- nova demanda ou reatribuição seleciona usuário cadastrado por UUID;
+- sem responsável é permitido com UUID nulo e texto vazio;
+- responsável externo e nome livre não são opções atuais;
+- texto legado sem UUID pode ser preservado sem virar opção futura;
+- `Vanessa Migrado` permanece como exceção histórica conhecida;
+- carteira pessoal usa somente igualdade de UUID.
 
-As verificações de produção confirmaram:
+A função `listar_perfis_minimos()` fornece os perfis disponíveis à interface conforme o contrato vigente. RPCs e gatilho impedem divergência entre UUID e nome.
 
-| Dimensão | Resultado |
+## 4. RPCs operacionais vigentes
+
+O frontend atual utiliza ou possui contratos para:
+
+- `criar_sme_demanda_v2`;
+- `editar_sme_demanda`;
+- `registrar_andamento_sme_demanda`;
+- `transicionar_status_sme_demanda`;
+- `excluir_sme_demanda`;
+- `restaurar_sme_demanda`;
+- `listar_perfis_minimos`.
+
+As RPCs obtêm autoria por `auth.uid()`, validam papel no banco e gravam mutação e evento na mesma transação.
+
+As RPCs v1 permanecem temporariamente disponíveis apenas por compatibilidade e somente poderão ser revogadas no R12 após homologação integral.
+
+## 5. RLS e papéis
+
+- usuário ativo consulta demandas e histórico;
+- administrador e editor executam mutações operacionais autorizadas;
+- somente administrador exclui logicamente e restaura;
+- leitor não executa mutações;
+- perfil pendente ou inativo não acessa dados operacionais;
+- `anon` não consulta tabelas nem executa RPCs operacionais;
+- inserções e atualizações diretas não substituem RPCs;
+- o último administrador ativo não pode ser removido ou rebaixado.
+
+Uma interface pode ocultar ação, mas a segurança real deve continuar no banco.
+
+## 6. Fotografia reconciliada de Production
+
+| Indicador | Resultado |
 |---|---:|
 | Demandas | 379 |
-| Históricos | 385 |
-| Perfis | 5 |
-| Números duplicados | 0 |
-| Históricos órfãos | 0 |
-| Registros classificados como `legado` | 379 |
-| Prazo interno definido | 10 |
-| Prazo interno não informado | 369 |
-| Prazo final definido | 25 |
-| Prazo final não informado | 354 |
-| Eventos de criação | 379 |
-| Eventos posteriores | 6 |
-| Status anterior inferido | 0 |
-| Registros excluídos logicamente | 0 |
-| Índices do Ciclo 3 | 4 |
-| Checks `NOT VALID` | 5 |
+| Demandas vinculadas por UUID | 378 |
+| Informação histórica sem UUID | 1 |
+| Históricos | 764 |
+| Perfis | 13 |
+| Divergências UUID–nome | 0 |
+| Links de origem cadastrados | 0 |
 
-As RPCs v1 de criação e mudança de status foram testadas dentro de uma transação revertida. O teste confirmou o novo contrato e deixou zero registros de teste na produção.
+Eventos conhecidos:
 
-## 4. Dados e usuários iniciais
+| Tipo | Quantidade |
+|---|---:|
+| criação | 379 |
+| reatribuição | 378 |
+| mudança de status | 7 |
+| andamento | 0 |
+| edição | 0 |
+| alteração de prazo | 0 |
+| exclusão | 0 |
+| restauração | 0 |
 
-O acervo administrativo original de 50 demandas permanece em `scripts/bootstrap/initial-demandas.json`. Esse arquivo é consumido apenas pelo comando administrativo `npm run bootstrap:supabase`, está fora de `src` e não integra o bundle público.
+Essas contagens são fotografia de 25/07/2026, não constantes de aplicação. Toda operação futura deve consultar novamente o banco.
 
-O bootstrap valida o JSON com schema estrito, é idempotente por número e consegue reparar histórico ausente. Ele não é a fonte autoritativa do estado atual do banco.
+## 7. Pendências estruturais reconhecidas
 
-No navegador, o modo local usa exclusivamente `src/data/demoDemandas.ts`, com oito registros sintéticos identificados por `DEMO-`.
+Antes de ampliar R4 e R5, permanecem para debate e execução controlada:
 
-Perfis configurados:
+- validação formal das cinco constraints `NOT VALID`;
+- concorrência otimista por versão esperada;
+- alinhamento de limites entre banco e Zod;
+- definição do contrato de `link_origem`;
+- paginação real no servidor;
+- histórico sob demanda;
+- redução de recargas integrais após RPC e Realtime;
+- E2E contra Supabase real ou efêmero por papel.
 
-| E-mail | Nível | Status |
-|---|---|---|
-| `wilson.mpeixoto@rioeduca.net` | administrador | ativo |
-| `jailsonbsilva@rioeduca.net` | administrador | ativo |
-| `teste@rioeduca.net` | editor | ativo |
-| `ernane.jann@rioeduca.net` | leitor | pendente |
+Essas pendências não autorizam mudança automática. Seguem a governança do R1 e R2.
 
-Senhas, chaves secretas e credenciais administrativas não devem ser registradas no Git nem expostas ao Vite.
+## 8. Dados e segurança operacional
 
-## 5. Integração Vercel
+- dados reais não entram em `src`, fixtures públicas, logs, screenshots ou artefatos;
+- chaves secretas e `service_role` não entram no Vite;
+- scripts de bootstrap ficam fora do grafo do cliente;
+- modo local usa somente dados sintéticos;
+- migrations materiais exigem backup legível e invariantes;
+- rollback de frontend não apaga colunas ou eventos válidos;
+- correção de banco ocorre por nova migration versionada, nunca por edição manual não registrada.
 
-A integração Supabase–Vercel sincroniza as variáveis públicas:
+## 9. Integração Vercel
+
+Variáveis públicas aceitas:
 
 ```dotenv
 SUPABASE_URL=
 SUPABASE_PUBLISHABLE_KEY=
 ```
 
-Também podem existir os equivalentes `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+Também podem existir equivalentes públicos compatíveis com a integração de hospedagem. Configuração parcial deve produzir erro controlado. Produção nunca aceita modo local.
 
-O `vite.config.ts` expõe ao bundle somente credenciais públicas. Chaves secretas, URLs PostgreSQL e senhas permanecem indisponíveis no navegador.
+## 10. Verificação
 
-Configuração explícita opcional:
-
-```dotenv
-VITE_APP_MODE=supabase
-VITE_SUPABASE_URL=https://SEU_PROJECT_REF.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLICA
-```
-
-Configuração parcial produz erro controlado. Em produção, `VITE_APP_MODE=local` também é recusado.
-
-## 6. Compatibilidade da aplicação
-
-O repositório remoto tenta o contrato expandido e mantém um fallback legado somente para ausência inequívoca de coluna ou cache de schema. Esse fallback não mascara falhas de RLS, autenticação ou rede.
-
-Com o schema expandido ativo:
-
-- `sme_demandas` é lida com os campos novos e `deleted_at is null`;
-- linhas antigas recebem defaults seguros no mapper;
-- as mutações continuam temporariamente nas RPCs v1;
-- os gatilhos classificam somente situação de prazo e tipo de evento necessários à compatibilidade;
-- o Ciclo 4 substituirá as mutações v1 por contratos auditáveis v2.
-
-## 7. Autorizações preservadas
-
-Continuam homologados:
-
-1. administrador consulta e gerencia perfis, edita e exclui demandas;
-2. editor cria e edita por fluxos autorizados, mas não exclui;
-3. leitor ativo apenas consulta;
-4. perfil pendente não acessa dados operacionais;
-5. inserções diretas em demandas e histórico são recusadas;
-6. alteração direta de `status` é recusada;
-7. criação e mudança de status funcionam pelas RPCs transacionais;
-8. a RPC de bootstrap é exclusiva da `service_role`;
-9. `anon` não executa RPCs operacionais;
-10. o último administrador ativo não pode ser rebaixado nem removido;
-11. Realtime permanece habilitado para demandas e histórico.
-
-## 8. Verificação e recuperação
-
-Depois de cada alteração consolidada:
+Depois de alteração consolidada:
 
 ```bash
 npm ci
 npm run check:full
 ```
 
-No deployment Vercel, confirmar:
+Para mudança de banco, execute também:
 
-- login com conta real;
-- carregamento do acervo remoto;
-- atualização via Realtime;
-- ações conforme o papel;
-- persistência após sair, atualizar e entrar novamente.
+- replay integral das migrations em ambiente seguro;
+- consultas de invariantes e contagens;
+- testes de papéis e chamadas diretas;
+- verificação de RLS e grants;
+- smoke de Realtime;
+- atualização dos tipos gerados;
+- atualização de Handoff, plano, Product Context e documentação afetada.
 
-O gate inclui scanner contra dados administrativos no bundle público e Playwright em desktop e mobile.
-
-Em falha de frontend após uma migration aditiva:
-
-- manter as colunas novas;
-- reverter para o último deployment estável;
-- não apagar colunas, históricos ou snapshots durante incidente;
-- corrigir o banco somente por nova migration versionada.
+No deployment, confirmar login real, carregamento remoto, ações por papel, persistência, Realtime e ausência de dados administrativos no bundle.

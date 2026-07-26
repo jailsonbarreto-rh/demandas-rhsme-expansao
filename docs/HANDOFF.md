@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **26 de julho de 2026 — Pacote E0 documental em revisão**
+Atualizado em: **26 de julho de 2026 — baseline documental do Pacote E0**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
@@ -19,26 +19,26 @@ Atualizado em: **26 de julho de 2026 — Pacote E0 documental em revisão**
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
 | Implementação funcional autorizada | Nenhuma |
-| Próxima atividade | Nenhum pacote posterior autorizado; depende de nova autorização expressa após revisão e homologação do E0 |
+| Próxima atividade | Nenhum pacote posterior autorizado; depende de nova autorização expressa |
 
-O SHA acima é a baseline estável verificada no início do E0. Ele não pretende ser um campo autorreferente de “SHA atual após o próprio merge”, que ficaria obsoleto no instante da atualização.
+O SHA-base acima registra a linha de partida verificada para o E0 e não pretende representar o SHA da `main` após o próprio merge.
 
-## Estado do Pacote E0
+## Pacote E0 documental
 
-O E0 foi autorizado exclusivamente para reconciliação documental e criação do gate de coerência. Nesta branch:
+O E0 foi autorizado exclusivamente para reconciliação documental e criação do gate de coerência. Seu conteúdo:
 
-- os Planos v3.1 e v1.2 foram versionados integralmente;
-- a cadeia vigente foi atualizada para Adendo v2.0.4, Protocolo v1.3 e Política v1.1;
-- o Plano Remanescente v2.1 e as versões substituídas foram preservados como históricos;
-- a ref do Supabase foi corrigida nos documentos vigentes;
-- nenhuma decisão `OP-Dxx` foi aprovada automaticamente;
-- nenhuma implementação funcional foi autorizada.
+- versiona os Planos v3.1 e v1.2;
+- atualiza a cadeia vigente para Adendo v2.0.4, Protocolo v1.3 e Política v1.1;
+- preserva o Plano Remanescente v2.1 e as versões substituídas como históricos;
+- corrige a ref do Supabase nos documentos vigentes;
+- não aprova automaticamente nenhuma decisão `OP-Dxx`;
+- não autoriza implementação funcional.
 
-O E0 **não está concluído enquanto o PR permanecer sem merge**. Esta execução não autoriza o merge.
+A presença deste conteúdo na `main` após o merge registra a conclusão documental do E0. Fora da `main`, ele representa a proposta de reconciliação em revisão. Em ambos os estados, nenhum pacote funcional posterior está autorizado.
 
-## Escopo material deste pacote
+## Escopo material do E0
 
-Este pacote:
+O E0:
 
 - altera apenas arquivos Markdown, `package.json` e scripts de teste/auditoria documental;
 - não altera frontend, estilos, componentes, TypeScript operacional ou comportamento da aplicação;
@@ -90,14 +90,11 @@ As contagens são uma fotografia de verificação, não constantes da aplicaçã
 - Andamento, prontuário e recuperação administrativa pertencem ao R5.
 - O Trilho B permanece separado e não bloqueia genericamente a evolução independente do Trilho A.
 
-Nenhuma dessas pendências foi corrigida ou autorizada por este pacote.
+Nenhuma dessas pendências foi corrigida ou autorizada pelo E0.
 
 ## Regra de continuidade
 
-Depois da revisão do PR:
-
-1. o E0 somente poderá ser considerado concluído após merge e homologação documental;
-2. nenhuma decisão `OP-Dxx` poderá ser inferida da adoção dos planos;
-3. o responsável pelo produto escolherá e autorizará expressamente o próximo pacote;
-4. qualquer implementação futura deverá atualizar o marcador de autorização neste Handoff e no Registro de Decisões;
-5. nenhum deployment decorrerá automaticamente deste E0.
+1. nenhuma decisão `OP-Dxx` pode ser inferida da adoção dos planos;
+2. o responsável pelo produto escolhe e autoriza expressamente o próximo pacote;
+3. qualquer implementação futura atualiza o marcador de autorização neste Handoff e no Registro de Decisões;
+4. nenhum deployment decorre automaticamente do E0.

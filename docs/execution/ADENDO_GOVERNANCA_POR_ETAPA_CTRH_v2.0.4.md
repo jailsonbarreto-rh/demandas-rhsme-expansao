@@ -1,24 +1,20 @@
-> **Nota de superação (26/07/2026):** documento preservado integralmente como registro histórico. Foi substituído pelo Adendo de Governança v2.0.4.
->
-> **Status documental:** HISTÓRICO — não orienta execução atual.
+# ADENDO DE GOVERNANÇA POR ETAPA — CENTRAL DE DEMANDAS CTRH
 
-# ADENDO DE GOVERNANÇA POR ETAPA — PLANO REMANESCENTE CTRH
-
-**Versão:** 2.0.3  
-**Data:** 25 de julho de 2026  
+**Versão:** 2.0.4  
+**Data:** 26 de julho de 2026  
 **Status:** VIGENTE — DEBATE, APROVAÇÃO E SINCRONIZAÇÃO DOCUMENTAL OBRIGATÓRIOS
 
 ## 1. Autoridade
 
-Este adendo substitui o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.2.md` para fins de autorização e sequência.
+Este adendo substitui o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md` para fins de autorização e sequência.
 
-O Plano Remanescente v2.1 organiza o trabalho possível, mas não autoriza automaticamente a implementação de ciclos ou itens. A governança ocorre ciclo por ciclo e decisão por decisão.
+O `Plano_Integrado_Reformulado_CTRH_v3.1.md` organiza a estratégia geral em dois trilhos coordenados. O `Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` organiza o roteiro executável possível do Trilho A. Nenhum deles autoriza automaticamente a implementação de pacotes, ciclos, itens ou decisões `OP-Dxx`. A governança ocorre pacote por pacote e decisão por decisão, e o Registro de Decisões é a fonte exclusiva das decisões expressamente aprovadas.
 
 ## 2. Fases obrigatórias
 
-Cada ciclo possui três fases independentes:
+Cada pacote ou ciclo possui três fases independentes:
 
-1. **Debate pré-implementação:** decompor o ciclo em decisões concretas e explicar telas, fluxos, permissões, dados e efeitos na rotina.
+1. **Debate pré-implementação:** decompor o pacote em decisões concretas e explicar telas, fluxos, permissões, dados e efeitos na rotina.
 2. **Implementação autorizada:** transformar em código ou banco somente decisões expressamente aprovadas e registradas.
 3. **Sincronização e homologação:** homologar apenas depois que código, banco e documentos vigentes descrevem a mesma regra.
 
@@ -82,7 +78,7 @@ O executor deve:
 
 A entrega não pode ser homologada quando o código contradiz documento vigente, o plano descreve regra superada, o Handoff não corresponde ao ambiente real ou uma decisão implementada não está registrada.
 
-Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`.
+Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`.
 
 ## 7. Limites
 
@@ -90,12 +86,12 @@ A ferramenta não pode:
 
 - completar lacunas silenciosamente;
 - ampliar o escopo por conveniência;
-- antecipar outro ciclo;
+- antecipar outro pacote;
 - alterar comportamento não debatido;
 - usar documento histórico para desfazer decisão posterior;
-- adiar atualização documental para outro ciclo.
+- adiar atualização documental para outro pacote.
 
-Nova escolha de produto descoberta durante a implementação retorna ao responsável antes de prosseguir.
+Nova escolha de produto descoberta durante a implementação retorna ao responsável antes de prosseguir. A descoberta interrompe somente o item afetado; o restante pode prosseguir quando for independente, seguro e não antecipar a decisão pendente.
 
 ## 8. Sequência operacional
 
@@ -126,18 +122,20 @@ As decisões R3-D01 a R3-D09 foram implementadas e prevalecem sobre textos anter
 - `escopo=meu` apenas como compatibilidade legada;
 - indicadores contextuais por carteira.
 
-O R3 não será refeito. A sequência de debate retoma R1, depois R2, antes de R4 e R5.
+O R3 não será refeito. O Plano Executivo v1.2 preserva esse marco e organiza os pacotes posteriores, sem autorizar sua implementação.
 
 ## 10. Próxima atividade autorizada
 
-Após a homologação desta reconciliação documental, fica autorizada somente a análise e o debate pré-implementação do R1. Não estão autorizadas alterações funcionais, migrations ou publicações.
+Este documento integra exclusivamente o Pacote E0 documental. O E0 somente estará concluído após merge e homologação do respectivo PR. Nenhum pacote funcional posterior está autorizado; a próxima atividade depende de nova autorização expressa após a revisão do E0.
 
 ## 11. Precedência
 
-1. este Adendo v2.0.3;
+1. este Adendo v2.0.4;
 2. decisões expressas registradas;
-3. Protocolo v1.2;
-4. Política de Sincronização Documental v1.0;
+3. Protocolo v1.3;
+4. Política de Sincronização Documental v1.1;
 5. AGENTS e Handoff atualizados;
-6. Product Context e Plano Remanescente v2.1;
-7. documentos anteriores apenas como históricos.
+6. Product Context;
+7. Plano Integrado v3.1, como estratégia geral;
+8. Plano Executivo da Operação Atual v1.2, como roteiro do Trilho A;
+9. documentos anteriores apenas como históricos.

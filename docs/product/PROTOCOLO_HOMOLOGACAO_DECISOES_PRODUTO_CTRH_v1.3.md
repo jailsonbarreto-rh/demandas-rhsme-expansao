@@ -1,25 +1,21 @@
-> **Nota de superação (26/07/2026):** documento preservado integralmente como registro histórico. Foi substituído pelo Protocolo v1.3.
->
-> **Status documental:** HISTÓRICO — não orienta execução atual.
-
 # PROTOCOLO DE DEBATE, APROVAÇÃO E SINCRONIZAÇÃO DAS DECISÕES DE PRODUTO — CTRH
 
-**Versão:** 1.2  
-**Data:** 25 de julho de 2026  
-**Status:** VIGENTE — GOVERNANÇA CICLO A CICLO  
+**Versão:** 1.3  
+**Data:** 26 de julho de 2026  
+**Status:** VIGENTE — GOVERNANÇA POR PACOTE E DECISÃO  
 **Finalidade:** garantir que nenhuma mudança seja implementada sem compreensão, decisão expressa, registro e atualização dos documentos que orientarão trabalhos futuros.
 
 ## 1. Regra central
 
-O Plano Remanescente CTRH é referência do trabalho possível. Não autoriza automaticamente nenhum ciclo ou item.
+O `Plano_Integrado_Reformulado_CTRH_v3.1.md` é a estratégia geral, e o `Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` é o roteiro do Trilho A. Eles organizam o trabalho possível e não autorizam automaticamente pacote, ciclo, item ou decisão `OP-Dxx`.
 
-Antes de cada ciclo, a ferramenta deve decompor o trabalho em decisões independentes, explicar cada uma e submetê-la ao responsável pelo produto. A implementação somente começa após concordância expressa ou retificação posteriormente aprovada.
+Antes de cada pacote, a ferramenta deve decompor o trabalho em decisões independentes, explicar cada uma e submetê-la ao responsável pelo produto. A implementação somente começa após concordância expressa ou retificação posteriormente aprovada e registro no Registro de Decisões.
 
 A conclusão exige também sincronização documental. Uma regra implementada, mas contradita por documento vigente, não está homologada.
 
 ## 2. Unidade de análise
 
-A unidade de aprovação é a decisão concreta, não o título ou objetivo geral do ciclo.
+A unidade de aprovação é a decisão concreta, não o título ou objetivo geral do pacote.
 
 Devem ser tratadas separadamente mudanças que afetem:
 
@@ -88,7 +84,7 @@ Depois do debate, consolidar:
 - documentos que precisarão ser sincronizados;
 - critérios de aceite.
 
-A implementação depende de autorização expressa sobre essa consolidação e de registro prévio em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`.
+A implementação depende de autorização expressa sobre essa consolidação e de registro prévio em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`, que é a fonte exclusiva das decisões aprovadas.
 
 ## 7. Sincronização documental
 
@@ -101,7 +97,7 @@ A implementação depende de autorização expressa sobre essa consolidação e 
 ### 7.2 Durante a implementação
 
 - atualizar documentos vigentes junto da mudança funcional;
-- não deixar documentação para outro ciclo;
+- não deixar documentação para outro pacote;
 - preservar documentos históricos com nota de superação quando necessário;
 - parar quando dois documentos vigentes apresentarem regras incompatíveis sem precedência definida.
 
@@ -119,13 +115,13 @@ Confirmar:
 1. decisão registrada;
 2. código e banco coerentes;
 3. Product Context atualizado;
-4. Plano Remanescente atualizado quando houve mudança de estado, sequência ou escopo;
+4. Plano Integrado e Plano Executivo atualizados quando houve mudança de estado, sequência ou escopo que os afete;
 5. AGENTS atualizado quando houve obrigação permanente;
 6. ADR e documentação técnica atualizados;
 7. Handoff correspondente ao ambiente real;
 8. documentos históricos identificados como históricos ou superados.
 
-Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`.
+Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`.
 
 ## 8. Novas decisões durante a implementação
 
@@ -136,9 +132,9 @@ Se surgir nova escolha ou consequência:
 3. aguardar decisão expressa;
 4. atualizar o registro e a matriz documental antes de continuar.
 
-O restante pode prosseguir apenas quando independente e seguro.
+O restante pode prosseguir apenas quando independente, seguro e incapaz de antecipar ou tornar irreversível a decisão pendente.
 
-## 9. Sequência de cada ciclo
+## 9. Sequência de cada pacote
 
 ```text
 análise do estado atual
@@ -154,9 +150,37 @@ análise do estado atual
 → sincronização documental
 → busca de contradições remanescentes
 → homologação
-→ debate do ciclo seguinte
+→ atividade seguinte expressamente autorizada
 ```
 
 ## 10. Proibição de execução silenciosa
 
-Nenhuma ferramenta pode completar lacunas, antecipar outro ciclo, transformar recomendação em requisito ou usar documento histórico para desfazer decisão posterior. Quando houver divergência que afete o produto, deve explicá-la e aguardar decisão.
+Nenhuma ferramenta pode completar lacunas, antecipar outro pacote, transformar recomendação em requisito ou usar documento histórico para desfazer decisão posterior. Quando houver divergência que afete o produto, deve explicá-la e aguardar decisão.
+
+## 11. Controle formal de mudanças
+
+Novo fato, risco ou dependência não reabre automaticamente todo o programa. O executor deve:
+
+1. identificar o item materialmente afetado;
+2. registrar a descoberta e seus efeitos nos Trilhos A e B;
+3. suspender somente esse item;
+4. permitir a continuidade de itens independentes e seguros;
+5. submeter qualquer nova escolha de produto ao responsável;
+6. sincronizar os documentos vigentes quando a decisão for aprovada.
+
+Planos novos ou revisados não aprovam por si mesmos as recomendações que contêm. Mudança de autoridade documental, decisão de produto e autorização de implementação são atos separados e precisam ser registrados separadamente.
+
+## 12. Cadeia documental vigente
+
+Depois do E0, a interpretação obrigatória segue:
+
+1. Adendo de Governança v2.0.4;
+2. este Protocolo v1.3;
+3. Registro de Decisões;
+4. Política de Sincronização Documental v1.1;
+5. Product Context;
+6. Plano Integrado v3.1;
+7. Plano Executivo da Operação Atual v1.2;
+8. ADRs e documentação técnica;
+9. Handoff;
+10. documentos anteriores somente como históricos.

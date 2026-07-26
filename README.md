@@ -21,7 +21,7 @@ O estado funcional atual inclui:
 - filtros, paginação visual e rotas profundas preservando o contexto;
 - mutações auditáveis preparadas no Supabase.
 
-A sequência de evolução retoma R1 e R2 antes de R4 e R5. Nenhum ciclo está automaticamente autorizado.
+A evolução está organizada em dois trilhos coordenados: o Trilho A continua a operação atual sem depender da data de chegada do legado, e o Trilho B preservará e incorporará as futuras cargas. A base atual representa menos de 10% do acervo legado esperado. Nenhum pacote, ciclo ou decisão `OP-Dxx` está automaticamente autorizado.
 
 ## Governança e documentação
 
@@ -29,17 +29,18 @@ Antes de alterar código, banco ou comportamento, leia `AGENTS.md`.
 
 As referências vigentes são:
 
+- [Adendo de Governança v2.0.4](docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.4.md);
+- [Protocolo de Decisões v1.3](docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.3.md);
 - [Registro de Decisões](docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md);
+- [Política de Sincronização Documental v1.1](docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md);
 - [Contexto do Produto](docs/PRODUCT_CONTEXT.md);
-- [Plano Remanescente v2.1](docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md);
-- [Adendo de Governança v2.0.3](docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md);
-- [Protocolo de Decisões v1.2](docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.2.md);
-- [Política de Sincronização Documental](docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md);
+- [Plano Integrado Reformulado v3.1](docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md), como estratégia geral;
+- [Plano Executivo da Operação Atual v1.2](docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md), como roteiro do Trilho A;
 - [Handoff Operacional](docs/HANDOFF.md).
 
 Toda alteração de regra de negócio, lógica, permissão, obrigatoriedade, cálculo, dado ou rota deve atualizar no mesmo PR todos os documentos vigentes afetados. Código correto com documentação divergente não constitui entrega concluída.
 
-Planos e especificações anteriores permanecem apenas como registros históricos no Git e não podem restaurar regras posteriormente alteradas.
+O Plano Remanescente v2.1, planos e especificações anteriores permanecem apenas como registros históricos no Git e não podem restaurar regras posteriormente alteradas.
 
 ## Executar localmente
 
@@ -57,6 +58,7 @@ Sem arquivo de ambiente, o servidor de desenvolvimento inicia em modo local com 
 
 ```bash
 npm test
+npm run check:docs
 npm run check:full
 ```
 

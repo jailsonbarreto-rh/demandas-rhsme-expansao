@@ -1,7 +1,7 @@
 # Supabase e operação multiusuário
 
-**Atualizado em:** 25 de julho de 2026  
-**Estado:** vigente após as migrations auditáveis e o R3.
+**Atualizado em:** 26 de julho de 2026  
+**Estado:** vigente após as migrations auditáveis, o R3 e a reconciliação documental do E0.
 
 O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, na região `sa-east-1`.
 
@@ -14,14 +14,15 @@ A aplicação mantém dois modos:
 
 Supabase é a fonte de verdade dos dados operacionais em produção.
 
-Regras de produto não devem ser inferidas apenas do schema ou de uma migration histórica. Consulte, nesta ordem:
+Regras de produto não devem ser inferidas apenas do schema ou de uma migration histórica. Consulte a ordem completa em `AGENTS.md` e, para esta matéria:
 
 1. `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
 2. `docs/PRODUCT_CONTEXT.md`;
-3. `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`;
-4. `docs/HANDOFF.md`.
+3. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`;
+4. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`;
+5. `docs/HANDOFF.md`.
 
-Toda alteração de schema, RPC, RLS, Auth ou Realtime deve cumprir a `POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`.
+Toda alteração de schema, RPC, RLS, Auth ou Realtime deve cumprir a `POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`.
 
 ## 2. Migrations
 
@@ -36,6 +37,17 @@ Os marcos principais atualmente aplicados são:
 5. RPCs auditáveis de criação, edição, andamento, transição, exclusão e restauração;
 6. grants e contratos administrativos necessários;
 7. R3 de responsáveis oficiais por UUID e coerência UUID–nome.
+
+### 2.1 Divergência histórica reconhecida
+
+O histórico remoto contém duas versões temporárias de `pg_net` sem arquivo homônimo na árvore Git:
+
+```text
+20260723231805_enable_pg_net_for_r3_user_provisioning
+20260723232308_remove_pg_net_after_r3_user_provisioning
+```
+
+O Pacote E0 apenas registra a divergência. A reconstrução fiel dos arquivos pertence ao E1A e não foi executada. Nenhum novo pacote que crie migration deve começar antes da reconciliação, e os registros remotos não devem ser reescritos ou reaplicados por inferência.
 
 Não mantenha neste documento uma lista manual considerada mais autoritativa que o próprio diretório. Antes de qualquer migration, confirme os arquivos existentes, o histórico remoto e o estado de `main`.
 
@@ -200,6 +212,7 @@ Depois de alteração consolidada:
 
 ```bash
 npm ci
+npm run check:docs
 npm run check:full
 ```
 

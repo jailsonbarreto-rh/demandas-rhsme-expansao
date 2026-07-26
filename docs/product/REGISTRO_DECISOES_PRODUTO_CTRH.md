@@ -1,14 +1,16 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
+<!-- IMPLEMENTATION_AUTHORIZATION: none -->
+
 **Status:** vigente  
-**Atualizado em:** 25 de julho de 2026  
-**Finalidade:** registrar somente decisões expressamente aprovadas pelo responsável pelo produto antes da implementação de cada ciclo.
+**Atualizado em:** 26 de julho de 2026  
+**Finalidade:** registrar somente decisões expressamente aprovadas pelo responsável pelo produto antes da implementação de cada pacote.
 
 ## 1. Regra de uso
 
-- O Plano Remanescente vigente é referência do trabalho possível, não autorização automática.
-- Cada ciclo passa primeiro por debate pré-implementação.
-- O ciclo será desmontado em decisões independentes.
+- O Plano Integrado v3.1 e o Plano Executivo v1.2 organizam o trabalho possível, não autorização automática.
+- Cada pacote passa primeiro por debate pré-implementação.
+- O pacote será desmontado em decisões independentes.
 - Somente decisões expressas entram neste registro.
 - Silêncio, ausência de objeção, recomendação técnica, texto anterior do plano ou aprovação do objetivo geral não equivalem a aprovação dos itens internos.
 - Qualquer consequência nova descoberta durante a implementação retorna para decisão antes de ser codificada.
@@ -95,7 +97,7 @@ A entrega somente será considerada concluída quando:
 
 1. a decisão estiver registrada;
 2. código e banco refletirem a decisão;
-3. `docs/PRODUCT_CONTEXT.md` e o Plano Remanescente vigente descreverem a mesma regra;
+3. `docs/PRODUCT_CONTEXT.md`, o Plano Integrado e o Plano Executivo afetado descreverem a mesma regra;
 4. `AGENTS.md`, ADRs e documentação técnica afetados estiverem atualizados;
 5. documentos históricos potencialmente conflitantes estiverem identificados como históricos ou superados;
 6. `docs/HANDOFF.md` registrar o estado efetivamente implantado;
@@ -103,7 +105,40 @@ A entrega somente será considerada concluída quando:
 
 A documentação é parte do contrato do produto. Não será tratada como tarefa editorial opcional nem adiada para outro ciclo.
 
-Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`.
+Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`.
+
+### GOV-007 — Adoção da cadeia documental v3.1/v1.2
+
+**Data:** 26 de julho de 2026  
+**Classificação:** reconciliação documental  
+**Decisão:** APROVADA.
+
+A cadeia documental passa a distinguir:
+
+1. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` como estratégia geral dos Trilhos A e B;
+2. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` como roteiro do trabalho possível do Trilho A;
+3. este Registro como fonte exclusiva das decisões expressamente aprovadas;
+4. Adendo v2.0.4, Protocolo v1.3 e Política v1.1 como governança vigente;
+5. Plano Remanescente v2.1 e versões documentais anteriores como registros históricos.
+
+A adoção dos planos não aprova nenhuma decisão `OP-Dxx`, não autoriza implementação funcional e não converte recomendações em regras de produto. Pacotes e decisões continuam sujeitos a debate, registro e autorização expressa.
+
+### GOV-008 — Autorização exclusiva do Pacote E0
+
+**Data:** 26 de julho de 2026  
+**Classificação:** reconciliação documental e necessidade técnica  
+**Decisão:** APROVADA.
+
+Fica autorizado exclusivamente o Pacote E0 para:
+
+- versionar integralmente os Planos v3.1 e v1.2;
+- criar as versões reconciliadas do Adendo, Protocolo e Política;
+- sincronizar a cadeia documental vigente e marcar as versões substituídas como históricas;
+- corrigir a referência documental do projeto Supabase;
+- criar e integrar o gate automatizado de coerência documental;
+- abrir um único PR documental, sem merge ou deployment nesta execução.
+
+O E0 não autoriza E1, E1A, E2, E3, E4, R1, R2, R4, R5, migration, alteração de banco, alteração funcional, Preview ou Production. Ele somente estará concluído após merge e homologação do PR. Depois disso, qualquer próximo pacote dependerá de nova autorização expressa.
 
 ## 3. Decisões do Ciclo R3
 
@@ -223,6 +258,8 @@ Todos os documentos vigentes devem refletir as decisões R3-D01 a R3-D09. Em par
 
 O Plano Remanescente v2.1 e o Product Context atualizado substituem as descrições conflitantes anteriores. Documentos históricos permanecem preservados, mas não orientam regressão.
 
+**Nota de precedência:** a orientação de continuidade por R1/R2 registrada naquele momento foi superada, quanto à próxima atividade, por GOV-007 e GOV-008. As regras materiais do R3 permanecem vigentes; nenhum pacote posterior está autorizado automaticamente.
+
 ## 4. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
@@ -246,7 +283,8 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
-| R1 | Pendente | Não | Não | Próximo debate após homologação documental |
+| E0 | Concluído | GOV-007 e GOV-008 | Somente documentação e gate documental | Em PR; conclui apenas após merge e homologação |
+| R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |
 | R3 | Concluído | Sim | Sim | Implementado; documentação reconciliada nesta revisão |
 | R4 | Não iniciado | Não | Não | Futuro após R1 e R2 |

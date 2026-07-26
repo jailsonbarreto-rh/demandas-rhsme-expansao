@@ -1,11 +1,7 @@
-> **Nota de superação (26/07/2026):** documento preservado integralmente como registro histórico. Foi substituído pela Política de Sincronização Documental v1.1.
->
-> **Status documental:** HISTÓRICO — não orienta execução atual.
-
 # POLÍTICA DE SINCRONIZAÇÃO DOCUMENTAL — CENTRAL DE DEMANDAS CTRH
 
-**Versão:** 1.0  
-**Data:** 25 de julho de 2026  
+**Versão:** 1.1  
+**Data:** 26 de julho de 2026  
 **Status:** VIGENTE  
 **Finalidade:** impedir que código, banco, documentação e decisões de produto descrevam regras diferentes.
 
@@ -43,9 +39,10 @@ A documentação é parte do contrato do produto, e não relato opcional posteri
 |---|---|
 | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` | Fonte das decisões expressamente aprovadas. |
 | `docs/PRODUCT_CONTEXT.md` | Semântica atual do produto, pessoas, necessidades e regras funcionais. |
-| `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` | Sequência, dependências e escopo remanescente atualizados. |
-| `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md` | Regra de autorização e governança ciclo a ciclo. |
-| `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.2.md` | Procedimento de debate, aprovação, registro e sincronização. |
+| `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` | Estratégia geral dos Trilhos A e B, dependências e princípios transversais. |
+| `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` | Roteiro executável possível do Trilho A, sem autorização automática. |
+| `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.4.md` | Regra de autorização e governança por pacote e decisão. |
+| `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.3.md` | Procedimento de debate, aprovação, registro e sincronização. |
 | `AGENTS.md` | Obrigações operacionais resumidas para agentes. |
 | `docs/HANDOFF.md` | Estado material mais recente, ambientes e próxima atividade autorizada. |
 | ADR vigente | Decisão arquitetural estável e suas consequências. |
@@ -70,7 +67,7 @@ Documentos históricos não devem ser reescritos para fingir que a decisão anti
 - referência explícita ao documento vigente que substituiu a regra;
 - exclusão da ordem obrigatória de leitura para execução atual.
 
-O Plano Mestre v1.0 e versões anteriores do Plano Remanescente são registros históricos. Não são fonte autônoma para reconstruir comportamento superado.
+O Plano Mestre v1.0, as versões do Plano Remanescente, as versões anteriores do Adendo, Protocolo e Política e as minutas executivas substituídas são registros históricos. Não são fonte autônoma para reconstruir comportamento superado.
 
 ## 6. Matriz de impacto documental
 
@@ -78,13 +75,14 @@ Antes de concluir uma alteração, o executor deve verificar:
 
 | Tipo de mudança | Documentos mínimos a revisar |
 |---|---|
-| Nova decisão ou alteração de regra de negócio | Registro de decisões, Product Context, plano vigente, AGENTS, Handoff e documentação funcional afetada. |
-| Mudança de sequência ou dependência dos ciclos | Plano vigente, Adendo de Governança, AGENTS, Registro de decisões e Handoff. |
-| Alteração de schema, RPC, RLS ou autenticação | Documentação Supabase, ADR aplicável, plano vigente, Handoff e tipos gerados. |
-| Mudança de rota, navegação ou estado na URL | Product Context, plano vigente, guia de usuário, testes de rota e Handoff. |
+| Nova decisão ou alteração de regra de negócio | Registro de decisões, Product Context, planos vigentes afetados, AGENTS, Handoff e documentação funcional afetada. |
+| Mudança de sequência ou dependência dos pacotes | Plano Integrado, Plano Executivo quando afetado, Adendo de Governança, AGENTS, Registro de decisões e Handoff. |
+| Alteração de schema, RPC, RLS ou autenticação | Documentação Supabase, ADR aplicável, planos vigentes afetados, Handoff e tipos gerados. |
+| Mudança de rota, navegação ou estado na URL | Product Context, planos vigentes afetados, guia de usuário, testes de rota e Handoff. |
 | Mudança de papel ou permissão | Registro de decisões, Product Context, documentação Supabase, matriz de papéis e Handoff. |
-| Mudança em métricas, alertas ou relatórios | Product Context, plano vigente, documentação do cálculo, relatórios e Handoff. |
+| Mudança em métricas, alertas ou relatórios | Product Context, planos vigentes afetados, documentação do cálculo, relatórios e Handoff. |
 | Correção apenas técnica sem mudança de produto | Handoff, documentação técnica afetada e ADR quando houver nova decisão arquitetural duradoura. |
+| Mudança que afete recepção ou preservação do legado | Plano Integrado, Plano Executivo quando aplicável, documentação de migração, Product Context, Registro de Decisões e Handoff. |
 
 A lista é mínima. Outros documentos encontrados pela busca do repositório também devem ser avaliados.
 
@@ -99,7 +97,7 @@ A lista é mínima. Outros documentos encontrados pela busca do repositório tam
 
 ### Durante a implementação
 
-1. não adiar a documentação para outro ciclo;
+1. não adiar a documentação para outro pacote;
 2. atualizar a redação normativa junto da mudança funcional;
 3. preservar histórico e inserir notas de superação quando necessário;
 4. interromper o item se documentos vigentes apresentarem regras incompatíveis sem decisão de precedência.
@@ -111,6 +109,8 @@ A lista é mínima. Outros documentos encontrados pela busca do repositório tam
 3. revisar a matriz de impacto;
 4. preencher o checklist do pull request;
 5. atualizar `docs/HANDOFF.md`.
+
+O gate automatizado `npm run check:docs` deve permanecer verde e verificar a unicidade da cadeia vigente, a ordem de leitura, a ref do Supabase, a autorização registrada, as decisões `OP-Dxx` e a identificação dos documentos históricos.
 
 ### Antes do merge
 
@@ -136,7 +136,19 @@ Uma entrega falha no gate documental quando:
 
 Nenhum desses casos pode ser tratado como correção editorial opcional.
 
-## 9. Regra específica consolidada após o R3
+## 9. Controle de autorização
+
+O Registro de Decisões e o Handoff devem declarar a mesma autorização funcional por meio do marcador:
+
+```text
+<!-- IMPLEMENTATION_AUTHORIZATION: none -->
+```
+
+Quando houver autorização futura, `none` será substituído pelo identificador estável do pacote nos dois documentos, acompanhado da decisão expressa correspondente. O marcador não substitui a decisão; apenas permite ao gate detectar divergência.
+
+Adotar um plano não aprova as decisões `OP-Dxx` contidas nele. Uma `OP-Dxx` somente pode ser apresentada como aprovada quando possuir entrada própria no Registro de Decisões com redação final e estado `APROVADA`.
+
+## 10. Regra específica consolidada após o R3
 
 A partir das decisões R3-D01 a R3-D09:
 

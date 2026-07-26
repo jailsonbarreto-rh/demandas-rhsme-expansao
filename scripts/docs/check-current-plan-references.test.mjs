@@ -16,6 +16,7 @@ const SCRIPT_PATH = resolve(
 const fixtureRoots = new Set();
 
 const PATHS = {
+  pullRequestTemplate: '.github/pull_request_template.md',
   adendo: 'docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.4.md',
   protocol:
     'docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.3.md',
@@ -78,6 +79,17 @@ async function createValidFixture() {
     'README.md',
     [
       '# CTRH',
+      `Estratégia geral: \`${PATHS.strategy}\`.`,
+      `Trilho A: \`${PATHS.execution}\`.`,
+      'O Plano Remanescente v2.1 é histórico.',
+    ].join('\n'),
+  );
+
+  await write(
+    root,
+    PATHS.pullRequestTemplate,
+    [
+      '# Pull request',
       `Estratégia geral: \`${PATHS.strategy}\`.`,
       `Trilho A: \`${PATHS.execution}\`.`,
       'O Plano Remanescente v2.1 é histórico.',
@@ -239,8 +251,8 @@ test('DOC002 detects the remnant plan as current authority', async () => {
   const root = await createValidFixture();
   await write(
     root,
-    'README.md',
-    '# CTRH\nPlano vigente: `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`.\n',
+    PATHS.pullRequestTemplate,
+    '# Pull request\nPlano vigente: `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`.\n',
   );
 
   expectFailure(runAudit(root), 'DOC002');

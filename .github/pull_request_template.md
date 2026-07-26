@@ -11,6 +11,7 @@ Descreva a mudança e a decisão que a autoriza.
 ## Validação
 
 - [ ] Testes específicos executados.
+- [ ] Gate documental `npm run check:docs` executado.
 - [ ] Gate integral aplicável executado.
 - [ ] Preview corresponde ao SHA do PR, quando houver mudança funcional.
 - [ ] Fluxo real foi verificado no papel e viewport afetados.
@@ -21,7 +22,7 @@ Descreva a mudança e a decisão que a autoriza.
 - [ ] Pesquisei no repositório os termos relacionados à regra alterada.
 - [ ] Atualizei `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` quando houve decisão de produto ou regra de negócio.
 - [ ] Atualizei `docs/PRODUCT_CONTEXT.md` quando mudou a semântica atual do produto.
-- [ ] Atualizei o Plano Remanescente vigente quando mudou estado, sequência, dependência ou escopo futuro.
+- [ ] Atualizei o Plano Integrado e o Plano Executivo vigentes afetados quando mudou estado, sequência, dependência ou escopo futuro.
 - [ ] Atualizei `AGENTS.md` quando mudou obrigação permanente para agentes.
 - [ ] Atualizei a documentação técnica ou ADR afetado.
 - [ ] Marquei documentos históricos conflitantes como históricos ou superados, sem reescrever o passado.

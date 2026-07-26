@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const PATHS = {
+  pullRequestTemplate: '.github/pull_request_template.md',
   adendo: 'docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.4.md',
   protocol:
     'docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.3.md',
@@ -25,6 +26,7 @@ const PATHS = {
 const CURRENT_GUIDANCE = [
   'AGENTS.md',
   'README.md',
+  PATHS.pullRequestTemplate,
   PATHS.adendo,
   PATHS.protocol,
   PATHS.decisions,

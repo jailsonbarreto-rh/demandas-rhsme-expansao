@@ -1,3 +1,7 @@
+> **Nota de superação (26/07/2026):** documento preservado integralmente como registro da reconciliação pós-R3. Para estratégia e execução futuras, foi substituído pelo Plano Integrado v3.1 e pelo Plano Executivo da Operação Atual v1.2.
+>
+> **Status documental:** HISTÓRICO — não autoriza nem orienta execução atual.
+
 # PLANO REMANESCENTE DE EXECUÇÃO — CENTRAL DE DEMANDAS CTRH
 
 ## Reconciliação pós-R3 e retomada cronológica dos ciclos estruturantes

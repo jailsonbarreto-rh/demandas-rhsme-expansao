@@ -1,122 +1,103 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **25 de julho de 2026 — reconciliação documental pós-R3 concluída**
+Atualizado em: **26 de julho de 2026 — Pacote E0 documental em revisão**
 
-## Estado atual
+<!-- IMPLEMENTATION_AUTHORIZATION: none -->
+
+## Estado material verificado
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
+| SHA-base remoto verificado para o E0 | `ee61dab5917f84b034305ba2119e4bbad673f176` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrsllr` |
-| Marco documental | Reconciliação pós-R3 mesclada pelo PR #55; Handoff alinhado após o merge |
-| Último Production documentado | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
-| Reconciliação documental | Concluída após gate integral aprovado |
+| Deployment efetivo de Production | `dpl_44HusLjkHEJxpKtvWQFfrgJmXvNR` — `READY` |
+| SHA efetivo de Production | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
+| Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
+| Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
+| Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
-| Plano vigente | `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md` |
-| Atividade atual autorizada | Debate pré-implementação do R1 |
-| Implementação funcional autorizada | Nenhuma; depende de nova aprovação expressa |
+| Implementação funcional autorizada | Nenhuma |
+| Próxima atividade | Nenhum pacote posterior autorizado; depende de nova autorização expressa após revisão e homologação do E0 |
 
-## Decisões vigentes de responsabilidade
+O SHA acima é a baseline estável verificada no início do E0. Ele não pretende ser um campo autorreferente de “SHA atual após o próprio merge”, que ficaria obsoleto no instante da atualização.
 
-- `responsavel_id` é a identidade oficial do responsável.
-- Novas demandas e futuras reatribuições selecionam usuário cadastrado por UUID ou permanecem sem responsável.
-- Responsável externo e nome livre não são opções atuais.
-- O nome textual vinculado a UUID é derivado pelo servidor.
-- Informação textual legada sem UUID pode ser preservada sem virar opção futura.
-- 378 demandas históricas permanecem vinculadas aos perfis oficiais.
-- `Vanessa Migrado` permanece como única informação histórica conhecida sem UUID.
-- Demandas sem UUID não aparecem em carteira pessoal.
+## Estado do Pacote E0
 
-## Navegação vigente
+O E0 foi autorizado exclusivamente para reconciliação documental e criação do gate de coerência. Nesta branch:
 
-- `/demandas` representa a carteira completa da equipe.
-- `/minhas-demandas` representa somente demandas vinculadas ao UUID autenticado.
-- `escopo=meu` existe somente como compatibilidade legada e redireciona para `/minhas-demandas`.
-- As duas carteiras possuem cabeçalho contextual e alternância direta.
-- `Limpar filtros` não troca a carteira.
-- Detalhes preservam carteira, filtros e rota de origem.
-- Indicadores contextuais usam a carteira atualmente aberta.
+- os Planos v3.1 e v1.2 foram versionados integralmente;
+- a cadeia vigente foi atualizada para Adendo v2.0.4, Protocolo v1.3 e Política v1.1;
+- o Plano Remanescente v2.1 e as versões substituídas foram preservados como históricos;
+- a ref do Supabase foi corrigida nos documentos vigentes;
+- nenhuma decisão `OP-Dxx` foi aprovada automaticamente;
+- nenhuma implementação funcional foi autorizada.
 
-## Reconciliação documental concluída no PR #55
+O E0 **não está concluído enquanto o PR permanecer sem merge**. Esta execução não autoriza o merge.
 
-Foram instituídos ou atualizados:
+## Escopo material deste pacote
 
-- `AGENTS.md`;
-- `README.md`;
-- `docs/PRODUCT_CONTEXT.md`;
-- `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`;
-- `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md`;
-- `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.2.md`;
-- `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`;
-- `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
-- `docs/SUPABASE_SETUP.md`;
-- `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
-- `.github/pull_request_template.md`.
+Este pacote:
 
-Planos, adendos, protocolo e especificação anteriores potencialmente conflitantes foram marcados como históricos e apontam para seus substitutos. A íntegra original permanece recuperável no histórico Git, inclusive no commit-base `967a727d25fcbae848a7556da510e9387581f7b7`.
+- altera apenas arquivos Markdown, `package.json` e scripts de teste/auditoria documental;
+- não altera frontend, estilos, componentes, TypeScript operacional ou comportamento da aplicação;
+- não cria nem edita migration;
+- não aplica SQL, não altera dados e não modifica RLS, RPC, grants, Auth ou Realtime;
+- não altera `vercel.json`;
+- não cria Preview e não publica Production;
+- não executa E1, E1A, E2, E3, E4, R1, R2, R4 ou R5;
+- não remove dados reais da árvore Git;
+- não reescreve histórico Git.
 
-O PR #55 foi aprovado pelo workflow oficial em todas as etapas: auditoria de dependências, assinaturas e proveniência, análise estática, testes e cobertura, build, orçamento do bundle e testes Playwright.
+## R3 implementado e preservado
 
-## Política permanente de documentação
+- `responsavel_id` permanece a identidade oficial do responsável.
+- Novas demandas e futuras reatribuições usam usuário cadastrado por UUID ou ausência explícita.
+- Responsável externo e nome livre não são opções da operação atual.
+- Informação textual legada sem UUID continua preservada sem formar carteira pessoal.
+- 378 demandas permanecem vinculadas aos perfis oficiais.
+- Uma informação textual legada permanece sem UUID.
+- `/demandas` continua sendo a carteira da equipe.
+- `/minhas-demandas` continua sendo a carteira pessoal por UUID.
+- `escopo=meu` continua somente como compatibilidade legada.
+- Indicadores continuam contextuais à carteira delimitada pela rota.
 
-Toda alteração concreta de lógica, regra de negócio, permissão, obrigatoriedade, modelo de dados, cálculo, rota ou comportamento visível deve atualizar no mesmo PR todos os documentos vigentes afetados.
-
-A entrega não está concluída quando apenas o código e os testes estão corretos. Também é necessário:
-
-1. registrar a decisão;
-2. sincronizar Product Context, plano, AGENTS, ADRs e documentação técnica;
-3. atualizar este Handoff;
-4. marcar textos históricos conflitantes;
-5. pesquisar no repositório por orientações antigas;
-6. preencher o checklist documental do PR.
-
-## Fotografia reconciliada de Production
+## Fotografia read-only verificada no Supabase em 26/07/2026
 
 | Indicador | Resultado |
 |---|---:|
 | Demandas | 379 |
 | Demandas vinculadas a perfil oficial | 378 |
-| Informação histórica sem UUID | 1 |
+| Informação textual legada sem UUID | 1 |
 | Históricos | 764 |
 | Perfis | 13 |
-| Divergências UUID–nome | 0 |
-| Links de origem cadastrados | 0 |
+| Demandas logicamente excluídas | 0 |
+| Demandas abertas sem próxima ação | 376 |
+| Demandas abertas sem data de acompanhamento | 376 |
 
-## Estado dos ciclos
+As contagens são uma fotografia de verificação, não constantes da aplicação.
 
-| Ciclo | Estado |
-|---|---|
-| R1 | debate pré-implementação autorizado; implementação não autorizada |
-| R2 | pendente após R1 |
-| R3 | implementado, documentado e preservado |
-| R4 | pendente após R1, R2 e R3 |
-| R5 | suspenso até R4 |
-| R6–R12 | futuros |
+## Pendências reconhecidas, não executadas
 
-A execução cronológica retoma R1 e R2. O R3 não deve ser desfeito nem reexecutado.
+- Production permanece no PR #52 e ainda não contém a evolução funcional do PR #53.
+- Duas migrations temporárias de `pg_net` constam no histórico remoto e não possuem arquivo homônimo no Git; o tratamento pertence ao E1A.
+- Dados operacionais reais ainda existem na árvore corrente e pertencem ao E2.
+- RLS da lixeira e autoria administrativa pertencem ao E4 e dependem das decisões aplicáveis.
+- Integridade, concorrência e contratos pertencem ao R1.
+- Consulta escalável e histórico sob demanda pertencem ao R2.
+- Prazos e próxima providência pertencem ao R4.
+- Andamento, prontuário e recuperação administrativa pertencem ao R5.
+- O Trilho B permanece separado e não bloqueia genericamente a evolução independente do Trilho A.
 
-## Pendências estruturantes reconhecidas
-
-- cinco constraints ainda `NOT VALID`;
-- concorrência otimista ausente;
-- carregamento integral de demandas e histórico;
-- paginação apenas visual;
-- recargas integrais após mutações e Realtime;
-- E2E Supabase ainda a estruturar;
-- semântica do campo `setor` ainda aberta;
-- R4 ainda não entregue como experiência completa;
-- R5 não autorizado.
-
-## Publicação e segurança operacional
-
-A reconciliação do PR #55 foi exclusivamente documental:
-
-- não alterou frontend, banco, migrations, RLS, Auth, Realtime ou dados;
-- não exigiu deployment de Preview ou Production;
-- não autorizou execução funcional de R1 ou qualquer ciclo posterior;
-- manteve o bloqueio de deploy automático vigente.
+Nenhuma dessas pendências foi corrigida ou autorizada por este pacote.
 
 ## Regra de continuidade
 
-A próxima atividade permitida é analisar e debater o R1 item a item. A implementação do R1 dependerá de consolidação das decisões e nova autorização expressa.
+Depois da revisão do PR:
+
+1. o E0 somente poderá ser considerado concluído após merge e homologação documental;
+2. nenhuma decisão `OP-Dxx` poderá ser inferida da adoção dos planos;
+3. o responsável pelo produto escolherá e autorizará expressamente o próximo pacote;
+4. qualquer implementação futura deverá atualizar o marcador de autorização neste Handoff e no Registro de Decisões;
+5. nenhum deployment decorrerá automaticamente deste E0.

@@ -2,34 +2,37 @@
 
 Estas regras valem para todo trabalho neste repositório.
 
-O `Plano_Remanescente_Execucao_CTRH_v2.1.md` permanece como referência organizada do trabalho possível. Ele **não autoriza automaticamente** a implementação de nenhum ciclo ou item.
+O `Plano_Integrado_Reformulado_CTRH_v3.1.md` é a estratégia geral dos Trilhos A e B. O `Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` organiza o trabalho possível do Trilho A. Nenhum deles **autoriza automaticamente** a implementação de pacote, ciclo, item ou decisão `OP-Dxx`.
 
-Toda implementação dos Ciclos R1 a R12 depende de debate prévio e autorização expressa do responsável pelo produto, conforme o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md`.
+O Registro de Decisões é a fonte exclusiva das decisões aprovadas. Toda implementação depende de debate prévio, registro e autorização expressa do responsável pelo produto, conforme o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.4.md`.
 
 ## Leitura obrigatória
 
 Antes de interpretar ou alterar qualquer ciclo, leia integralmente, nesta ordem:
 
-1. `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md`;
-2. `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.2.md`;
+1. `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.4.md`;
+2. `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.3.md`;
 3. `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
-4. `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`;
+4. `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`;
 5. `docs/PRODUCT_CONTEXT.md`;
-6. `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`, como referência;
-7. os ADRs de `docs/adr/` aplicáveis ao ciclo;
-8. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
-9. versões anteriores do Plano Remanescente e `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente como registros históricos.
+6. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`, como estratégia geral;
+7. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`, como roteiro do Trilho A;
+8. os ADRs de `docs/adr/` e a documentação técnica aplicáveis ao pacote;
+9. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
+10. o Plano Remanescente v2.1, versões anteriores dos planos e `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente como registros históricos.
 
-O `ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md`, o Plano Remanescente v2.0 e o Plano Mestre v1.0 são registros históricos. Não podem restaurar uma regra posteriormente alterada e registrada.
+O `Plano_Remanescente_Execucao_CTRH_v2.1.md`, o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md`, o Protocolo v1.2, a Política v1.0, o `ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md`, o Plano Remanescente v2.0 e o Plano Mestre v1.0 são históricos e foram superados para execução atual. Não podem restaurar uma regra posteriormente alterada e registrada.
 
 ## Autoridade e sequência
 
 - Não reexecute os Ciclos 0 a 4 do Plano Mestre v1.0: eles estão encerrados.
 - Não use a antiga numeração dos Ciclos 5 a 13 para decidir a próxima etapa.
-- Nenhum Ciclo R1 a R12 possui autorização automática de implementação.
-- O processo ocorre sequencialmente: debate, decisão, autorização, implementação, sincronização documental e homologação do ciclo atual; depois começa o debate do seguinte.
+- Nenhum pacote ou Ciclo R1 a R12 possui autorização automática de implementação.
+- O processo ocorre por pacote: debate, decisão, autorização, implementação, sincronização documental e homologação; somente depois começa a atividade seguinte autorizada.
 - Decisões expressas mais recentes registradas prevalecem sobre planos, especificações ou relatórios anteriores.
 - A próxima atividade autorizada deve ser confirmada em `docs/HANDOFF.md`.
+- Adotar um plano não aprova nenhuma decisão `OP-Dxx` nele descrita.
+- Uma nova descoberta interrompe somente o item materialmente afetado; o restante prossegue apenas quando independente, seguro e sem antecipar a decisão pendente.
 
 ## Regras vigentes consolidadas após o R3
 
@@ -96,15 +99,15 @@ Toda mudança de lógica, regra de negócio, permissão, obrigatoriedade, dado, 
 
 - o Registro de Decisões, quando aplicável;
 - o `PRODUCT_CONTEXT`;
-- o Plano Remanescente vigente;
+- o Plano Integrado e o Plano Executivo quando afetados;
 - este `AGENTS.md`, quando houver regra permanente para agentes;
 - ADRs e documentação técnica afetados;
 - `docs/HANDOFF.md`;
 - documentos históricos que necessitem nota de superação.
 
-Antes do PR, pesquise no repositório os termos relacionados à regra antiga. Ocorrências restantes devem ser atuais ou claramente identificadas como históricas.
+Antes do PR, pesquise no repositório os termos relacionados à regra antiga. Ocorrências restantes devem ser atuais ou claramente identificadas como históricas. Execute também `npm run check:docs`.
 
-A entrega não está pronta quando o código e os testes passam, mas a documentação vigente descreve regra diferente. Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`.
+A entrega não está pronta quando o código e os testes passam, mas a documentação vigente descreve regra diferente. Consulte `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`.
 
 ## Limite da autorização
 
@@ -120,18 +123,18 @@ Não:
 - use documento histórico como justificativa para desfazer regra posterior;
 - deixe atualização documental para outro ciclo.
 
-Se surgir uma nova decisão durante a implementação, pare o item afetado, explique a questão e aguarde decisão expressa. O restante poderá prosseguir apenas se for independente e seguro.
+Se surgir uma nova decisão durante a implementação, pare o item afetado, explique a questão e aguarde decisão expressa. O restante poderá prosseguir apenas se for independente, seguro e não antecipar a decisão pendente.
 
 ## Disciplina de entrega funcional
 
 - Trabalhe sempre em branch própria; nunca desenvolva diretamente na `main`.
-- Execute um único ciclo publicável por branch e PR, salvo autorização expressa diferente.
+- Execute um único pacote publicável por branch e PR, salvo autorização expressa diferente.
 - Confirme `main`, SHA remoto, migrations aplicadas e worktree limpo antes de criar a branch.
 - Para mudanças de comportamento, escreva ou atualize testes primeiro e registre a falha RED esperada.
 - Implemente a menor solução completa do escopo aprovado.
 - Não misture ciclos, refatorações oportunistas ou mudanças não autorizadas.
 - Publique Preview no mesmo SHA do PR e homologue o fluxo real.
-- Ao concluir o ciclo, atualize `docs/HANDOFF.md`, o registro de decisões e todos os documentos vigentes afetados.
+- Ao concluir o pacote, atualize `docs/HANDOFF.md`, o registro de decisões e todos os documentos vigentes afetados.
 - Preencha integralmente o checklist documental do template de pull request.
 
 ## Validação obrigatória
@@ -140,16 +143,18 @@ Na raiz do repositório, execute:
 
 ```bash
 npm ci
+npm run check:docs
 npm audit --audit-level=high
 npm audit signatures
 npm run lint
 npm run test:coverage
 npm run build
 npm run check:bundle
+npm run check:public-bundle
 npm run test:e2e
 ```
 
-`npm run check:full` consolida o gate atual. Execute também gates específicos do ciclo. Nenhum teste pode ser removido, omitido ou ignorado para obter aprovação.
+`npm run check:full` consolida o gate atual. Execute também gates específicos do pacote. Nenhum teste pode ser removido, omitido ou ignorado para obter aprovação.
 
 ## Regras permanentes de produto e dados
 
@@ -162,6 +167,8 @@ npm run test:e2e
 - Não reintroduza `UPDATE` ou `DELETE` direto nas tabelas operacionais.
 - Não recrie estruturas já implantadas sem necessidade aprovada.
 - Não apague dados, histórico, backups ou deployments sem inventário e autorização destrutiva específica.
+- A base atual representa menos de 10% do acervo legado esperado; nenhuma regra para novas operações pode apagar, truncar, omitir ou transformar silenciosamente dados legados futuros.
+- Em toda mudança relevante, distinguir impacto na operação atual, no legado já importado e em cargas futuras. O Trilho B não bloqueia genericamente o Trilho A, e o Trilho A não pode inviabilizar o legado.
 
 ## Paradas e relato
 
@@ -172,4 +179,4 @@ Pare quando:
 - código, banco e documentação não puderem ser reconciliados com segurança;
 - a implementação exigir restaurar comportamento descrito apenas em documento histórico.
 
-Ao concluir cada ciclo, registre: decisões aprovadas, escopo implementado e excluído, branch, commits, PR, Preview e SHA, testes, migrations, impacto em dados, acessibilidade, homologação, documentos sincronizados, documentos históricos preservados, rollback, riscos e próximo debate autorizado.
+Ao concluir cada pacote, registre: decisões aprovadas, escopo implementado e excluído, branch, commits, PR, Preview e SHA quando aplicável, testes, migrations, impacto nos Trilhos A e B, impacto em dados, acessibilidade, homologação, documentos sincronizados, documentos históricos preservados, rollback, riscos e próxima atividade autorizada.

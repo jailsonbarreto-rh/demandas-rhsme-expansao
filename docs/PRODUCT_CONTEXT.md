@@ -1,11 +1,11 @@
 # Contexto do Produto — Central de Demandas CTRH
 
-**Estado documental:** vigente após as decisões R3-D01 a R3-D10.  
-**Atualizado em:** 25 de julho de 2026.
+**Estado documental:** vigente após as decisões R3-D01 a R3-D10 e a adoção da cadeia documental do E0.  
+**Atualizado em:** 26 de julho de 2026.
 
-Este documento é a referência operacional para a semântica atual do produto. Decisões expressamente aprovadas estão em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`; a sequência remanescente está em `docs/execution/Plano_Remanescente_Execucao_CTRH_v2.1.md`; a governança está no Adendo e no Protocolo vigentes indicados por `AGENTS.md`.
+Este documento é a referência operacional para a semântica atual do produto. Decisões expressamente aprovadas estão exclusivamente em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`; a estratégia geral está em `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`; o roteiro do Trilho A está em `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`; a governança está no Adendo e no Protocolo vigentes indicados por `AGENTS.md`.
 
-Versões anteriores dos planos e especificações são registros históricos. Não restauram regras posteriormente alteradas.
+O Plano Remanescente v2.1 e versões anteriores dos planos e especificações são históricos e foram superados para execução atual. Não restauram regras posteriormente alteradas.
 
 ## Propósito
 
@@ -49,6 +49,17 @@ Ficam fora do escopo: ranking competitivo, avaliação de desempenho, workflow d
 - A interface usa vocabulário administrativo conhecido pela equipe, sem jargão de software imposto.
 - O Registro de Decisões é a fonte das regras expressamente aprovadas.
 - Código, banco e documentos vigentes devem descrever a mesma regra.
+
+## Dois trilhos e dimensão do legado
+
+A base atual representa menos de 10% do acervo esperado do sistema legado. A data de recebimento dos demais dados não é conhecida e não constitui bloqueio geral para a evolução do produto existente.
+
+- **Trilho A — evolução da operação atual:** corrige e evolui o SITE CTRH que já está em uso.
+- **Trilho B — preservação e incorporação do legado:** receberá fontes e lotes futuros com rastreabilidade, sem apagar ou inventar dados.
+
+Uma dependência do legado interrompe somente o item materialmente afetado. Os demais itens do Trilho A podem avançar quando forem independentes e seguros. Reciprocamente, nenhuma regra criada para novas operações pode impedir o recebimento integral de uma linha legada, apagar a demanda, truncar campos ou converter silenciosamente informação incompatível em vazio ou em valor atual aparentemente válido.
+
+Preservar uma linha legada não significa necessariamente publicá-la de imediato na carteira operacional. A arquitetura e as decisões internas do Trilho B continuam pendentes e não foram aprovadas automaticamente pela adoção dos planos.
 
 ## Pessoas e necessidades
 
@@ -370,4 +381,4 @@ Depois da implementação, confirmar na tela, papel e cenário afetados:
 5. se existe risco de estimular controle paralelo;
 6. se os documentos vigentes descrevem exatamente a regra entregue.
 
-Toda mudança deve cumprir a `POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.0.md`. Quando o plano não define um detalhe, derive apenas a menor decisão reversível que não altere comportamento substancial. Duas opções plausíveis com efeitos diferentes exigem parada e decisão do responsável pelo produto.
+Toda mudança deve cumprir a `POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`. Quando o plano não define um detalhe, derive apenas a menor decisão reversível que não altere comportamento substancial. Duas opções plausíveis com efeitos diferentes exigem parada e decisão do responsável pelo produto.

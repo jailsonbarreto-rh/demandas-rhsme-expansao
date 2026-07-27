@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **27 de julho de 2026 — Correção de apresentação do histórico técnico (PR #69)**
+Atualizado em: **27 de julho de 2026 — Correção do histórico publicada e bloqueio restaurado (PRs #69–#71)**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
@@ -9,22 +9,24 @@ Atualizado em: **27 de julho de 2026 — Correção de apresentação do histór
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Deployment efetivo anterior ao PR #69 | `dpl_DMrubRz2sDRtN5ZmmjKByDD94kDn` — `READY` |
-| SHA efetivo anterior ao PR #69 | `c59f8be936b7071cb3f60d147e26e408f60ee6f3` — PR #59 |
-| Bloqueio automático de deploy | restaurado pelo PR #60 |
+| Production | `https://demandas-rhsme-expansao.vercel.app/` — HTTP 200 |
+| Deployment efetivo | `dpl_F2pATpQ3oFKW6K58NZVVqWqSwfyw` — `READY` |
+| SHA efetivo de Production | `2e53369342989a352371e4de030969596934465f` — PR #70 |
+| Correção funcional publicada | PR #69, merge `3a197b65fa26ebc89176fb537592d75545084b38` |
+| Bloqueio automático de deploy | restaurado pelo PR #71 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Implementação autorizada após este pacote | nenhuma |
-| Próxima atividade funcional | continuação do E3 após homologação do PR #69 |
+| Próxima atividade funcional | continuação do E3 após homologação da correção publicada |
 
 ## Pacotes concluídos
 
 - **E0:** cadeia documental v3.1/v1.2 consolidada e gate documental instituído no PR #58.
 - **E1:** Production alinhada ao estado funcional da `main`, incluindo o PR #53, pelo PR #59; o bloqueio de deploy foi restaurado pelo PR #60.
 - **E1A:** os dois fatos históricos temporários de `pg_net` foram representados no Git por arquivos homônimos e statements idênticos aos registrados remotamente no PR #61.
+- **Correção do histórico técnico:** implementada no PR #69, publicada em Production pelo PR #70 e seguida da restauração do bloqueio automático no PR #71.
 
 Nenhum SQL do E1A foi executado novamente no Supabase.
 
@@ -53,6 +55,19 @@ Superfícies corrigidas:
 - `VisaoGeral`.
 
 A comparação com o snapshot anterior ao R3 confirmou zero comentários históricos apagados ou alterados. O R3 acrescentou eventos auditáveis sem substituir registros anteriores.
+
+## Validação da entrega
+
+- auditoria de dependências: aprovada;
+- assinaturas e proveniência: aprovadas;
+- lint: aprovado;
+- testes unitários, integração e cobertura: aprovados;
+- build e orçamento de bundle: aprovados;
+- Playwright: aprovado;
+- Preview: `READY`;
+- Production: `READY`;
+- domínio oficial: HTTP 200;
+- nenhum dado, comentário, migration ou estrutura do Supabase foi alterado.
 
 ## Decisão sobre dados reais e segurança final
 

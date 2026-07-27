@@ -2,6 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import type { ComentarioHistorico, Demanda } from '../types';
+import { presentHistoryEvent } from '../domain/historyPresentation';
 import { getPrazoFinalSemantics } from '../utils/date';
 import { isClosed } from '../domain/workSemantics';
 
@@ -119,24 +120,30 @@ export function DemandDetailDrawer({
                   </section>
 
                   <section className="drawer-section drawer-history-section">
-                    <h3>Histórico de Comentários</h3>
+                    <h3>Histórico da demanda</h3>
                     {history.length > 0 ? (
                       <div className="timeline-container drawer-timeline">
-                        {history.map((item, index) => (
-                          <div key={item.id} className={`timeline-item ${index === 0 ? 'latest' : ''}`}>
-                            <div className="timeline-circle" />
-                            <div className="timeline-content">
-                              <div className="timeline-header">
-                                <span className="timeline-meta">{item.data_hora}</span>
-                                <span className={badgeClass(item.status_novo)}>{item.status_novo}</span>
+                        {history.map((item, index) => {
+                          const presentation = presentHistoryEvent(item);
+                          return (
+                            <div key={item.id} className={`timeline-item ${index === 0 ? 'latest' : ''}`}>
+                              <div className="timeline-circle" />
+                              <div className="timeline-content">
+                                <div className="timeline-header">
+                                  <span className="timeline-meta">{item.data_hora}</span>
+                                  <span className={badgeClass(item.status_novo)}>{item.status_novo}</span>
+                                </div>
+                                <div className="timeline-meta" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span className="timeline-event-type">{presentation.label}</span>
+                                  <span className="timeline-setor">{item.setor || 'CTRH'}</span>
+                                </div>
+                                <div className="timeline-comment">{presentation.comment}</div>
                               </div>
-                              <div className="timeline-setor">{item.setor || 'CTRH'}</div>
-                              <div className="timeline-comment">{item.comentario}</div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
-                    ) : <span className="empty-inline">Nenhum log registrado.</span>}
+                    ) : <span className="empty-inline">Nenhum registro no histórico.</span>}
                   </section>
                 </div>
 

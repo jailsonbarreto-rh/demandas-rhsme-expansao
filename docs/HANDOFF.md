@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **27 de julho de 2026 — Pacote E1A**
+Atualizado em: **27 de julho de 2026 — Correção de apresentação do histórico técnico (PR #69)**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
@@ -10,53 +10,60 @@ Atualizado em: **27 de julho de 2026 — Pacote E1A**
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Deployment efetivo | `dpl_DMrubRz2sDRtN5ZmmjKByDD94kDn` — `READY` |
-| SHA efetivo de Production | `c59f8be936b7071cb3f60d147e26e408f60ee6f3` — PR #59 |
+| Deployment efetivo anterior ao PR #69 | `dpl_DMrubRz2sDRtN5ZmmjKByDD94kDn` — `READY` |
+| SHA efetivo anterior ao PR #69 | `c59f8be936b7071cb3f60d147e26e408f60ee6f3` — PR #59 |
 | Bloqueio automático de deploy | restaurado pelo PR #60 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Implementação autorizada após este pacote | nenhuma |
-| Próxima atividade prevista no plano | E2, dependente de autorização expressa |
+| Próxima atividade funcional | continuação do E3 após homologação do PR #69 |
 
 ## Pacotes concluídos
 
 - **E0:** cadeia documental v3.1/v1.2 consolidada e gate documental instituído no PR #58.
 - **E1:** Production alinhada ao estado funcional da `main`, incluindo o PR #53, pelo PR #59; o bloqueio de deploy foi restaurado pelo PR #60.
-- **E1A:** os dois fatos históricos temporários de `pg_net` foram representados no Git por arquivos homônimos e statements idênticos aos registrados remotamente.
+- **E1A:** os dois fatos históricos temporários de `pg_net` foram representados no Git por arquivos homônimos e statements idênticos aos registrados remotamente no PR #61.
 
-O conteúdo do E1A integra o PR #61. Sua presença na `main` registra a conclusão do pacote. Nenhum SQL do E1A foi executado novamente no Supabase.
+Nenhum SQL do E1A foi executado novamente no Supabase.
 
-## Resultado do E1A
+## Correção do histórico técnico — PR #69
 
-Arquivos reconstruídos:
+Problema identificado em uso real:
 
-```text
-supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
-supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
-```
+- comentários de auditoria técnica eram exibidos literalmente na timeline cotidiana;
+- referências internas como `R3`, `lote saneado` e hash de lote apareciam para usuários sem significado operacional;
+- eventos de importação e migração eram misturados às movimentações humanas na Visão Geral.
 
-Statements remotos preservados:
+Decisão e implementação:
 
-```sql
-create extension if not exists pg_net with schema extensions;
-```
+- os registros brutos permanecem integralmente preservados no Supabase;
+- `Demanda importada do lote saneado <hash>.` e `Demanda importada da planilha inicial.` são exibidos como `Demanda importada do sistema legado.`;
+- `Responsável vinculado a perfil oficial na migração R3.` é exibido como `Responsável vinculado ao perfil oficial.`;
+- o título passa a ser `Histórico da demanda`;
+- cada evento recebe categoria legível;
+- eventos técnicos permanecem no histórico individual, mas não aparecem como movimentação operacional global;
+- comentários operacionais escritos por usuários permanecem inalterados.
 
-```sql
-drop extension if exists pg_net;
-```
+Superfícies corrigidas:
 
-Invariantes:
+- `DemandDetailDrawer`;
+- `ModalHistorico`;
+- `VisaoGeral`.
 
-- a habilitação temporária precede a remoção;
-- `pg_net` está ausente no estado remoto final;
-- nenhuma migration foi reaplicada;
-- nenhuma tabela, função, política, grant ou dado de Production foi alterado;
-- nenhum Preview ou deployment foi criado pelo E1A;
-- a aplicação e o R3 permaneceram inalterados.
+A comparação com o snapshot anterior ao R3 confirmou zero comentários históricos apagados ou alterados. O R3 acrescentou eventos auditáveis sem substituir registros anteriores.
 
-A evidência técnica está em `docs/technical/E1A_PG_NET_HISTORY.md` e o gate automatizado em `src/migrations/pgNetHistory.test.ts`.
+## Decisão sobre dados reais e segurança final
+
+O responsável pelo produto determinou que a retirada de dados reais dos repositórios, a contenção do repositório predecessor, a revisão de deployments antigos e eventual reescrita de histórico Git sejam adiadas para um pacote consolidado de segurança ao final das implementações funcionais e antes da entrega do produto para uso.
+
+Até esse momento:
+
+- nenhum arquivo real será apagado;
+- nenhum histórico será reescrito;
+- nenhuma ação de contenção será tratada como bloqueio das próximas implementações funcionais;
+- os dados serão preservados para evitar perda potencial durante o desenvolvimento e a conferência do legado.
 
 ## Estado funcional preservado
 
@@ -64,25 +71,27 @@ A evidência técnica está em `docs/technical/E1A_PG_NET_HISTORY.md` e o gate a
 - `/demandas` continua sendo a carteira da equipe.
 - `/minhas-demandas` continua sendo a carteira pessoal por UUID.
 - Indicadores e filtros continuam contextuais à carteira aberta.
-- A paginação padrão de 50 registros e a opção de 100 estão em Production.
-- Nenhum dado operacional foi modificado neste pacote.
+- A paginação padrão de 50 registros e a opção de 100 permanecem.
+- Nenhum dado operacional foi modificado pelo PR #69.
+- Nenhum comentário ou evento foi apagado ou reescrito no Supabase.
 
 ## Pendências posteriores do plano
 
-- **E2:** remover dados operacionais reais da árvore corrente do Git, sem reescrever histórico nesta etapa.
-- **E3:** corrigir semânticas objetivas já previstas.
+- **E3:** concluir as demais correções semânticas objetivas já previstas.
 - **E4:** RLS da lixeira e autoria administrativa.
 - **R1:** integridade, contratos e concorrência.
 - **R2:** consultas escaláveis e histórico sob demanda.
 - **R4:** prazos e próxima providência.
 - **R5:** andamento, prontuário e recuperação administrativa.
+- **Segurança final:** executar ao fim das implementações funcionais o antigo escopo E2 ampliado, conforme decisão expressa do responsável pelo produto.
 
-Nenhuma dessas etapas está autorizada automaticamente pela conclusão do E1A.
+Nenhuma dessas etapas está autorizada automaticamente pela conclusão do PR #69.
 
 ## Regra de continuidade
 
 1. nenhuma decisão `OP-Dxx` pode ser inferida dos planos;
 2. o responsável pelo produto autoriza expressamente o próximo pacote;
 3. cada pacote permanece isolado em branch e PR próprios;
-4. alterações de banco futuras devem partir da cadeia de migrations agora reconciliada;
-5. nenhum deployment decorre automaticamente do E1A.
+4. alterações de banco futuras exigem preflight da cadeia de migrations antes da aplicação;
+5. toda etapa concluída atualiza os documentos vigentes afetados no mesmo trabalho;
+6. divergência documental decorrente da própria conclusão de uma tarefa é atualização rotineira de status, não um novo ciclo de planejamento.

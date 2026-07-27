@@ -13,13 +13,14 @@ Antes de interpretar ou alterar qualquer ciclo, leia integralmente, nesta ordem:
 1. `docs/execution/ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.4.md`;
 2. `docs/product/PROTOCOLO_HOMOLOGACAO_DECISOES_PRODUTO_CTRH_v1.3.md`;
 3. `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
-4. `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`;
-5. `docs/PRODUCT_CONTEXT.md`;
-6. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`, como estratégia geral;
-7. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`, como roteiro do Trilho A;
-8. os ADRs de `docs/adr/` e a documentação técnica aplicáveis ao pacote;
-9. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
-10. o Plano Remanescente v2.1, versões anteriores dos planos e `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente como registros históricos.
+4. `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md`;
+5. `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`;
+6. `docs/PRODUCT_CONTEXT.md`;
+7. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`, como estratégia geral;
+8. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`, como roteiro do Trilho A;
+9. os ADRs de `docs/adr/` e a documentação técnica aplicáveis ao pacote;
+10. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
+11. o Plano Remanescente v2.1, versões anteriores dos planos e `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente como registros históricos.
 
 O `Plano_Remanescente_Execucao_CTRH_v2.1.md`, o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md`, o Protocolo v1.2, a Política v1.0, o `ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md`, o Plano Remanescente v2.0 e o Plano Mestre v1.0 são históricos e foram superados para execução atual. Não podem restaurar uma regra posteriormente alterada e registrada.
 
@@ -45,6 +46,19 @@ O `Plano_Remanescente_Execucao_CTRH_v2.1.md`, o `ADENDO_GOVERNANCA_POR_ETAPA_CTR
 - `/minhas-demandas` é a carteira pessoal por UUID.
 - `escopo=meu` existe somente como compatibilidade legada e deve redirecionar para `/minhas-demandas` preservando os demais filtros.
 - Indicadores e filtros atuam dentro da carteira delimitada pela rota atual.
+
+## Preservação informacional obrigatória
+
+- Regras atuais são rígidas para novos cadastros e novas operações.
+- Dados oficiais legados ou históricos não podem ser apagados, omitidos, truncados, sobrescritos nem convertidos silenciosamente em vazio por incompatibilidade com regra atual ou futura.
+- Toda transformação deve preservar o valor original, a proveniência e a razão da transformação.
+- Correspondência automática somente é permitida quando comprovável; aproximações silenciosas são proibidas.
+- O que não puder ser correlacionado deve permanecer como pendência, ambiguidade ou conflito, sem perda da informação original.
+- A regra vale para responsáveis, setores, tipos, classificações, status, prazos, datas, assuntos, números, comentários, observações, documentos, links, autoria e eventos históricos.
+- Auditoria técnica e apresentação operacional são camadas distintas: hashes, migrations, códigos de lote e nomes internos podem ser preservados para auditoria, mas não substituem informação útil ao usuário.
+- Qualquer alteração capaz de apagar, reduzir, ocultar, reinterpretar ou sobrescrever informação oficial deve parar o item afetado e ser apresentada ao responsável pelo produto antes da implementação.
+
+Consulte `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md`.
 
 ## Fase obrigatória de debate pré-implementação
 
@@ -101,6 +115,7 @@ Toda mudança de lógica, regra de negócio, permissão, obrigatoriedade, dado, 
 - o `PRODUCT_CONTEXT`;
 - o Plano Integrado e o Plano Executivo quando afetados;
 - este `AGENTS.md`, quando houver regra permanente para agentes;
+- o princípio de preservação informacional, quando a mudança alcançar legado, histórico, transformação ou apresentação de dados;
 - ADRs e documentação técnica afetados;
 - `docs/HANDOFF.md`;
 - documentos históricos que necessitem nota de superação.
@@ -169,6 +184,7 @@ npm run test:e2e
 - Não apague dados, histórico, backups ou deployments sem inventário e autorização destrutiva específica.
 - A base atual representa menos de 10% do acervo legado esperado; nenhuma regra para novas operações pode apagar, truncar, omitir ou transformar silenciosamente dados legados futuros.
 - Em toda mudança relevante, distinguir impacto na operação atual, no legado já importado e em cargas futuras. O Trilho B não bloqueia genericamente o Trilho A, e o Trilho A não pode inviabilizar o legado.
+- O pacote de retirada de dados reais dos repositórios e demais medidas de exposição foi adiado para o final das implementações funcionais, antes da entrega do produto, conforme GOV-011.
 
 ## Paradas e relato
 
@@ -177,6 +193,8 @@ Pare quando:
 - uma lacuna afetar comportamento, regra, permissão, tela, cálculo, dado ou experiência do usuário sem decisão expressa;
 - dois documentos vigentes apresentarem regras incompatíveis;
 - código, banco e documentação não puderem ser reconciliados com segurança;
-- a implementação exigir restaurar comportamento descrito apenas em documento histórico.
+- a implementação exigir restaurar comportamento descrito apenas em documento histórico;
+- uma transformação puder apagar, omitir, reduzir, ocultar ou sobrescrever informação oficial;
+- auditoria técnica estiver sendo usada como substituta de conteúdo operacional compreensível.
 
 Ao concluir cada pacote, registre: decisões aprovadas, escopo implementado e excluído, branch, commits, PR, Preview e SHA quando aplicável, testes, migrations, impacto nos Trilhos A e B, impacto em dados, acessibilidade, homologação, documentos sincronizados, documentos históricos preservados, rollback, riscos e próxima atividade autorizada.

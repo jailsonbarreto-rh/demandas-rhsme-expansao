@@ -1,92 +1,75 @@
 # Supabase e operação multiusuário
 
-**Atualizado em:** 26 de julho de 2026  
-**Estado:** vigente após as migrations auditáveis, o R3 e a reconciliação documental do E0.
+**Atualizado em:** 27 de julho de 2026  
+**Estado:** vigente após R3, E0, E1 e reconciliação histórica E1A.
 
-O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, na região `sa-east-1`.
+O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`.
 
-A aplicação mantém dois modos:
+A aplicação possui dois modos:
 
 - `supabase`: persistência compartilhada, autenticação real, RLS e Realtime;
-- `local`: desenvolvimento e testes com dados sintéticos; recusado quando `PROD=true`.
+- `local`: desenvolvimento e testes somente com dados sintéticos; recusado quando `PROD=true`.
 
-## 1. Fonte de verdade e autoridade documental
+## 1. Fonte de verdade
 
-Supabase é a fonte de verdade dos dados operacionais em produção.
+Supabase é a fonte de verdade dos dados operacionais de Production. Regras de produto não devem ser inferidas apenas do schema ou de migrations históricas.
 
-Regras de produto não devem ser inferidas apenas do schema ou de uma migration histórica. Consulte a ordem completa em `AGENTS.md` e, para esta matéria:
+Consulte, nesta ordem, `AGENTS.md`, o Registro de Decisões, `PRODUCT_CONTEXT.md`, os Planos v3.1/v1.2 e `HANDOFF.md`.
 
-1. `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
-2. `docs/PRODUCT_CONTEXT.md`;
-3. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`;
-4. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`;
-5. `docs/HANDOFF.md`.
+Toda mudança de schema, RPC, RLS, Auth ou Realtime deve usar migration versionada e cumprir a Política de Sincronização Documental v1.1.
 
-Toda alteração de schema, RPC, RLS, Auth ou Realtime deve cumprir a `POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`.
+## 2. Cadeia de migrations
 
-## 2. Migrations
+Os arquivos estão em `supabase/migrations/` e são aplicados pela ordem dos prefixos. Os marcos principais são:
 
-A cadeia versionada está em `supabase/migrations/` e deve ser aplicada exclusivamente pelos arquivos do repositório, na ordem dos prefixos.
+1. perfis, demandas, histórico, RLS, Realtime e RPCs iniciais;
+2. revogação de execução anônima e índices;
+3. importação auditável do legado;
+4. expansão aditiva do modelo;
+5. RPCs auditáveis de criação, edição, andamento, status, exclusão e restauração;
+6. proteção contra escritas diretas;
+7. responsáveis oficiais por UUID no R3.
 
-Os marcos principais atualmente aplicados são:
+### 2.1 E1A — paridade histórica de `pg_net`
 
-1. criação de perfis, demandas, histórico, RLS, Realtime e RPCs iniciais;
-2. revogação de execução anônima e índices de chaves estrangeiras;
-3. importação e auditoria do legado;
-4. expansão aditiva do modelo com prazos semânticos, próxima ação, origem, exclusão lógica e eventos estruturados;
-5. RPCs auditáveis de criação, edição, andamento, transição, exclusão e restauração;
-6. grants e contratos administrativos necessários;
-7. R3 de responsáveis oficiais por UUID e coerência UUID–nome.
-
-### 2.1 Divergência histórica reconhecida
-
-O histórico remoto contém duas versões temporárias de `pg_net` sem arquivo homônimo na árvore Git:
+O histórico remoto registra:
 
 ```text
 20260723231805_enable_pg_net_for_r3_user_provisioning
 20260723232308_remove_pg_net_after_r3_user_provisioning
 ```
 
-O Pacote E0 apenas registra a divergência. A reconstrução fiel dos arquivos pertence ao E1A e não foi executada. Nenhum novo pacote que crie migration deve começar antes da reconciliação, e os registros remotos não devem ser reescritos ou reaplicados por inferência.
+Os arquivos homônimos agora existem no Git com os statements remotos exatos:
 
-Não mantenha neste documento uma lista manual considerada mais autoritativa que o próprio diretório. Antes de qualquer migration, confirme os arquivos existentes, o histórico remoto e o estado de `main`.
-
-Para um projeto novo:
-
-```bash
-npx supabase login
-npx supabase link --project-ref SEU_PROJECT_REF
-npx supabase db push
+```sql
+create extension if not exists pg_net with schema extensions;
 ```
 
-## 3. Estado atual do domínio
+```sql
+drop extension if exists pg_net;
+```
 
-### 3.1 Demandas
+Esses arquivos representam fatos já aplicados. **Não devem ser reaplicados manualmente em Production.** O estado final esperado e verificado é `pg_net` ausente.
 
-`public.sme_demandas` inclui, entre outros:
+O teste `src/migrations/pgNetHistory.test.ts` exige presença, conteúdo exato, ordem e remoção final. A evidência read-only está em `docs/technical/E1A_PG_NET_HISTORY.md`.
 
-- número, tipo, assunto e classificação;
-- `responsavel_id` e snapshot textual `responsavel`;
-- prazo interno e final com situação e justificativa;
-- próxima ação e data de acompanhamento;
-- status e setor;
-- link e origem;
-- autoria e timestamps;
-- metadados de exclusão lógica.
+Antes de qualquer migration nova:
 
-### 3.2 Histórico
+```bash
+npx supabase link --project-ref kdhekkzwcokfrpcrsllr
+npx supabase migration list
+npx supabase db push --dry-run
+```
 
-`public.sme_historico` preserva:
+O dry-run não pode propor novamente versões já registradas remotamente.
 
-- demanda;
-- tipo de evento;
-- status anterior e resultante;
-- setor;
-- comentário ou justificativa;
-- alterações estruturadas antes/depois;
-- autoria e data.
+## 3. Modelo operacional atual
 
-Tipos oficiais:
+`public.sme_demandas` contém identificação, classificação, responsável por UUID, prazos semânticos, próxima ação, data de acompanhamento, status, setor, origem, autoria e exclusão lógica.
+
+`public.sme_historico` contém tipo de evento, estados anterior e resultante, comentário, alterações estruturadas, autoria e data.
+
+Tipos oficiais de evento:
 
 ```text
 criacao
@@ -99,24 +82,19 @@ exclusao
 restauracao
 ```
 
-### 3.3 Responsabilidade após o R3
+## 4. Responsabilidade após o R3
 
-A regra vigente é:
-
-- `responsavel_id` identifica oficialmente o responsável;
+- `responsavel_id` é a identidade oficial;
 - o nome é derivado do perfil no servidor;
-- nova demanda ou reatribuição seleciona usuário cadastrado por UUID;
-- sem responsável é permitido com UUID nulo e texto vazio;
-- responsável externo e nome livre não são opções atuais;
-- texto legado sem UUID pode ser preservado sem virar opção futura;
+- novas atribuições usam usuário cadastrado ou ausência explícita;
+- nome livre e responsável externo não são opções atuais;
+- texto legado sem UUID pode ser preservado sem formar carteira pessoal;
 - `Vanessa Migrado` permanece como exceção histórica conhecida;
-- carteira pessoal usa somente igualdade de UUID.
+- `/minhas-demandas` usa igualdade de UUID.
 
-A função `listar_perfis_minimos()` fornece os perfis disponíveis à interface conforme o contrato vigente. RPCs e gatilho impedem divergência entre UUID e nome.
+## 5. RPCs operacionais
 
-## 4. RPCs operacionais vigentes
-
-O frontend atual utiliza ou possui contratos para:
+O frontend utiliza ou possui contratos para:
 
 - `criar_sme_demanda_v2`;
 - `editar_sme_demanda`;
@@ -126,76 +104,36 @@ O frontend atual utiliza ou possui contratos para:
 - `restaurar_sme_demanda`;
 - `listar_perfis_minimos`.
 
-As RPCs obtêm autoria por `auth.uid()`, validam papel no banco e gravam mutação e evento na mesma transação.
+As mutações obtêm autoria por `auth.uid()`, validam papel no banco e gravam demanda e histórico na mesma transação.
 
-As RPCs v1 permanecem temporariamente disponíveis apenas por compatibilidade e somente poderão ser revogadas no R12 após homologação integral.
+## 6. RLS e segurança
 
-## 5. RLS e papéis
-
-- usuário ativo consulta demandas e histórico;
-- administrador e editor executam mutações operacionais autorizadas;
-- somente administrador exclui logicamente e restaura;
+- usuário ativo consulta dados operacionais;
+- administrador e editor executam mutações autorizadas;
+- somente administrador exclui e restaura;
 - leitor não executa mutações;
 - perfil pendente ou inativo não acessa dados operacionais;
-- `anon` não consulta tabelas nem executa RPCs operacionais;
-- inserções e atualizações diretas não substituem RPCs;
-- o último administrador ativo não pode ser removido ou rebaixado.
+- `anon` não consulta tabelas nem executa RPCs;
+- o cliente não substitui a segurança do banco;
+- dados reais, segredos e `service_role` não entram no bundle, fixtures públicas ou logs.
 
-Uma interface pode ocultar ação, mas a segurança real deve continuar no banco.
+## 7. Fotografia operacional conhecida
 
-## 6. Fotografia reconciliada de Production
+Na fotografia read-only de 26/07/2026 havia 379 demandas, 378 vínculos oficiais por UUID, uma informação textual legada sem UUID, 764 históricos e 13 perfis. Essas quantidades não são constantes da aplicação e devem ser consultadas novamente antes de operações materiais.
 
-| Indicador | Resultado |
-|---|---:|
-| Demandas | 379 |
-| Demandas vinculadas por UUID | 378 |
-| Informação histórica sem UUID | 1 |
-| Históricos | 764 |
-| Perfis | 13 |
-| Divergências UUID–nome | 0 |
-| Links de origem cadastrados | 0 |
+## 8. Pendências posteriores
 
-Eventos conhecidos:
+Permanecem nos pacotes próprios do Plano Executivo:
 
-| Tipo | Quantidade |
-|---|---:|
-| criação | 379 |
-| reatribuição | 378 |
-| mudança de status | 7 |
-| andamento | 0 |
-| edição | 0 |
-| alteração de prazo | 0 |
-| exclusão | 0 |
-| restauração | 0 |
+- E2: retirada de dados reais da árvore corrente;
+- E4: RLS da lixeira e autoria administrativa;
+- R1: constraints, contratos, domínios e concorrência;
+- R2: paginação, consulta e histórico sob demanda;
+- R4 e R5: prazos, próxima providência, andamento e prontuário.
 
-Essas contagens são fotografia de 25/07/2026, não constantes de aplicação. Toda operação futura deve consultar novamente o banco.
+Nenhum desses itens é autorizado pelo E1A.
 
-## 7. Pendências estruturais reconhecidas
-
-Antes de ampliar R4 e R5, permanecem para debate e execução controlada:
-
-- validação formal das cinco constraints `NOT VALID`;
-- concorrência otimista por versão esperada;
-- alinhamento de limites entre banco e Zod;
-- definição do contrato de `link_origem`;
-- paginação real no servidor;
-- histórico sob demanda;
-- redução de recargas integrais após RPC e Realtime;
-- E2E contra Supabase real ou efêmero por papel.
-
-Essas pendências não autorizam mudança automática. Seguem a governança do R1 e R2.
-
-## 8. Dados e segurança operacional
-
-- dados reais não entram em `src`, fixtures públicas, logs, screenshots ou artefatos;
-- chaves secretas e `service_role` não entram no Vite;
-- scripts de bootstrap ficam fora do grafo do cliente;
-- modo local usa somente dados sintéticos;
-- migrations materiais exigem backup legível e invariantes;
-- rollback de frontend não apaga colunas ou eventos válidos;
-- correção de banco ocorre por nova migration versionada, nunca por edição manual não registrada.
-
-## 9. Integração Vercel
+## 9. Vercel
 
 Variáveis públicas aceitas:
 
@@ -204,11 +142,11 @@ SUPABASE_URL=
 SUPABASE_PUBLISHABLE_KEY=
 ```
 
-Também podem existir equivalentes públicos compatíveis com a integração de hospedagem. Configuração parcial deve produzir erro controlado. Produção nunca aceita modo local.
+Production nunca aceita modo local. Configuração parcial deve produzir erro controlado.
 
 ## 10. Verificação
 
-Depois de alteração consolidada:
+Para alteração consolidada:
 
 ```bash
 npm ci
@@ -216,14 +154,6 @@ npm run check:docs
 npm run check:full
 ```
 
-Para mudança de banco, execute também:
+Para migrations materiais, execute também replay integral em ambiente seguro, `migration list`, `db push --dry-run`, invariantes de dados, testes de papéis, RLS, grants, Realtime e atualização dos tipos gerados.
 
-- replay integral das migrations em ambiente seguro;
-- consultas de invariantes e contagens;
-- testes de papéis e chamadas diretas;
-- verificação de RLS e grants;
-- smoke de Realtime;
-- atualização dos tipos gerados;
-- atualização de Handoff, plano, Product Context e documentação afetada.
-
-No deployment, confirmar login real, carregamento remoto, ações por papel, persistência, Realtime e ausência de dados administrativos no bundle.
+O E1A é exceção apenas no sentido de que não executa DDL: ele reconstrói arquivos históricos já registrados e valida que nenhuma alteração remota foi realizada.

@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **27 de julho de 2026 — Correção do histórico publicada e bloqueio restaurado (PRs #69–#71)**
+Atualizado em: **27 de julho de 2026 — Preservação informacional consolidada após os PRs #69–#71**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
@@ -18,6 +18,7 @@ Atualizado em: **27 de julho de 2026 — Correção do histórico publicada e bl
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
+| Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Implementação autorizada após este pacote | nenhuma |
 | Próxima atividade funcional | continuação do E3 após homologação da correção publicada |
 
@@ -69,6 +70,23 @@ A comparação com o snapshot anterior ao R3 confirmou zero comentários histór
 - domínio oficial: HTTP 200;
 - nenhum dado, comentário, migration ou estrutura do Supabase foi alterado.
 
+## Princípio transversal de preservação informacional
+
+As decisões GOV-009 e GOV-010 passam a orientar toda alteração futura:
+
+- regras atuais permanecem rígidas para novos cadastros e novas operações;
+- dados oficiais legados ou históricos incompatíveis não podem ser apagados, omitidos, truncados, sobrescritos ou convertidos silenciosamente em vazio;
+- toda transformação preserva valor original, proveniência e razão;
+- correlação automática somente ocorre quando comprovável;
+- informação não associada permanece como pendência, ambiguidade ou conflito para saneamento posterior;
+- o princípio se aplica a responsáveis, setores, tipos, classificações, status, prazos, datas, assuntos, números, comentários, observações, documentos, links, autoria e eventos;
+- auditoria técnica e apresentação operacional são camadas distintas;
+- qualquer risco de perda ou sobrescrita deve ser apresentado ao responsável pelo produto antes da implementação.
+
+`Vanessa Migrado` permanece como caso canônico de informação histórica preservada sem UUID até vínculo oficial posterior.
+
+Consulte `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md`.
+
 ## Decisão sobre dados reais e segurança final
 
 O responsável pelo produto determinou que a retirada de dados reais dos repositórios, a contenção do repositório predecessor, a revisão de deployments antigos e eventual reescrita de histórico Git sejam adiadas para um pacote consolidado de segurança ao final das implementações funcionais e antes da entrega do produto para uso.
@@ -98,9 +116,9 @@ Até esse momento:
 - **R2:** consultas escaláveis e histórico sob demanda.
 - **R4:** prazos e próxima providência.
 - **R5:** andamento, prontuário e recuperação administrativa.
-- **Segurança final:** executar ao fim das implementações funcionais o antigo escopo E2 ampliado, conforme decisão expressa do responsável pelo produto.
+- **Segurança final:** executar ao fim das implementações funcionais o antigo escopo E2 ampliado, conforme GOV-011.
 
-Nenhuma dessas etapas está autorizada automaticamente pela conclusão do PR #69.
+Nenhuma dessas etapas está autorizada automaticamente pela conclusão do PR #69 ou pela consolidação documental atual.
 
 ## Regra de continuidade
 
@@ -109,4 +127,5 @@ Nenhuma dessas etapas está autorizada automaticamente pela conclusão do PR #69
 3. cada pacote permanece isolado em branch e PR próprios;
 4. alterações de banco futuras exigem preflight da cadeia de migrations antes da aplicação;
 5. toda etapa concluída atualiza os documentos vigentes afetados no mesmo trabalho;
-6. divergência documental decorrente da própria conclusão de uma tarefa é atualização rotineira de status, não um novo ciclo de planejamento.
+6. divergência documental decorrente da própria conclusão de uma tarefa é atualização rotineira de status, não um novo ciclo de planejamento;
+7. qualquer alteração que possa comprometer informação oficial para e retorna para decisão expressa.

@@ -29,6 +29,8 @@ jobs:
       CYCLE4_PROGRESS: supabase/migrations/20260722123713_cycle4_progress_and_status.sql
       CYCLE4_ADMIN: supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
       CYCLE4_HARDENING: supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
+      E1A_PG_NET_ENABLE: supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
+      E1A_PG_NET_REMOVE: supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
       R3_RESPONSAVEIS: supabase/migrations/20260724000100_r3_responsaveis_oficiais.sql
 
     steps:
@@ -54,13 +56,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/cycle3-migration /tmp/cycle4-migrations /tmp/r3-migrations
+          mkdir -p /tmp/cycle3-migration /tmp/cycle4-migrations /tmp/e1a-pg-net-migrations /tmp/r3-migrations
           mv "$CYCLE3_MIGRATION" /tmp/cycle3-migration/
           mv "$CYCLE4_CREATE" /tmp/cycle4-migrations/
           mv "$CYCLE4_EDIT" /tmp/cycle4-migrations/
           mv "$CYCLE4_PROGRESS" /tmp/cycle4-migrations/
           mv "$CYCLE4_ADMIN" /tmp/cycle4-migrations/
           mv "$CYCLE4_HARDENING" /tmp/cycle4-migrations/
+          mv "$E1A_PG_NET_ENABLE" /tmp/e1a-pg-net-migrations/
+          mv "$E1A_PG_NET_REMOVE" /tmp/e1a-pg-net-migrations/
           mv "$R3_RESPONSAVEIS" /tmp/r3-migrations/
           supabase db start
 
@@ -78,7 +82,7 @@ jobs:
       - name: Insert synthetic Cycle 4 users
         run: psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_mutations_fixture.sql
 
-      - name: Apply Cycle 4 and R3 migrations
+      - name: Apply Cycle 4, E1A history and R3 migrations
         shell: bash
         run: |
           set -o pipefail
@@ -87,6 +91,8 @@ jobs:
           mv /tmp/cycle4-migrations/20260722123713_cycle4_progress_and_status.sql "$CYCLE4_PROGRESS"
           mv /tmp/cycle4-migrations/20260722123920_cycle4_admin_restore_and_grants.sql "$CYCLE4_ADMIN"
           mv /tmp/cycle4-migrations/20260722123935_cycle4_block_direct_writes.sql "$CYCLE4_HARDENING"
+          mv /tmp/e1a-pg-net-migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql "$E1A_PG_NET_ENABLE"
+          mv /tmp/e1a-pg-net-migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql "$E1A_PG_NET_REMOVE"
           mv /tmp/r3-migrations/20260724000100_r3_responsaveis_oficiais.sql "$R3_RESPONSAVEIS"
           supabase migration up --local 2>&1 | tee cycle4-migration-report.txt
 
@@ -96,6 +102,10 @@ jobs:
           set -o pipefail
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_mutations_invariants.sql 2>&1 | tee cycle4-invariants-report.txt
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_physical_delete_invariants.sql 2>&1 | tee cycle4-physical-delete-report.txt
+
+      - name: Verify pg_net is absent after E1A replay
+        run: |
+          test "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from pg_extension where extname = 'pg_net';")" = "0"
 
       - name: Upload database reports and validated migrations
         if: always()
@@ -111,6 +121,8 @@ jobs:
             supabase/migrations/20260722123713_cycle4_progress_and_status.sql
             supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
             supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
+            supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
+            supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
             supabase/migrations/20260724000100_r3_responsaveis_oficiais.sql
           if-no-files-found: warn
           retention-days: 14

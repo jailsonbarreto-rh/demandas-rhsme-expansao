@@ -3,7 +3,7 @@
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
 **Status:** vigente  
-**Atualizado em:** 26 de julho de 2026  
+**Atualizado em:** 27 de julho de 2026  
 **Finalidade:** registrar somente decisões expressamente aprovadas pelo responsável pelo produto antes da implementação de cada pacote.
 
 ## 1. Regra de uso
@@ -127,18 +127,66 @@ A adoção dos planos não aprova nenhuma decisão `OP-Dxx`, não autoriza imple
 
 **Data:** 26 de julho de 2026  
 **Classificação:** reconciliação documental e necessidade técnica  
+**Decisão:** APROVADA E CONCLUÍDA.
+
+O Pacote E0 foi autorizado exclusivamente para consolidar a cadeia documental v3.1/v1.2, criar o gate automatizado e corrigir referências documentais. Foi concluído no PR #58. A conclusão do E0 não autorizou automaticamente os pacotes seguintes.
+
+### GOV-009 — Preservação informacional universal
+
+**Data:** 27 de julho de 2026  
+**Classificação:** preservação do que já existe e decisão de governança de dados  
 **Decisão:** APROVADA.
 
-Fica autorizado exclusivamente o Pacote E0 para:
+As regras atuais governam novos cadastros e novas operações. Dados oficiais legados, históricos ou já registrados não podem ser apagados, omitidos, sobrescritos, truncados, convertidos silenciosamente em vazio nem substituídos por valor aparentemente compatível apenas porque não atendem a uma regra atual ou futura.
 
-- versionar integralmente os Planos v3.1 e v1.2;
-- criar as versões reconciliadas do Adendo, Protocolo e Política;
-- sincronizar a cadeia documental vigente e marcar as versões substituídas como históricas;
-- corrigir a referência documental do projeto Supabase;
-- criar e integrar o gate automatizado de coerência documental;
-- abrir um único PR documental, sem merge ou deployment nesta execução.
+O tratamento obrigatório é:
 
-O E0 não autoriza E1, E1A, E2, E3, E4, R1, R2, R4, R5, migration, alteração de banco, alteração funcional, Preview ou Production. Ele somente estará concluído após merge e homologação do PR. Depois disso, qualquer próximo pacote dependerá de nova autorização expressa.
+1. preservar o valor original e sua proveniência;
+2. tentar normalização, tradução e correlação segura;
+3. aplicar a regra atual automaticamente somente quando a correspondência for comprovável;
+4. registrar como pendente, ambíguo, conflitante ou não associado o que não puder ser adaptado com segurança;
+5. manter a informação consultável e recuperável para saneamento posterior;
+6. nunca inventar correspondência nem transformar ausência de correlação em ausência de informação.
+
+A regra vale para responsáveis, setores, tipos, classificações, status, prazos, datas, assuntos, números, comentários, observações, documentos, links, eventos históricos e qualquer outro dado oficial.
+
+O caso `Vanessa Migrado` é o exemplo canônico: a informação textual histórica permanece preservada sem UUID até que exista decisão e vínculo oficial. A exceção histórica não reintroduz nome livre para novos cadastros.
+
+Toda mudança futura que possa apagar, reduzir, ocultar, reinterpretar ou sobrescrever informação oficial deve ser apresentada ao responsável pelo produto antes da implementação. O item afetado deve parar até decisão expressa.
+
+Consulte `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md`.
+
+### GOV-010 — Separação entre auditoria técnica e apresentação operacional
+
+**Data:** 27 de julho de 2026  
+**Classificação:** decisão de produto e correção de apresentação  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+Metadados técnicos de migration, lote, hash, rotina ou versão podem e devem permanecer preservados para auditoria, mas não substituem informação operacional nem devem ser exibidos literalmente ao usuário quando não ajudam a compreender ou executar o trabalho.
+
+A interface apresenta linguagem administrativa útil. Os registros brutos permanecem preservados no banco.
+
+A correção implementada no PR #69, publicada pelo PR #70 e protegida pelo PR #71 determinou:
+
+- `Demanda importada do lote saneado <hash>.` e `Demanda importada da planilha inicial.` são apresentadas como `Demanda importada do sistema legado.`;
+- `Responsável vinculado a perfil oficial na migração R3.` é apresentado como `Responsável vinculado ao perfil oficial.`;
+- eventos técnicos permanecem no histórico individual, mas não aparecem como movimentação operacional global;
+- nenhum comentário ou evento bruto foi apagado ou reescrito.
+
+### GOV-011 — Segurança e exposição consolidadas ao final da fase funcional
+
+**Data:** 27 de julho de 2026  
+**Classificação:** mudança de sequência  
+**Decisão:** APROVADA.
+
+A retirada de dados reais dos repositórios, a contenção do repositório predecessor, a revisão de deployments antigos e eventual reescrita de histórico Git ficam adiadas para um pacote consolidado de segurança ao final das implementações funcionais e antes da entrega do produto para uso.
+
+Até esse pacote final:
+
+- nenhum arquivo real será apagado por esse motivo;
+- nenhum histórico Git será reescrito;
+- a frente de segurança não bloqueará as implementações funcionais independentes;
+- a preservação para desenvolvimento e conferência prevalece sobre limpeza prematura.
 
 ## 3. Decisões do Ciclo R3
 
@@ -258,7 +306,7 @@ Todos os documentos vigentes devem refletir as decisões R3-D01 a R3-D09. Em par
 
 O Plano Remanescente v2.1 e o Product Context atualizado substituem as descrições conflitantes anteriores. Documentos históricos permanecem preservados, mas não orientam regressão.
 
-**Nota de precedência:** a orientação de continuidade por R1/R2 registrada naquele momento foi superada, quanto à próxima atividade, por GOV-007 e GOV-008. As regras materiais do R3 permanecem vigentes; nenhum pacote posterior está autorizado automaticamente.
+**Nota de precedência:** a orientação de continuidade por R1/R2 registrada naquele momento foi superada, quanto à próxima atividade, por GOV-007, GOV-008 e pelas decisões posteriores deste Registro. As regras materiais do R3 permanecem vigentes; nenhum pacote posterior está autorizado automaticamente.
 
 ## 4. Modelo de registro de decisão do ciclo
 
@@ -283,10 +331,15 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
-| E0 | Concluído | GOV-007 e GOV-008 | Somente documentação e gate documental | Em PR; conclui apenas após merge e homologação |
+| E0 | Concluído | GOV-007 e GOV-008 | Concluída | PR #58 concluído |
+| E1 | Concluído | Autorização registrada no Handoff histórico | Concluída | Production alinhada pelo PR #59; bloqueio restaurado no PR #60 |
+| E1A | Concluído | Autorização registrada no Handoff histórico | Concluída | PR #61 concluído sem reexecução de SQL |
+| E2 / segurança final | Adiado | GOV-011 | Não no momento | Executar após as implementações funcionais e antes da entrega |
+| E3 | Em andamento | GOV-010 para o histórico técnico | Parcialmente concluída | Correção publicada pelos PRs #69–#71; demais itens semânticos pendentes |
+| E4 | Não iniciado | Não | Não | Futuro |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |
-| R3 | Concluído | Sim | Sim | Implementado; documentação reconciliada nesta revisão |
+| R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |
 | R4 | Não iniciado | Não | Não | Futuro após R1 e R2 |
 | R5 | Não iniciado | Não | Não | Suspenso até R4 |
 | R6 | Não iniciado | Não | Não | Futuro |

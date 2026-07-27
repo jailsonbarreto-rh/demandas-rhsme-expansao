@@ -109,7 +109,7 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
         <div className="dashboard-col-card">
           <h2>
             <i className="fa-solid fa-building-user" style={{ color: 'var(--accent-color)' }} />
-            Setores mais Ativos (Top 5)
+            Demandas por setor informado
           </h2>
 
           <div style={{ marginTop: '10px' }}>

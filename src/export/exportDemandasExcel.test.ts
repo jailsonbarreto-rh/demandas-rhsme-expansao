@@ -57,6 +57,9 @@ describe('buildDemandasWorkbook', () => {
     expect(resumo?.getCell('A1').value).toBe('CENTRAL DE DEMANDAS — RELATÓRIO ANALÍTICO');
     expect(resumo?.getCell('B6').value).toBe('leitor@rioeduca.net');
     expect(resumo?.getCell('B8').value).toBe(2);
+    expect(resumo?.getCell('C10').value).toBe('EM ACOMPANHAMENTO');
+    expect(resumo?.getCell('A27').value).toBe('DEMANDAS POR SETOR INFORMADO');
+    expect(resumo?.getCell('A52').value).toBe('DISTRIBUIÇÃO POR RESPONSÁVEL — 10 MAIORES VOLUMES');
 
     expect(base?.views[0]).toMatchObject({ state: 'frozen', ySplit: 8 });
     expect(base?.getTables()).toHaveLength(0);

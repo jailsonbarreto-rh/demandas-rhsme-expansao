@@ -1,100 +1,88 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **26 de julho de 2026 — baseline documental do Pacote E0**
+Atualizado em: **27 de julho de 2026 — Pacote E1A**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
-## Estado material verificado
+## Estado material
 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| SHA-base remoto verificado para o E0 | `ee61dab5917f84b034305ba2119e4bbad673f176` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
-| Deployment efetivo de Production | `dpl_44HusLjkHEJxpKtvWQFfrgJmXvNR` — `READY` |
-| SHA efetivo de Production | `98ce45df2e05d223c89227dea244dc53a7d4e363` — PR #52 |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
+| Deployment efetivo | `dpl_DMrubRz2sDRtN5ZmmjKByDD94kDn` — `READY` |
+| SHA efetivo de Production | `c59f8be936b7071cb3f60d147e26e408f60ee6f3` — PR #59 |
+| Bloqueio automático de deploy | restaurado pelo PR #60 |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
-| Registro de decisões | `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md` |
-| Implementação funcional autorizada | Nenhuma |
-| Próxima atividade | Nenhum pacote posterior autorizado; depende de nova autorização expressa |
+| Implementação autorizada após este pacote | nenhuma |
+| Próxima atividade prevista no plano | E2, dependente de autorização expressa |
 
-O SHA-base acima registra a linha de partida verificada para o E0 e não pretende representar o SHA da `main` após o próprio merge.
+## Pacotes concluídos
 
-## Pacote E0 documental
+- **E0:** cadeia documental v3.1/v1.2 consolidada e gate documental instituído no PR #58.
+- **E1:** Production alinhada ao estado funcional da `main`, incluindo o PR #53, pelo PR #59; o bloqueio de deploy foi restaurado pelo PR #60.
+- **E1A:** os dois fatos históricos temporários de `pg_net` foram representados no Git por arquivos homônimos e statements idênticos aos registrados remotamente.
 
-O E0 foi autorizado exclusivamente para reconciliação documental e criação do gate de coerência. Seu conteúdo:
+O conteúdo do E1A integra o PR #61. Sua presença na `main` registra a conclusão do pacote. Nenhum SQL do E1A foi executado novamente no Supabase.
 
-- versiona os Planos v3.1 e v1.2;
-- atualiza a cadeia vigente para Adendo v2.0.4, Protocolo v1.3 e Política v1.1;
-- preserva o Plano Remanescente v2.1 e as versões substituídas como históricos;
-- corrige a ref do Supabase nos documentos vigentes;
-- não aprova automaticamente nenhuma decisão `OP-Dxx`;
-- não autoriza implementação funcional.
+## Resultado do E1A
 
-A presença deste conteúdo na `main` após o merge registra a conclusão documental do E0. Fora da `main`, ele representa a proposta de reconciliação em revisão. Em ambos os estados, nenhum pacote funcional posterior está autorizado.
+Arquivos reconstruídos:
 
-## Escopo material do E0
+```text
+supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
+supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
+```
 
-O E0:
+Statements remotos preservados:
 
-- altera apenas arquivos Markdown, `package.json` e scripts de teste/auditoria documental;
-- não altera frontend, estilos, componentes, TypeScript operacional ou comportamento da aplicação;
-- não cria nem edita migration;
-- não aplica SQL, não altera dados e não modifica RLS, RPC, grants, Auth ou Realtime;
-- não altera `vercel.json`;
-- não cria Preview e não publica Production;
-- não executa E1, E1A, E2, E3, E4, R1, R2, R4 ou R5;
-- não remove dados reais da árvore Git;
-- não reescreve histórico Git.
+```sql
+create extension if not exists pg_net with schema extensions;
+```
 
-## R3 implementado e preservado
+```sql
+drop extension if exists pg_net;
+```
 
-- `responsavel_id` permanece a identidade oficial do responsável.
-- Novas demandas e futuras reatribuições usam usuário cadastrado por UUID ou ausência explícita.
-- Responsável externo e nome livre não são opções da operação atual.
-- Informação textual legada sem UUID continua preservada sem formar carteira pessoal.
-- 378 demandas permanecem vinculadas aos perfis oficiais.
-- Uma informação textual legada permanece sem UUID.
+Invariantes:
+
+- a habilitação temporária precede a remoção;
+- `pg_net` está ausente no estado remoto final;
+- nenhuma migration foi reaplicada;
+- nenhuma tabela, função, política, grant ou dado de Production foi alterado;
+- nenhum Preview ou deployment foi criado pelo E1A;
+- a aplicação e o R3 permaneceram inalterados.
+
+A evidência técnica está em `docs/technical/E1A_PG_NET_HISTORY.md` e o gate automatizado em `src/migrations/pgNetHistory.test.ts`.
+
+## Estado funcional preservado
+
+- `responsavel_id` continua sendo a identidade oficial do responsável.
 - `/demandas` continua sendo a carteira da equipe.
 - `/minhas-demandas` continua sendo a carteira pessoal por UUID.
-- `escopo=meu` continua somente como compatibilidade legada.
-- Indicadores continuam contextuais à carteira delimitada pela rota.
+- Indicadores e filtros continuam contextuais à carteira aberta.
+- A paginação padrão de 50 registros e a opção de 100 estão em Production.
+- Nenhum dado operacional foi modificado neste pacote.
 
-## Fotografia read-only verificada no Supabase em 26/07/2026
+## Pendências posteriores do plano
 
-| Indicador | Resultado |
-|---|---:|
-| Demandas | 379 |
-| Demandas vinculadas a perfil oficial | 378 |
-| Informação textual legada sem UUID | 1 |
-| Históricos | 764 |
-| Perfis | 13 |
-| Demandas logicamente excluídas | 0 |
-| Demandas abertas sem próxima ação | 376 |
-| Demandas abertas sem data de acompanhamento | 376 |
+- **E2:** remover dados operacionais reais da árvore corrente do Git, sem reescrever histórico nesta etapa.
+- **E3:** corrigir semânticas objetivas já previstas.
+- **E4:** RLS da lixeira e autoria administrativa.
+- **R1:** integridade, contratos e concorrência.
+- **R2:** consultas escaláveis e histórico sob demanda.
+- **R4:** prazos e próxima providência.
+- **R5:** andamento, prontuário e recuperação administrativa.
 
-As contagens são uma fotografia de verificação, não constantes da aplicação.
-
-## Pendências reconhecidas, não executadas
-
-- Production permanece no PR #52 e ainda não contém a evolução funcional do PR #53.
-- Duas migrations temporárias de `pg_net` constam no histórico remoto e não possuem arquivo homônimo no Git; o tratamento pertence ao E1A.
-- Dados operacionais reais ainda existem na árvore corrente e pertencem ao E2.
-- RLS da lixeira e autoria administrativa pertencem ao E4 e dependem das decisões aplicáveis.
-- Integridade, concorrência e contratos pertencem ao R1.
-- Consulta escalável e histórico sob demanda pertencem ao R2.
-- Prazos e próxima providência pertencem ao R4.
-- Andamento, prontuário e recuperação administrativa pertencem ao R5.
-- O Trilho B permanece separado e não bloqueia genericamente a evolução independente do Trilho A.
-
-Nenhuma dessas pendências foi corrigida ou autorizada pelo E0.
+Nenhuma dessas etapas está autorizada automaticamente pela conclusão do E1A.
 
 ## Regra de continuidade
 
-1. nenhuma decisão `OP-Dxx` pode ser inferida da adoção dos planos;
-2. o responsável pelo produto escolhe e autoriza expressamente o próximo pacote;
-3. qualquer implementação futura atualiza o marcador de autorização neste Handoff e no Registro de Decisões;
-4. nenhum deployment decorre automaticamente do E0.
+1. nenhuma decisão `OP-Dxx` pode ser inferida dos planos;
+2. o responsável pelo produto autoriza expressamente o próximo pacote;
+3. cada pacote permanece isolado em branch e PR próprios;
+4. alterações de banco futuras devem partir da cadeia de migrations agora reconciliada;
+5. nenhum deployment decorre automaticamente do E1A.

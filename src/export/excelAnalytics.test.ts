@@ -36,7 +36,7 @@ describe('excelAnalytics', () => {
     expect(parseBrazilianDate('')).toBeNull();
   });
 
-  it('calcula indicadores, distribuições, ranking e prazos sem tratar encerradas como vencidas', () => {
+  it('calcula indicadores, distribuições e prazos sem tratar encerradas como vencidas', () => {
     const now = new Date(2026, 6, 16, 12, 0, 0);
     const demandas = [
       { ...base, id: 1, responsavel: 'Ana', limite2: '15/07/2026', limite2Situacao: 'definido' as const },
@@ -51,7 +51,7 @@ describe('excelAnalytics', () => {
 
     expect(result.kpis).toEqual({
       total: 6,
-      ativos: 5,
+      emAcompanhamento: 5,
       encerrados: 1,
       paraAssinatura: 1,
       vencidos: 1,
@@ -61,7 +61,7 @@ describe('excelAnalytics', () => {
       { label: 'Processo', count: 5, percentage: 83.33 },
       { label: 'Expediente', count: 1, percentage: 16.67 },
     ]);
-    expect(result.rankingResponsaveis.slice(0, 3)).toEqual([
+    expect(result.distribuicaoResponsaveis.slice(0, 3)).toEqual([
       { label: 'Ana', count: 2, percentage: 33.33 },
       { label: 'Bruno', count: 2, percentage: 33.33 },
       { label: 'Carla', count: 1, percentage: 16.67 },

@@ -278,7 +278,7 @@ function buildSummarySheet(
   setMetadataRow(worksheet, 9, 'Recorte aplicado', sanitizeExcelText(filterSummary), 'N');
 
   writeKpiCard(worksheet, 'A', 'B', 'Total', analytics.kpis.total, COLORS.navy, COLORS.white);
-  writeKpiCard(worksheet, 'C', 'D', 'Em acompanhamento', analytics.kpis.ativos, COLORS.blueLight, COLORS.navy);
+  writeKpiCard(worksheet, 'C', 'D', 'Em acompanhamento', analytics.kpis.emAcompanhamento, COLORS.blueLight, COLORS.navy);
   writeKpiCard(worksheet, 'E', 'F', 'Encerradas', analytics.kpis.encerrados, COLORS.greenLight, COLORS.green);
   writeKpiCard(worksheet, 'G', 'H', 'Para assinatura', analytics.kpis.paraAssinatura, COLORS.purpleLight, COLORS.purple);
   writeKpiCard(worksheet, 'I', 'J', 'Vencidas', analytics.kpis.vencidos, COLORS.redLight, COLORS.red);
@@ -307,7 +307,7 @@ function buildSummarySheet(
   writeDistributionSection(
     worksheet,
     'Distribuição por responsável — 10 maiores volumes',
-    analytics.rankingResponsaveis,
+    analytics.distribuicaoResponsaveis,
     52,
     { labelStart: 'A', labelEnd: 'D', count: 'E', barStart: 'F', barEnd: 'N' },
     10,

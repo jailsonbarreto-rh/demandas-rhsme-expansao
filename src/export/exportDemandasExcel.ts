@@ -278,7 +278,7 @@ function buildSummarySheet(
   setMetadataRow(worksheet, 9, 'Recorte aplicado', sanitizeExcelText(filterSummary), 'N');
 
   writeKpiCard(worksheet, 'A', 'B', 'Total', analytics.kpis.total, COLORS.navy, COLORS.white);
-  writeKpiCard(worksheet, 'C', 'D', 'Ativas', analytics.kpis.ativos, COLORS.blueLight, COLORS.navy);
+  writeKpiCard(worksheet, 'C', 'D', 'Em acompanhamento', analytics.kpis.ativos, COLORS.blueLight, COLORS.navy);
   writeKpiCard(worksheet, 'E', 'F', 'Encerradas', analytics.kpis.encerrados, COLORS.greenLight, COLORS.green);
   writeKpiCard(worksheet, 'G', 'H', 'Para assinatura', analytics.kpis.paraAssinatura, COLORS.purpleLight, COLORS.purple);
   writeKpiCard(worksheet, 'I', 'J', 'Vencidas', analytics.kpis.vencidos, COLORS.redLight, COLORS.red);
@@ -299,14 +299,14 @@ function buildSummarySheet(
 
   writeDistributionSection(worksheet, 'Composição por status', analytics.byStatus, 15, leftColumns, 8);
   writeDistributionSection(worksheet, 'Composição por tipo', analytics.byType, 15, rightColumns, 8);
-  writeDistributionSection(worksheet, 'Concentração por setor', analytics.bySector, 27, leftColumns, 8);
+  writeDistributionSection(worksheet, 'Demandas por setor informado', analytics.bySector, 27, leftColumns, 8);
   writeDistributionSection(worksheet, 'Composição por classificação', analytics.byClassification, 27, rightColumns, 8);
   writeDistributionSection(worksheet, 'Situação operacional dos prazos', analytics.deadlineSituation, 39, leftColumns, 8);
   writeDistributionSection(worksheet, 'Faixas de dias até o prazo', analytics.deadlineRanges, 39, rightColumns, 8);
 
   writeDistributionSection(
     worksheet,
-    'Ranking de responsáveis — 10 maiores volumes',
+    'Distribuição por responsável — 10 maiores volumes',
     analytics.rankingResponsaveis,
     52,
     { labelStart: 'A', labelEnd: 'D', count: 'E', barStart: 'F', barEnd: 'N' },
@@ -411,23 +411,23 @@ function buildDataSheet(
   });
 
   const headers = [
-  'ID',
-  'Número',
-  'Tipo',
-  'Assunto',
-  'Responsável',
-  'Limite 1',
-  'Limite 2',
-  'Status',
-  'Setor',
-  'Classificação',
-  'Situação do prazo',
-  'Dias até o prazo',
-];
-worksheet.getRow(8).values = headers;
-rows.forEach((values, index) => {
-  worksheet.getRow(9 + index).values = values;
-});
+    'ID',
+    'Número',
+    'Tipo',
+    'Assunto',
+    'Responsável',
+    'Limite 1',
+    'Limite 2',
+    'Status',
+    'Setor',
+    'Classificação',
+    'Situação do prazo',
+    'Dias até o prazo',
+  ];
+  worksheet.getRow(8).values = headers;
+  rows.forEach((values, index) => {
+    worksheet.getRow(9 + index).values = values;
+  });
 
   const headerRow = worksheet.getRow(8);
   headerRow.height = 32;

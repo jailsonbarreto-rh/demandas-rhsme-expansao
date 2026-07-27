@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **27 de julho de 2026 — Preservação informacional consolidada após os PRs #69–#71**
+Atualizado em: **27 de julho de 2026 — E3 publicado e bloqueio automático restaurado (PRs #73–#75)**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
@@ -10,93 +10,103 @@ Atualizado em: **27 de julho de 2026 — Preservação informacional consolidada
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` — HTTP 200 |
-| Deployment efetivo | `dpl_F2pATpQ3oFKW6K58NZVVqWqSwfyw` — `READY` |
-| SHA efetivo de Production | `2e53369342989a352371e4de030969596934465f` — PR #70 |
-| Correção funcional publicada | PR #69, merge `3a197b65fa26ebc89176fb537592d75545084b38` |
-| Bloqueio automático de deploy | restaurado pelo PR #71 |
+| Deployment efetivo | `dpl_H5TFobDu94pyMCeu4s8FkSjeVwU7` — `READY` |
+| SHA efetivo de Production | `f9873c59d5c097bb00c82a76b65c2abb6ff95009` — PR #74 |
+| Implementação funcional do E3 | PR #73, merge `99acdf0b7f27d22f71119522bacb4d3ac72118e3` |
+| Bloqueio automático de deploy | restaurado pelo PR #75 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Implementação autorizada após este pacote | nenhuma |
-| Próxima atividade funcional | continuação do E3 após homologação da correção publicada |
+| Próxima atividade | debate e decisão do E4; nenhuma implementação do E4 está autorizada |
 
 ## Pacotes concluídos
 
 - **E0:** cadeia documental v3.1/v1.2 consolidada e gate documental instituído no PR #58.
-- **E1:** Production alinhada ao estado funcional da `main`, incluindo o PR #53, pelo PR #59; o bloqueio de deploy foi restaurado pelo PR #60.
-- **E1A:** os dois fatos históricos temporários de `pg_net` foram representados no Git por arquivos homônimos e statements idênticos aos registrados remotamente no PR #61.
-- **Correção do histórico técnico:** implementada no PR #69, publicada em Production pelo PR #70 e seguida da restauração do bloqueio automático no PR #71.
+- **E1:** Production alinhada ao estado funcional da `main`, incluindo o PR #53, pelo PR #59; bloqueio restaurado no PR #60.
+- **E1A:** fatos históricos temporários de `pg_net` representados no Git no PR #61, sem reexecução de SQL.
+- **Correção do histórico técnico:** implementada no PR #69, publicada pelo PR #70 e protegida pelo PR #71.
+- **Preservação informacional:** consolidada documentalmente no PR #72.
+- **E3 — semânticas gerenciais:** concluído no PR #73, publicado pelo PR #74 e seguido da restauração do bloqueio no PR #75.
 
-Nenhum SQL do E1A foi executado novamente no Supabase.
+## E3 — semânticas gerenciais objetivas
 
-## Correção do histórico técnico — PR #69
+### Problema corrigido
 
-Problema identificado em uso real:
+Alguns rótulos atribuíam às contagens significados não comprovados pelos dados:
 
-- comentários de auditoria técnica eram exibidos literalmente na timeline cotidiana;
-- referências internas como `R3`, `lote saneado` e hash de lote apareciam para usuários sem significado operacional;
-- eventos de importação e migração eram misturados às movimentações humanas na Visão Geral.
+- `Setores mais Ativos` podia sugerir atividade ou produtividade;
+- `Ativas` era impreciso para demandas apenas não encerradas;
+- `Ranking de responsáveis` podia sugerir competição ou desempenho individual.
 
-Decisão e implementação:
+### Redação vigente
 
-- os registros brutos permanecem integralmente preservados no Supabase;
-- `Demanda importada do lote saneado <hash>.` e `Demanda importada da planilha inicial.` são exibidos como `Demanda importada do sistema legado.`;
-- `Responsável vinculado a perfil oficial na migração R3.` é exibido como `Responsável vinculado ao perfil oficial.`;
-- o título passa a ser `Histórico da demanda`;
-- cada evento recebe categoria legível;
-- eventos técnicos permanecem no histórico individual, mas não aparecem como movimentação operacional global;
-- comentários operacionais escritos por usuários permanecem inalterados.
+- `Demandas por setor informado`;
+- `Em acompanhamento`;
+- `Distribuição por responsável — 10 maiores volumes`;
+- `Registros recentes do histórico`, já corrigido na etapa anterior.
 
-Superfícies corrigidas:
+O campo `setor` continua sendo texto informado na demanda. Sua contagem não comprova produtividade, desempenho, esforço executado ou estrutura organizacional oficial.
 
-- `DemandDetailDrawer`;
-- `ModalHistorico`;
-- `VisaoGeral`.
+### Superfícies alteradas
 
-A comparação com o snapshot anterior ao R3 confirmou zero comentários históricos apagados ou alterados. O R3 acrescentou eventos auditáveis sem substituir registros anteriores.
+- Visão Geral;
+- resumo analítico do Excel;
+- seção de distribuição por setor do Excel;
+- distribuição por responsável no Excel;
+- nomes internos do contrato analítico;
+- testes de microcopy e documentação.
 
-## Validação da entrega
+### Preservação
 
+- nenhum dado foi alterado;
+- nenhuma demanda, responsável, status, prazo, comentário ou histórico foi reescrito;
+- cálculos, quantidades, filtros e recortes permaneceram idênticos;
+- nenhuma migration foi criada ou executada;
+- nenhuma estrutura, policy, função ou registro do Supabase foi modificado.
+
+A decisão está registrada como OP-D02 e detalhada em `docs/adr/ADR-005-semantica-setor-e-distribuicoes.md`.
+
+## Validação do E3
+
+- TDD com RED confirmado antes da implementação;
 - auditoria de dependências: aprovada;
 - assinaturas e proveniência: aprovadas;
 - lint: aprovado;
 - testes unitários, integração e cobertura: aprovados;
 - build e orçamento de bundle: aprovados;
-- Playwright: aprovado;
-- Preview: `READY`;
-- Production: `READY`;
-- domínio oficial: HTTP 200;
-- nenhum dado, comentário, migration ou estrutura do Supabase foi alterado.
+- testes Playwright: aprovados;
+- Preview: `READY` e HTTP 200;
+- Production: `READY` e HTTP 200;
+- SHA publicado corresponde ao PR operacional #74.
 
 ## Princípio transversal de preservação informacional
 
-As decisões GOV-009 e GOV-010 passam a orientar toda alteração futura:
+As decisões GOV-009 e GOV-010 orientam toda alteração futura:
 
-- regras atuais permanecem rígidas para novos cadastros e novas operações;
+- regras atuais permanecem rígidas para novos cadastros e operações;
 - dados oficiais legados ou históricos incompatíveis não podem ser apagados, omitidos, truncados, sobrescritos ou convertidos silenciosamente em vazio;
 - toda transformação preserva valor original, proveniência e razão;
 - correlação automática somente ocorre quando comprovável;
 - informação não associada permanece como pendência, ambiguidade ou conflito para saneamento posterior;
-- o princípio se aplica a responsáveis, setores, tipos, classificações, status, prazos, datas, assuntos, números, comentários, observações, documentos, links, autoria e eventos;
+- o princípio se aplica a todos os campos e eventos;
 - auditoria técnica e apresentação operacional são camadas distintas;
 - qualquer risco de perda ou sobrescrita deve ser apresentado ao responsável pelo produto antes da implementação.
 
 `Vanessa Migrado` permanece como caso canônico de informação histórica preservada sem UUID até vínculo oficial posterior.
 
-Consulte `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md`.
-
 ## Decisão sobre dados reais e segurança final
 
-O responsável pelo produto determinou que a retirada de dados reais dos repositórios, a contenção do repositório predecessor, a revisão de deployments antigos e eventual reescrita de histórico Git sejam adiadas para um pacote consolidado de segurança ao final das implementações funcionais e antes da entrega do produto para uso.
+A retirada de dados reais dos repositórios, a contenção do repositório predecessor, a revisão de deployments antigos e eventual reescrita de histórico Git permanecem adiadas para um pacote consolidado de segurança ao final das implementações funcionais e antes da entrega do produto para uso.
 
 Até esse momento:
 
-- nenhum arquivo real será apagado;
+- nenhum arquivo real será apagado por essa frente;
 - nenhum histórico será reescrito;
-- nenhuma ação de contenção será tratada como bloqueio das próximas implementações funcionais;
-- os dados serão preservados para evitar perda potencial durante o desenvolvimento e a conferência do legado.
+- a segurança final não bloqueará implementações funcionais independentes;
+- os dados serão preservados para desenvolvimento e conferência do legado.
 
 ## Estado funcional preservado
 
@@ -105,20 +115,18 @@ Até esse momento:
 - `/minhas-demandas` continua sendo a carteira pessoal por UUID.
 - Indicadores e filtros continuam contextuais à carteira aberta.
 - A paginação padrão de 50 registros e a opção de 100 permanecem.
-- Nenhum dado operacional foi modificado pelo PR #69.
-- Nenhum comentário ou evento foi apagado ou reescrito no Supabase.
+- Os eventos técnicos continuam preservados no banco e traduzidos apenas na apresentação.
 
 ## Pendências posteriores do plano
 
-- **E3:** concluir as demais correções semânticas objetivas já previstas.
-- **E4:** RLS da lixeira e autoria administrativa.
+- **E4:** RLS da lixeira e autoria administrativa — depende de debate da OP-D17 e autorização expressa.
 - **R1:** integridade, contratos e concorrência.
 - **R2:** consultas escaláveis e histórico sob demanda.
 - **R4:** prazos e próxima providência.
 - **R5:** andamento, prontuário e recuperação administrativa.
-- **Segurança final:** executar ao fim das implementações funcionais o antigo escopo E2 ampliado, conforme GOV-011.
+- **Segurança final:** antigo escopo E2 ampliado, conforme GOV-011.
 
-Nenhuma dessas etapas está autorizada automaticamente pela conclusão do PR #69 ou pela consolidação documental atual.
+Nenhuma dessas etapas está autorizada automaticamente pela conclusão do E3.
 
 ## Regra de continuidade
 
@@ -127,5 +135,5 @@ Nenhuma dessas etapas está autorizada automaticamente pela conclusão do PR #69
 3. cada pacote permanece isolado em branch e PR próprios;
 4. alterações de banco futuras exigem preflight da cadeia de migrations antes da aplicação;
 5. toda etapa concluída atualiza os documentos vigentes afetados no mesmo trabalho;
-6. divergência documental decorrente da própria conclusão de uma tarefa é atualização rotineira de status, não um novo ciclo de planejamento;
+6. atualização de status decorrente da conclusão normal de uma tarefa não cria novo ciclo de planejamento;
 7. qualquer alteração que possa comprometer informação oficial para e retorna para decisão expressa.

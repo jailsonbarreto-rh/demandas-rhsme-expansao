@@ -1,5 +1,6 @@
 import React from 'react';
 import { ComentarioHistorico, Demanda } from '../types';
+import { isTechnicalHistoryEvent, presentHistoryEvent } from '../domain/historyPresentation';
 
 interface VisaoGeralProps {
   demandas: Demanda[];
@@ -51,11 +52,13 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
   const statusDist = getStatusDistribution();
   const setorDist = getSetorDistribution();
   const ultimasMovimentacoes = historico
+    .filter((item) => !isTechnicalHistoryEvent(item))
     .slice(0, 5)
     .map((item) => {
       const demandaCorresp = demandas.find((demanda) => demanda.id === item.demandaId);
       return {
         ...item,
+        presentation: presentHistoryEvent(item),
         processoNumero: demandaCorresp?.numero || `Processo #${item.demandaId}`,
         demanda: demandaCorresp,
       };
@@ -138,7 +141,7 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
         <div className="dashboard-col-card" style={{ width: '100%' }}>
           <h2>
             <i className="fa-solid fa-clock-rotate-left" style={{ color: 'var(--accent-color)' }} />
-            Últimas Movimentações Globais
+            Registros recentes do histórico
           </h2>
 
           <div style={{ marginTop: '20px' }}>
@@ -175,6 +178,7 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span className="timeline-event-type">{item.presentation.label}</span>
                           <span className="timeline-setor">
                             <i className="fa-solid fa-building" style={{ marginRight: '4px', fontSize: '0.688rem' }} />
                             {item.setor || 'CTRH'}
@@ -195,7 +199,7 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
                         </div>
 
                         <div className="timeline-comment" style={{ marginTop: '6px', fontSize: '0.813rem', fontStyle: 'italic' }}>
-                          &quot;{item.comentario}&quot;
+                          &quot;{item.presentation.comment}&quot;
                         </div>
                       </div>
                     </div>
@@ -204,7 +208,7 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
               </div>
             ) : (
               <div style={{ padding: '20px 0', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.875rem' }}>
-                Nenhuma movimentação de histórico registrada.
+                Nenhuma movimentação operacional registrada.
               </div>
             )}
           </div>

@@ -188,7 +188,29 @@ Até esse pacote final:
 - a frente de segurança não bloqueará as implementações funcionais independentes;
 - a preservação para desenvolvimento e conferência prevalece sobre limpeza prematura.
 
-## 3. Decisões do Ciclo R3
+## 3. Decisões do Pacote E3
+
+### OP-D02 — Semântica neutra de setor, acompanhamento e distribuição por responsável
+
+**Data:** 27 de julho de 2026  
+**Classificação:** correção de linguagem e prevenção de inferência indevida  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+O campo `setor` permanece textual e registra o setor informado na demanda. A contagem de demandas agrupadas por esse campo não comprova atividade recente, produtividade, desempenho, esforço realizado nem estrutura organizacional oficial.
+
+A quantidade de demandas vinculadas a um responsável representa distribuição de carteira ou estoque, não classificação competitiva nem avaliação de desempenho. Para as demandas não encerradas, o conceito oficial permanece `Em acompanhamento`.
+
+As redações vigentes são:
+
+- `Setores mais Ativos` → `Demandas por setor informado`;
+- `Ativas` → `Em acompanhamento`;
+- `Ranking de responsáveis — 10 maiores volumes` → `Distribuição por responsável — 10 maiores volumes`.
+
+Os dados, cálculos, contagens, filtros e regras operacionais permanecem inalterados. A correção do histórico técnico foi implementada nos PRs #69–#71; as demais semânticas do E3 foram implementadas no PR #73.
+
+Consulte `docs/adr/ADR-005-semantica-setor-e-distribuicoes.md`.
+
+## 4. Decisões do Ciclo R3
 
 ### R3-D01 — Identidade oficial do responsável
 
@@ -308,7 +330,7 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 
 **Nota de precedência:** a orientação de continuidade por R1/R2 registrada naquele momento foi superada, quanto à próxima atividade, por GOV-007, GOV-008 e pelas decisões posteriores deste Registro. As regras materiais do R3 permanecem vigentes; nenhum pacote posterior está autorizado automaticamente.
 
-## 4. Modelo de registro de decisão do ciclo
+## 5. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
 |---|---|
@@ -327,7 +349,7 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 5. Controle por ciclo
+## 6. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
@@ -335,8 +357,8 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 | E1 | Concluído | Autorização registrada no Handoff histórico | Concluída | Production alinhada pelo PR #59; bloqueio restaurado no PR #60 |
 | E1A | Concluído | Autorização registrada no Handoff histórico | Concluída | PR #61 concluído sem reexecução de SQL |
 | E2 / segurança final | Adiado | GOV-011 | Não no momento | Executar após as implementações funcionais e antes da entrega |
-| E3 | Em andamento | GOV-010 para o histórico técnico | Parcialmente concluída | Correção publicada pelos PRs #69–#71; demais itens semânticos pendentes |
-| E4 | Não iniciado | Não | Não | Futuro |
+| E3 | Concluído | GOV-010 e OP-D02 | Concluída | Histórico corrigido nos PRs #69–#71; demais semânticas concluídas no PR #73 |
+| E4 | Não iniciado | Não | Não | Futuro; depende de debate e autorização expressa |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |

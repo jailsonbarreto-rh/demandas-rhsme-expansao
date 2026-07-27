@@ -22,7 +22,7 @@ export interface DeadlineInfo {
 export interface ExcelAnalytics {
   kpis: {
     total: number;
-    ativos: number;
+    emAcompanhamento: number;
     encerrados: number;
     paraAssinatura: number;
     vencidos: number;
@@ -32,7 +32,7 @@ export interface ExcelAnalytics {
   byType: DistributionItem[];
   bySector: DistributionItem[];
   byClassification: DistributionItem[];
-  rankingResponsaveis: DistributionItem[];
+  distribuicaoResponsaveis: DistributionItem[];
   deadlineSituation: DistributionItem[];
   deadlineRanges: DistributionItem[];
 }
@@ -176,7 +176,7 @@ export function getDeadlineInfo(demanda: Demanda, now = new Date()): DeadlineInf
 }
 
 export function buildExcelAnalytics(demandas: Demanda[], now = new Date()): ExcelAnalytics {
-  const active = demandas.filter(isInFollowUp);
+  const emAcompanhamento = demandas.filter(isInFollowUp);
   const deadlineInfo = demandas.map((demanda) => getDeadlineInfo(demanda, now));
 
   const deadlineSituation = SITUATION_ORDER.map((label) => {
@@ -192,8 +192,8 @@ export function buildExcelAnalytics(demandas: Demanda[], now = new Date()): Exce
   return {
     kpis: {
       total: demandas.length,
-      ativos: active.length,
-      encerrados: demandas.length - active.length,
+      emAcompanhamento: emAcompanhamento.length,
+      encerrados: demandas.length - emAcompanhamento.length,
       paraAssinatura: demandas.filter((demanda) => demanda.status === 'Para Assinatura').length,
       vencidos: deadlineSituation.find((item) => item.label === 'Vencidas')?.count ?? 0,
       vencendoHoje: deadlineSituation.find((item) => item.label === 'Vencendo hoje')?.count ?? 0,
@@ -202,7 +202,7 @@ export function buildExcelAnalytics(demandas: Demanda[], now = new Date()): Exce
     byType: countBy(demandas, (demanda) => demanda.tipo),
     bySector: countBy(demandas, (demanda) => normalizeLabel(demanda.setor, 'Não informado')),
     byClassification: countBy(demandas, (demanda) => normalizeLabel(demanda.classificacao, 'Não informada')),
-    rankingResponsaveis: countBy(
+    distribuicaoResponsaveis: countBy(
       demandas,
       (demanda) => normalizeLabel(demanda.responsavel, 'Não informado'),
     ).slice(0, 10),

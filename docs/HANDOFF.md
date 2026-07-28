@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **28 de julho de 2026 — refinamento visual do Radar autorizado**
+Atualizado em: **28 de julho de 2026 — UX-RADAR-001 em validação no PR #88**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-001 -->
 
@@ -61,12 +61,24 @@ Validação concluída:
 
 Nenhum código funcional, dado, schema, migration ou configuração do Supabase foi alterado. A análise específica do tratamento de `brace-expansion` permanece fora deste pacote.
 
+## Refinamento UX-RADAR-001 em validação
+
+O PR #88 implementa o escopo expressamente aprovado em 28 de julho de 2026:
+
+- identidade completa do Radar no cabeçalho principal, sem hero duplicado;
+- navegação inicial nomeada `Radar de Governança`;
+- estado operacional dinâmico sem exposição de fornecedor ou mecanismo de armazenamento;
+- três frases de decisão interna retiradas da interface, com cálculos, denominadores, rótulos neutros e documentação preservados;
+- indicação visual `Ctrl/⌘ K` retirada, mantendo o atalho funcional;
+- nenhum dado, schema, migration, permissão, métrica ou regra de cálculo alterado.
+
 ## Radar de Governança
 
 ### Identidade
 
 - **Título:** `Radar de Governança`.
 - **Subtítulo exato:** `Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.`
+- **Posição:** cabeçalho principal do produto; não há segunda apresentação do título dentro da página.
 
 ### Componentes preservados
 

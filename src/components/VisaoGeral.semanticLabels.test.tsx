@@ -42,6 +42,9 @@ describe('semânticas do Radar de Governança', () => {
     );
 
     expect(screen.queryByRole('heading', { name: 'Radar de Governança' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Composição atual')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Leitura da carteira' })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Composição da carteira' })).toBeVisible();
     expect(screen.queryByText('Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Cobertura dos prazos' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Distribuição por responsável' })).toBeVisible();

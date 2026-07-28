@@ -1,6 +1,6 @@
 # ADR-006 — Radar de Governança e leituras sustentadas pela base atual
 
-**Status:** aprovado e implementado; refinamento UX-RADAR-001 publicado  
+**Status:** aprovado e implementado; UX-RADAR-001 publicado e UX-RADAR-002 em validação  
 **Data:** 28 de julho de 2026
 
 ## Contexto
@@ -17,6 +17,8 @@ A área passa a se apresentar como:
 - **Subtítulo:** `Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.`
 
 A identidade aparece uma única vez no cabeçalho principal, acompanhada do ícone de bússola. O botão inicial de navegação adota o mesmo nome e a página deixa de repetir um hero próprio.
+
+A carteira coletiva é nomeada `Todas as demandas` na navegação, distinguindo-a da carteira pessoal. Os rótulos `Composição atual` e `Leitura da carteira` não são exibidos; os cartões permanecem agrupados em uma região acessível chamada `Composição da carteira`, sem alteração de conteúdo ou cálculo. Em telas estreitas, a navegação usa uma grade de duas colunas.
 
 O estado técnico da aplicação é traduzido em mensagem operacional derivada de carregamento e erro, sem citar fornecedor ou mecanismo de armazenamento. A indicação visual `Ctrl/Command+K` não é exibida, mas o atalho permanece protegido.
 

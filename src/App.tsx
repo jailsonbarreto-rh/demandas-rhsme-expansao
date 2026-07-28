@@ -544,7 +544,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             title="Ver a carteira completa da equipe"
           >
             <i className="fa-solid fa-list-check" aria-hidden="true" />
-            <span>Demandas</span>
+            <span>Todas as demandas</span>
           </button>
 
           <button

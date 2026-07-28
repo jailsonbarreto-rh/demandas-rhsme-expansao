@@ -246,7 +246,7 @@ describe('App no modo Supabase', () => {
     await waitFor(() => expect(window.location.pathname).toBe('/demandas'));
     expect(await screen.findByText('Demanda de outro usuário')).toBeVisible();
     expect(screen.getByText('Demanda sem responsável oficial')).toBeVisible();
-    expect(screen.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: /^todas as demandas$/i })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('button', { name: 'Ver minhas demandas' })).toBeVisible();
   });
 

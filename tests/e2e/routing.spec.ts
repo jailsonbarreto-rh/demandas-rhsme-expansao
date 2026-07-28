@@ -10,7 +10,7 @@ async function login(page: Page) {
 
 test('rotas e filtros preservam o contexto de navegação', async ({ page }) => {
   await login(page);
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
   await page.getByLabel(/^status$/i).selectOption('todos');
   await expect.poll(() => new URL(page.url()).searchParams.get('status')).toBe('todos');
 

@@ -195,14 +195,7 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
     <main className="visao-geral-container governance-dashboard">
       {renderAtencaoImediata()}
 
-      <section className="governance-section" aria-labelledby="composition-title">
-        <div className="governance-section-heading">
-          <div>
-            <span className="governance-kicker">Composição atual</span>
-            <h2 id="composition-title">Leitura da carteira</h2>
-          </div>
-        </div>
-
+      <section className="governance-section" aria-label="Composição da carteira">
         <div className="dashboard-row governance-composition-grid">
           <article className="dashboard-col-card governance-card">
             <div className="governance-card-title">

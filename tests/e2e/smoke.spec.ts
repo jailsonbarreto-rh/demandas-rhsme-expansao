@@ -8,7 +8,7 @@ async function expectNoHorizontalOverflow(page: import('@playwright/test').Page)
   expect(overflow.content).toBeLessThanOrEqual(overflow.viewport + 1);
 }
 
-test('fluxos críticos funcionam sem erros, dependências externas ou estouro horizontal', async ({ page }) => {
+test('fluxos críticos funcionam sem erros, dependências externas ou estouro horizontal', async ({ page }, testInfo) => {
   const consoleErrors: string[] = [];
   const externalAssetRequests: string[] = [];
 
@@ -42,6 +42,30 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   await expect(page.getByText('Modo de demonstração', { exact: true })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
+  const navigation = page.locator('.nav-tabs');
+  const compositionRegion = page.getByRole('region', { name: 'Composição da carteira' });
+  await expect(page.getByRole('button', { name: /^todas as demandas$/i })).toBeVisible();
+  await expect(page.getByText('Composição atual', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Leitura da carteira' })).toHaveCount(0);
+  await expect(compositionRegion).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  if (testInfo.project.name === 'chromium-mobile') {
+    const navigationColumnCount = await navigation.evaluate((element) => (
+      getComputedStyle(element).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+    ));
+    expect(navigationColumnCount).toBe(2);
+  }
+
+  await testInfo.attach(`navegacao-${testInfo.project.name}`, {
+    body: await navigation.screenshot(),
+    contentType: 'image/png',
+  });
+  await testInfo.attach(`composicao-${testInfo.project.name}`, {
+    body: await compositionRegion.screenshot(),
+    contentType: 'image/png',
+  });
+
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /exportar excel/i }).click();
   const download = await downloadPromise;
@@ -51,7 +75,7 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   await expect(page.getByRole('heading', { name: /nova demanda/i })).toBeVisible();
   await page.getByRole('button', { name: /^cancelar$/i }).click();
 
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
   await page.getByRole('button', { name: /^abrir$/i }).first().click();
   await expect(page.getByRole('heading', { name: /processo nº/i })).toBeVisible();
   await page.getByRole('button', { name: /^editar$/i }).click();

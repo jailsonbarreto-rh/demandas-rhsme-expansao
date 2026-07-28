@@ -82,6 +82,7 @@
 
 .governance-composition-grid {
   gap: 22px;
+  margin-top: 0;
 }
 
 .governance-composition-grid .governance-card {
@@ -569,6 +570,10 @@
 @media (max-width: 780px) {
   .governance-dashboard {
     gap: 27px;
+  }
+
+  .governance-composition-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .governance-section-heading {

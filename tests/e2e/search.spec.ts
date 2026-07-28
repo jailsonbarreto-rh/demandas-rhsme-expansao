@@ -10,7 +10,7 @@ async function login(page: import('@playwright/test').Page) {
 
 test('busca avançada encontra campos distribuídos, histórico e número sem pontuação', async ({ page }) => {
   await login(page);
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
 
   const search = page.getByRole('combobox', { name: /busca por texto/i });
   await search.fill('cessao demonstracao 2026');
@@ -29,7 +29,7 @@ test('busca avançada encontra campos distribuídos, histórico e número sem po
 
 test('busca sem resultado exato apresenta sugestões próximas explicadas', async ({ page }) => {
   await login(page);
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
 
   const search = page.getByRole('combobox', { name: /busca por texto/i });
   await search.fill('cessao demonstracao 2099');
@@ -45,7 +45,7 @@ test('busca sem resultado exato apresenta sugestões próximas explicadas', asyn
 
 test('buscas recentes, atalho e período funcionam por teclado', async ({ page }) => {
   await login(page);
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
 
   const search = page.getByRole('combobox', { name: /busca por texto/i });
   await search.fill('cessao demonstracao 2026');
@@ -55,7 +55,7 @@ test('buscas recentes, atalho e período funcionam por teclado', async ({ page }
 
   await page.getByRole('button', { name: /^radar de governança$/i }).click();
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+K' : 'Control+K');
-  await expect(page.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('button', { name: /^todas as demandas$/i })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('combobox', { name: /busca por texto/i })).toBeFocused();
 
   await page.getByRole('button', { name: /^mais filtros$/i }).click();

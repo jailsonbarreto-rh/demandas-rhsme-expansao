@@ -10,7 +10,7 @@ async function login(page: import('@playwright/test').Page) {
 
 test('modal de edição permanece interativo acima do drawer', async ({ page }) => {
   await login(page);
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
   await page.getByRole('button', { name: /^abrir$/i }).first().click();
   await page.getByRole('button', { name: /^editar$/i }).click();
   await expect(page.getByRole('heading', { name: /editar dados da demanda/i })).toBeVisible();

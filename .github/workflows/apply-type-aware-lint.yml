@@ -128,16 +128,10 @@ jobs:
           const appPath = 'src/App.tsx';
           let app = fs.readFileSync(appPath, 'utf8');
           const navigateMatches = app.match(/(?<!void )(?<!await )navigate\(/g) ?? [];
-          if (navigateMatches.length !== 9) {
-            throw new Error(`Esperadas 9 chamadas de navigate sem tratamento; encontradas ${navigateMatches.length}.`);
+          if (navigateMatches.length !== 8) {
+            throw new Error(`Esperadas 8 chamadas de navigate sem tratamento; encontradas ${navigateMatches.length}.`);
           }
           app = app.replace(/(?<!void )(?<!await )navigate\(/g, 'void navigate(');
-
-          const searchParamsMatches = app.match(/(?<!void )setSearchParams\(/g) ?? [];
-          if (searchParamsMatches.length !== 1) {
-            throw new Error(`Esperada 1 chamada de setSearchParams sem tratamento; encontradas ${searchParamsMatches.length}.`);
-          }
-          app = app.replace(/(?<!void )setSearchParams\(/g, 'void setSearchParams(');
 
           if (!app.includes('onLogout={handleLogout}') || !app.includes('onExportExcel={handleExportExcel}')) {
             throw new Error('Handlers assíncronos esperados no Header não foram encontrados.');
@@ -163,7 +157,7 @@ Os arquivos TypeScript operacionais fora de \`src\` permanecem sob o preset reco
 
 ## Achados corrigidos
 
-O primeiro gate tipado identificou oito promessas de navegação ou sincronização de URL sem tratamento explícito e dois handlers assíncronos fornecidos a atributos que esperavam retorno \`void\`. As chamadas intencionalmente não aguardadas passaram a usar \`void\`, e os handlers do cabeçalho receberam adaptadores síncronos explícitos.
+O primeiro gate tipado identificou oito promessas de navegação sem tratamento explícito e dois handlers assíncronos fornecidos a atributos que esperavam retorno \`void\`. As chamadas intencionalmente não aguardadas passaram a usar \`void\`, e os handlers do cabeçalho receberam adaptadores síncronos explícitos.
 
 ## Adoção progressiva
 

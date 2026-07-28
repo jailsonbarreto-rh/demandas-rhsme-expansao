@@ -1,0 +1,5 @@
+/* Ajustes de acessibilidade do Radar de Governança */
+.governance-progress-list .progress-bar-labels small {
+  color: var(--text-muted);
+  font-weight: 600;
+}

@@ -1,16 +1,16 @@
 name: Resolve brace-expansion compatibility
 
 on:
-  push:
+  pull_request:
     branches:
-      - chore/remove-brace-expansion-patch
+      - main
 
 permissions:
   contents: write
 
 jobs:
   resolve:
-    if: github.actor != 'github-actions[bot]'
+    if: github.event.pull_request.head.ref == 'chore/remove-brace-expansion-patch' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 45
 

@@ -119,7 +119,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     if (nextQuickFilters.vencido) nextParams.set('vencido', '1');
 
     setFiltros(nextFilters);
-    navigate({
+    void navigate({
       pathname: scope === 'meu' ? '/minhas-demandas' : '/demandas',
       search: nextParams.toString(),
     });
@@ -134,18 +134,18 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       navigateToWorkspace('meu');
       return;
     }
-    navigate({ pathname: tab === 'admin' ? '/admin' : '/', search: '' });
+    void navigate({ pathname: tab === 'admin' ? '/admin' : '/', search: '' });
   };
 
   const setDrawerAberto = (open: boolean) => {
-    if (!open) navigate({ pathname: currentWorkspacePath, search: searchParams.toString() });
+    if (!open) void navigate({ pathname: currentWorkspacePath, search: searchParams.toString() });
   };
 
   useEffect(() => {
     if (!legacyPersonalUrl) return;
     const legacyParams = new URLSearchParams(searchParams);
     legacyParams.delete('escopo');
-    navigate({ pathname: '/minhas-demandas', search: legacyParams.toString() }, { replace: true });
+    void navigate({ pathname: '/minhas-demandas', search: legacyParams.toString() }, { replace: true });
   }, [legacyPersonalUrl, navigate, searchParams]);
 
   useEffect(() => {
@@ -167,7 +167,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'k') return;
       event.preventDefault();
       setSearchFocusRequested(true);
-      navigate({
+      void navigate({
         pathname: activeTab === 'minhas-demandas' ? '/minhas-demandas' : '/demandas',
         search: searchParams.toString(),
       });
@@ -213,13 +213,13 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     if (selected) setDemandaSelecionada(selected);
     else {
       toast.error('A demanda informada não foi encontrada.');
-      navigate({ pathname: `/${match[1]}`, search: searchParams.toString() }, { replace: true });
+      void navigate({ pathname: `/${match[1]}`, search: searchParams.toString() }, { replace: true });
     }
   }, [demandas, location.pathname, navigate, searchParams]);
 
   const openDemand = (demanda: Demanda) => {
     setDemandaSelecionada(demanda);
-    navigate({ pathname: `${currentWorkspacePath}/${demanda.id}`, search: searchParams.toString() });
+    void navigate({ pathname: `${currentWorkspacePath}/${demanda.id}`, search: searchParams.toString() });
   };
 
   useEffect(() => {
@@ -284,7 +284,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
   const handleLogout = async () => {
     await session.signOut();
-    navigate({ pathname: '/', search: '' });
+    void navigate({ pathname: '/', search: '' });
     setDemandaSelecionada(null);
     setModalNovoAberto(false);
     setModalEditarAberto(false);
@@ -496,9 +496,9 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
         <Header
           userEmail={userEmail}
           demandas={workspaceDemandas}
-          onLogout={handleLogout}
+          onLogout={() => { void handleLogout(); }}
           onOpenNovo={() => setModalNovoAberto(true)}
-          onExportExcel={handleExportExcel}
+          onExportExcel={() => { void handleExportExcel(); }}
           onOpenMinhasDemandas={() => navigateToWorkspace('meu')}
           personalWorkspaceActive={activeTab === 'minhas-demandas'}
           exportingExcel={exportandoExcel}

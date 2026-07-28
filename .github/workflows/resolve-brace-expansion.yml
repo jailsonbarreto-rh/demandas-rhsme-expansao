@@ -42,8 +42,8 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/create-brace-expansion-patches.mjs
-          npx patch-package minimatch --error-on-fail
-          npx patch-package readdir-glob/minimatch --error-on-fail
+          npx patch-package minimatch
+          npx patch-package readdir-glob/minimatch
           test -f patches/minimatch+3.1.5.patch
           find patches -maxdepth 1 -type f -name '*minimatch+3.1.5.patch' | grep -q 'readdir-glob'
 

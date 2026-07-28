@@ -193,17 +193,6 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
 
   return (
     <main className="visao-geral-container governance-dashboard">
-      <header className="governance-hero">
-        <div className="governance-hero-mark" aria-hidden="true">
-          <i className="fa-solid fa-compass" />
-        </div>
-        <div>
-          <span className="governance-eyebrow">Leitura institucional da carteira</span>
-          <h1>Radar de Governança</h1>
-          <p>Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.</p>
-        </div>
-      </header>
-
       {renderAtencaoImediata()}
 
       <section className="governance-section" aria-labelledby="composition-title">
@@ -212,7 +201,6 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
             <span className="governance-kicker">Composição atual</span>
             <h2 id="composition-title">Leitura da carteira</h2>
           </div>
-          <p>Distribuições calculadas sobre as demandas atualmente registradas, sem inferência de produtividade ou desempenho.</p>
         </div>
 
         <div className="dashboard-row governance-composition-grid">
@@ -260,7 +248,6 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
             <span className="governance-kicker">Confiabilidade da leitura</span>
             <h2 id="deadlines-title">Cobertura dos prazos</h2>
           </div>
-          <p>A ausência de prazo é apresentada como ausência de informação e não como situação regular.</p>
         </div>
 
         <div className="deadline-coverage-grid">
@@ -300,7 +287,6 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
             <span className="governance-kicker">Distribuição da carteira</span>
             <h2 id="responsible-title">Distribuição por responsável</h2>
           </div>
-          <p>Volume e composição por status. A leitura não representa produtividade, desempenho ou carga equivalente de trabalho.</p>
         </div>
 
         <article className="governance-card responsible-distribution-card">

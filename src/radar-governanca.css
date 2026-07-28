@@ -603,6 +603,7 @@
 
 @media (max-width: 520px) {
   .governance-header-identity {
+    align-items: flex-start;
     gap: 12px;
   }
 

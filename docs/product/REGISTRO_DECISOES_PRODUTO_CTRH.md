@@ -1,6 +1,6 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-001 -->
+<!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
 **Status:** vigente  
 **Atualizado em:** 28 de julho de 2026  
@@ -336,7 +336,7 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 
 **Data:** 28 de julho de 2026  
 **Classificação:** decisão expressamente aprovada pelo responsável pelo produto.  
-**Decisão:** APROVADA PARA IMPLEMENTAÇÃO.
+**Decisão:** APROVADA E IMPLEMENTADA.
 
 A identidade completa `Radar de Governança` — ícone, título e subtítulo — será apresentada no cabeçalho principal, ocupando o lugar de `Painel de Demandas`, sem repetição de um segundo hero dentro da página. O botão inicial de navegação também passará a se chamar `Radar de Governança`.
 
@@ -374,7 +374,7 @@ Não há autorização nem necessidade de alterar dados, schema, migrations, per
 | E1A | Concluído | Autorização registrada no Handoff histórico | Concluída | PR #61 concluído sem reexecução de SQL |
 | E2 / segurança final | Adiado | GOV-011 | Não no momento | Executar após as implementações funcionais e antes da entrega |
 | E3 | Concluído | GOV-010 e OP-D02 | Concluída | Histórico corrigido nos PRs #69–#71; demais semânticas concluídas no PR #73 |
-| UX-RADAR-001 | Concluído | UX-RADAR-001 | Em validação | PR #88 |
+| UX-RADAR-001 | Concluído | UX-RADAR-001 | Concluída | PR #88, publicação #89 e bloqueio #90 |
 | E4 | Não iniciado | Não | Não | Futuro; depende de debate e autorização expressa |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |

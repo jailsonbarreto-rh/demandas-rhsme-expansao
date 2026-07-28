@@ -42,13 +42,19 @@ import ExcelJS from 'exceljs';
 
 const require = createRequire(import.meta.url);
 
-test('adaptador mantém a API CommonJS esperada pelo minimatch 3', () => {
-  const expand = require('brace-expansion');
-  assert.equal(typeof expand, 'function');
-  assert.deepEqual(expand('relatorio-{2025,2026}.xlsx'), [
-    'relatorio-2025.xlsx',
-    'relatorio-2026.xlsx',
-  ]);
+const requireFrom = (moduleId) => createRequire(require.resolve(moduleId));
+
+test('adaptador mantém a API CommonJS esperada por cada minimatch 3', () => {
+  const rootExpand = requireFrom('minimatch')('brace-expansion');
+  const nestedExpand = requireFrom('readdir-glob/node_modules/minimatch')('brace-expansion');
+
+  for (const expand of [rootExpand, nestedExpand]) {
+    assert.equal(typeof expand, 'function');
+    assert.deepEqual(expand('relatorio-{2025,2026}.xlsx'), [
+      'relatorio-2025.xlsx',
+      'relatorio-2026.xlsx',
+    ]);
+  }
 });
 
 test('minimatch direto e o minimatch do readdir-glob permanecem funcionais', () => {

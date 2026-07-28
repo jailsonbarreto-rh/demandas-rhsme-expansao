@@ -6,7 +6,7 @@ afterEach(() => cleanup());
 
 describe('LoadingSkeletons', () => {
   it.each([
-    ['visão geral', DashboardSkeleton],
+    ['Radar de Governança', DashboardSkeleton],
     ['tabela de demandas', TableSkeleton],
     ['administração', AdminSkeleton],
     ['acesso', AuthSkeleton],

@@ -1,0 +1,116 @@
+name: Resolve brace-expansion compatibility
+
+on:
+  push:
+    branches:
+      - chore/remove-brace-expansion-patch
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: chore/remove-brace-expansion-patch
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Remove compatibility patch and regenerate lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          delete packageJson.scripts.postinstall;
+          if (packageJson.overrides) {
+            delete packageJson.overrides['brace-expansion'];
+            if (Object.keys(packageJson.overrides).length === 0) delete packageJson.overrides;
+          }
+          fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
+          NODE
+          rm scripts/patch-brace-expansion-compat.mjs
+          npm install --package-lock-only --ignore-scripts
+          rm -rf node_modules
+          npm ci
+
+      - name: Verify resolved dependency tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/maintenance
+          {
+            echo '# Resolução da compatibilidade de brace-expansion — 28 de julho de 2026'
+            echo
+            echo '## Resultado'
+            echo
+            echo 'O override global de `brace-expansion` e o script de alteração direta de arquivos em `node_modules` foram removidos.'
+            echo 'O lockfile foi reconciliado pelo npm com as faixas declaradas pelas dependências consumidoras.'
+            echo
+            echo '## Árvore efetiva'
+            echo
+            echo '```text'
+            npm ls brace-expansion minimatch readdir-glob exceljs --all
+            echo '```'
+            echo
+            echo '## Explicação do npm'
+            echo
+            echo '```text'
+            npm explain brace-expansion
+            echo '```'
+            echo
+            echo '## Validações'
+            echo
+            echo '- instalação limpa por `npm ci`;'
+            echo '- importação e execução de `minimatch`;'
+            echo '- criação e serialização de workbook pelo `exceljs`;'
+            echo '- gate completo do projeto, inclusive Playwright.'
+          } > docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md
+
+          node --input-type=module <<'NODE'
+          import minimatchModule from 'minimatch';
+          import ExcelJS from 'exceljs';
+
+          const minimatch = typeof minimatchModule === 'function'
+            ? minimatchModule
+            : minimatchModule.minimatch;
+          if (typeof minimatch !== 'function' || !minimatch('relatorio.xlsx', '*.xlsx')) {
+            throw new Error('minimatch não está funcional após a resolução da árvore.');
+          }
+
+          const workbook = new ExcelJS.Workbook();
+          const worksheet = workbook.addWorksheet('Validação');
+          worksheet.addRow(['CTRH', 'ok']);
+          const buffer = await workbook.xlsx.writeBuffer();
+          if (!buffer || buffer.byteLength === 0) {
+            throw new Error('ExcelJS não conseguiu serializar o workbook de validação.');
+          }
+          NODE
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run full quality gate
+        run: npm run check:full
+
+      - name: Commit validated resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/resolve-brace-expansion.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json scripts/patch-brace-expansion-compat.mjs docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md .github/workflows/resolve-brace-expansion.yml
+          git commit -m 'chore(deps): remover patch manual de brace-expansion'
+          git push origin HEAD:chore/remove-brace-expansion-patch

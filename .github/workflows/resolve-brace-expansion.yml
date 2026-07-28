@@ -37,16 +37,19 @@ jobs:
           rm -rf node_modules
           npm ci --ignore-scripts
 
-      - name: Generate versioned patch
+      - name: Generate versioned patches
         shell: bash
         run: |
           set -o pipefail
           {
             node scripts/create-brace-expansion-patches.mjs
             npx patch-package minimatch
-            echo '--- patch gerado ---'
+            npx patch-package readdir-glob/minimatch
+            echo '--- patches gerados ---'
             find patches -maxdepth 1 -type f -print -exec sed -n '1,80p' {} \;
             test -f patches/minimatch+3.1.5.patch
+            test "$(find patches -maxdepth 1 -type f -name '*.patch' | wc -l)" -eq 2
+            find patches -maxdepth 1 -type f -name '*minimatch+5.1.9.patch' | grep -q .
           } 2>&1 | tee brace-expansion-patch-generation-report.txt
 
       - name: Upload patch generation report
@@ -58,7 +61,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Prove clean npm ci applies the patch
+      - name: Prove clean npm ci applies both patches
         shell: bash
         run: |
           set -o pipefail
@@ -84,17 +87,20 @@ jobs:
             echo
             echo '## Diagnóstico confirmado'
             echo
-            echo 'O `minimatch` raiz 3.1.5 espera que `require("brace-expansion")` retorne diretamente uma função. A versão corrigida `brace-expansion` 5.0.8 expõe a função pela propriedade `expand`. O override seguro eliminava a vulnerabilidade, mas exigia adaptação desse consumidor antigo.'
+            echo 'O override seguro para `brace-expansion` 5.0.8 altera a forma de exportação esperada por duas versões transitivas de `minimatch` presentes na árvore.'
             echo
-            echo 'A cópia aninhada em `readdir-glob` é `minimatch` 5.1.9 e já utiliza a propriedade `expand`; ela não precisa de alteração. O script anterior tentava corrigir esse segundo caminho sem necessidade.'
+            echo '- o `minimatch` raiz 3.1.5 usa `var expand = require("brace-expansion")`;'
+            echo '- o `minimatch` 5.1.9 aninhado em `readdir-glob` usa `const expand = require("brace-expansion")`.'
             echo
-            echo 'A remoção integral do override e do patch foi testada. A instalação e o ExcelJS funcionaram, porém a árvore restaurou 13 vulnerabilidades de severidade alta. Portanto, a correção do `minimatch` raiz ainda é necessária enquanto a dependência transitiva antiga permanecer.'
+            echo 'A versão corrigida `brace-expansion` 5.0.8 expõe a função pela propriedade `expand`. Os dois consumidores precisam referenciar essa propriedade, mas seus arquivos não possuem o mesmo padrão textual. O script anterior tratava ambos como se fossem idênticos e já era incompatível com a segunda cópia.'
+            echo
+            echo 'A remoção integral do override e do patch foi testada. A instalação, o `minimatch` e o ExcelJS funcionaram, porém a árvore restaurou 13 vulnerabilidades de severidade alta. Portanto, a correção continua necessária enquanto essas dependências transitivas permanecerem.'
             echo
             echo '## Solução adotada'
             echo
-            echo 'O script próprio que fazia substituição textual em caminhos internos foi removido. A alteração mínima passou a ser mantida em um patch unificado, versionado e aplicado por `patch-package` 8.0.1 durante o `postinstall`.'
+            echo 'O script próprio que modificava diretamente caminhos internos de `node_modules` foi removido. As duas alterações mínimas passaram a ser mantidas em patches unificados, versionados e aplicados por `patch-package` 8.0.1 durante o `postinstall`.'
             echo
-            echo 'O override de `brace-expansion` 5.0.8 foi preservado para impedir a regressão da vulnerabilidade. O CI exige aplicação bem-sucedida do patch em uma instalação limpa e executa testes específicos sobre expansão de chaves nas duas versões de `minimatch` e geração de Excel.'
+            echo 'O override de `brace-expansion` 5.0.8 foi preservado para impedir a regressão das vulnerabilidades. O CI exige a aplicação bem-sucedida de ambos os patches em uma instalação limpa e executa testes específicos sobre expansão de chaves nas duas versões de `minimatch` e geração de Excel.'
             echo
             echo '## Árvore efetiva'
             echo
@@ -106,11 +112,11 @@ jobs:
             echo
             echo '- `npm ci` em árvore removida previamente;'
             echo '- `patch-package --error-on-fail`;'
-            echo '- auditoria de vulnerabilidades e assinaturas;'
-            echo '- teste do arquivo efetivamente corrigido e do consumidor já compatível;'
+            echo '- auditoria de vulnerabilidades, assinaturas e proveniência;'
+            echo '- teste dos dois arquivos efetivamente corrigidos;'
             echo '- teste de expansão de chaves nas duas instâncias;'
             echo '- criação e serialização real de workbook pelo ExcelJS;'
-            echo '- lint, cobertura, build, orçamento de bundle e Playwright.'
+            echo '- lint tipado, cobertura, build, orçamento de bundle e Playwright.'
           } > docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md
 
       - name: Install Chromium

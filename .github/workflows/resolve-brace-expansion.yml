@@ -26,18 +26,33 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Prepare versioned compatibility adapter
+      - name: Prepare standardized patch configuration
         run: node scripts/prepare-brace-expansion-adapter.mjs
 
-      - name: Regenerate lockfile and install clean tree
+      - name: Generate lockfile and unpatched clean tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --package-lock-only --ignore-scripts
+          rm -rf node_modules
+          npm ci --ignore-scripts
+
+      - name: Generate versioned patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/create-brace-expansion-patches.mjs
+          npx patch-package minimatch --error-on-fail
+          npx patch-package readdir-glob/minimatch --error-on-fail
+          test -f patches/minimatch+3.1.5.patch
+          find patches -maxdepth 1 -type f -name '*minimatch+3.1.5.patch' | grep -q 'readdir-glob'
+
+      - name: Prove clean npm ci applies both patches
         shell: bash
         run: |
           set -o pipefail
-          {
-            npm install --package-lock-only --ignore-scripts
-            rm -rf node_modules
-            npm ci
-          } 2>&1 | tee brace-expansion-install-report.txt
+          rm -rf node_modules
+          npm ci 2>&1 | tee brace-expansion-install-report.txt
 
       - name: Upload installation report
         if: always()
@@ -48,7 +63,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Record resolved dependency tree
+      - name: Record diagnosis and effective tree
         shell: bash
         run: |
           set -euo pipefail
@@ -56,36 +71,34 @@ jobs:
           {
             echo '# Resolução da compatibilidade de brace-expansion — 28 de julho de 2026'
             echo
-            echo '## Diagnóstico'
+            echo '## Diagnóstico confirmado'
             echo
-            echo 'O override direto para `brace-expansion` 5.0.8 eliminava a vulnerabilidade, mas alterava a API CommonJS esperada pelo `minimatch` 3. O `postinstall` compensava essa diferença modificando arquivos instalados em `node_modules`.'
+            echo 'As duas instâncias de `minimatch` 3.1.5 esperam que `require("brace-expansion")` retorne diretamente uma função. A versão corrigida `brace-expansion` 5.0.8 expõe a função pela propriedade `expand`. O override seguro eliminava a vulnerabilidade, mas exigia adaptação dos consumidores antigos.'
             echo
-            echo 'A tentativa de remover simultaneamente o override e o script restaurou a árvore sem incompatibilidade, porém reintroduziu 13 vulnerabilidades de severidade alta nas versões antigas de `brace-expansion` exigidas por `minimatch` e `readdir-glob`.'
+            echo 'A remoção integral do override e do patch foi testada. A instalação e o ExcelJS funcionaram, porém a árvore restaurou 13 vulnerabilidades de severidade alta. Portanto, a correção ainda é necessária enquanto as dependências transitivas antigas permanecerem.'
             echo
             echo '## Solução adotada'
             echo
-            echo 'Foi criado um adaptador local mínimo e versionado que preserva a API callable esperada pelos consumidores antigos e delega a expansão à versão corrigida `brace-expansion` 5.0.8, instalada sob o alias `brace-expansion-modern`.'
+            echo 'O script próprio que fazia substituição textual em caminhos internos foi removido. A alteração mínima passou a ser mantida em dois patches unificados, versionados e aplicados por `patch-package` 8.0.1 durante o `postinstall`:'
             echo
-            echo 'O adaptador é aplicado pelo mecanismo nativo `overrides` do npm. Não há alteração posterior em `node_modules`, substituição textual, `postinstall` ou `patch-package`.'
+            echo '- `minimatch` 3.1.5 raiz;'
+            echo '- `minimatch` 3.1.5 aninhado em `readdir-glob`.'
+            echo
+            echo 'O override de `brace-expansion` 5.0.8 foi preservado para impedir a regressão da vulnerabilidade. O CI exige aplicação bem-sucedida dos patches em uma instalação limpa e executa testes específicos sobre expansão de chaves e geração de Excel.'
             echo
             echo '## Árvore efetiva'
             echo
             echo '```text'
-            npm ls brace-expansion brace-expansion-modern minimatch readdir-glob exceljs --all
-            echo '```'
-            echo
-            echo '## Explicação do npm'
-            echo
-            echo '```text'
-            npm explain brace-expansion
+            npm ls brace-expansion minimatch readdir-glob exceljs patch-package --all
             echo '```'
             echo
             echo '## Controles permanentes'
             echo
-            echo '- instalação limpa por `npm ci`;'
+            echo '- `npm ci` em árvore removida previamente;'
+            echo '- `patch-package --error-on-fail`;'
             echo '- auditoria de vulnerabilidades e assinaturas;'
-            echo '- teste automatizado da API CommonJS;'
-            echo '- teste das duas instâncias de `minimatch` utilizadas;'
+            echo '- teste dos dois arquivos efetivamente corrigidos;'
+            echo '- teste de expansão de chaves nas duas instâncias;'
             echo '- criação e serialização real de workbook pelo ExcelJS;'
             echo '- lint, cobertura, build, orçamento de bundle e Playwright.'
           } > docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md
@@ -112,9 +125,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/resolve-brace-expansion.yml scripts/prepare-brace-expansion-adapter.mjs
+          rm .github/workflows/resolve-brace-expansion.yml
+          rm scripts/prepare-brace-expansion-adapter.mjs scripts/create-brace-expansion-patches.mjs
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json scripts/patch-brace-expansion-compat.mjs scripts/brace-expansion-compat.test.mjs scripts/prepare-brace-expansion-adapter.mjs vendor/brace-expansion-compat docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md .github/workflows/resolve-brace-expansion.yml
-          git commit -m 'chore(deps): substituir patch manual por adaptador auditável'
+          git add package.json package-lock.json patches scripts/patch-brace-expansion-compat.mjs scripts/brace-expansion-compat.test.mjs scripts/prepare-brace-expansion-adapter.mjs scripts/create-brace-expansion-patches.mjs docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md .github/workflows/resolve-brace-expansion.yml
+          git commit -m 'chore(deps): padronizar correção de brace-expansion'
           git push origin HEAD:chore/remove-brace-expansion-patch

@@ -48,6 +48,15 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   await expect(page.getByText('Composição atual', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Leitura da carteira' })).toHaveCount(0);
   await expect(compositionRegion).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+
+  if (testInfo.project.name === 'chromium-mobile') {
+    const navigationColumnCount = await navigation.evaluate((element) => (
+      getComputedStyle(element).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+    ));
+    expect(navigationColumnCount).toBe(2);
+  }
+
   await testInfo.attach(`navegacao-${testInfo.project.name}`, {
     body: await navigation.screenshot(),
     contentType: 'image/png',

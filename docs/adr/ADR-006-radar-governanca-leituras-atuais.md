@@ -1,6 +1,6 @@
 # ADR-006 — Radar de Governança e leituras sustentadas pela base atual
 
-**Status:** aprovado; refinamento UX-RADAR-001 em validação  
+**Status:** aprovado e implementado; refinamento UX-RADAR-001 publicado  
 **Data:** 28 de julho de 2026
 
 ## Contexto

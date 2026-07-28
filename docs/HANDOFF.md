@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **28 de julho de 2026 — UX-RADAR-001 em validação no PR #88**
+Atualizado em: **28 de julho de 2026 — UX-RADAR-001 publicado e bloqueio restaurado**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-001 -->
+<!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
 ## Estado material
 
@@ -10,18 +10,18 @@ Atualizado em: **28 de julho de 2026 — UX-RADAR-001 em validação no PR #88**
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` — HTTP 200 |
-| Deployment efetivo | `dpl_8b2S3v8wkZfXkzcEohrqp32qT2W9` — `READY` |
-| SHA efetivo de Production | `ab8f4b83d23ea4f0337095838a14f4aad095450b` — PR #84 |
+| Deployment efetivo | `dpl_Ct3jYSQ3fNaobbzTcHRTpKdMcH8t` — `READY` |
+| SHA efetivo de Production | `2143ab1669cb873ee5c1c0bced19dc90a97ea5ae` — PR #89 |
 | Atualização de dependências | PR #83, merge `6ccb45eacc76a95b6cde0967a6040e259b6c351c` |
-| Bloqueio automático de deploy | restaurado pelo PR #87 |
+| Bloqueio automático de deploy | restaurado pelo PR #90 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | UX-RADAR-001 — identidade e microcopy operacional do Radar |
-| Próxima atividade | concluir UX-RADAR-001; E4 permanece sem autorização |
+| Implementação funcional autorizada | nenhuma |
+| Próxima atividade | debate e decisão do E4; nenhuma implementação do E4 está autorizada |
 
 ## Pacotes concluídos
 
@@ -33,6 +33,7 @@ Atualizado em: **28 de julho de 2026 — UX-RADAR-001 em validação no PR #88**
 - **E3 — semânticas gerenciais:** PR #73, publicação #74 e bloqueio #75.
 - **Radar de Governança:** PR #76, publicação #77 e bloqueio #78.
 - **Manutenção de dependências:** PR #83, publicação #84 e bloqueio #87.
+- **Refinamento UX-RADAR-001:** PR #88, publicação #89 e bloqueio #90.
 
 ## Atualização de dependências de manutenção
 
@@ -61,9 +62,9 @@ Validação concluída:
 
 Nenhum código funcional, dado, schema, migration ou configuração do Supabase foi alterado. A análise específica do tratamento de `brace-expansion` permanece fora deste pacote.
 
-## Refinamento UX-RADAR-001 em validação
+## Refinamento UX-RADAR-001 concluído
 
-O PR #88 implementa o escopo expressamente aprovado em 28 de julho de 2026:
+O PR #88 implementou o escopo expressamente aprovado em 28 de julho de 2026:
 
 - identidade completa do Radar no cabeçalho principal, sem hero duplicado;
 - navegação inicial nomeada `Radar de Governança`;
@@ -71,6 +72,16 @@ O PR #88 implementa o escopo expressamente aprovado em 28 de julho de 2026:
 - três frases de decisão interna retiradas da interface, com cálculos, denominadores, rótulos neutros e documentação preservados;
 - indicação visual `Ctrl/⌘ K` retirada, mantendo o atalho funcional;
 - nenhum dado, schema, migration, permissão, métrica ou regra de cálculo alterado.
+
+Publicação e validação:
+
+- Preview `dpl_GFCunid48X5mkGQkHT9mGbxoBf5j` — `READY` no SHA `995267fd212e304ecdcbf8d688b9e77d8cdd0e49`;
+- Production `dpl_Ct3jYSQ3fNaobbzTcHRTpKdMcH8t` — `READY` no SHA `2143ab1669cb873ee5c1c0bced19dc90a97ea5ae`;
+- domínio principal HTTP 200 com o título `Fluxo CTRH — Radar de Governança`;
+- 260 testes unitários/integração e 22 cenários Playwright aprovados;
+- gate documental, compatibilidade transitiva e inspeção do bundle público aprovados;
+- Supabase `ACTIVE_HEALTHY`, consultado sem escrita e sem alteração de schema;
+- `npm ci` fixado na Vercel para impedir reaplicação de patches sobre dependências restauradas do cache.
 
 ## Radar de Governança
 

@@ -11,6 +11,7 @@ packageJson.dependencies['brace-expansion-modern'] = 'npm:brace-expansion@5.0.8'
 packageJson.overrides ??= {};
 packageJson.overrides['brace-expansion'] = 'file:vendor/brace-expansion-compat';
 fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
+fs.writeFileSync('.npmrc', 'install-links=true\n');
 
 fs.rmSync('scripts/patch-brace-expansion-compat.mjs');
 fs.mkdirSync('vendor/brace-expansion-compat', { recursive: true });

@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **28 de julho de 2026 — UX-RADAR-002 autorizado e em implementação**
+Atualizado em: **28 de julho de 2026 — UX-RADAR-002 publicado e bloqueio restaurado**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-002 -->
+<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
 ## Estado material
 
@@ -10,18 +10,18 @@ Atualizado em: **28 de julho de 2026 — UX-RADAR-002 autorizado e em implementa
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` — HTTP 200 |
-| Deployment efetivo | `dpl_Ct3jYSQ3fNaobbzTcHRTpKdMcH8t` — `READY` |
-| SHA efetivo de Production | `2143ab1669cb873ee5c1c0bced19dc90a97ea5ae` — PR #89 |
+| Deployment efetivo | `dpl_GuVDMjfxjKYgnU2uTgidxE3Em2yh` — `READY` |
+| SHA efetivo de Production | `1aa5e6c7fa7c1158881e44d9c75af94f81d18204` — PR #92 |
 | Atualização de dependências | PR #83, merge `6ccb45eacc76a95b6cde0967a6040e259b6c351c` |
-| Bloqueio automático de deploy | restaurado pelo PR #90 |
+| Bloqueio automático de deploy | restaurado pelo PR #93 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | `UX-RADAR-002` — nomenclatura da carteira e polimento visual contido |
-| Próxima atividade | implementar e validar `UX-RADAR-002`; E4 permanece sem autorização |
+| Implementação funcional autorizada | nenhuma |
+| Próxima atividade | debater o E4 antes de qualquer implementação; permanece sem autorização |
 
 ## Pacotes concluídos
 
@@ -34,6 +34,7 @@ Atualizado em: **28 de julho de 2026 — UX-RADAR-002 autorizado e em implementa
 - **Radar de Governança:** PR #76, publicação #77 e bloqueio #78.
 - **Manutenção de dependências:** PR #83, publicação #84 e bloqueio #87.
 - **Refinamento UX-RADAR-001:** PR #88, publicação #89 e bloqueio #90.
+- **Refinamento UX-RADAR-002:** PR #91, publicação #92 e bloqueio #93.
 
 ## Atualização de dependências de manutenção
 
@@ -62,7 +63,7 @@ Validação concluída:
 
 Nenhum código funcional, dado, schema, migration ou configuração do Supabase foi alterado. A análise específica do tratamento de `brace-expansion` permanece fora deste pacote.
 
-## Refinamento UX-RADAR-002 autorizado
+## Refinamento UX-RADAR-002 concluído
 
 O responsável pelo produto aprovou em 28 de julho de 2026 um pacote estritamente visual e editorial:
 
@@ -72,7 +73,7 @@ O responsável pelo produto aprovou em 28 de julho de 2026 um pacote estritament
 - organizar os quatro destinos da navegação em duas colunas nas telas estreitas, sem estouro horizontal;
 - preservar integralmente dados, schema, Supabase, permissões, métricas, cálculos, filtros e regras de negócio.
 
-Critérios de aceitação serão registrados e executados antes do código funcional. O pacote não autoriza qualquer item do E4.
+A implementação funcional foi concluída no PR #91 e publicada pelo PR #92. O gate final aprovou 260 testes unitários/integração, 22 cenários Playwright em desktop e mobile — incluindo 320 px —, lint, auditoria, cobertura, build e orçamento do bundle. A comparação visual confirmou a remoção dos textos e o novo rótulo, sem estouro horizontal. Production `dpl_GuVDMjfxjKYgnU2uTgidxE3Em2yh` ficou `READY` no SHA `1aa5e6c7fa7c1158881e44d9c75af94f81d18204`; o domínio principal respondeu HTTP 200. O pacote não autorizou qualquer item do E4.
 
 ## Refinamento UX-RADAR-001 concluído
 

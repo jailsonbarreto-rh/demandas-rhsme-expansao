@@ -67,7 +67,7 @@ describe('ações interativas da interface', () => {
         onToggleFiltroStatus={onToggleFiltroStatus}
         onToggleQuickFilter={onToggleQuickFilter}
         canEdit
-        appMode="supabase"
+        connectionStatus="online"
       />,
     );
 

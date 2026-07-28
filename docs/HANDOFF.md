@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **28 de julho de 2026 — dependências de manutenção publicadas e bloqueio restaurado**
+Atualizado em: **28 de julho de 2026 — refinamento visual do Radar autorizado**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: none -->
+<!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-001 -->
 
 ## Estado material
 
@@ -20,8 +20,8 @@ Atualizado em: **28 de julho de 2026 — dependências de manutenção publicada
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | nenhuma |
-| Próxima atividade | debate e decisão do E4; nenhuma implementação do E4 está autorizada |
+| Implementação funcional autorizada | UX-RADAR-001 — identidade e microcopy operacional do Radar |
+| Próxima atividade | concluir UX-RADAR-001; E4 permanece sem autorização |
 
 ## Pacotes concluídos
 

@@ -57,7 +57,7 @@ describe('segurança e acessibilidade do login', () => {
     localStorage.setItem('demandas_user', 'teste@rioeduca.net');
     render(<App />);
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: /^demandas$/i }));
+    await user.click(await screen.findByRole('button', { name: /^todas as demandas$/i }));
     await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);
     expect(await screen.findByRole('button', { name: /fechar painel de detalhes/i })).toHaveAttribute('aria-label');
   });
@@ -66,7 +66,7 @@ describe('segurança e acessibilidade do login', () => {
     render(<App />);
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: /^demandas$/i }));
+    await user.click(await screen.findByRole('button', { name: /^todas as demandas$/i }));
     await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);
     await user.click(await screen.findByRole('button', { name: /^editar$/i }));
 
@@ -92,7 +92,7 @@ describe('navegação persistente', () => {
     window.history.replaceState({}, '', '/demandas?status=Todos%20%28exibir%20tudo%29');
     render(<App />);
 
-    expect(await screen.findByRole('button', { name: /^demandas$/i })).toHaveClass('active');
+    expect(await screen.findByRole('button', { name: /^todas as demandas$/i })).toHaveClass('active');
     expect(await screen.findByLabelText(/^status$/i)).toHaveValue('todos');
   });
 

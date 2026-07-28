@@ -19,7 +19,7 @@ describe('Header — identidade única do produto', () => {
         }}
         onToggleFiltroStatus={vi.fn()}
         onToggleQuickFilter={vi.fn()}
-        appMode="supabase"
+        connectionStatus="online"
       />,
     );
 

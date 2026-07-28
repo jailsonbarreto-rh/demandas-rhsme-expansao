@@ -26,7 +26,7 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Remove compatibility patch and regenerate lockfile
+      - name: Replace node_modules patch with versioned compatibility adapter
         shell: bash
         run: |
           set -euo pipefail
@@ -34,18 +34,80 @@ jobs:
           const fs = require('node:fs');
           const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           delete packageJson.scripts.postinstall;
-          if (packageJson.overrides) {
-            delete packageJson.overrides['brace-expansion'];
-            if (Object.keys(packageJson.overrides).length === 0) delete packageJson.overrides;
-          }
+          packageJson.scripts['test:dependency-compat'] = 'node --test scripts/brace-expansion-compat.test.mjs';
+          packageJson.scripts.check = packageJson.scripts.check.replace(
+            'npm audit signatures &&',
+            'npm audit signatures && npm run test:dependency-compat &&',
+          );
+          packageJson.dependencies['brace-expansion-modern'] = 'npm:brace-expansion@5.0.8';
+          packageJson.overrides ??= {};
+          packageJson.overrides['brace-expansion'] = 'file:vendor/brace-expansion-compat';
           fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
           NODE
+
           rm scripts/patch-brace-expansion-compat.mjs
+          mkdir -p vendor/brace-expansion-compat
+          cat > vendor/brace-expansion-compat/package.json <<'JSON'
+          {
+            "name": "brace-expansion",
+            "version": "5.0.8",
+            "private": true,
+            "main": "index.cjs",
+            "license": "UNLICENSED"
+          }
+          JSON
+          cat > vendor/brace-expansion-compat/index.cjs <<'JS'
+          'use strict';
+
+          const modernModule = require('brace-expansion-modern');
+          const expand = modernModule.expand || modernModule;
+
+          if (typeof expand !== 'function') {
+            throw new TypeError('brace-expansion-modern não expôs uma função compatível.');
+          }
+
+          module.exports = expand;
+          module.exports.expand = expand;
+          JS
+
+          cat > scripts/brace-expansion-compat.test.mjs <<'JS'
+          import assert from 'node:assert/strict';
+          import { createRequire } from 'node:module';
+          import test from 'node:test';
+          import ExcelJS from 'exceljs';
+
+          const require = createRequire(import.meta.url);
+
+          test('adaptador mantém a API CommonJS esperada pelo minimatch 3', () => {
+            const expand = require('brace-expansion');
+            assert.equal(typeof expand, 'function');
+            assert.deepEqual(expand('relatorio-{2025,2026}.xlsx'), [
+              'relatorio-2025.xlsx',
+              'relatorio-2026.xlsx',
+            ]);
+          });
+
+          test('minimatch direto e o minimatch do readdir-glob permanecem funcionais', () => {
+            const rootMinimatch = require('minimatch');
+            const nestedMinimatch = require('readdir-glob/node_modules/minimatch');
+            assert.equal(rootMinimatch('relatorio.xlsx', '*.xlsx'), true);
+            assert.equal(nestedMinimatch('relatorio.xlsx', '*.xlsx'), true);
+          });
+
+          test('ExcelJS continua criando e serializando arquivos', async () => {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Validação');
+            worksheet.addRow(['CTRH', 'ok']);
+            const buffer = await workbook.xlsx.writeBuffer();
+            assert.ok(buffer.byteLength > 0);
+          });
+          JS
+
           npm install --package-lock-only --ignore-scripts
           rm -rf node_modules
           npm ci
 
-      - name: Verify resolved dependency tree
+      - name: Record resolved dependency tree
         shell: bash
         run: |
           set -euo pipefail
@@ -53,15 +115,22 @@ jobs:
           {
             echo '# Resolução da compatibilidade de brace-expansion — 28 de julho de 2026'
             echo
-            echo '## Resultado'
+            echo '## Diagnóstico'
             echo
-            echo 'O override global de `brace-expansion` e o script de alteração direta de arquivos em `node_modules` foram removidos.'
-            echo 'O lockfile foi reconciliado pelo npm com as faixas declaradas pelas dependências consumidoras.'
+            echo 'O override direto para `brace-expansion` 5.0.8 eliminava a vulnerabilidade, mas alterava a API CommonJS esperada pelo `minimatch` 3. O `postinstall` compensava essa diferença modificando arquivos instalados em `node_modules`.'
+            echo
+            echo 'A tentativa de remover simultaneamente o override e o script restaurou a árvore sem incompatibilidade, porém reintroduziu 13 vulnerabilidades de severidade alta nas versões antigas de `brace-expansion` exigidas por `minimatch` e `readdir-glob`.'
+            echo
+            echo '## Solução adotada'
+            echo
+            echo 'Foi criado um adaptador local mínimo e versionado que preserva a API callable esperada pelos consumidores antigos e delega a expansão à versão corrigida `brace-expansion` 5.0.8, instalada sob o alias `brace-expansion-modern`.'
+            echo
+            echo 'O adaptador é aplicado pelo mecanismo nativo `overrides` do npm. Não há alteração posterior em `node_modules`, substituição textual, `postinstall` ou `patch-package`.'
             echo
             echo '## Árvore efetiva'
             echo
             echo '```text'
-            npm ls brace-expansion minimatch readdir-glob exceljs --all
+            npm ls brace-expansion brace-expansion-modern minimatch readdir-glob exceljs --all
             echo '```'
             echo
             echo '## Explicação do npm'
@@ -70,33 +139,15 @@ jobs:
             npm explain brace-expansion
             echo '```'
             echo
-            echo '## Validações'
+            echo '## Controles permanentes'
             echo
             echo '- instalação limpa por `npm ci`;'
-            echo '- importação e execução de `minimatch`;'
-            echo '- criação e serialização de workbook pelo `exceljs`;'
-            echo '- gate completo do projeto, inclusive Playwright.'
+            echo '- auditoria de vulnerabilidades e assinaturas;'
+            echo '- teste automatizado da API CommonJS;'
+            echo '- teste das duas instâncias de `minimatch` utilizadas;'
+            echo '- criação e serialização real de workbook pelo ExcelJS;'
+            echo '- lint, cobertura, build, orçamento de bundle e Playwright.'
           } > docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md
-
-          node --input-type=module <<'NODE'
-          import minimatchModule from 'minimatch';
-          import ExcelJS from 'exceljs';
-
-          const minimatch = typeof minimatchModule === 'function'
-            ? minimatchModule
-            : minimatchModule.minimatch;
-          if (typeof minimatch !== 'function' || !minimatch('relatorio.xlsx', '*.xlsx')) {
-            throw new Error('minimatch não está funcional após a resolução da árvore.');
-          }
-
-          const workbook = new ExcelJS.Workbook();
-          const worksheet = workbook.addWorksheet('Validação');
-          worksheet.addRow(['CTRH', 'ok']);
-          const buffer = await workbook.xlsx.writeBuffer();
-          if (!buffer || buffer.byteLength === 0) {
-            throw new Error('ExcelJS não conseguiu serializar o workbook de validação.');
-          }
-          NODE
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
@@ -123,6 +174,6 @@ jobs:
           rm .github/workflows/resolve-brace-expansion.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json scripts/patch-brace-expansion-compat.mjs docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md .github/workflows/resolve-brace-expansion.yml
-          git commit -m 'chore(deps): remover patch manual de brace-expansion'
+          git add package.json package-lock.json scripts/patch-brace-expansion-compat.mjs scripts/brace-expansion-compat.test.mjs vendor/brace-expansion-compat docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md .github/workflows/resolve-brace-expansion.yml
+          git commit -m 'chore(deps): substituir patch manual por adaptador auditável'
           git push origin HEAD:chore/remove-brace-expansion-patch

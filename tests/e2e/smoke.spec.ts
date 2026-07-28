@@ -39,7 +39,7 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   await page.getByRole('button', { name: /acessar sistema/i }).click();
 
   await expect(page.getByRole('button', { name: /sair/i })).toBeVisible();
-  await expect(page.getByText(/Modo de demonstração/i)).toBeVisible();
+  await expect(page.getByText('Modo de demonstração', { exact: true })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   const downloadPromise = page.waitForEvent('download');

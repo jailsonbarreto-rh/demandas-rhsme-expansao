@@ -374,6 +374,7 @@ Não há autorização nem necessidade de alterar dados, schema, migrations, per
 | E1A | Concluído | Autorização registrada no Handoff histórico | Concluída | PR #61 concluído sem reexecução de SQL |
 | E2 / segurança final | Adiado | GOV-011 | Não no momento | Executar após as implementações funcionais e antes da entrega |
 | E3 | Concluído | GOV-010 e OP-D02 | Concluída | Histórico corrigido nos PRs #69–#71; demais semânticas concluídas no PR #73 |
+| UX-RADAR-001 | Concluído | UX-RADAR-001 | Em validação | PR #88 |
 | E4 | Não iniciado | Não | Não | Futuro; depende de debate e autorização expressa |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |

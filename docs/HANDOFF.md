@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **28 de julho de 2026 — UX-RADAR-001 publicado e bloqueio restaurado**
+Atualizado em: **28 de julho de 2026 — UX-RADAR-002 autorizado e em implementação**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: none -->
+<!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-002 -->
 
 ## Estado material
 
@@ -20,8 +20,8 @@ Atualizado em: **28 de julho de 2026 — UX-RADAR-001 publicado e bloqueio resta
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | nenhuma |
-| Próxima atividade | debate e decisão do E4; nenhuma implementação do E4 está autorizada |
+| Implementação funcional autorizada | `UX-RADAR-002` — nomenclatura da carteira e polimento visual contido |
+| Próxima atividade | implementar e validar `UX-RADAR-002`; E4 permanece sem autorização |
 
 ## Pacotes concluídos
 
@@ -61,6 +61,18 @@ Validação concluída:
 - Playwright e acessibilidade no navegador.
 
 Nenhum código funcional, dado, schema, migration ou configuração do Supabase foi alterado. A análise específica do tratamento de `brace-expansion` permanece fora deste pacote.
+
+## Refinamento UX-RADAR-002 autorizado
+
+O responsável pelo produto aprovou em 28 de julho de 2026 um pacote estritamente visual e editorial:
+
+- renomear o botão `Demandas` para `Todas as demandas`, preservando rota, ícone e comportamento;
+- retirar da interface os rótulos `Composição atual` e `Leitura da carteira`, mantendo a região analítica acessível;
+- eliminar o espaçamento residual da composição e harmonizar o ritmo vertical dos blocos;
+- organizar os quatro destinos da navegação em duas colunas nas telas estreitas, sem estouro horizontal;
+- preservar integralmente dados, schema, Supabase, permissões, métricas, cálculos, filtros e regras de negócio.
+
+Critérios de aceitação serão registrados e executados antes do código funcional. O pacote não autoriza qualquer item do E4.
 
 ## Refinamento UX-RADAR-001 concluído
 

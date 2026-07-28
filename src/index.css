@@ -1275,13 +1275,44 @@ h1, h2, h3, h4 {
 }
 
 .inst-badge-ambiente {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.65rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  color: var(--text-muted);
-  background-color: #f1f5f9;
+  font-weight: 650;
+  padding: 3px 8px;
   border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background-color: #f8fafc;
+}
+
+.inst-badge-ambiente i {
+  font-size: 0.7rem;
+}
+
+.inst-badge-ambiente.status-online {
+  color: #166534;
+  border-color: #bbf7d0;
+  background-color: #f0fdf4;
+}
+
+.inst-badge-ambiente.status-connecting {
+  color: #854d0e;
+  border-color: #fde68a;
+  background-color: #fffbeb;
+}
+
+.inst-badge-ambiente.status-offline {
+  color: #991b1b;
+  border-color: #fecaca;
+  background-color: #fef2f2;
+}
+
+.inst-badge-ambiente.status-local {
+  color: #475569;
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
 }
 
 .btn-logout-link {
@@ -2549,8 +2580,6 @@ h1, h2, h3, h4 {
 
 /* Busca avançada e encontrabilidade */
 .advanced-search-wrapper { position: relative; }
-.search-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.search-shortcut { border: 1px solid var(--border-color); border-bottom-width: 2px; border-radius: 5px; background: #f8fafc; color: var(--text-muted); font: inherit; font-size: 0.65rem; font-weight: 650; padding: 2px 7px; }
 .search-help-text { display: block; margin-top: 6px; color: var(--text-muted); font-size: 0.719rem; line-height: 1.35; }
 .recent-searches-panel { position: relative; z-index: 2; margin-top: 8px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-md); padding: 10px; }
 .recent-searches-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 6px 8px; color: var(--primary-color); font-size: 0.75rem; }
@@ -2573,7 +2602,6 @@ h1, h2, h3, h4 {
 .search-history-snippet i { margin-top: 2px; color: var(--accent-color); }
 
 @media (max-width: 640px) {
-  .search-shortcut { display: none; }
   .recent-searches-panel { margin-top: 6px; }
   .more-filters-panel.open { max-height: 760px; }
 }

@@ -156,6 +156,6 @@ jobs:
           rm scripts/prepare-brace-expansion-adapter.mjs scripts/create-brace-expansion-patches.mjs
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json patches scripts/patch-brace-expansion-compat.mjs scripts/brace-expansion-compat.test.mjs scripts/prepare-brace-expansion-adapter.mjs scripts/create-brace-expansion-patches.mjs docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md .github/workflows/resolve-brace-expansion.yml
+          git add package.json package-lock.json patches scripts/patch-brace-expansion-compat.mjs scripts/brace-expansion-compat.node.mjs scripts/prepare-brace-expansion-adapter.mjs scripts/create-brace-expansion-patches.mjs docs/maintenance/BRACE_EXPANSION_RESOLUTION_2026-07-28.md .github/workflows/resolve-brace-expansion.yml
           git commit -m 'chore(deps): padronizar correção de brace-expansion'
           git push origin HEAD:chore/remove-brace-expansion-patch

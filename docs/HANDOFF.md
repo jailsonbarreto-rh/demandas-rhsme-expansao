@@ -20,7 +20,7 @@ Atualizado em: **28 de julho de 2026 — dependências de manutenção publicada
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação autorizada após este pacote | nenhuma |
+| Implementação funcional autorizada | nenhuma |
 | Próxima atividade | debate e decisão do E4; nenhuma implementação do E4 está autorizada |
 
 ## Pacotes concluídos
@@ -47,117 +47,86 @@ Foram atualizadas exclusivamente dependências já existentes, sem instalação 
 | `@radix-ui/react-dropdown-menu` | `2.1.21` | `2.1.24` |
 | `typescript-eslint` | `8.64.0` | `8.65.0` |
 
-O `package-lock.json` foi regenerado pelo npm em Node.js 24. O workflow temporário de geração do lockfile foi removido antes do PR final.
+O `package-lock.json` foi regenerado pelo npm em Node.js 24 e mantido consistente com as versões exatas do `package.json`. O workflow temporário usado apenas para gerar o lockfile foi removido antes do gate final.
 
-Validação concluída:
+Validação do pacote:
 
-- `npm ci`;
-- auditoria de vulnerabilidades;
-- assinaturas e proveniência;
-- lint;
-- testes unitários, integração e cobertura;
-- build e orçamento de bundle;
-- Playwright e acessibilidade no navegador.
-
-Nenhum código funcional, dado, schema, migration ou configuração do Supabase foi alterado. A análise específica do tratamento de `brace-expansion` permanece fora deste pacote.
+- instalação limpa por `npm ci`: aprovada;
+- auditoria de vulnerabilidades: aprovada;
+- assinaturas e proveniência do registro: aprovadas;
+- lint: aprovado;
+- testes unitários, de integração e cobertura: aprovados;
+- build e orçamento de bundle: aprovados;
+- Playwright e acessibilidade no navegador: aprovados;
+- nenhuma nova dependência funcional foi adicionada;
+- nenhum código funcional, dado, schema, migration ou configuração do Supabase foi alterado;
+- o tratamento específico de `brace-expansion` permanece fora deste pacote e deverá ser analisado separadamente.
 
 ## Radar de Governança
 
-### Identidade
+O Radar superior está materialmente em Production e representa apenas dados confirmados, sem criar semânticas gerenciais não comprovadas.
 
-- **Título:** `Radar de Governança`.
-- **Subtítulo exato:** `Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.`
+### Indicadores atuais
 
-### Componentes preservados
+- **Demandas em aberto**;
+- **Em acompanhamento**;
+- **Para assinatura**;
+- **Vencem hoje**;
+- **Vencidas**;
+- **Providências imediatas**.
 
-- `Atenção agora`;
-- distribuição por status;
-- demandas por setor informado;
-- registros recentes do histórico.
+### Regras preservadas
 
-### Leituras adicionadas
+- os indicadores acompanham a carteira atual;
+- em **Visão geral** e **Demandas**, consideram toda a carteira aberta;
+- em **Minhas demandas**, consideram somente as demandas do usuário conectado;
+- clicar em um indicador aplica o filtro na própria carteira;
+- nenhuma regra de responsabilidade foi alterada;
+- nenhuma classificação gerencial não comprovada foi inferida.
 
-**Cobertura dos prazos**
+## Estado dos ambientes
 
-- prazo interno e prazo final separados;
-- definido, não informado e não se aplica;
-- percentual de cobertura;
-- vencimento calculado somente entre prazos finais definidos, com denominador explícito.
+### GitHub
 
-**Distribuição por responsável**
+- `main` contém o estado funcional e documental vigente;
+- branches de publicação e bloqueio já foram integradas;
+- não há autorização implícita para novos ciclos de produto.
 
-- agrupamento oficial por `responsavel_id`;
-- quantidade e composição por status;
-- `Vínculo legado pendente` separado de `Sem responsável`;
-- nenhuma inferência de produtividade, desempenho ou equivalência da carga.
+### Supabase
 
-`Vanessa Migrado` permanece visível como vínculo legado pendente, sem UUID, até saneamento oficial posterior.
+- projeto: `CTRH PROCESSOS`;
+- ref: `kdhekkzwcokfrpcrsllr`;
+- região: `sa-east-1`;
+- nenhuma migration foi aplicada pelos pacotes de dependências, Radar ou documentação;
+- nenhuma carga ou alteração de dados foi realizada.
 
-### Evolução futura
+### Vercel
 
-As leituras dependentes da chegada integral e reconciliação do legado permanecem em `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md`, sem autorização automática:
+- Production está em `READY`;
+- o deployment atual corresponde ao pacote publicado pelo PR #84;
+- o bloqueio automático foi restaurado pelo PR #87;
+- nenhuma publicação automática permanece aberta.
 
-- evolução temporal da carteira;
-- entradas, encerramentos e saldo por período;
-- envelhecimento;
-- permanência por status e gargalos;
-- próximas providências;
-- cumprimento de prazos;
-- perfil ampliado por tipo, classificação e setor;
-- cobertura e qualidade da base completa.
+## Próximos ciclos ainda não autorizados
 
-Datas de importação não podem ser tratadas como datas operacionais, e estoque não pode ser convertido em produtividade.
-
-## Semânticas vigentes
-
-- `Demandas por setor informado`;
-- `Em acompanhamento`;
-- `Distribuição por responsável`;
-- `Registros recentes do histórico`.
-
-O campo `setor` é texto informado na demanda. Sua contagem não comprova produtividade, desempenho, esforço executado ou estrutura organizacional oficial.
-
-## Preservação informacional
-
-- regras atuais são rígidas para novos cadastros e operações;
-- dados oficiais legados ou históricos incompatíveis não podem ser apagados, omitidos, truncados, sobrescritos ou convertidos silenciosamente em vazio;
-- toda transformação preserva valor original, proveniência e razão;
-- correlação automática somente ocorre quando comprovável;
-- informação não associada permanece como pendência, ambiguidade ou conflito;
-- auditoria técnica e apresentação operacional são camadas distintas;
-- qualquer risco de perda ou sobrescrita deve voltar ao responsável pelo produto antes da implementação.
-
-## Segurança final
-
-A retirada de dados reais dos repositórios, contenção do repositório predecessor, revisão de deployments antigos e eventual reescrita de histórico Git permanecem adiadas para pacote consolidado ao final das implementações funcionais e antes da entrega do produto para uso.
-
-Até esse momento, nenhum arquivo real ou histórico será apagado por essa frente.
-
-## Estado funcional preservado
-
-- `responsavel_id` é a identidade oficial do responsável;
-- `/demandas` é a carteira da equipe;
-- `/minhas-demandas` é a carteira pessoal por UUID;
-- indicadores e filtros permanecem contextuais à carteira aberta;
-- paginação padrão de 50 e opção de 100 permanecem;
-- eventos técnicos continuam preservados no banco e traduzidos apenas na apresentação.
-
-## Pendências posteriores
-
-- **E4:** RLS da lixeira e autoria administrativa — depende de debate e autorização expressa.
-- **R1:** integridade, contratos e concorrência.
-- **R2:** consultas escaláveis e histórico sob demanda.
-- **R4:** prazos e próxima providência.
-- **R5:** andamento, prontuário e recuperação administrativa.
+- **E4:** decisões de produto ainda em debate;
+- **R1:** legitimidade estrutural e restrições de edição;
+- **R2:** consultas escaláveis e histórico sob demanda;
+- **R4:** prazos e próxima providência;
+- **R5:** andamento, prontuário e recuperação administrativa;
 - **Segurança final:** antigo escopo E2 ampliado, conforme GOV-011.
 
-Nenhuma dessas etapas está autorizada automaticamente.
+Nenhuma dessas etapas está autorizada automaticamente pela conclusão do Radar ou pela atualização de dependências.
 
 ## Regra de continuidade
 
-1. nenhuma decisão `OP-Dxx` pode ser inferida dos planos;
-2. o responsável pelo produto autoriza expressamente o próximo pacote;
-3. cada pacote permanece isolado em branch e PR próprios;
-4. alterações futuras de banco exigem preflight da cadeia de migrations;
-5. toda etapa concluída atualiza os documentos vigentes no mesmo trabalho;
-6. qualquer alteração que possa comprometer informação oficial para e retorna para decisão expressa.
+Antes de qualquer nova implementação funcional:
+
+1. explicar o ciclo e suas decisões independentes;
+2. registrar a decisão expressa no Registro de Decisões;
+3. atualizar o marcador `IMPLEMENTATION_AUTHORIZATION` quando houver autorização;
+4. criar branch própria;
+5. executar o gate completo;
+6. integrar somente após validação;
+7. publicar apenas quando autorizado;
+8. restaurar o bloqueio automático após a publicação.

@@ -1,6 +1,6 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: none -->
+<!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-002 -->
 
 **Status:** vigente  
 **Atualizado em:** 28 de julho de 2026  
@@ -346,6 +346,20 @@ O badge técnico que cita fornecedor ou mecanismo de armazenamento será substit
 
 Não há autorização nem necessidade de alterar dados, schema, migrations, permissões, métricas, regras de cálculo ou integração do Supabase.
 
+### UX-RADAR-002 — Clareza da carteira e polimento visual contido
+
+**Data:** 28 de julho de 2026  
+**Classificação:** decisão expressamente aprovada pelo responsável pelo produto.  
+**Decisão:** APROVADA PARA IMPLEMENTAÇÃO.
+
+O botão de navegação da carteira coletiva passa de `Demandas` para `Todas as demandas`, distinguindo de forma explícita o escopo da equipe em relação a `Minhas demandas`. O título contextual da própria carteira permanece `Todas as demandas`.
+
+Os rótulos visuais `Composição atual` e `Leitura da carteira` serão retirados do Radar por não acrescentarem orientação acionável. A região analítica manterá nome acessível, e todos os cartões, cálculos, denominadores, rótulos de dados e comportamentos permanecem preservados.
+
+O polimento visual fica restrito ao sistema existente: remover o espaçamento residual deixado pelo cabeçalho retirado, harmonizar o ritmo entre blocos e acomodar os quatro destinos de navegação em uma grade de duas colunas em telas estreitas. Não serão introduzidos novos componentes, cores, métricas ou padrões de interação.
+
+Não há autorização nem necessidade de alterar dados, schema, migrations, permissões, integração do Supabase, regras de negócio, rotas ou cálculos.
+
 ## 6. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
@@ -375,6 +389,7 @@ Não há autorização nem necessidade de alterar dados, schema, migrations, per
 | E2 / segurança final | Adiado | GOV-011 | Não no momento | Executar após as implementações funcionais e antes da entrega |
 | E3 | Concluído | GOV-010 e OP-D02 | Concluída | Histórico corrigido nos PRs #69–#71; demais semânticas concluídas no PR #73 |
 | UX-RADAR-001 | Concluído | UX-RADAR-001 | Concluída | PR #88, publicação #89 e bloqueio #90 |
+| UX-RADAR-002 | Em implementação | UX-RADAR-002 | Em execução | Nomenclatura e polimento visual aprovados em 28/07/2026 |
 | E4 | Não iniciado | Não | Não | Futuro; depende de debate e autorização expressa |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |

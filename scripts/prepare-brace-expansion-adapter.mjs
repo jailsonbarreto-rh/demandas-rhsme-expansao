@@ -9,7 +9,10 @@ packageJson.scripts.check = packageJson.scripts.check.replace(
 );
 packageJson.dependencies['brace-expansion-modern'] = 'npm:brace-expansion@5.0.8';
 packageJson.overrides ??= {};
-packageJson.overrides['brace-expansion'] = 'file:vendor/brace-expansion-compat';
+delete packageJson.overrides['brace-expansion'];
+packageJson.overrides['minimatch@3.1.5'] = {
+  'brace-expansion': 'file:vendor/brace-expansion-compat',
+};
 fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
 fs.writeFileSync('.npmrc', 'install-links=true\n');
 
@@ -41,7 +44,6 @@ import test from 'node:test';
 import ExcelJS from 'exceljs';
 
 const require = createRequire(import.meta.url);
-
 const requireFrom = (moduleId) => createRequire(require.resolve(moduleId));
 
 test('adaptador mantém a API CommonJS esperada por cada minimatch 3', () => {
@@ -57,11 +59,14 @@ test('adaptador mantém a API CommonJS esperada por cada minimatch 3', () => {
   }
 });
 
-test('minimatch direto e o minimatch do readdir-glob permanecem funcionais', () => {
+test('as duas instâncias de minimatch executam expansão de chaves', () => {
   const rootMinimatch = require('minimatch');
   const nestedMinimatch = require('readdir-glob/node_modules/minimatch');
-  assert.equal(rootMinimatch('relatorio.xlsx', '*.xlsx'), true);
-  assert.equal(nestedMinimatch('relatorio.xlsx', '*.xlsx'), true);
+  const pattern = 'relatorio-{2025,2026}.xlsx';
+  assert.equal(rootMinimatch('relatorio-2026.xlsx', pattern), true);
+  assert.equal(nestedMinimatch('relatorio-2026.xlsx', pattern), true);
+  assert.equal(rootMinimatch('relatorio-2027.xlsx', pattern), false);
+  assert.equal(nestedMinimatch('relatorio-2027.xlsx', pattern), false);
 });
 
 test('ExcelJS continua criando e serializando arquivos', async () => {

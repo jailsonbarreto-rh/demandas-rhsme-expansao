@@ -1,14 +1,33 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "rewrites": [
-    { "source": "/demandas", "destination": "/index.html" },
-    { "source": "/demandas/:path*", "destination": "/index.html" },
-    { "source": "/minhas-demandas", "destination": "/index.html" },
-    { "source": "/minhas-demandas/:path*", "destination": "/index.html" },
-    { "source": "/admin", "destination": "/index.html" },
-    { "source": "/admin/:path*", "destination": "/index.html" }
-  ]
+    {
+      "source": "/demandas",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/demandas/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/minhas-demandas",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/minhas-demandas/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/index.html"
+    }
+  ],
+  "buildCommand": "npm run test:dependency-compat && npm run check:docs && npm run build && npm run check:public-bundle"
 }

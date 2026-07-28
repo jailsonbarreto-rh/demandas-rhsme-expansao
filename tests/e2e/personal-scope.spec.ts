@@ -26,7 +26,7 @@ test('cartão, aba e alternador conectam as duas carteiras', async ({ page }) =>
   await page.getByRole('button', { name: 'Demandas Equipe CTRH' }).click();
 
   await expect(page).toHaveURL(/\/demandas(?:\?|$)/);
-  await expect(page.getByRole('button', { name: /^demandas$/i })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('button', { name: /^todas as demandas$/i })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'Todas as demandas' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ver minhas demandas' })).toBeVisible();
 

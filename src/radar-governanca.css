@@ -82,6 +82,7 @@
 
 .governance-composition-grid {
   gap: 22px;
+  margin-top: 0;
 }
 
 .governance-composition-grid .governance-card {

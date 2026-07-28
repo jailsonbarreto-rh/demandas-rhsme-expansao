@@ -51,7 +51,7 @@ test('fluxos críticos funcionam sem erros, dependências externas ou estouro ho
   await expect(page.getByRole('heading', { name: /nova demanda/i })).toBeVisible();
   await page.getByRole('button', { name: /^cancelar$/i }).click();
 
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
   await page.getByRole('button', { name: /^abrir$/i }).first().click();
   await expect(page.getByRole('heading', { name: /processo nº/i })).toBeVisible();
   await page.getByRole('button', { name: /^editar$/i }).click();

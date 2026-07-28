@@ -39,7 +39,7 @@ test('visão geral, demandas e administração são acessíveis', async ({ page 
   await login(page);
   await expectAccessible(page, 'visão geral');
 
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
   await expect(page.getByLabel(/^status$/i)).toBeVisible();
   await expectAccessible(page, 'demandas');
 
@@ -56,7 +56,7 @@ test('diálogo e painel de detalhes são acessíveis', async ({ page }) => {
   await expectAccessible(page, 'nova demanda', '.radix-dialog-content');
   await page.getByRole('button', { name: /^cancelar$/i }).click();
 
-  await page.getByRole('button', { name: /^demandas$/i }).click();
+  await page.getByRole('button', { name: /^todas as demandas$/i }).click();
   await page.getByRole('row').nth(1).getByRole('button', { name: /^abrir$/i }).click();
   await expect(page.getByRole('heading', { name: /processo nº/i })).toBeVisible();
   await expectAccessible(page, 'detalhe da demanda', '.drawer-content');

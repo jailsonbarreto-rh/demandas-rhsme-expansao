@@ -8,6 +8,7 @@ import './index.css';
 import './brand.css';
 import './minhas-demandas.css';
 import './r3-refinements.css';
+import './radar-governanca.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

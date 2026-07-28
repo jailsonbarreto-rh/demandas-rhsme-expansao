@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 packageJson.scripts.postinstall = 'patch-package --error-on-fail';
-packageJson.scripts['test:dependency-compat'] = 'node --test scripts/brace-expansion-compat.test.mjs';
+packageJson.scripts['test:dependency-compat'] = 'node --test scripts/brace-expansion-compat.node.mjs';
 if (!packageJson.scripts.check.includes('npm run test:dependency-compat')) {
   packageJson.scripts.check = packageJson.scripts.check.replace(
     'npm audit signatures &&',
@@ -19,10 +19,11 @@ fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
 
 fs.rmSync('.npmrc', { force: true });
 fs.rmSync('scripts/patch-brace-expansion-compat.mjs');
+fs.rmSync('scripts/brace-expansion-compat.test.mjs', { force: true });
 fs.rmSync('vendor', { recursive: true, force: true });
 fs.mkdirSync('patches', { recursive: true });
 
-fs.writeFileSync('scripts/brace-expansion-compat.test.mjs', `import assert from 'node:assert/strict';
+fs.writeFileSync('scripts/brace-expansion-compat.node.mjs', `import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import test from 'node:test';

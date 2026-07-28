@@ -10,7 +10,8 @@ packageJson.scripts.check = packageJson.scripts.check.replace(
 packageJson.dependencies['brace-expansion-modern'] = 'npm:brace-expansion@5.0.8';
 packageJson.overrides ??= {};
 delete packageJson.overrides['brace-expansion'];
-packageJson.overrides['minimatch@3.1.5'] = {
+delete packageJson.overrides['minimatch@3.1.5'];
+packageJson.overrides.minimatch = {
   'brace-expansion': 'file:vendor/brace-expansion-compat',
 };
 fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);

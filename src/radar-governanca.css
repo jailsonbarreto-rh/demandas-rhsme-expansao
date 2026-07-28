@@ -572,6 +572,10 @@
     gap: 27px;
   }
 
+  .governance-composition-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .governance-section-heading {
     align-items: flex-start;
     flex-direction: column;

@@ -1,9 +1,9 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: none -->
+<!-- IMPLEMENTATION_AUTHORIZATION: UX-RADAR-001 -->
 
 **Status:** vigente  
-**Atualizado em:** 27 de julho de 2026  
+**Atualizado em:** 28 de julho de 2026  
 **Finalidade:** registrar somente decisões expressamente aprovadas pelo responsável pelo produto antes da implementação de cada pacote.
 
 ## 1. Regra de uso
@@ -330,7 +330,23 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 
 **Nota de precedência:** a orientação de continuidade por R1/R2 registrada naquele momento foi superada, quanto à próxima atividade, por GOV-007, GOV-008 e pelas decisões posteriores deste Registro. As regras materiais do R3 permanecem vigentes; nenhum pacote posterior está autorizado automaticamente.
 
-## 5. Modelo de registro de decisão do ciclo
+## 5. Decisão de interface autorizada
+
+### UX-RADAR-001 — Consolidação da identidade e da microcopy operacional do Radar
+
+**Data:** 28 de julho de 2026  
+**Classificação:** decisão expressamente aprovada pelo responsável pelo produto.  
+**Decisão:** APROVADA PARA IMPLEMENTAÇÃO.
+
+A identidade completa `Radar de Governança` — ícone, título e subtítulo — será apresentada no cabeçalho principal, ocupando o lugar de `Painel de Demandas`, sem repetição de um segundo hero dentro da página. O botão inicial de navegação também passará a se chamar `Radar de Governança`.
+
+Serão retiradas da interface as três frases explicativas que repetem decisões internas sobre produtividade, desempenho e interpretação da ausência de prazo. Permanecem preservados os cálculos, denominadores explícitos, contadores de cobertura, rótulos neutros e a documentação de governança; a mudança é exclusivamente de exposição ao usuário.
+
+O badge técnico que cita fornecedor ou mecanismo de armazenamento será substituído por estado operacional derivado da condição real da aplicação: sistema online, sincronização em curso, conexão indisponível ou modo de demonstração. O indicador visual `Ctrl/⌘ K` será removido, mantendo-se integralmente o atalho de teclado.
+
+Não há autorização nem necessidade de alterar dados, schema, migrations, permissões, métricas, regras de cálculo ou integração do Supabase.
+
+## 6. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
 |---|---|
@@ -349,7 +365,7 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 6. Controle por ciclo
+## 7. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
@@ -358,6 +374,7 @@ O Plano Remanescente v2.1 e o Product Context atualizado substituem as descriç�
 | E1A | Concluído | Autorização registrada no Handoff histórico | Concluída | PR #61 concluído sem reexecução de SQL |
 | E2 / segurança final | Adiado | GOV-011 | Não no momento | Executar após as implementações funcionais e antes da entrega |
 | E3 | Concluído | GOV-010 e OP-D02 | Concluída | Histórico corrigido nos PRs #69–#71; demais semânticas concluídas no PR #73 |
+| UX-RADAR-001 | Concluído | UX-RADAR-001 | Em validação | PR #88 |
 | E4 | Não iniciado | Não | Não | Futuro; depende de debate e autorização expressa |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |

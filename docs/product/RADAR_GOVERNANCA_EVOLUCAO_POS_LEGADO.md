@@ -2,7 +2,7 @@
 
 **Status:** ideias aprovadas para preservação documental; implementação futura condicionada à disponibilidade e confiabilidade dos dados.  
 **Data:** 28 de julho de 2026  
-**Superfície atual:** `Radar de Governança` na rota inicial do SITE CTRH.
+**Superfície atual:** `Radar de Governança` na rota inicial do SITE CTRH, identificado uma única vez no cabeçalho principal.
 
 ## 1. Finalidade
 
@@ -26,7 +26,7 @@ Uma leitura futura somente poderá entrar no Radar quando:
 3. a cobertura for suficiente para a leitura proposta;
 4. importações técnicas e datas de carga estiverem separadas de fatos operacionais;
 5. o cálculo puder ser reproduzido no sistema, no Excel e nos testes;
-6. limitações e denominadores forem apresentados ao usuário;
+6. denominadores e informações operacionalmente necessárias forem apresentados ao usuário, com limitações preservadas em rótulos neutros e documentação;
 7. nenhuma ausência for tratada como resultado positivo;
 8. nenhuma distribuição de estoque for apresentada como produtividade ou desempenho.
 

@@ -6,43 +6,29 @@
   animation: fadeIn 0.35s ease-out forwards;
 }
 
-.governance-hero {
-  position: relative;
-  overflow: hidden;
+.governance-header-identity {
   display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 30px 32px;
-  border: 1px solid rgba(47, 111, 165, 0.18);
-  border-radius: 16px;
-  background:
-    radial-gradient(circle at top right, rgba(47, 111, 165, 0.12), transparent 34%),
-    linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
-  box-shadow: 0 16px 34px rgba(23, 50, 77, 0.06);
+  align-items: center;
+  gap: 16px;
 }
 
-.governance-hero::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary-color), var(--accent-color), rgba(47, 111, 165, 0.16));
-}
-
-.governance-hero-mark {
-  width: 52px;
-  height: 52px;
+.governance-header-mark {
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  border-radius: 14px;
+  border-radius: 13px;
   color: #fff;
   background: linear-gradient(145deg, var(--primary-color), var(--accent-color));
-  box-shadow: 0 12px 22px rgba(23, 50, 77, 0.18);
-  font-size: 1.15rem;
+  box-shadow: 0 10px 20px rgba(23, 50, 77, 0.18);
+  font-size: 1.08rem;
 }
 
-.governance-eyebrow,
+.governance-header-copy {
+  min-width: 0;
+}
+
 .governance-kicker {
   display: block;
   margin-bottom: 5px;
@@ -52,21 +38,6 @@
   letter-spacing: 0.11em;
   line-height: 1.3;
   text-transform: uppercase;
-}
-
-.governance-hero h1 {
-  font-size: clamp(1.8rem, 3vw, 2.35rem);
-  font-weight: 760;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
-}
-
-.governance-hero p {
-  max-width: 760px;
-  margin-top: 9px;
-  color: var(--text-muted);
-  font-size: 0.94rem;
-  line-height: 1.55;
 }
 
 .governance-section {
@@ -600,10 +571,6 @@
     gap: 27px;
   }
 
-  .governance-hero {
-    padding: 24px;
-  }
-
   .governance-section-heading {
     align-items: flex-start;
     flex-direction: column;
@@ -635,19 +602,15 @@
 }
 
 @media (max-width: 520px) {
-  .governance-hero {
-    gap: 14px;
-    padding: 20px;
+  .governance-header-identity {
+    align-items: flex-start;
+    gap: 12px;
   }
 
-  .governance-hero-mark {
+  .governance-header-mark {
     width: 42px;
     height: 42px;
     border-radius: 11px;
-  }
-
-  .governance-hero h1 {
-    font-size: 1.55rem;
   }
 
   .coverage-metrics {

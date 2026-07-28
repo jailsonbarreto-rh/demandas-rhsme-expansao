@@ -65,7 +65,7 @@ describe('FilterPanel — busca avançada', () => {
     expect(onCommitSearch).toHaveBeenCalledWith('cessão ricardo 2025');
   });
 
-  it('confirma a consulta com Enter e mostra o atalho de teclado', () => {
+  it('confirma a consulta com Enter sem exibir o atalho no layout', () => {
     const onCommitSearch = vi.fn();
     render(<Harness onCommitSearch={onCommitSearch} />);
 
@@ -74,7 +74,7 @@ describe('FilterPanel — busca avançada', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
 
     expect(onCommitSearch).toHaveBeenCalledWith('cessao erica 2026');
-    expect(screen.getByText(/Ctrl\/⌘ K/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Ctrl\/⌘ K/i)).not.toBeInTheDocument();
   });
 
   it('exibe os filtros de período e a validação do intervalo', () => {

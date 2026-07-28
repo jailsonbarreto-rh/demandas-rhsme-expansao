@@ -5,6 +5,15 @@ import type { DemandFilters } from '../filters/filterTypes';
 import { getTodayString, isBeforeToday } from '../utils/date';
 import { BrandLogo } from './BrandLogo';
 
+type ConnectionStatus = 'online' | 'connecting' | 'offline' | 'local';
+
+const CONNECTION_STATUS_PRESENTATION: Record<ConnectionStatus, { label: string; icon: string }> = {
+  online: { label: 'Sistema online', icon: 'fa-circle-check' },
+  connecting: { label: 'Sincronizando…', icon: 'fa-arrows-rotate fa-spin' },
+  offline: { label: 'Conexão indisponível', icon: 'fa-triangle-exclamation' },
+  local: { label: 'Modo de demonstração', icon: 'fa-flask' },
+};
+
 interface HeaderProps {
   userEmail: string;
   demandas: Demanda[];
@@ -25,7 +34,7 @@ interface HeaderProps {
   onToggleFiltroStatus: (status: DemandFilters['status']) => void;
   onToggleQuickFilter: (filtro: 'assinatura' | 'hoje' | 'vencido') => void;
   canEdit?: boolean;
-  appMode?: 'local' | 'supabase';
+  connectionStatus?: ConnectionStatus;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -41,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleFiltroStatus,
   onToggleQuickFilter,
   canEdit = true,
-  appMode = 'local',
+  connectionStatus = 'local',
 }) => {
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
@@ -79,6 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
   const legendaCriticas = totalCriticas > 0
     ? `${totalCriticas} ${totalCriticas === 1 ? 'demanda exige' : 'demandas exigem'} providência imediata.`
     : 'Todas as demandas de prazo crítico estão em dia.';
+  const connectionPresentation = CONNECTION_STATUS_PRESENTATION[connectionStatus];
 
   return (
     <header className="header-container">
@@ -95,14 +105,20 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div
             className="inst-meta-item inst-timestamp"
-            title="Momento em que os dados locais da sessão do app foram carregados ou recarregados"
+            title="Momento em que os dados exibidos foram carregados ou atualizados"
           >
             <i className="fa-solid fa-rotate" aria-hidden="true" />
             <span>Atualizado: {lastUpdate}</span>
           </div>
 
-          <div className="inst-badge-ambiente">
-            {appMode === 'supabase' ? 'Base Compartilhada — Supabase' : 'Ambiente Local (LocalStorage)'}
+          <div
+            className={`inst-badge-ambiente status-${connectionStatus}`}
+            role="status"
+            aria-live="polite"
+            title="Estado operacional atual do sistema"
+          >
+            <i className={`fa-solid ${connectionPresentation.icon}`} aria-hidden="true" />
+            <span>{connectionPresentation.label}</span>
           </div>
 
           <button
@@ -118,11 +134,16 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="title-action-row">
-        <div className="title-area">
-          <h1>Painel de Demandas</h1>
-          <p className="header-subtitle">
-            Acompanhamento de processos, expedientes, prazos e providências.
-          </p>
+        <div className="title-area governance-header-identity">
+          <div className="governance-header-mark" aria-hidden="true">
+            <i className="fa-solid fa-compass" />
+          </div>
+          <div className="governance-header-copy">
+            <h1>Radar de Governança</h1>
+            <p className="header-subtitle">
+              Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.
+            </p>
+          </div>
         </div>
 
         <div className="header-global-actions">

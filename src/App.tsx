@@ -489,6 +489,10 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   }
 
   const targetScopeForHeaderFilters: DemandFilters['scope'] = activeTab === 'minhas-demandas' ? 'meu' : 'equipe';
+  let connectionStatus: 'online' | 'connecting' | 'offline' | 'local' = 'online';
+  if (appServices.mode === 'local') connectionStatus = 'local';
+  else if (data.error) connectionStatus = 'offline';
+  else if (data.loading) connectionStatus = 'connecting';
 
   return (
     <Suspense fallback={activeTab === 'admin' ? <AdminSkeleton /> : isDemandWorkspace ? <TableSkeleton /> : null}>
@@ -517,7 +521,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             navigateToWorkspace(targetScopeForHeaderFilters, {}, nextQuickFilters);
           }}
           canEdit={canEdit}
-          appMode={appServices.mode}
+          connectionStatus={connectionStatus}
         />
 
         <nav className="nav-tabs" aria-label="Áreas do sistema">
@@ -526,10 +530,10 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             className={`nav-tab-link ${activeTab === 'visao-geral' ? 'active' : ''}`}
             aria-current={activeTab === 'visao-geral' ? 'page' : undefined}
             onClick={() => setActiveTab('visao-geral')}
-            title="Ver o resumo e indicadores do CTRH"
+            title="Abrir o Radar de Governança"
           >
             <i className="fa-solid fa-chart-pie" aria-hidden="true" />
-            <span>Visão geral</span>
+            <span>Radar de Governança</span>
           </button>
 
           <button

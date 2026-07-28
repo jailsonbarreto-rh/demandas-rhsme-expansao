@@ -31,7 +31,7 @@ const demandas = [
 describe('semânticas do Radar de Governança', () => {
   afterEach(cleanup);
 
-  it('apresenta identidade institucional e leituras analíticas sem inferir desempenho', () => {
+  it('mantém as leituras analíticas sem duplicar identidade nem avisos internos', () => {
     render(
       <VisaoGeral
         demandas={demandas}
@@ -41,8 +41,8 @@ describe('semânticas do Radar de Governança', () => {
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Radar de Governança' })).toBeVisible();
-    expect(screen.getByText('Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Radar de Governança' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Visão estratégica do fluxo de trabalho, com análise de dados e monitoramento da carteira de demandas.')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Cobertura dos prazos' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Distribuição por responsável' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Demandas por setor informado' })).toBeVisible();
@@ -50,5 +50,8 @@ describe('semânticas do Radar de Governança', () => {
     expect(screen.getByText('Vínculo legado pendente')).toBeVisible();
     expect(screen.queryByText(/setores mais ativos/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/ranking/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Distribuições calculadas sobre as demandas atualmente registradas, sem inferência de produtividade ou desempenho.')).not.toBeInTheDocument();
+    expect(screen.queryByText('A ausência de prazo é apresentada como ausência de informação e não como situação regular.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Volume e composição por status. A leitura não representa produtividade, desempenho ou carga equivalente de trabalho.')).not.toBeInTheDocument();
   });
 });

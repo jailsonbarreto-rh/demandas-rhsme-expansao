@@ -268,6 +268,12 @@ Uma demanda com vários sinais aparece uma vez, pela severidade mais alta, e pre
 
 “Ranking de responsáveis” é proibido; usar **distribuição da carteira por responsável**. Métricas com baixa cobertura exibem a limitação.
 
+## Identidade da rota inicial
+
+A identidade `Radar de Governança` aparece uma única vez no cabeçalho principal, com ícone de bússola e o subtítulo institucional vigente. O botão correspondente na navegação usa o mesmo nome. A página não repete um hero próprio.
+
+Estados de infraestrutura são traduzidos para linguagem operacional — sistema online, sincronização, conexão indisponível ou modo de demonstração — sem expor fornecedor ou mecanismo de armazenamento ao usuário.
+
 ## Experiência por papel
 
 ### Administrador
@@ -286,7 +292,7 @@ Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar f
 
 | Rota | Finalidade | Acesso | Estado |
 |---|---|---|---|
-| `/` | início e visão geral atual; futuramente início personalizado | autenticados | vigente |
+| `/` | Radar de Governança e leituras atuais da carteira; futuramente início personalizado | autenticados | vigente |
 | `/demandas` | carteira completa da equipe, busca e filtros | autenticados | vigente |
 | `/minhas-demandas` | carteira pessoal por UUID, busca e filtros | autenticados | vigente |
 | `/demandas/:id` | detalhe/prontuário preservando a carteira da equipe | autenticados | vigente; prontuário ainda evoluirá |
@@ -316,7 +322,7 @@ Gráficos nunca antecedem a fila de ação.
 - Normalização de caixa, acento e pontuação do número.
 - Busca multi-termo com todos os termos exigidos, mesmo entre campos.
 - Sugestão aproximada explicada e destaque sem injeção de HTML.
-- Buscas recentes e atalho `Ctrl/Command+K`.
+- Buscas recentes e atalho funcional `Ctrl/Command+K`; sua indicação visual não integra o layout.
 - Filtros e demanda preservados na URL.
 - Carteira de origem preservada ao abrir e fechar uma demanda.
 - `/demandas` e `/minhas-demandas` permanecem áreas distintas.

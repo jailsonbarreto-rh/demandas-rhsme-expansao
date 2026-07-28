@@ -123,10 +123,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
       <div className="filters-grid" style={{ marginTop: '20px' }}>
         <div className="filter-group search-input-wrapper advanced-search-wrapper" style={{ gridColumn: 'span 2' }}>
-          <div className="search-label-row">
-            <label htmlFor="busca">Busca por texto</label>
-            <kbd className="search-shortcut" title="Posicionar o cursor na busca">Ctrl/⌘ K</kbd>
-          </div>
+          <label htmlFor="busca">Busca por texto</label>
           <div className="input-icon-group">
             <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
             <input

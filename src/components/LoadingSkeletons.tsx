@@ -1,6 +1,6 @@
 export function DashboardSkeleton() {
   return (
-    <div className="skeleton-page" role="status" aria-label="Carregando visão geral" aria-busy="true">
+    <div className="skeleton-page" role="status" aria-label="Carregando Radar de Governança" aria-busy="true">
       <div className="skeleton-banner skeleton-block" />
       <div className="skeleton-grid">
         <div className="skeleton-card skeleton-block" />

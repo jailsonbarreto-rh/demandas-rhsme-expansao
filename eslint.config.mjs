@@ -4,6 +4,12 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+const typescriptFiles = ['**/*.{ts,tsx}'];
+const typedConfigs = tseslint.configs.recommendedTypeChecked.map((config) => ({
+  ...config,
+  files: typescriptFiles,
+}));
+
 export default tseslint.config(
   {
     ignores: [
@@ -24,9 +30,9 @@ export default tseslint.config(
       globals: globals.nodeBuiltin,
     },
   },
-  ...tseslint.configs.recommendedTypeChecked,
+  ...typedConfigs,
   {
-    files: ['**/*.{ts,tsx}'],
+    files: typescriptFiles,
     languageOptions: {
       globals: {
         ...globals.browser,

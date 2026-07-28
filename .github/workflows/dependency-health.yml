@@ -10,37 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  apply-type-aware-lint:
-    name: Apply scoped type-aware lint changes
-    if: github.event.pull_request.head.ref == 'quality/type-aware-lint' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout implementation branch
-        uses: actions/checkout@v4
-        with:
-          ref: quality/type-aware-lint
-          fetch-depth: 0
-
-      - name: Apply deterministic changes
-        run: node scripts/apply-type-aware-lint.mjs
-
-      - name: Restore CI definition and commit implementation
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main --depth=1
-          git checkout origin/main -- .github/workflows/dependency-health.yml
-          rm -f .github/workflows/apply-type-aware-lint.yml scripts/apply-type-aware-lint.mjs
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add eslint.config.mjs src/App.tsx docs/maintenance/TYPE_AWARE_LINT_2026-07-28.md .github/workflows/dependency-health.yml .github/workflows/apply-type-aware-lint.yml scripts/apply-type-aware-lint.mjs
-          git commit -m 'chore(lint): corrigir promessas e delimitar lint tipado'
-          git push origin HEAD:quality/type-aware-lint
-
   audit-test-build-browser:
     name: Audit, lint, coverage, build and browser QA
     runs-on: ubuntu-latest

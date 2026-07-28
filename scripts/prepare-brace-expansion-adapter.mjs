@@ -74,7 +74,7 @@ for (const target of targets) {
   const matches = source.split(expected).length - 1;
   if (matches !== 1) {
     throw new Error(
-      `Contrato inesperado em ${target}: esperada exatamente uma declaração compatível; encontradas ${matches}.`,
+      \`Contrato inesperado em \${target}: esperada exatamente uma declaração compatível; encontradas \${matches}.\`,
     );
   }
   fs.writeFileSync(target, source.replace(expected, replacement));

@@ -34,7 +34,7 @@ const modulePaths = [
   'readdir-glob/node_modules/minimatch',
 ];
 
-test('as instâncias consumidoras usam a API expand compatível', () => {
+test('as duas instâncias consumidoras usam a API expand compatível', () => {
   for (const moduleId of modulePaths) {
     const resolved = require.resolve(moduleId);
     const source = fs.readFileSync(resolved, 'utf8');
@@ -62,15 +62,27 @@ test('ExcelJS continua criando e serializando arquivos', async () => {
 
 fs.writeFileSync('scripts/create-brace-expansion-patches.mjs', `import fs from 'node:fs';
 
-const target = 'node_modules/minimatch/minimatch.js';
-const source = fs.readFileSync(target, 'utf8');
-const expected = "var expand = require('brace-expansion')";
-const replacement = "var expand = require('brace-expansion').expand";
-const matches = source.split(expected).length - 1;
-if (matches !== 1) {
-  throw new Error(
-    \`Contrato inesperado em \${target}: esperada exatamente uma declaração compatível; encontradas \${matches}.\`,
-  );
+const targets = [
+  {
+    path: 'node_modules/minimatch/minimatch.js',
+    expected: "var expand = require('brace-expansion')",
+    replacement: "var expand = require('brace-expansion').expand",
+  },
+  {
+    path: 'node_modules/readdir-glob/node_modules/minimatch/minimatch.js',
+    expected: "const expand = require('brace-expansion')",
+    replacement: "const expand = require('brace-expansion').expand",
+  },
+];
+
+for (const target of targets) {
+  const source = fs.readFileSync(target.path, 'utf8');
+  const matches = source.split(target.expected).length - 1;
+  if (matches !== 1) {
+    throw new Error(
+      \`Contrato inesperado em \${target.path}: esperada exatamente uma declaração compatível; encontradas \${matches}.\`,
+    );
+  }
+  fs.writeFileSync(target.path, source.replace(target.expected, target.replacement));
 }
-fs.writeFileSync(target, source.replace(expected, replacement));
 `);

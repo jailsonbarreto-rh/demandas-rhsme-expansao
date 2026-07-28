@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **28 de julho de 2026 — Radar de Governança publicado e bloqueio automático restaurado (PRs #76–#78)**
+Atualizado em: **28 de julho de 2026 — dependências de manutenção atualizadas e validadas no PR #79**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: none -->
 
@@ -13,6 +13,7 @@ Atualizado em: **28 de julho de 2026 — Radar de Governança publicado e bloque
 | Deployment efetivo | `dpl_G4DYuCYfyNZ464oTTRVQbi842KFx` — `READY` |
 | SHA efetivo de Production | `a6fe540003ea2c2f2519c185a1b3c956081a3da7` — PR #77 |
 | Implementação funcional do Radar | PR #76, merge `37e8734f9b79936a551bb985f85b0de13f9fe06c` |
+| Atualização de dependências | PR #79 |
 | Bloqueio automático de deploy | restaurado pelo PR #78 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
 | Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
@@ -32,6 +33,35 @@ Atualizado em: **28 de julho de 2026 — Radar de Governança publicado e bloque
 - **Preservação informacional:** consolidada documentalmente no PR #72.
 - **E3 — semânticas gerenciais:** concluído no PR #73, publicado pelo PR #74 e protegido pelo PR #75.
 - **Radar de Governança:** implementado no PR #76, publicado pelo PR #77 e protegido pelo PR #78.
+- **Manutenção de dependências:** versões patch/minor compatíveis atualizadas e validadas no PR #79.
+
+## Atualização de dependências de manutenção
+
+Foram atualizadas exclusivamente dependências já existentes, sem instalação de nova biblioteca e sem alteração de comportamento de produto:
+
+| Pacote | Versão anterior | Versão atual |
+|---|---:|---:|
+| `react-hook-form` | `7.82.0` | `7.83.0` |
+| `@hookform/resolvers` | `5.4.0` | `5.5.7` |
+| `@radix-ui/react-dialog` | `1.1.20` | `1.1.23` |
+| `@radix-ui/react-alert-dialog` | `1.1.20` | `1.1.23` |
+| `@radix-ui/react-dropdown-menu` | `2.1.21` | `2.1.24` |
+| `typescript-eslint` | `8.64.0` | `8.65.0` |
+
+O `package-lock.json` foi regenerado pelo npm em Node.js 24 e mantido consistente com as versões exatas do `package.json`. O workflow temporário usado apenas para gerar o lockfile foi removido antes do gate final.
+
+Validação do pacote:
+
+- instalação limpa por `npm ci`: aprovada;
+- auditoria de vulnerabilidades: aprovada;
+- assinaturas e proveniência do registro: aprovadas;
+- lint: aprovado;
+- testes unitários, de integração e cobertura: aprovados;
+- build e orçamento de bundle: aprovados;
+- Playwright e acessibilidade no navegador: aprovados;
+- nenhuma nova dependência foi adicionada;
+- nenhum código funcional, dado, schema, migration ou configuração do Supabase foi alterado;
+- o tratamento específico de `brace-expansion` permanece fora deste pacote e deverá ser analisado separadamente.
 
 ## Radar de Governança
 
@@ -174,7 +204,7 @@ Até esse momento:
 - **R5:** andamento, prontuário e recuperação administrativa.
 - **Segurança final:** antigo escopo E2 ampliado, conforme GOV-011.
 
-Nenhuma dessas etapas está autorizada automaticamente pela conclusão do Radar.
+Nenhuma dessas etapas está autorizada automaticamente pela conclusão do Radar ou pela atualização de dependências.
 
 ## Regra de continuidade
 

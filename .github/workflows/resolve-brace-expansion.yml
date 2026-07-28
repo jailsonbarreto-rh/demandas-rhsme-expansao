@@ -37,18 +37,16 @@ jobs:
           rm -rf node_modules
           npm ci --ignore-scripts
 
-      - name: Generate versioned patches
+      - name: Generate versioned patch
         shell: bash
         run: |
           set -o pipefail
           {
             node scripts/create-brace-expansion-patches.mjs
             npx patch-package minimatch
-            npx patch-package readdir-glob/minimatch
-            echo '--- patches gerados ---'
+            echo '--- patch gerado ---'
             find patches -maxdepth 1 -type f -print -exec sed -n '1,80p' {} \;
             test -f patches/minimatch+3.1.5.patch
-            find patches -maxdepth 1 -type f -name '*minimatch+3.1.5.patch' | grep -q 'readdir-glob'
           } 2>&1 | tee brace-expansion-patch-generation-report.txt
 
       - name: Upload patch generation report
@@ -60,7 +58,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Prove clean npm ci applies both patches
+      - name: Prove clean npm ci applies the patch
         shell: bash
         run: |
           set -o pipefail
@@ -86,18 +84,17 @@ jobs:
             echo
             echo '## Diagnóstico confirmado'
             echo
-            echo 'As duas instâncias de `minimatch` 3.1.5 esperam que `require("brace-expansion")` retorne diretamente uma função. A versão corrigida `brace-expansion` 5.0.8 expõe a função pela propriedade `expand`. O override seguro eliminava a vulnerabilidade, mas exigia adaptação dos consumidores antigos.'
+            echo 'O `minimatch` raiz 3.1.5 espera que `require("brace-expansion")` retorne diretamente uma função. A versão corrigida `brace-expansion` 5.0.8 expõe a função pela propriedade `expand`. O override seguro eliminava a vulnerabilidade, mas exigia adaptação desse consumidor antigo.'
             echo
-            echo 'A remoção integral do override e do patch foi testada. A instalação e o ExcelJS funcionaram, porém a árvore restaurou 13 vulnerabilidades de severidade alta. Portanto, a correção ainda é necessária enquanto as dependências transitivas antigas permanecerem.'
+            echo 'A cópia aninhada em `readdir-glob` é `minimatch` 5.1.9 e já utiliza a propriedade `expand`; ela não precisa de alteração. O script anterior tentava corrigir esse segundo caminho sem necessidade.'
+            echo
+            echo 'A remoção integral do override e do patch foi testada. A instalação e o ExcelJS funcionaram, porém a árvore restaurou 13 vulnerabilidades de severidade alta. Portanto, a correção do `minimatch` raiz ainda é necessária enquanto a dependência transitiva antiga permanecer.'
             echo
             echo '## Solução adotada'
             echo
-            echo 'O script próprio que fazia substituição textual em caminhos internos foi removido. A alteração mínima passou a ser mantida em dois patches unificados, versionados e aplicados por `patch-package` 8.0.1 durante o `postinstall`:'
+            echo 'O script próprio que fazia substituição textual em caminhos internos foi removido. A alteração mínima passou a ser mantida em um patch unificado, versionado e aplicado por `patch-package` 8.0.1 durante o `postinstall`.'
             echo
-            echo '- `minimatch` 3.1.5 raiz;'
-            echo '- `minimatch` 3.1.5 aninhado em `readdir-glob`.'
-            echo
-            echo 'O override de `brace-expansion` 5.0.8 foi preservado para impedir a regressão da vulnerabilidade. O CI exige aplicação bem-sucedida dos patches em uma instalação limpa e executa testes específicos sobre expansão de chaves e geração de Excel.'
+            echo 'O override de `brace-expansion` 5.0.8 foi preservado para impedir a regressão da vulnerabilidade. O CI exige aplicação bem-sucedida do patch em uma instalação limpa e executa testes específicos sobre expansão de chaves nas duas versões de `minimatch` e geração de Excel.'
             echo
             echo '## Árvore efetiva'
             echo
@@ -110,7 +107,7 @@ jobs:
             echo '- `npm ci` em árvore removida previamente;'
             echo '- `patch-package --error-on-fail`;'
             echo '- auditoria de vulnerabilidades e assinaturas;'
-            echo '- teste dos dois arquivos efetivamente corrigidos;'
+            echo '- teste do arquivo efetivamente corrigido e do consumidor já compatível;'
             echo '- teste de expansão de chaves nas duas instâncias;'
             echo '- criação e serialização real de workbook pelo ExcelJS;'
             echo '- lint, cobertura, build, orçamento de bundle e Playwright.'

@@ -20,7 +20,7 @@ Atualizado em: **28 de julho de 2026 — dependências de manutenção publicada
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação autorizada após este pacote | nenhuma |
+| Implementação funcional autorizada | nenhuma |
 | Próxima atividade | debate e decisão do E4; nenhuma implementação do E4 está autorizada |
 
 ## Pacotes concluídos

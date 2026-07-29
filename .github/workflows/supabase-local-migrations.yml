@@ -31,7 +31,7 @@ jobs:
       CYCLE4_HARDENING: supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
       E1A_PG_NET_ENABLE: supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
       E1A_PG_NET_REMOVE: supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
-      R3_RESPONSAVEIS: supabase/migrations/20260724000100_r3_responsaveis_oficiais.sql
+      R3_RESPONSAVEIS: supabase/migrations/20260724011303_r3_responsaveis_oficiais.sql
 
     steps:
       - name: Checkout repository
@@ -93,7 +93,7 @@ jobs:
           mv /tmp/cycle4-migrations/20260722123935_cycle4_block_direct_writes.sql "$CYCLE4_HARDENING"
           mv /tmp/e1a-pg-net-migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql "$E1A_PG_NET_ENABLE"
           mv /tmp/e1a-pg-net-migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql "$E1A_PG_NET_REMOVE"
-          mv /tmp/r3-migrations/20260724000100_r3_responsaveis_oficiais.sql "$R3_RESPONSAVEIS"
+          mv /tmp/r3-migrations/20260724011303_r3_responsaveis_oficiais.sql "$R3_RESPONSAVEIS"
           supabase migration up --local 2>&1 | tee cycle4-migration-report.txt
 
       - name: Validate Cycle 4 roles, transactions and logical deletion
@@ -123,7 +123,7 @@ jobs:
             supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
             supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
             supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
-            supabase/migrations/20260724000100_r3_responsaveis_oficiais.sql
+            supabase/migrations/20260724011303_r3_responsaveis_oficiais.sql
           if-no-files-found: warn
           retention-days: 14
 

@@ -1,6 +1,6 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
+<!-- IMPLEMENTATION_AUTHORIZATION: A1-CORE -->
 
 **Status:** vigente  
 **Atualizado em:** 29 de julho de 2026  
@@ -436,7 +436,70 @@ O E4 está encerrado. Nenhum pacote posterior está automaticamente autorizado; 
 
 ---
 
-## 7. Modelo de registro de decisão do ciclo
+## 7. Decisões e autorização do A1-Core residual
+
+### GOV-012 — Prioridade de conclusão funcional independente do legado futuro
+
+**Data:** 29 de julho de 2026  
+**Classificação:** mudança de sequência e foco de produto  
+**Decisão:** APROVADA.
+
+A chegada, o formato e o volume dos dados legados futuros deixam de integrar o caminho crítico das funcionalidades da operação atual. O produto será concluído com o modelo e os dados hoje disponíveis, mantendo preservação informacional e flexibilidade para compatibilização posterior, sem antecipar regras de importação, domínios ou limites ainda desconhecidos.
+
+A sequência executiva vigente passa a ser:
+
+1. **A1-Core residual:** gate dinâmico de migrations, retirada dos contratos operacionais obsoletos e proteção contra sobrescrita concorrente;
+2. **R4 operacional:** prazos, próxima providência, dados operacionais, apresentação equivalente em desktop/mobile e Excel;
+3. **R5 e demais funcionalidades operacionais:** andamento, prontuário, recuperação administrativa e fechamento dos fluxos;
+4. **R2 e otimizações de escala:** executar depois das funções prioritárias, antes da entrega final quando necessárias à qualidade do produto atual ou quando houver evidência de degradação.
+
+R1-1, R1-4 autônomo, preparação específica de cargas e regras dependentes do formato futuro permanecem fora do caminho crítico. R1-2 será consumido como fundação do R4-1, sem ciclo independente.
+
+### OP-D15 — Retirada dos contratos e acessos operacionais obsoletos
+
+**Data:** 29 de julho de 2026  
+**Classificação:** necessidade técnica e segurança de contrato  
+**Decisão:** APROVADA.
+
+O cliente deixa de expor ou chamar `LegacyCreateDemandaInput`, `update`, `updateStatus`, `delete`, `criar_sme_demanda` e `atualizar_status_sme_demanda`. Todos os fluxos visuais permanecem nas RPCs nomeadas, transacionais e auditáveis já implantadas.
+
+O papel `authenticated` perde a execução das duas RPCs antigas. Os símbolos podem permanecer temporariamente no banco somente para compatibilidade administrativa controlada, sem acesso pelo usuário comum e sem uso pelo frontend. Não haverá apagamento de dados, eventos ou migrations históricas.
+
+### OP-D01 — Tratamento de edição concorrente
+
+**Data:** 29 de julho de 2026  
+**Classificação:** integridade multiusuário e experiência de conflito  
+**Decisão:** APROVADA.
+
+Toda mutação sobre demanda existente deve enviar a versão `updated_at` sobre a qual o formulário foi aberto. Depois de bloquear a linha, a RPC compara essa versão com o estado atual.
+
+Quando outra pessoa já tiver alterado a demanda:
+
+- a operação é rejeitada sem atualizar a demanda e sem criar histórico;
+- o conteúdo digitado permanece preservado na interface;
+- o sistema informa que existe uma versão mais recente e apresenta os campos alterados quando consultáveis;
+- o usuário pode cancelar ou recarregar a versão atual para reaplicar conscientemente seu conteúdo;
+- não haverá combinação automática, gravação forçada ou transferência de responsabilidade;
+- a resposta de conflito jamais devolverá informação que a RLS não permita consultar.
+
+### A1-CORE-A01 — Autorização consolidada do núcleo residual
+
+**Data:** 29 de julho de 2026  
+**Classificação:** autorização de implementação  
+**Decisão:** APROVADA.
+
+Está autorizada a implementação sequencial do A1-Core para:
+
+1. substituir a enumeração manual de migrations por staging e manifesto dinâmicos, preservando as fixtures e invariantes históricas;
+2. remover contratos, adaptadores e chamadas operacionais legadas do TypeScript;
+3. revogar de `authenticated` a execução das RPCs `criar_sme_demanda` e `atualizar_status_sme_demanda`, sem DML, backfill ou exclusão histórica;
+4. introduzir concorrência otimista nas mutações de demandas existentes, com erro estável, ausência de efeitos colaterais em conflito e tratamento de interface conforme OP-D01;
+5. preservar R3, E4, papéis, responsabilidade oficial, autoria do executor, busca, filtros, Excel, acessibilidade, responsividade, Realtime e rotas;
+6. executar RED/GREEN, replay integral, invariantes por papel, revisão de grants, Advisors, gate completo e sincronização documental.
+
+Ficam fora do A1-Core: validação das cinco constraints, dois índices residuais, limites de texto, catálogo definitivo, importação futura, paginação R2 e as funcionalidades visuais do R4/R5. A implementação dessas funcionalidades começa somente após o encerramento do A1-Core.
+
+## 8. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
 |---|---|
@@ -455,7 +518,7 @@ O E4 está encerrado. Nenhum pacote posterior está automaticamente autorizado; 
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 8. Controle por ciclo
+## 9. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
@@ -467,10 +530,11 @@ O E4 está encerrado. Nenhum pacote posterior está automaticamente autorizado; 
 | UX-RADAR-001 | Concluído | UX-RADAR-001 | Concluída | PR #88, publicação #89 e bloqueio #90 |
 | UX-RADAR-002 | Concluído | UX-RADAR-002 | Concluída | PR #91, publicação #92 e bloqueio #93 |
 | E4 | Concluído | OP-D17, E4-D01, E4-A01 e E4-C01 | Concluída | PR #96 integrado; migration `20260729133230` verificada em Production |
-| R1 | Pendente | Não | Não | Sem autorização atual |
+| A1-Core | Concluído | GOV-012, OP-D15, OP-D01 e A1-CORE-A01 | Sim | Implementação autorizada; ainda não iniciada |
+| R1 residual fora do Core | Parcial | GOV-012 | Não no momento | R1-1 e R1-4 adiados; R1-2 incorporado ao R4-1 |
 | R2 | Não iniciado | Não | Não | Futuro |
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |
-| R4 | Não iniciado | Não | Não | Futuro após R1 e R2 |
+| R4 | Debate material consolidado | GOV-012 | Após A1-Core | Próximo marco funcional, sem dependência do R2 |
 | R5 | Não iniciado | Não | Não | Suspenso até R4 |
 | R6 | Não iniciado | Não | Não | Futuro |
 | R7 | Não iniciado | Não | Não | Futuro |

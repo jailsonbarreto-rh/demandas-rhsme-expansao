@@ -2,12 +2,24 @@ import type {
   ComentarioHistorico,
   Demanda,
   DemandStatus,
-  LegacyCreateDemandaInput,
 } from '../types';
 
-type DemandFixtureInput = LegacyCreateDemandaInput
-  & Pick<Demanda, 'id'>
-  & Partial<Omit<Demanda, keyof LegacyCreateDemandaInput | 'id'>>;
+type RequiredDemandFixtureFields = Pick<
+  Demanda,
+  | 'id'
+  | 'numero'
+  | 'tipo'
+  | 'assunto'
+  | 'responsavel'
+  | 'limite1'
+  | 'limite2'
+  | 'status'
+  | 'setor'
+  | 'classificacao'
+>;
+
+type DemandFixtureInput = RequiredDemandFixtureFields
+  & Partial<Omit<Demanda, keyof RequiredDemandFixtureFields>>;
 
 type HistoryFixtureInput = Pick<
   ComentarioHistorico,

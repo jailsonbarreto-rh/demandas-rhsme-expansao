@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **29 de julho de 2026 — E4 concluído e verificado em Production**
+Atualizado em: **29 de julho de 2026 — A1-Core residual autorizado**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
+<!-- IMPLEMENTATION_AUTHORIZATION: A1-CORE -->
 
 ## Estado material
 
@@ -20,8 +20,23 @@ Atualizado em: **29 de julho de 2026 — E4 concluído e verificado em Productio
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | Nenhuma |
-| Próxima atividade | debate pré-implementação do R1; nenhuma implementação do R1 está autorizada |
+| Implementação funcional autorizada | **A1-Core residual** — GOV-012, OP-D15, OP-D01 e A1-CORE-A01 |
+| Próxima atividade | implementar os releases do A1-Core; depois abrir o debate itemizado do R4, sem pré-autorizar suas funções nem antecipar dados futuros |
+
+## A1-Core autorizado
+
+O responsável pelo produto determinou que a conclusão das funções atuais não dependa da chegada nem do formato do legado futuro. Está autorizado o núcleo residual estritamente necessário antes do R4:
+
+- gate dinâmico de migrations;
+- retirada dos contratos e chamadas operacionais antigas;
+- revogação das duas RPCs obsoletas para usuários autenticados;
+- concorrência otimista, sem sobrescrita silenciosa, merge automático ou alteração do responsável;
+- preservação do formulário e ausência de efeitos no banco quando houver conflito.
+
+O A1-Core será entregue em quatro etapas reversíveis: fundação; banco de concorrência aditivo; frontend v2 publicado e validado; limpeza das assinaturas antigas somente com rollback v2 já comprovado. Nenhum grant novo a `service_role` será criado.
+
+R1-1, R1-4 autônomo e o R2 remanescente saem do caminho crítico. A ordem dos prazos entra no R4-1. Nenhum dado atual será corrigido, preenchido ou reclassificado pelo A1-Core.
+
 
 ## Pacotes concluídos
 
@@ -201,10 +216,10 @@ O pacote não alterou frontend, rotas ou responsáveis existentes e não gerou P
 
 ## Pendências posteriores
 
-- **R1:** debate pré-implementação de integridade, contratos e concorrência; ainda sem autorização funcional.
-- **R2:** consultas escaláveis e histórico sob demanda.
-- **R4:** prazos e próxima providência.
-- **R5:** andamento, prontuário e recuperação administrativa.
+- **A1-Core:** autorizado e pendente de implementação.
+- **R4:** próximo marco funcional após o A1-Core.
+- **R5:** andamento, prontuário e recuperação administrativa após o R4.
+- **R2:** consultas escaláveis e histórico sob demanda, adiado para depois das funções prioritárias.
 - **Segurança final:** antigo escopo E2 ampliado, conforme GOV-011.
 
 Nenhuma dessas etapas está autorizada automaticamente.

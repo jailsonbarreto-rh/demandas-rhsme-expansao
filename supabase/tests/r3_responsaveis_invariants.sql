@@ -1,4 +1,4 @@
--- Executar após 20260724000100_r3_responsaveis_oficiais.sql.
+-- Executar após 20260724011303_r3_responsaveis_oficiais.sql.
 
 do $$
 declare

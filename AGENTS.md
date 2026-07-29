@@ -38,6 +38,9 @@ O `Plano_Remanescente_Execucao_CTRH_v2.1.md`, o `ADENDO_GOVERNANCA_POR_ETAPA_CTR
 ## Regras vigentes consolidadas após o R3
 
 - `responsavel_id` é a identidade oficial do responsável.
+- A atribuição de responsável organiza a referência da demanda e não cria posse exclusiva, restrição de continuidade nem autorização baseada em propriedade.
+- Administrador ou editor ativo pode praticar as ações permitidas em qualquer demanda ativa, independentemente de ser o responsável cadastrado; leitor permanece sem mutação.
+- Responsável e ator são identidades independentes: toda ação registra quem efetivamente a praticou, e somente uma reatribuição explícita pode alterar `responsavel_id`.
 - Novas demandas e futuras reatribuições selecionam usuário cadastrado por UUID ou permanecem sem responsável.
 - Responsável externo e nome livre não são opções atuais de cadastro ou reatribuição.
 - Informação textual legada sem UUID pode ser preservada, mas não pode ser reescrita livremente nem usada para formar carteira pessoal.

@@ -1,6 +1,6 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: E4 -->
+<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
 **Status:** vigente  
 **Atualizado em:** 29 de julho de 2026  
@@ -412,6 +412,28 @@ Está autorizada a implementação isolada do E4 para:
 
 Ficam fora do E4: tela da lixeira, restauração, concorrência otimista, revogação de RPCs antigas, importadores, índices de outros pacotes, R1, R2, R4, R5, frontend, Preview e deployment Vercel.
 
+### E4-C01 — Encerramento da implementação
+
+**Data:** 29 de julho de 2026  
+**Classificação:** encerramento operacional e sincronização documental.  
+**Estado:** CONCLUÍDO EM PRODUCTION.
+
+O E4 foi autorizado no PR #94, precedido pela reconciliação da versão remota do R3 no PR #95 e implementado no PR #96. A migration canônica `20260729133230_security_deleted_visibility_and_actor.sql` está aplicada em Production.
+
+A verificação pós-migration confirmou:
+
+- somente administrador ativo consulta demandas logicamente excluídas e seus históricos;
+- editor ativo pode atuar em demanda atribuída a outra pessoa, com o executor registrado e o responsável preservado;
+- leitor e perfil inativo permanecem sem as permissões vedadas;
+- grants e execução da função de gatilho não foram ampliados;
+- 379 demandas, nenhuma excluída, 764 históricos, 13 perfis ativos, 378 `updated_by` nulos legados e 378 `created_by` nulos legados foram preservados;
+- não houve backfill, reatribuição, alteração de frontend ou deployment da Vercel;
+- Advisors não apresentaram achado novo introduzido pelo E4 e as chamadas recentes da API permaneceram saudáveis.
+
+Durante a aplicação, a integração Git registrou automaticamente a migration canônica enquanto uma reaplicação idempotente era iniciada. A entrada redundante `20260729135047` foi identificada e removida do histórico por guarda exata, sem reversão de schema, DDL adicional ou alteração de dados. O histórico remoto final contém apenas a versão canônica `20260729133230`.
+
+O E4 está encerrado. Nenhum pacote posterior está automaticamente autorizado; a próxima atividade é o debate pré-implementação do R1.
+
 ---
 
 ## 7. Modelo de registro de decisão do ciclo
@@ -444,7 +466,7 @@ Ficam fora do E4: tela da lixeira, restauração, concorrência otimista, revoga
 | E3 | Concluído | GOV-010 e OP-D02 | Concluída | Histórico corrigido nos PRs #69–#71; demais semânticas concluídas no PR #73 |
 | UX-RADAR-001 | Concluído | UX-RADAR-001 | Concluída | PR #88, publicação #89 e bloqueio #90 |
 | UX-RADAR-002 | Concluído | UX-RADAR-002 | Concluída | PR #91, publicação #92 e bloqueio #93 |
-| E4 | Concluído | OP-D17, E4-D01 e E4-A01 | Autorizada | Implementação de RLS e autoria administrativa autorizada em 29/07/2026 |
+| E4 | Concluído | OP-D17, E4-D01, E4-A01 e E4-C01 | Concluída | PR #96 integrado; migration `20260729133230` verificada em Production |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |

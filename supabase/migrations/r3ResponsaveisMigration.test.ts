@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const migrationsDir = dirname(fileURLToPath(import.meta.url));
-const migrationPath = resolve(migrationsDir, '20260724000100_r3_responsaveis_oficiais.sql');
+const migrationPath = resolve(migrationsDir, '20260724011303_r3_responsaveis_oficiais.sql');
 const sql = existsSync(migrationPath)
   ? readFileSync(migrationPath, 'utf8').replace(/\r\n/g, '\n').toLowerCase()
   : '';

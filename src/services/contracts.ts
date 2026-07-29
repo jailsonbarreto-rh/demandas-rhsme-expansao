@@ -5,7 +5,6 @@ import type {
   DeleteDemandaInput,
   Demanda,
   EditDemandaInput,
-  LegacyCreateDemandaInput,
   PerfilMinimo,
   PerfilUsuario,
   ProgressInput,
@@ -21,24 +20,13 @@ export interface AppData {
 export interface DemandasRepository {
   load(): Promise<AppData>;
   loadTrash(): Promise<Demanda[]>;
-  create(input: CreateDemandaInput | LegacyCreateDemandaInput): Promise<void>;
+  create(input: CreateDemandaInput): Promise<void>;
   edit(id: number, input: EditDemandaInput): Promise<void>;
   registerProgress(id: number, input: ProgressInput): Promise<void>;
   transitionStatus(id: number, input: StatusTransitionInput): Promise<void>;
   deleteLogically(id: number, input: DeleteDemandaInput): Promise<void>;
   restore(id: number, input: RestoreDemandaInput): Promise<void>;
   subscribe(onRemoteChange: () => void): () => void;
-
-  /** @deprecated Compatibilidade temporária até a migração completa da interface. */
-  update(id: number, changes: Partial<Demanda>): Promise<void>;
-  /** @deprecated Compatibilidade temporária até a migração completa da interface. */
-  updateStatus(
-    id: number,
-    status: Demanda['status'],
-    comentario: string,
-  ): Promise<void>;
-  /** @deprecated Exclusão exige motivo explícito; use deleteLogically. */
-  delete(id: number): Promise<void>;
 }
 
 export interface AuthService {

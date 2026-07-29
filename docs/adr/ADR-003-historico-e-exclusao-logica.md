@@ -29,12 +29,16 @@ Todo evento apresenta data e hora, autor ou “Autor não identificado”, setor
 
 Exclusão operacional é lógica, com `deleted_at`, `deleted_by` e motivo de pelo menos dez caracteres. Ela preserva demanda e histórico, remove o item das consultas normais e o disponibiliza na lixeira apenas para administrador. Restauração também exige motivo e cria evento próprio.
 
-As RPCs obtêm o autor por `auth.uid()`; o cliente nunca envia identidade do ator. O banco produz o JSON antes/depois a partir dos valores reais. Evento e mutação ocorrem na mesma transação, e falha de auditoria reverte a alteração.
+As RPCs operacionais autenticadas obtêm o ator por `auth.uid()`; o cliente nunca escolhe a identidade do ator. Em rotina administrativa privilegiada sem sessão pessoal, a função deve validar previamente a identidade e a autorização do ator antes de atribuí-lo, e o gatilho preserva esse valor validado. O banco produz o JSON antes/depois a partir dos valores reais. Evento e mutação ocorrem na mesma transação, e falha de auditoria reverte a alteração.
+
+Responsabilidade e autoria são contratos independentes. `responsavel_id` indica a pessoa atribuída como referência da demanda, sem criar propriedade exclusiva. Administrador ou editor ativo pode atuar em demanda atribuída a outra pessoa; a ação registra o usuário que a praticou e não muda o responsável, salvo reatribuição explícita.
 
 ## Consequências
 
 - Registrar andamento não exige falsificar mudança de status.
 - Edição, reatribuição e prazo tornam-se rastreáveis.
+- Ausência, férias ou apoio entre colegas não bloqueiam a continuidade por outro usuário autorizado.
+- O histórico identifica o executor real sem transformar essa pessoa automaticamente em responsável.
 - Exclusão é recuperável e não rompe a memória institucional.
 - Leitor não executa mutações; editor não exclui nem restaura; administrador possui as ações administrativas previstas.
 - A migration de contrato revoga mutações legadas somente após o frontend compatível estar homologado.

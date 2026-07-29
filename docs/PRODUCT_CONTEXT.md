@@ -1,7 +1,7 @@
 # Contexto do Produto — Central de Demandas CTRH
 
 **Estado documental:** vigente após as decisões R3-D01 a R3-D10 e a adoção da cadeia documental do E0.  
-**Atualizado em:** 26 de julho de 2026.
+**Atualizado em:** 29 de julho de 2026.
 
 Este documento é a referência operacional para a semântica atual do produto. Decisões expressamente aprovadas estão exclusivamente em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`; a estratégia geral está em `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`; o roteiro do Trilho A está em `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`; a governança está no Adendo e no Protocolo vigentes indicados por `AGENTS.md`.
 
@@ -207,6 +207,10 @@ Consulte `docs/adr/ADR-002-prazos-proxima-acao.md`.
 `responsavel_id` é a identidade operacional oficial. O texto `responsavel` é snapshot legível e compatibilidade legada.
 
 - **Responsável oficial:** UUID de usuário cadastrado e nome derivado no servidor.
+- **Atribuição sem exclusividade:** o responsável é a pessoa de referência da demanda; a atribuição não impede que outro administrador ou editor ativo dê continuidade ao trabalho.
+- **Autorização por papel:** a possibilidade de agir decorre do papel e do estado do perfil, nunca da igualdade entre `auth.uid()` e `responsavel_id`.
+- **Autoria independente:** comentário, andamento, edição ou transição registra o usuário que efetivamente praticou a ação e não altera o responsável.
+- **Reatribuição explícita:** somente a operação consciente de reatribuição modifica `responsavel_id`, registrando também o ator que a realizou.
 - **Não atribuído:** UUID nulo e texto vazio; continua permitido, mas integra a qualidade de dados.
 - **Informação legada sem UUID:** pode ser preservada sem virar opção de novo cadastro ou reatribuição.
 - **Responsável externo ou nome livre:** não é opção vigente para novas demandas ou futuras reatribuições.
@@ -220,7 +224,7 @@ As decisões R3-D01 a R3-D09 prevalecem sobre descrições anteriores de respons
 
 ### Eventos e exclusão
 
-Os tipos oficiais são `criacao`, `andamento`, `mudanca_status`, `edicao`, `reatribuicao`, `alteracao_prazo`, `exclusao` e `restauracao`. Todo evento mostra data e hora, autor ou “Autor não identificado”, setor, tipo, status resultante e descrição. Autoria legada não é inventada.
+Os tipos oficiais são `criacao`, `andamento`, `mudanca_status`, `edicao`, `reatribuicao`, `alteracao_prazo`, `exclusao` e `restauracao`. Todo evento mostra data e hora, autor ou “Autor não identificado”, setor, tipo, status resultante e descrição. Em operação autenticada, o ator é sempre o `auth.uid()` que executou a ação, ainda que outra pessoa seja a responsável pela demanda. A demanda registra esse último ator em `updated_by`, o evento registra em `created_by` e `responsavel_id` permanece inalterado, salvo reatribuição explícita. Autoria legada não é inventada.
 
 Exclusão é lógica e recuperável; preserva demanda e histórico, exige motivo e registra autoria. Consulte `docs/adr/ADR-003-historico-e-exclusao-logica.md`.
 

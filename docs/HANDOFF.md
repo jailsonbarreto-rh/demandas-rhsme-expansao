@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **28 de julho de 2026 — UX-RADAR-002 publicado e bloqueio restaurado**
+Atualizado em: **29 de julho de 2026 — E4 debatido e autorizado para implementação**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
+<!-- IMPLEMENTATION_AUTHORIZATION: E4 -->
 
 ## Estado material
 
@@ -20,8 +20,8 @@ Atualizado em: **28 de julho de 2026 — UX-RADAR-002 publicado e bloqueio resta
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | nenhuma |
-| Próxima atividade | debater o E4 antes de qualquer implementação; permanece sem autorização |
+| Implementação funcional autorizada | `E4` — RLS da lixeira e autoria independente da responsabilidade |
+| Próxima atividade | implementar o E4 em branch própria, com testes RED antes da migration |
 
 ## Pacotes concluídos
 
@@ -178,9 +178,25 @@ Até esse momento, nenhum arquivo real ou histórico será apagado por essa fren
 - paginação padrão de 50 e opção de 100 permanecem;
 - eventos técnicos continuam preservados no banco e traduzidos apenas na apresentação.
 
+## E4 autorizado
+
+O responsável pelo produto aprovou em 29 de julho de 2026 as decisões OP-D17, E4-D01 e E4-A01:
+
+- somente administrador ativo poderá consultar demandas logicamente excluídas e seus históricos;
+- demandas ativas permanecem consultáveis por todos os usuários ativos;
+- `responsavel_id` identifica a pessoa atribuída à demanda, mas não cria posse exclusiva nem limita a atuação de colegas;
+- administrador ou editor ativo poderá continuar qualquer demanda ativa, independentemente de quem seja o responsável;
+- cada ação e comentário registrará quem efetivamente os praticou;
+- uma ação comum não altera o responsável oficial;
+- reatribuição somente ocorrerá por operação explícita e auditável;
+- operação autenticada usará `auth.uid()`; rotina administrativa sem sessão somente preservará ator previamente validado;
+- não haverá backfill nem autoria inferida para o legado.
+
+O E4 não altera frontend, rotas, dados existentes, responsáveis, histórico legado, permissões sobre demandas ativas ou integração visual. Também não autoriza lixeira, restauração, concorrência, R1 ou pacotes posteriores.
+
 ## Pendências posteriores
 
-- **E4:** RLS da lixeira e autoria administrativa — depende de debate e autorização expressa.
+- **E4:** autorizado para implementação isolada; ainda não aplicado ao Supabase.
 - **R1:** integridade, contratos e concorrência.
 - **R2:** consultas escaláveis e histórico sob demanda.
 - **R4:** prazos e próxima providência.

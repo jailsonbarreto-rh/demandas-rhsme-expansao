@@ -875,6 +875,9 @@ Entregar as mutações cotidianas de forma auditável, concorrente e semanticame
 - mudança de status registra transição real;
 - mutações passam por RPC nomeada;
 - autoria vem de `auth.uid()`;
+- responsabilidade e autoria são independentes: o responsável oficial não possui exclusividade sobre a demanda;
+- administrador ou editor ativo pode atuar em demanda atribuída a colega, conforme as permissões do papel;
+- uma ação registra quem a executou e não muda `responsavel_id`, salvo reatribuição explícita;
 - evento e mutação são atômicos;
 - exclusão física não é operação cotidiana.
 

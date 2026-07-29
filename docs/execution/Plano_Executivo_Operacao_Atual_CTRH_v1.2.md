@@ -842,18 +842,21 @@ drop extension if exists pg_net;
 ## E4 — Endurecer RLS da lixeira e autoria administrativa
 
 **Classificação:** segurança e integridade de auditoria.  
-**Hard gate:** OP-D17 para visibilidade da lixeira.
+**Hard gates:** OP-D17 para visibilidade da lixeira e E4-D01 para separação entre responsável e ator.
 
 **Arquivos:**
 - Create: `supabase/migrations/<next>_security_deleted_visibility_and_actor.sql`
 - Create: `supabase/tests/security_deleted_visibility_invariants.sql`
 - Modify: `supabase/migrations/cycle4Migration.test.ts`
 - Modify: `src/lib/database.types.ts`
-- Modify: docs de segurança e Handoff
+- Modify: `.github/workflows/supabase-local-migrations.yml`
+- Modify: `AGENTS.md`, Product Context, ADR-003, docs de segurança e Handoff
 
 **Interfaces:**
 - Produces: não-admin só lê demandas ativas; admin lê ativas e excluídas.
 - Produces: `updated_by` usa `auth.uid()` em operação autenticada e preserva ator explícito em operação administrativa validada.
+- Preserves: a autorização de mutação continua baseada em papel e estado do perfil, nunca em `responsavel_id`.
+- Preserves: agir, comentar ou movimentar não reatribui a demanda; somente operação explícita altera o responsável.
 
 - [ ] **Passo 1 — Escrever invariantes RED de RLS**
 
@@ -863,7 +866,11 @@ drop extension if exists pg_net;
   - editor ativo não consulta demanda excluída;
   - administrador ativo consulta;
   - histórico da demanda excluída segue a mesma regra;
-  - todas as demandas ativas continuam visíveis conforme regra vigente.
+  - todas as demandas ativas continuam visíveis conforme regra vigente;
+  - editor pode atuar em demanda cujo `responsavel_id` pertença a outra pessoa;
+  - a ação registra o editor em `updated_by` e `sme_historico.created_by`;
+  - a ação não altera `responsavel_id` nem o nome derivado do responsável;
+  - leitor continua sem permissão de mutação.
 
 - [ ] **Passo 2 — Executar RED no Supabase local**
 
@@ -899,13 +906,22 @@ drop extension if exists pg_net;
   new.updated_by := coalesce((select auth.uid()), new.updated_by);
   ```
 
-  As RPCs administrativas devem validar o ator antes de atribuir `new.updated_by`.
+  A prioridade de `auth.uid()` impede que um cliente autenticado escolha outro ator. As RPCs administrativas sem sessão pessoal devem validar o ator antes de atribuir `new.updated_by`. Nenhuma policy ou RPC pode comparar o ator com `responsavel_id` para autorizar a ação.
 
-- [ ] **Passo 6 — Proibir backfill inferido**
+- [ ] **Passo 6 — Provar independência entre responsável e ator**
+
+  Em fixture sintética, atribuir a demanda ao usuário A e executar edição/andamento com o editor B. Confirmar:
+
+  - `responsavel_id` continua sendo A;
+  - `updated_by` passa a ser B;
+  - o novo evento possui `created_by = B`;
+  - o leitor não consegue executar a mesma mutação.
+
+- [ ] **Passo 7 — Proibir backfill inferido**
 
   Confirmar que os 378 `updated_by` nulos continuam nulos. A migration corrige comportamento futuro, não reescreve história.
 
-- [ ] **Passo 7 — Replay e Advisors**
+- [ ] **Passo 8 — Replay e Advisors**
 
   ```bash
   supabase db reset --local --no-seed
@@ -914,7 +930,7 @@ drop extension if exists pg_net;
 
   Rodar Advisors e revisar grants.
 
-- [ ] **Passo 8 — Commit**
+- [ ] **Passo 9 — Commit**
 
   ```bash
   git commit -m "security: restringir lixeira e preservar autoria administrativa"

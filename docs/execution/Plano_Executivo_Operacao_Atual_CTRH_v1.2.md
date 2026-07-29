@@ -844,13 +844,15 @@ drop extension if exists pg_net;
 **Classificação:** segurança e integridade de auditoria.  
 **Hard gates:** OP-D17 para visibilidade da lixeira e E4-D01 para separação entre responsável e ator.
 
-**Arquivos:**
-- Create: `supabase/migrations/<next>_security_deleted_visibility_and_actor.sql`
+**Estado:** concluído em Production em 29/07/2026 pelo PR #96, após autorização no PR #94 e reconciliação da versão R3 no PR #95. Migration canônica: `20260729133230_security_deleted_visibility_and_actor.sql`. Nenhuma implementação posterior foi autorizada.
+
+**Arquivos efetivamente alterados no PR #96:**
+- Create: `supabase/migrations/20260729133230_security_deleted_visibility_and_actor.sql`
+- Create: `supabase/tests/e4_legacy_null_authorship_fixture.sql`
 - Create: `supabase/tests/security_deleted_visibility_invariants.sql`
-- Modify: `supabase/migrations/cycle4Migration.test.ts`
-- Modify: `src/lib/database.types.ts`
 - Modify: `.github/workflows/supabase-local-migrations.yml`
-- Modify: `AGENTS.md`, Product Context, ADR-003, docs de segurança e Handoff
+
+A sincronização documental de encerramento foi executada em PR próprio após a verificação de Production. Não houve alteração de tipos porque o E4 não modificou colunas nem contratos de dados.
 
 **Interfaces:**
 - Produces: não-admin só lê demandas ativas; admin lê ativas e excluídas.
@@ -858,7 +860,7 @@ drop extension if exists pg_net;
 - Preserves: a autorização de mutação continua baseada em papel e estado do perfil, nunca em `responsavel_id`.
 - Preserves: agir, comentar ou movimentar não reatribui a demanda; somente operação explícita altera o responsável.
 
-- [ ] **Passo 1 — Escrever invariantes RED de RLS**
+- [x] **Passo 1 — Escrever invariantes RED de RLS**
 
   Provar que:
 
@@ -872,14 +874,14 @@ drop extension if exists pg_net;
   - a ação não altera `responsavel_id` nem o nome derivado do responsável;
   - leitor continua sem permissão de mutação.
 
-- [ ] **Passo 2 — Executar RED no Supabase local**
+- [x] **Passo 2 — Executar RED no Supabase local**
 
   ```bash
   psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 \
     -f supabase/tests/security_deleted_visibility_invariants.sql
   ```
 
-- [ ] **Passo 3 — Alterar policy de demandas**
+- [x] **Passo 3 — Alterar policy de demandas**
 
   Regra-alvo:
 
@@ -893,11 +895,11 @@ drop extension if exists pg_net;
   )
   ```
 
-- [ ] **Passo 4 — Alterar policy de histórico**
+- [x] **Passo 4 — Alterar policy de histórico**
 
   Usar existência da demanda visível ao mesmo usuário. Não conceder leitura de histórico excluído por policy independente.
 
-- [ ] **Passo 5 — Corrigir `touch_updated_at`**
+- [x] **Passo 5 — Corrigir `touch_updated_at`**
 
   Regra:
 
@@ -908,7 +910,7 @@ drop extension if exists pg_net;
 
   A prioridade de `auth.uid()` impede que um cliente autenticado escolha outro ator. As RPCs administrativas sem sessão pessoal devem validar o ator antes de atribuir `new.updated_by`. Nenhuma policy ou RPC pode comparar o ator com `responsavel_id` para autorizar a ação.
 
-- [ ] **Passo 6 — Provar independência entre responsável e ator**
+- [x] **Passo 6 — Provar independência entre responsável e ator**
 
   Em fixture sintética, atribuir a demanda ao usuário A e executar edição/andamento com o editor B. Confirmar:
 
@@ -917,11 +919,11 @@ drop extension if exists pg_net;
   - o novo evento possui `created_by = B`;
   - o leitor não consegue executar a mesma mutação.
 
-- [ ] **Passo 7 — Proibir backfill inferido**
+- [x] **Passo 7 — Proibir backfill inferido**
 
   Confirmar que os 378 `updated_by` nulos continuam nulos. A migration corrige comportamento futuro, não reescreve história.
 
-- [ ] **Passo 8 — Replay e Advisors**
+- [x] **Passo 8 — Replay e Advisors**
 
   ```bash
   supabase db reset --local --no-seed
@@ -930,12 +932,14 @@ drop extension if exists pg_net;
 
   Rodar Advisors e revisar grants.
 
-- [ ] **Passo 9 — Commit**
+- [x] **Passo 9 — Commit**
 
   ```bash
   git commit -m "security: restringir lixeira e preservar autoria administrativa"
   ```
 
+
+**Evidência de encerramento:** replay integral, invariantes de RLS e autoria, suíte completa, Advisors, grants, políticas, função de gatilho, histórico de migrations, contagens e logs de API foram verificados. Os 378 autores nulos em cada tabela permaneceram nulos; não houve backfill, reatribuição ou deployment da Vercel.
 ---
 
 # 9. R1 — Integridade, domínio e concorrência

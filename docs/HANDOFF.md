@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **29 de julho de 2026 — E4 debatido e autorizado para implementação**
+Atualizado em: **29 de julho de 2026 — E4 concluído e verificado em Production**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: E4 -->
+<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
 ## Estado material
 
@@ -15,19 +15,20 @@ Atualizado em: **29 de julho de 2026 — E4 debatido e autorizado para implement
 | Atualização de dependências | PR #83, merge `6ccb45eacc76a95b6cde0967a6040e259b6c351c` |
 | Bloqueio automático de deploy | restaurado pelo PR #93 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
-| Última migration remota | `20260724011303_r3_responsaveis_oficiais` |
+| Última migration remota | `20260729133230_security_deleted_visibility_and_actor` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | `E4` — RLS da lixeira e autoria independente da responsabilidade |
-| Próxima atividade | implementar o E4 em branch própria, com testes RED antes da migration |
+| Implementação funcional autorizada | Nenhuma |
+| Próxima atividade | debate pré-implementação do R1; nenhuma implementação do R1 está autorizada |
 
 ## Pacotes concluídos
 
 - **E0:** cadeia documental v3.1/v1.2 e gate documental — PR #58.
 - **E1:** Production alinhada à `main` — PR #59; bloqueio restaurado pelo PR #60.
 - **E1A:** fatos históricos temporários de `pg_net` representados no Git — PR #61, sem reexecução de SQL.
+- **E4 — RLS da lixeira e autoria administrativa:** decisões no PR #94, paridade do R3 no PR #95 e implementação no PR #96; migration `20260729133230` verificada em Production, sem deploy da Vercel.
 - **Correção do histórico técnico:** PR #69, publicação #70 e bloqueio #71.
 - **Preservação informacional:** consolidada no PR #72.
 - **E3 — semânticas gerenciais:** PR #73, publicação #74 e bloqueio #75.
@@ -178,26 +179,29 @@ Até esse momento, nenhum arquivo real ou histórico será apagado por essa fren
 - paginação padrão de 50 e opção de 100 permanecem;
 - eventos técnicos continuam preservados no banco e traduzidos apenas na apresentação.
 
-## E4 autorizado
+## E4 concluído em Production
 
-O responsável pelo produto aprovou em 29 de julho de 2026 as decisões OP-D17, E4-D01 e E4-A01:
+As decisões OP-D17, E4-D01 e E4-A01 foram implementadas e verificadas em 29 de julho de 2026:
 
-- somente administrador ativo poderá consultar demandas logicamente excluídas e seus históricos;
-- demandas ativas permanecem consultáveis por todos os usuários ativos;
-- `responsavel_id` identifica a pessoa atribuída à demanda, mas não cria posse exclusiva nem limita a atuação de colegas;
-- administrador ou editor ativo poderá continuar qualquer demanda ativa, independentemente de quem seja o responsável;
-- cada ação e comentário registrará quem efetivamente os praticou;
-- uma ação comum não altera o responsável oficial;
-- reatribuição somente ocorrerá por operação explícita e auditável;
-- operação autenticada usará `auth.uid()`; rotina administrativa sem sessão somente preservará ator previamente validado;
-- não haverá backfill nem autoria inferida para o legado.
+- somente administrador ativo consulta demandas logicamente excluídas e seus históricos;
+- demandas ativas continuam consultáveis por todos os usuários ativos;
+- `responsavel_id` identifica a pessoa de referência, sem criar posse exclusiva;
+- administrador ou editor ativo pode continuar qualquer demanda ativa, inclusive quando atribuída a outra pessoa;
+- cada ação e comentário registra quem efetivamente os praticou;
+- agir não altera o responsável; somente reatribuição explícita modifica `responsavel_id`;
+- operação autenticada usa `auth.uid()`; rotina administrativa sem sessão somente preserva ator previamente validado;
+- leitor e perfil inativo permanecem sem as permissões vedadas;
+- nenhum autor foi inferido para o legado.
 
-O E4 não altera frontend, rotas, dados existentes, responsáveis, histórico legado, permissões sobre demandas ativas ou integração visual. Também não autoriza lixeira, restauração, concorrência, R1 ou pacotes posteriores.
+O PR #96 integrou a migration `20260729133230_security_deleted_visibility_and_actor.sql`. A verificação pós-migration preservou 379 demandas, nenhuma excluída, 764 históricos, 13 perfis ativos, 378 `updated_by` nulos e 378 `created_by` nulos. Grants, função de gatilho e Advisors não apresentaram regressão do E4; a API permaneceu saudável.
+
+Uma entrada redundante de histórico de migration, criada durante a concorrência entre a integração Git e uma reaplicação idempotente, foi reconciliada por alvo exato. O histórico remoto final contém somente a versão canônica `20260729133230`, sem reversão de schema ou alteração de dados.
+
+O pacote não alterou frontend, rotas ou responsáveis existentes e não gerou Preview nem deployment da Vercel.
 
 ## Pendências posteriores
 
-- **E4:** autorizado para implementação isolada; ainda não aplicado ao Supabase.
-- **R1:** integridade, contratos e concorrência.
+- **R1:** debate pré-implementação de integridade, contratos e concorrência; ainda sem autorização funcional.
 - **R2:** consultas escaláveis e histórico sob demanda.
 - **R4:** prazos e próxima providência.
 - **R5:** andamento, prontuário e recuperação administrativa.

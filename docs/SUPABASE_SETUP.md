@@ -1,7 +1,7 @@
 # Supabase e operação multiusuário
 
 **Atualizado em:** 29 de julho de 2026  
-**Estado:** vigente após R3, E0, E1 e reconciliação histórica E1A.
+**Estado:** vigente após R3, E0, E1, reconciliação histórica E1A e E4.
 
 O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`.
 
@@ -28,7 +28,8 @@ Os arquivos estão em `supabase/migrations/` e são aplicados pela ordem dos pre
 4. expansão aditiva do modelo;
 5. RPCs auditáveis de criação, edição, andamento, status, exclusão e restauração;
 6. proteção contra escritas diretas;
-7. responsáveis oficiais por UUID no R3.
+7. responsáveis oficiais por UUID no R3;
+8. visibilidade da lixeira e preservação da autoria administrativa no E4 (`20260729133230_security_deleted_visibility_and_actor`).
 
 ### 2.1 E1A — paridade histórica de `pg_net`
 
@@ -111,8 +112,9 @@ As mutações autenticadas obtêm autoria por `auth.uid()`, validam papel no ban
 
 ## 6. RLS e segurança
 
-- usuário ativo consulta dados operacionais;
-- administrador e editor executam mutações autorizadas;
+- usuário ativo consulta demandas ativas e seus históricos;
+- somente administrador ativo consulta demandas logicamente excluídas e seus históricos;
+- administrador e editor executam mutações autorizadas em qualquer demanda ativa, independentemente do responsável cadastrado;
 - somente administrador exclui e restaura;
 - leitor não executa mutações;
 - perfil pendente ou inativo não acessa dados operacionais;
@@ -122,19 +124,18 @@ As mutações autenticadas obtêm autoria por `auth.uid()`, validam papel no ban
 
 ## 7. Fotografia operacional conhecida
 
-Na fotografia read-only de 26/07/2026 havia 379 demandas, 378 vínculos oficiais por UUID, uma informação textual legada sem UUID, 764 históricos e 13 perfis. Essas quantidades não são constantes da aplicação e devem ser consultadas novamente antes de operações materiais.
+Na verificação pós-E4 de 29/07/2026 havia 379 demandas, nenhuma logicamente excluída, 378 vínculos oficiais por UUID, uma informação textual legada sem UUID, 764 históricos e 13 perfis ativos. Permaneceram 378 `sme_demandas.updated_by` nulos e 378 `sme_historico.created_by` nulos, sem backfill ou autoria inferida. Essas quantidades não são constantes da aplicação e devem ser consultadas novamente antes de operações materiais.
 
 ## 8. Pendências posteriores
 
 Permanecem nos pacotes próprios do Plano Executivo:
 
-- E2: retirada de dados reais da árvore corrente;
-- E4: autorizado em 29/07/2026 para RLS da lixeira e autoria administrativa, ainda não aplicado;
-- R1: constraints, contratos, domínios e concorrência;
+- E2: retirada de dados reais da árvore corrente, adiada para o pacote final de segurança;
+- R1: constraints, contratos, domínios e concorrência, ainda sujeito a debate e autorização;
 - R2: paginação, consulta e histórico sob demanda;
 - R4 e R5: prazos, próxima providência, andamento e prontuário.
 
-Nenhum desses itens é autorizado pelo E1A.
+O E4 está concluído e não autoriza nenhum desses itens posteriores.
 
 ## 9. Vercel
 
@@ -160,3 +161,5 @@ npm run check:full
 Para migrations materiais, execute também replay integral em ambiente seguro, `migration list`, `db push --dry-run`, invariantes de dados, testes de papéis, RLS, grants, Realtime e atualização dos tipos gerados.
 
 O E1A é exceção apenas no sentido de que não executa DDL: ele reconstrói arquivos históricos já registrados e valida que nenhuma alteração remota foi realizada.
+
+O E4 foi aplicado pela migration canônica `20260729133230`, passou por replay integral, invariantes por papel, verificação de grants, Advisors, contagens e logs de API. Não alterou dados existentes, responsáveis, frontend ou Vercel.

@@ -218,7 +218,6 @@ O pacote não alterou frontend, rotas ou responsáveis existentes e não gerou P
 - **R4:** próximo marco funcional após o A1-Core.
 - **R5:** andamento, prontuário e recuperação administrativa após o R4.
 - **R2:** consultas escaláveis e histórico sob demanda, adiado para depois das funções prioritárias.
-- **R5:** andamento, prontuário e recuperação administrativa.
 - **Segurança final:** antigo escopo E2 ampliado, conforme GOV-011.
 
 Nenhuma dessas etapas está autorizada automaticamente.

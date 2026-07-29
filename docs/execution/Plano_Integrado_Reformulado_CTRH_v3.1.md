@@ -434,8 +434,8 @@ O núcleo comum contém tarefas que protegem ambos os trilhos:
 | B2 — preservação bruta e dry-run | após B1 | pode ser implementada antes de A2, desde que não faça promoção massiva |
 | B3 — promoção ampliada | não integralmente | depende de A2 e dos contratos de integridade aplicáveis de A1 |
 | A4 — regras para demandas nativas | sim | decisões de domínios definitivos podem aguardar amostra maior |
-| A5 — andamento | sim, após A1/A2/A4 | não precisa esperar saneamento completo de todo o legado |
-| A6 — prontuário | sim, após A2 e contrato de eventos | precisa comportar legado, mas não depende de todos os lotes promovidos |
+| A5 — andamento | sim, após A1/A4 | o fluxo de andamento não exige concluir A2; usa concorrência do A1 e regras operacionais do A4 |
+| A6 — prontuário | sim, após os recortes de consulta individual e histórico do A2 | R2-1/R2-3 entram como fundação direta do prontuário, sem exigir concluir todo o pacote de escala |
 | B5 — proveniência no prontuário | não | depende do modelo efetivo de ingestão e de A6 |
 | A7 — lixeira | sim | link de origem depende de contrato próprio; lixeira não deve ficar bloqueada por ele |
 
@@ -1562,13 +1562,13 @@ A ordem abaixo foi atualizada por GOV-012 para concluir primeiro as funções da
 
 ## Sequência vigente
 
-1. concluir A1-Core residual;
-2. executar R4 operacional;
-3. executar R5 e fechar os fluxos funcionais;
-4. executar R2 e otimizações de escala quando necessárias à qualidade do produto atual e antes da entrega final;
+1. concluir A1-Core residual em releases reversíveis;
+2. debater o R4 item a item e implementar somente as decisões expressamente autorizadas;
+3. priorizar R5 e fechar os fluxos funcionais, antecipando apenas os recortes de R2 que forem dependência técnica direta de lixeira, prontuário, busca ou retorno;
+4. executar o R2 remanescente e otimizações de escala quando necessárias à qualidade do produto atual e antes da entrega final;
 5. manter o Trilho B independente até a chegada de fontes concretas.
 
-As etapas originais de preparação do legado permanecem como referência do Trilho B e não bloqueiam essa sequência.
+Esta sequência é prioridade de planejamento, não pré-autorização de R4, R5 ou R2. As etapas originais abaixo são preservadas somente como rastreabilidade histórica; não substituem a sequência vigente nem recolocam o legado no caminho crítico.
 
 ## Fase comum histórica
 

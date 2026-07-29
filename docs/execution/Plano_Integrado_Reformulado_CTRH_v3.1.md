@@ -15,6 +15,8 @@
 >
 > O Plano Remanescente v2.1 continua sendo o documento normativo vigente até que esta v3.1 seja debatida, corrigida, aprovada e versionada no repositório. Nenhuma recomendação apresentada neste documento equivale a decisão do responsável pelo produto.
 
+> **Controle de mudança vigente — GOV-012 (29/07/2026):** a execução atual não depende da chegada do legado futuro. O caminho crítico passa por A1-Core residual, R4 e R5; R2 e otimizações de escala vêm depois das funções prioritárias. R1-1 e R1-4 autônomo ficam adiados, e a ordem dos prazos integra o R4-1. Esta decisão registrada prevalece sobre a sequência recomendada originalmente nesta minuta.
+
 ---
 
 # 1. FINALIDADE E CORREÇÃO DE EIXO
@@ -403,13 +405,13 @@ O núcleo comum contém tarefas que protegem ambos os trilhos:
 | Ordem | Pacote | Resultado independente |
 |---:|---|---|
 | A0 | Rebaseline operacional | Production, documentação e ambiente claramente alinhados |
-| A1 | R1 operacional | integridade, concorrência, contratos e índices seguros |
-| A2 | R2 | consulta escalável, histórico sob demanda e E2E remoto |
-| A3 | R3 preservado / semântica residual | nenhuma regressão de UUID ou carteiras; setor tratado sem inferência |
+| A1-Core | núcleo residual | gate de migrations, contratos obsoletos e concorrência |
 | A4 | R4 | prazos, próxima ação e saneamento operacional |
 | A5 | R5A | andamento e transições operacionais |
 | A6 | R5B | prontuário canônico |
 | A7 | R5D | links, origem, lixeira e restauração |
+| A2 | R2 pós-funções prioritárias | consulta escalável, histórico sob demanda e E2E remoto |
+| A3 | checkpoint R3 | nenhuma regressão de UUID ou carteiras; setor tratado sem inferência |
 
 ## 6.3 Trilho B — Preparação e incorporação do legado
 
@@ -1554,11 +1556,21 @@ O restante do pacote ou do outro trilho pode prosseguir somente se for independe
 
 ---
 
-# 16. ORDEM DE DELIBERAÇÃO E EXECUÇÃO RECOMENDADA
+# 16. ORDEM DE DELIBERAÇÃO E EXECUÇÃO ATUALIZADA
 
-A ordem abaixo preserva avanços independentes e explicita os pontos de encontro.
+A ordem abaixo foi atualizada por GOV-012 para concluir primeiro as funções da operação atual, sem subordinação ao formato do legado futuro.
 
-## Fase comum
+## Sequência vigente
+
+1. concluir A1-Core residual;
+2. executar R4 operacional;
+3. executar R5 e fechar os fluxos funcionais;
+4. executar R2 e otimizações de escala quando necessárias à qualidade do produto atual e antes da entrega final;
+5. manter o Trilho B independente até a chegada de fontes concretas.
+
+As etapas originais de preparação do legado permanecem como referência do Trilho B e não bloqueiam essa sequência.
+
+## Fase comum histórica
 
 1. Aprovar ou corrigir a arquitetura desta v3.1.
 2. Executar P0 documental e de segurança, em pacotes separados.

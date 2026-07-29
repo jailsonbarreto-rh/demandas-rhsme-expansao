@@ -10,7 +10,7 @@
 
 **Objetivo:** levar a operação atual do SITE CTRH a um estado íntegro, seguro, escalável, auditável e funcionalmente maduro, preservando integralmente as decisões do R3 e mantendo compatibilidade arquitetural com a futura incorporação do legado.
 
-**Arquitetura vigente após GOV-012:** a execução ocorre em pacotes pequenos, publicáveis e reversíveis. Depois da linha de base e do E4, conclui-se somente o A1-Core residual; em seguida vêm R4 e R5, priorizando as funções da operação atual. R2 e as otimizações de escala ficam depois das funções prioritárias. R1-1 e R1-4 autônomo são adiados; R1-2 integra a fundação do R4-1.
+**Arquitetura vigente após GOV-012:** a execução ocorre em pacotes pequenos, publicáveis e reversíveis. Depois da linha de base e do E4, conclui-se somente o A1-Core residual em releases separados; em seguida ocorre o debate itemizado do R4 e, após autorização, a evolução funcional de R4/R5. Somente recortes de R2 que forem dependência técnica direta de função aprovada podem ser antecipados; as demais otimizações de escala ficam depois das funções prioritárias. R1-1 e R1-4 autônomo são adiados; R1-2 integra a fundação do R4-1.
 
 **Stack:** React 19, TypeScript 5.9, Vite 8, React Router 8, TanStack Table 8, Zod 4, Supabase/PostgreSQL, RLS, Realtime, Vitest, Testing Library, Playwright, ExcelJS, GitHub Actions e Vercel.
 
@@ -312,14 +312,23 @@ Uma página vazia ainda precisa retornar `total` e `pageCount`; sugestões aprox
 
 ---
 
-## 6. Decisões pendentes e recomendações
+## 6. Catálogo de decisões
 
-Nenhuma recomendação desta seção é autorização automática.
+A situação autorizativa vem exclusivamente do Registro de Decisões. Recomendações de itens ainda pendentes não constituem autorização automática.
+
+### 6.1 Decisões já aprovadas relevantes
+
+| ID | Situação | Regra vigente | Pacote |
+|---|---|---|---|
+| OP-D01 | Aprovada | rejeitar escrita concorrente, preservar formulário e não fazer merge ou gravação forçada | R1-5 |
+| OP-D02 | Implementada | usar semântica neutra de setor e distribuição, sem inferir produtividade | E3 |
+| OP-D15 | Aprovada | retirar contratos antigos do cliente e revogar as duas RPCs obsoletas sem grant novo a `service_role` | R1-3 |
+| OP-D17 | Implementada | somente administrador ativo consulta demandas e históricos excluídos | E4 |
+
+### 6.2 Decisões ainda pendentes
 
 | ID | Decisão | Recomendação técnica | Pacote dependente |
 |---|---|---|---|
-| OP-D01 | Experiência de conflito concorrente | rejeitar escrita, preservar formulário, buscar versão atual e mostrar diff; sem merge automático nem “salvar mesmo assim” | R1-5 |
-| OP-D02 | Significado provisório de `setor` | manter texto livre e usar rótulo neutro `Setor informado`; não inferir produtividade ou estrutura organizacional | E3, R2-4, R4-3 |
 | OP-D03 | Propriedade da próxima ação | retirar da edição genérica; usar `Completar dados operacionais`, `Registrar andamento` e `Alterar status` | R4-2 |
 | OP-D04 | Reatribuição isolada | não alterar próxima ação automaticamente; manter alerta para revisão consciente | R4-2 |
 | OP-D05 | Apresentação da próxima providência | uma coluna/bloco consolidado com ação e data | R4-3 |
@@ -332,9 +341,7 @@ Nenhuma recomendação desta seção é autorização automática.
 | OP-D12 | Link de origem | manter no banco, mas não expor nem exigir até existir fonte institucional definida | R5-5 |
 | OP-D13 | Limites de texto | não criar máximo de negócio no Trilho A; manter mínimos úteis, proteção de transporte e ausência de truncamento; medir o legado antes de qualquer `CHECK length` | R1-4 |
 | OP-D14 | Catálogo de classificações | catálogo controlado para criação corrente; filtros unem catálogo e valores existentes; edição preserva valor histórico desconhecido até troca consciente | R1-4, R4-4 |
-| OP-D15 | Revogação das RPCs antigas | pesquisar consumidores e revogar `authenticated` agora; manter símbolo inerte por um ciclo para diagnóstico | R1-3 |
 | OP-D16 | Página e ordenação na URL | persistir `pagina`, `porPagina`, `ordenar`, `direcao` | R2-2 |
-| OP-D17 | Visibilidade da lixeira | somente administrador consulta demanda/histórico excluídos | E4, R5-1 |
 | OP-D18 | Destino dos importadores incompatíveis | suspender importação de demandas e preservar apenas bootstrap de usuários; não construir o Trilho B agora | Apêndice A |
 | OP-D19 | Link interno compartilhável | copiar `/demandas/:id`, sem filtros pessoais | R5-5 |
 | OP-D20 | Demanda alheia acessada por `/minhas-demandas/:id` | redirecionar para `/demandas/:id` com mensagem neutra, preservando a consulta sem fingir pertencimento | R2-3 |
@@ -384,9 +391,9 @@ flowchart TD
 
     E0 --> E1 --> E1A --> E3 --> E4
     E4 --> R10 --> R13 --> R15
-    R15 --> R41 --> R42 --> R43 --> R44
-    R44 --> R51 --> R52 --> R53 --> R54 --> R55
-    R55 --> R21 --> R22 --> R23 --> R24 --> R25 --> R26 --> R3C
+    R15 --> R41 --> R42 --> R43 --> R44 --> R52
+    R52 --> R21 --> R23 --> R51 --> R53 --> R54
+    R54 --> R22 --> R25 --> R55 --> R24 --> R26 --> R3C
     R10 -. "adiado" .-> R11
     R41 -. "incorpora ordem dos prazos" .-> R12
     R15 -. "adiado" .-> R14
@@ -395,11 +402,11 @@ flowchart TD
 
 ### 7.1 Encadeamento vigente
 
-- O A1-Core contém apenas R1-0, R1-3 e R1-5, nesta ordem lógica, podendo compartilhar branch e PR porque foi autorizado como um único núcleo residual publicável.
+- O A1-Core contém apenas R1-0, R1-3 e R1-5, nesta ordem lógica, mas usa releases e PRs separados: fundação; banco aditivo; frontend; limpeza pós-Produção.
 - R1-1 e R1-4 autônomo ficam adiados; R1-2 é implementado no R4-1.
-- R4 começa imediatamente após o A1-Core, sem depender de R2 nem de nova carga legada.
-- R5 sucede o R4 e fecha as funções operacionais prioritárias.
-- R2 e capacidade vêm depois dessas funções e antes da entrega final quando necessárias ao produto atual.
+- Após o A1-Core começa o debate itemizado do R4; somente as decisões expressamente aprovadas seguem para implementação.
+- R5 prioriza as funções operacionais. R2-1/R2-3 podem anteceder lixeira e prontuário, e R2-2/R2-5 podem anteceder retorno e busca, somente como dependências diretas das funções aprovadas.
+- R2-4, R2-6 e qualquer parcela remanescente de capacidade vêm depois das funções prioritárias e antes da entrega final quando necessárias ao produto atual.
 - E2 permanece no pacote final de segurança conforme GOV-011.
 - Apêndice A somente é acionado se houver risco concreto de uso dos importadores ou chegada antecipada de arquivo legado.
 
@@ -966,8 +973,10 @@ A sincronização documental de encerramento foi executada em PR próprio após 
 ```ts
 export interface StagedMigrationManifest {
   boundary: string;
+  baseline: string[];
   cycle3: string;
-  later: string[];
+  postCycle3: string[];
+  all: string[];
 }
 ```
 
@@ -980,7 +989,7 @@ export interface StagedMigrationManifest {
   20260722101325_20260722090000_central_trabalho_expand.sql
   ```
 
-- [ ] Gerar manifesto JSON como artefato, contendo `baseline`, `cycle3`, `postCycle3` e `all`.
+- [ ] Gerar um único manifesto JSON com o contrato acima: `boundary` é o nome exato da migration-fronteira; `baseline` contém somente arquivos anteriores; `cycle3` contém a própria fronteira; `postCycle3` contém somente arquivos posteriores; `all` é a concatenação cronológica exata dos três estágios.
 - [ ] Restaurar migrations em ordem cronológica.
 - [ ] Executar fixture/invariantes do Ciclo 3.
 - [ ] Aplicar cadeia posterior.
@@ -1150,7 +1159,7 @@ export interface DemandasMutationRepository {
   ```
 
 - [ ] Manter temporariamente as funções com corpo que lança erro claro, caso a decisão aprove símbolo inerte.
-- [ ] Preservar `service_role` somente para ferramentas administrativas ainda autorizadas.
+- [ ] Não conceder `service_role`: nenhuma ferramenta administrativa consumidora foi identificada ou autorizada; eventual contrato privilegiado futuro exige decisão própria.
 - [ ] Testar que a RPC antiga não altera dados nem cria histórico.
 - [ ] Commit:
 
@@ -1237,7 +1246,7 @@ export interface VersionedMutation {
 }
 ```
 
-**Sequência obrigatória:**
+**Sequência obrigatória:** cada release abaixo usa branch, PR, gate, evidência e rollback próprios. A autorização guarda-chuva do A1-Core não permite juntá-los no mesmo SHA final.
 
 ### Release R1-5A — Banco aditivo
 
@@ -1269,7 +1278,7 @@ export interface VersionedMutation {
 ### Release R1-5C — Limpeza
 
 - [ ] Somente após Production usar v2, revogar assinaturas antigas.
-- [ ] Manter rollback de frontend para o deployment anterior compatível com o banco aditivo.
+- [ ] Antes da limpeza, designar e verificar como rollback um deployment de frontend já compatível com v2; após revogar as assinaturas antigas, o deployment pré-v2 deixa de ser um rollback válido.
 - [ ] Commit por release:
 
   ```bash

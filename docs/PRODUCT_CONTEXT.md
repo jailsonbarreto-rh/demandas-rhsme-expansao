@@ -376,6 +376,19 @@ Uma implementação está errada se:
 
 Esses indicadores avaliam o produto, nunca pessoas.
 
+
+## Sequência funcional vigente após o E4
+
+A decisão GOV-012 retira a chegada e o formato dos dados futuros do caminho crítico. A evolução atual prioriza:
+
+1. A1-Core residual: gate de migrations, retirada dos contratos antigos e concorrência;
+2. R4: prazos, próxima providência, saneamento operacional e equivalência desktop/mobile/Excel;
+3. R5 e demais funções da rotina: andamento, prontuário e recuperação administrativa;
+4. R2 e otimizações de escala depois das funções prioritárias, antes da entrega final quando necessárias ao produto atual.
+
+R1-1 e R1-4 autônomo permanecem adiados. A ordem canônica dos prazos será consumida no R4-1. Nenhum desses ajustes autoriza inventar, corrigir ou reclassificar dados atuais ou futuros.
+
+
 ## Gate de consciência do produto
 
 Antes de cada ciclo, registrar:

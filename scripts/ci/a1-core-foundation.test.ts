@@ -41,6 +41,7 @@ describe('A1-Core — fundação residual', () => {
     const supabaseRepository = readRepositoryFile('src/services/supabaseDemandasRepository.ts');
     const localRepository = readRepositoryFile('src/services/localDemandasRepository.ts');
     const demoData = readRepositoryFile('src/data/demoDemandas.ts');
+    const expandedFixtures = readRepositoryFile('src/test/expandedFixtures.ts');
 
     expect(types).not.toContain('LegacyCreateDemandaInput');
     expect(contracts).not.toContain('LegacyCreateDemandaInput');
@@ -56,6 +57,7 @@ describe('A1-Core — fundação residual', () => {
     expect(localRepository).not.toContain('LegacyCreateDemandaInput');
     expect(localRepository).not.toContain('isExpandedCreateInput');
     expect(demoData).not.toContain('LegacyCreateDemandaInput');
+    expect(expandedFixtures).not.toContain('LegacyCreateDemandaInput');
   });
 
   it('deixa as RPCs obsoletas sem execução para papéis expostos', () => {

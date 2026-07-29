@@ -6,7 +6,6 @@ import type {
   DeleteDemandaInput,
   Demanda,
   EditDemandaInput,
-  LegacyCreateDemandaInput,
   ProgressInput,
   RestoreDemandaInput,
   StatusTransitionInput,
@@ -85,8 +84,7 @@ export function useDemandasData(
     error,
     reload,
     loadTrash: () => repository.loadTrash(),
-    create: (input: CreateDemandaInput | LegacyCreateDemandaInput) =>
-      mutate(() => repository.create(input)),
+    create: (input: CreateDemandaInput) => mutate(() => repository.create(input)),
     edit: (id: number, input: EditDemandaInput) => mutate(() => repository.edit(id, input)),
     registerProgress: (id: number, input: ProgressInput) =>
       mutate(() => repository.registerProgress(id, input)),
@@ -96,11 +94,5 @@ export function useDemandasData(
       mutate(() => repository.deleteLogically(id, input)),
     restore: (id: number, input: RestoreDemandaInput) =>
       mutate(() => repository.restore(id, input)),
-
-    // Adaptadores temporários para chamadas ainda não migradas nas telas.
-    update: (id: number, changes: Partial<Demanda>) => mutate(() => repository.update(id, changes)),
-    updateStatus: (id: number, status: Demanda['status'], comentario: string) =>
-      mutate(() => repository.updateStatus(id, status, comentario)),
-    delete: (id: number) => mutate(() => repository.delete(id)),
   };
 }

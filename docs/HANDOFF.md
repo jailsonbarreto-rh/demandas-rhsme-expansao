@@ -239,7 +239,7 @@ O gate final aprovou auditoria, proveniência, análise estática, 264 testes, c
 - **R2:** consultas escaláveis e histórico sob demanda, adiado para depois das funções prioritárias.
 - **Segurança final:** antigo escopo E2 ampliado, conforme GOV-011.
 
-Nenhuma dessas etapas está autorizada automaticamente.
+Os releases remanescentes do A1-Core continuam expressamente autorizados nos limites de GOV-012, OP-D01 e A1-CORE-A01. R4, R5, R2 e segurança final não recebem autorização automática.
 
 ## Regra de continuidade
 

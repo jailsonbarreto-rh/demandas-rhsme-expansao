@@ -381,12 +381,12 @@ Esses indicadores avaliam o produto, nunca pessoas.
 
 A decisão GOV-012 retira a chegada e o formato dos dados futuros do caminho crítico. A evolução atual prioriza:
 
-1. A1-Core residual: gate de migrations, retirada dos contratos antigos e concorrência;
-2. R4: prazos, próxima providência, saneamento operacional e equivalência desktop/mobile/Excel;
-3. R5 e demais funções da rotina: andamento, prontuário e recuperação administrativa;
-4. R2 e otimizações de escala depois das funções prioritárias, antes da entrega final quando necessárias ao produto atual.
+1. A1-Core residual em releases reversíveis: fundação, banco aditivo, frontend v2 e limpeza pós-Produção;
+2. debate itemizado do R4 e implementação somente das decisões expressamente autorizadas;
+3. R5 e demais funções da rotina, antecipando apenas os recortes de R2 que forem dependência técnica direta da função aprovada;
+4. R2 remanescente e otimizações de escala depois das funções prioritárias, antes da entrega final quando necessárias ao produto atual.
 
-R1-1 e R1-4 autônomo permanecem adiados. A ordem canônica dos prazos será consumida no R4-1. Nenhum desses ajustes autoriza inventar, corrigir ou reclassificar dados atuais ou futuros.
+R1-1 e R1-4 autônomo permanecem adiados. A ordem canônica dos prazos será consumida no R4-1. A prioridade de sequência não pré-autoriza R4, R5 ou R2. Nenhum desses ajustes autoriza inventar, corrigir ou reclassificar dados atuais ou futuros.
 
 
 ## Gate de consciência do produto

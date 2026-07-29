@@ -1,9 +1,9 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
+<!-- IMPLEMENTATION_AUTHORIZATION: E4 -->
 
 **Status:** vigente  
-**Atualizado em:** 28 de julho de 2026  
+**Atualizado em:** 29 de julho de 2026  
 **Finalidade:** registrar somente decisões expressamente aprovadas pelo responsável pelo produto antes da implementação de cada pacote.
 
 ## 1. Regra de uso
@@ -362,7 +362,59 @@ Não há autorização nem necessidade de alterar dados, schema, migrations, per
 
 A implementação funcional foi concluída no PR #91 e publicada pelo PR #92 no deployment Production `dpl_GuVDMjfxjKYgnU2uTgidxE3Em2yh`, SHA `1aa5e6c7fa7c1158881e44d9c75af94f81d18204`. O bloqueio automático de deploy foi restaurado pelo PR #93.
 
-## 6. Modelo de registro de decisão do ciclo
+## 6. Decisões do Pacote E4
+
+### OP-D17 — Visibilidade de demandas excluídas e seus históricos
+
+**Data:** 29 de julho de 2026  
+**Classificação:** decisão de permissão e endurecimento de segurança.  
+**Decisão:** APROVADA PARA IMPLEMENTAÇÃO.
+
+As demandas ativas e seus históricos continuam consultáveis por todos os usuários ativos, conforme as permissões vigentes. Demandas logicamente excluídas e os respectivos históricos somente podem ser consultados por administrador ativo, inclusive em requisição direta ao banco ou à API.
+
+Editor e leitor não podem consultar a lixeira nem reconstruir seu conteúdo por acesso técnico. O E4 corrige a proteção no banco e não cria ainda a página administrativa de lixeira, restauração ou qualquer nova ação visual; essas capacidades permanecem no R5-1.
+
+### E4-D01 — Separação entre responsabilidade e autoria das ações
+
+**Data:** 29 de julho de 2026  
+**Classificação:** preservação do funcionamento existente e decisão de integridade de auditoria.  
+**Decisão:** APROVADA PARA IMPLEMENTAÇÃO.
+
+`responsavel_id` identifica a pessoa oficialmente atribuída como referência da demanda. Essa atribuição não cria posse exclusiva, não limita a continuidade por colegas e não integra a autorização para editar, comentar, registrar andamento ou praticar outra ação permitida pelo papel do usuário.
+
+Administrador ou editor ativo pode atuar em qualquer demanda ativa, ainda que outra pessoa seja a responsável oficial. Cada comentário, movimentação ou alteração deve registrar o usuário que efetivamente praticou a ação:
+
+- operação autenticada registra obrigatoriamente `auth.uid()` como ator;
+- o evento grava o ator em `sme_historico.created_by`;
+- a demanda grava o último ator em `sme_demandas.updated_by`;
+- registrar uma ação não modifica `responsavel_id` nem o nome do responsável;
+- o responsável somente muda por reatribuição explícita, que também registra seu próprio ator;
+- leitor permanece sem permissão de mutação;
+- nenhuma policy, RPC ou regra de interface pode exigir que o ator seja o responsável cadastrado.
+
+Quando uma rotina administrativa privilegiada executar uma operação sem sessão pessoal, ela somente poderá informar um ator depois de validar essa identidade e sua autorização. Nessa situação, o gatilho preserva o ator explicitamente validado. Não haverá preenchimento retroativo dos registros legados sem autoria comprovada.
+
+### E4-A01 — Autorização consolidada do pacote
+
+**Data:** 29 de julho de 2026  
+**Classificação:** autorização de implementação.  
+**Decisão:** APROVADA.
+
+Está autorizada a implementação isolada do E4 para:
+
+1. restringir no banco a leitura de demandas excluídas e de seus históricos a administradores ativos;
+2. preservar as regras atuais de leitura das demandas ativas;
+3. corrigir `private.touch_updated_at()` para registrar o usuário autenticado e preservar ator administrativo previamente validado quando não houver `auth.uid()`;
+4. provar que o ator da ação independe do responsável oficial e que nenhuma ação comum reatribui a demanda;
+5. preservar todos os dados, UUIDs, históricos e autorias legadas, inclusive valores nulos;
+6. atualizar migrations, invariantes, workflow de replay, tipos e documentação afetada;
+7. executar replay integral, testes por papel, Advisors, revisão de grants e verificação pós-migration.
+
+Ficam fora do E4: tela da lixeira, restauração, concorrência otimista, revogação de RPCs antigas, importadores, índices de outros pacotes, R1, R2, R4, R5, frontend, Preview e deployment Vercel.
+
+---
+
+## 7. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
 |---|---|
@@ -381,7 +433,7 @@ A implementação funcional foi concluída no PR #91 e publicada pelo PR #92 no 
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 7. Controle por ciclo
+## 8. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
@@ -392,7 +444,7 @@ A implementação funcional foi concluída no PR #91 e publicada pelo PR #92 no 
 | E3 | Concluído | GOV-010 e OP-D02 | Concluída | Histórico corrigido nos PRs #69–#71; demais semânticas concluídas no PR #73 |
 | UX-RADAR-001 | Concluído | UX-RADAR-001 | Concluída | PR #88, publicação #89 e bloqueio #90 |
 | UX-RADAR-002 | Concluído | UX-RADAR-002 | Concluída | PR #91, publicação #92 e bloqueio #93 |
-| E4 | Não iniciado | Não | Não | Futuro; depende de debate e autorização expressa |
+| E4 | Concluído | OP-D17, E4-D01 e E4-A01 | Autorizada | Implementação de RLS e autoria administrativa autorizada em 29/07/2026 |
 | R1 | Pendente | Não | Não | Sem autorização atual |
 | R2 | Não iniciado | Não | Não | Futuro |
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |

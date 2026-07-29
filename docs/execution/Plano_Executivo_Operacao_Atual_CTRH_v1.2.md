@@ -990,13 +990,13 @@ export interface StagedMigrationManifest {
   20260722101325_20260722090000_central_trabalho_expand.sql
   ```
 
-- [ ] Gerar um único manifesto JSON com o contrato acima: `boundary` é o nome exato da migration-fronteira; `baseline` contém somente arquivos anteriores; `cycle3` contém a própria fronteira; `postCycle3` contém somente arquivos posteriores; `all` é a concatenação cronológica exata dos três estágios.
+- [x] Gerar um único manifesto JSON com o contrato acima: `boundary` é o nome exato da migration-fronteira; `baseline` contém somente arquivos anteriores; `cycle3` contém a própria fronteira; `postCycle3` contém somente arquivos posteriores; `all` é a concatenação cronológica exata dos três estágios.
 - [x] Restaurar migrations em ordem cronológica.
 - [x] Executar fixture/invariantes do Ciclo 3.
 - [x] Aplicar cadeia posterior.
 - [x] Executar replay integral.
 - [x] Remover variáveis manuais `CYCLE4_*` e `R3_RESPONSAVEIS`.
-- [ ] Commit:
+- [x] Commit:
 
   ```bash
   git commit -m "ci: tornar gate de migrations independente de lista manual"
@@ -1163,7 +1163,7 @@ export interface DemandasMutationRepository {
 - [x] Manter temporariamente os símbolos definidos, sem `EXECUTE` para papéis expostos; não alterar o corpo nem criar consumidor privilegiado.
 - [x] Não conceder `service_role`: nenhuma ferramenta administrativa consumidora foi identificada ou autorizada; eventual contrato privilegiado futuro exige decisão própria.
 - [x] Testar que a RPC antiga não altera dados nem cria histórico.
-- [ ] Commit:
+- [x] Commit:
 
   ```bash
   git commit -m "refactor: remover contratos operacionais legados"

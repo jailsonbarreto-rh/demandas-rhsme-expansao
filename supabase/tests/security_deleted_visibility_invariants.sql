@@ -23,7 +23,23 @@ begin
     true
   );
 end;
-$$;
+$;
+
+-- Perfil autenticado, porém inativo, para provar que a proteção vigente permanece.
+insert into auth.users (
+  id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+) values (
+  '44444444-4444-4444-4444-444444444444',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'e4.inativo@rioeduca.net', '', now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"nome":"Usuário Inativo E4"}'::jsonb, now(), now()
+);
+
+update public.perfis_usuarios
+set nome = 'Usuário Inativo E4', nivel = 'leitor', status = 'inativo', setor = 'Consulta'
+where id = '44444444-4444-4444-4444-444444444444';
 
 -- O editor cria duas demandas atribuídas ao administrador e movimenta uma delas.
 begin;
@@ -130,6 +146,10 @@ select pg_temp.assert_true(
   'leitor deixou de consultar uma demanda ativa'
 );
 select pg_temp.assert_true(
+  (select count(*) >= 2 from public.sme_historico where demanda_id = (select active_id from e4_targets)),
+  'leitor deixou de consultar o histórico de uma demanda ativa'
+);
+select pg_temp.assert_true(
   (select count(*) = 0 from public.sme_demandas where id = (select deleted_id from e4_targets)),
   'leitor consultou uma demanda excluída'
 );
@@ -148,12 +168,30 @@ select pg_temp.assert_true(
   'editor deixou de consultar uma demanda ativa'
 );
 select pg_temp.assert_true(
+  (select count(*) >= 2 from public.sme_historico where demanda_id = (select active_id from e4_targets)),
+  'editor deixou de consultar o histórico de uma demanda ativa'
+);
+select pg_temp.assert_true(
   (select count(*) = 0 from public.sme_demandas where id = (select deleted_id from e4_targets)),
   'editor consultou uma demanda excluída'
 );
 select pg_temp.assert_true(
   (select count(*) = 0 from public.sme_historico where demanda_id = (select deleted_id from e4_targets)),
   'editor consultou o histórico de uma demanda excluída'
+);
+rollback;
+
+-- Perfil inativo não consulta nem demanda ativa nem o seu histórico.
+begin;
+set local role authenticated;
+select pg_temp.set_actor('44444444-4444-4444-4444-444444444444');
+select pg_temp.assert_true(
+  (select count(*) = 0 from public.sme_demandas where id = (select active_id from e4_targets)),
+  'perfil inativo consultou uma demanda ativa'
+);
+select pg_temp.assert_true(
+  (select count(*) = 0 from public.sme_historico where demanda_id = (select active_id from e4_targets)),
+  'perfil inativo consultou o histórico de uma demanda ativa'
 );
 rollback;
 
@@ -216,5 +254,25 @@ select pg_temp.assert_true(
   'gatilho apagou o ator previamente validado da rotina administrativa'
 );
 rollback;
+
+-- A migration não pode inventar autoria para registros legados desconhecidos.
+select pg_temp.assert_true(
+  exists (
+    select 1 from public.sme_demandas
+    where numero = 'LEGADO-C3-002' and updated_by is null
+  ),
+  'a migration preencheu autoria desconhecida da demanda legada'
+);
+select pg_temp.assert_true(
+  exists (
+    select 1
+    from public.sme_historico h
+    join public.sme_demandas d on d.id = h.demanda_id
+    where d.numero = 'LEGADO-C3-002'
+      and h.comentario = 'Criação legada'
+      and h.created_by is null
+  ),
+  'a migration preencheu autoria desconhecida do histórico legado'
+);
 
 select 'E4 homologado: lixeira protegida, colaboração preservada e autoria fiel' as resultado;

@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **29 de julho de 2026 — A1-Core residual autorizado**
+Atualizado em: **29 de julho de 2026 — fundação A1-Core concluída em Production**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: A1-CORE -->
 
@@ -15,13 +15,13 @@ Atualizado em: **29 de julho de 2026 — A1-Core residual autorizado**
 | Atualização de dependências | PR #83, merge `6ccb45eacc76a95b6cde0967a6040e259b6c351c` |
 | Bloqueio automático de deploy | restaurado pelo PR #93 |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
-| Última migration remota | `20260729133230_security_deleted_visibility_and_actor` |
+| Última migration remota | `20260729180927_r1_retire_legacy_operational_rpcs` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
 | Princípio transversal de dados | `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md` |
 | Evolução futura do Radar | `docs/product/RADAR_GOVERNANCA_EVOLUCAO_POS_LEGADO.md` |
-| Implementação funcional autorizada | **A1-Core residual** — GOV-012, OP-D15, OP-D01 e A1-CORE-A01 |
-| Próxima atividade | implementar os releases do A1-Core; depois abrir o debate itemizado do R4, sem pré-autorizar suas funções nem antecipar dados futuros |
+| Implementação funcional autorizada | **A1-Core residual** — fundação concluída; concorrência aditiva permanece autorizada por GOV-012, OP-D01 e A1-CORE-A01 |
+| Próxima atividade | implementar o release aditivo de banco da concorrência otimista; depois migrar e publicar o frontend v2 antes da limpeza das assinaturas antigas |
 
 ## A1-Core autorizado
 
@@ -33,7 +33,7 @@ O responsável pelo produto determinou que a conclusão das funções atuais nã
 - concorrência otimista, sem sobrescrita silenciosa, merge automático ou alteração do responsável;
 - preservação do formulário e ausência de efeitos no banco quando houver conflito.
 
-O A1-Core será entregue em quatro etapas reversíveis: fundação; banco de concorrência aditivo; frontend v2 publicado e validado; limpeza das assinaturas antigas somente com rollback v2 já comprovado. Nenhum grant novo a `service_role` será criado.
+O A1-Core é entregue em quatro etapas reversíveis. A **fundação foi concluída no PR #99**; permanecem o banco de concorrência aditivo, o frontend v2 publicado e validado e, por último, a limpeza das assinaturas antigas somente com rollback v2 já comprovado. Nenhum grant novo a `service_role` foi ou será criado.
 
 R1-1, R1-4 autônomo e o R2 remanescente saem do caminho crítico. A ordem dos prazos entra no R4-1. Nenhum dado atual será corrigido, preenchido ou reclassificado pelo A1-Core.
 
@@ -44,6 +44,7 @@ R1-1, R1-4 autônomo e o R2 remanescente saem do caminho crítico. A ordem dos p
 - **E1:** Production alinhada à `main` — PR #59; bloqueio restaurado pelo PR #60.
 - **E1A:** fatos históricos temporários de `pg_net` representados no Git — PR #61, sem reexecução de SQL.
 - **E4 — RLS da lixeira e autoria administrativa:** decisões no PR #94, paridade do R3 no PR #95 e implementação no PR #96; migration `20260729133230` verificada em Production, sem deploy da Vercel.
+- **A1-Core — fundação residual:** PR #99, merge `e55990b8371eab45ed6dfa8beff53b6c83052535`; migration `20260729180927` aplicada uma única vez em Production, sem deployment da Vercel.
 - **Correção do histórico técnico:** PR #69, publicação #70 e bloqueio #71.
 - **Preservação informacional:** consolidada no PR #72.
 - **E3 — semânticas gerenciais:** PR #73, publicação #74 e bloqueio #75.
@@ -214,9 +215,25 @@ Uma entrada redundante de histórico de migration, criada durante a concorrênci
 
 O pacote não alterou frontend, rotas ou responsáveis existentes e não gerou Preview nem deployment da Vercel.
 
+## Fundação A1-Core concluída em Production
+
+O PR #99 tornou o replay de migrations independente de lista manual, removeu do cliente os tipos e adaptadores operacionais antigos e revogou `EXECUTE` das RPCs obsoletas `criar_sme_demanda` e `atualizar_status_sme_demanda` para `public`, `anon`, `authenticated` e `service_role`.
+
+A migration canônica `20260729180927_r1_retire_legacy_operational_rpcs.sql` foi aplicada automaticamente pela integração Git e aparece uma única vez no histórico remoto. As RPCs modernas permaneceram executáveis pelos papéis previstos.
+
+A fotografia pós-aplicação preservou:
+
+- 379 demandas e nenhuma logicamente excluída;
+- 764 eventos históricos;
+- 13 perfis ativos;
+- 378 demandas com `updated_by` nulo e 378 eventos com `created_by` nulo;
+- 376 demandas abertas sem próxima ação e sem data de acompanhamento.
+
+O gate final aprovou auditoria, proveniência, análise estática, 264 testes, cobertura, build, orçamento do bundle, replay integral do Supabase e 22 cenários de navegador. Advisors deixaram de apontar as duas RPCs retiradas; os avisos restantes são preexistentes e não foram ampliados. O deployment efetivo da Vercel permaneceu `dpl_GuVDMjfxjKYgnU2uTgidxE3Em2yh`.
+
 ## Pendências posteriores
 
-- **A1-Core:** autorizado e pendente de implementação.
+- **A1-Core:** fundação concluída; permanecem somente banco de concorrência aditivo, frontend v2 e limpeza posterior das assinaturas antigas.
 - **R4:** próximo marco funcional após o A1-Core.
 - **R5:** andamento, prontuário e recuperação administrativa após o R4.
 - **R2:** consultas escaláveis e histórico sob demanda, adiado para depois das funções prioritárias.

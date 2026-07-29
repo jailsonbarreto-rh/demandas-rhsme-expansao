@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **29 de julho de 2026 — E4 concluído e verificado em Production**
+Atualizado em: **29 de julho de 2026 — A1-Core residual autorizado**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: A1-CORE -->
 

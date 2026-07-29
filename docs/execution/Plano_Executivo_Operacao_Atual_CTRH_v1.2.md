@@ -10,7 +10,7 @@
 
 **Objetivo:** levar a operação atual do SITE CTRH a um estado íntegro, seguro, escalável, auditável e funcionalmente maduro, preservando integralmente as decisões do R3 e mantendo compatibilidade arquitetural com a futura incorporação do legado.
 
-**Arquitetura:** a execução ocorre em pacotes pequenos, publicáveis e reversíveis. Primeiro são corrigidas a linha de base, a segurança e a infraestrutura de migrations; depois vêm integridade e concorrência (R1), consultas escaláveis (R2), preservação do R3, experiência operacional de prazos e qualidade (R4) e, por fim, andamento, prontuário e recuperação administrativa (R5).
+**Arquitetura vigente após GOV-012:** a execução ocorre em pacotes pequenos, publicáveis e reversíveis. Depois da linha de base e do E4, conclui-se somente o A1-Core residual; em seguida vêm R4 e R5, priorizando as funções da operação atual. R2 e as otimizações de escala ficam depois das funções prioritárias. R1-1 e R1-4 autônomo são adiados; R1-2 integra a fundação do R4-1.
 
 **Stack:** React 19, TypeScript 5.9, Vite 8, React Router 8, TanStack Table 8, Zod 4, Supabase/PostgreSQL, RLS, Realtime, Vitest, Testing Library, Playwright, ExcelJS, GitHub Actions e Vercel.
 
@@ -344,7 +344,7 @@ Nenhuma recomendação desta seção é autorização automática.
 
 ---
 
-## 7. Ordem executiva definitiva
+## 7. Ordem executiva atualizada por GOV-012
 
 ```mermaid
 flowchart TD
@@ -382,21 +382,26 @@ flowchart TD
     R54["R5-4 — autoria e contexto dos eventos"]
     R55["R5-5 — busca, link, retorno e estabilização"]
 
-    E0 --> E1 --> E1A --> E2 --> E3 --> E4
-    E4 --> R10 --> R11 --> R12 --> R13 --> R14 --> R15
-    R15 --> R21 --> R22 --> R23 --> R24 --> R25 --> R26 --> R3C
-    R3C --> R41 --> R42 --> R43 --> R44
+    E0 --> E1 --> E1A --> E3 --> E4
+    E4 --> R10 --> R13 --> R15
+    R15 --> R41 --> R42 --> R43 --> R44
     R44 --> R51 --> R52 --> R53 --> R54 --> R55
+    R55 --> R21 --> R22 --> R23 --> R24 --> R25 --> R26 --> R3C
+    R10 -. "adiado" .-> R11
+    R41 -. "incorpora ordem dos prazos" .-> R12
+    R15 -. "adiado" .-> R14
+    R3C -. "antes da entrega" .-> E2
 ```
 
-### 7.1 Paralelismo permitido
+### 7.1 Encadeamento vigente
 
-- E1A deve ser concluído antes de qualquer pacote que crie migration. E2 e E3 podem ser preparados em paralelo a E1/E1A quando não alterarem banco.
-- E3 pode ser implementado antes de R1 quando OP-D02 estiver aprovada.
-- R1-0 e a preparação dos testes de R1-1 podem avançar em paralelo, mas R1-1 só deve mesclar após o gate novo estar verde.
-- Design e testes de R2 podem ser preparados durante R1-5, sem publicar antes da concorrência.
-- Decisões R5 não bloqueiam R1–R4.
-- Apêndice A somente é acionado se houver risco de uso dos importadores ou chegada antecipada de arquivo legado.
+- O A1-Core contém apenas R1-0, R1-3 e R1-5, nesta ordem lógica, podendo compartilhar branch e PR porque foi autorizado como um único núcleo residual publicável.
+- R1-1 e R1-4 autônomo ficam adiados; R1-2 é implementado no R4-1.
+- R4 começa imediatamente após o A1-Core, sem depender de R2 nem de nova carga legada.
+- R5 sucede o R4 e fecha as funções operacionais prioritárias.
+- R2 e capacidade vêm depois dessas funções e antes da entrega final quando necessárias ao produto atual.
+- E2 permanece no pacote final de segurança conforme GOV-011.
+- Apêndice A somente é acionado se houver risco concreto de uso dos importadores ou chegada antecipada de arquivo legado.
 
 ---
 
@@ -993,6 +998,8 @@ export interface StagedMigrationManifest {
 
 ## R1-1 — Validar constraints e completar índices de FK
 
+**Estado após GOV-012:** adiado; não integra o A1-Core nem bloqueia R4.
+
 **Classificação:** necessidade técnica.  
 **Pré-condição:** R1-0 verde.
 
@@ -1047,6 +1054,8 @@ sme_historico_tipo_evento_check
 ---
 
 ## R1-2 — Unificar a ordem dos prazos
+
+**Estado após GOV-012:** incorporado ao R4-1; não será executado como pacote autônomo.
 
 **Classificação:** decisão anteriormente confirmada e necessidade técnica.  
 **Regra:** quando ambos forem definidos, `prazo interno <= prazo final`.
@@ -1152,6 +1161,8 @@ export interface DemandasMutationRepository {
 ---
 
 ## R1-4 — Limites operacionais e domínios não destrutivos
+
+**Estado após GOV-012:** pacote autônomo adiado; nenhum máximo ou catálogo definitivo será inventado antes de necessidade concreta.
 
 **Classificação:** decisão de produto e proteção de dados.  
 **Hard gates:** OP-D13 e OP-D14.
@@ -2227,7 +2238,7 @@ Antes de R1-3/R1-5/E4, deliberar:
 4. R1-4;
 5. R1-5.
 
-Depois de homologar R1, iniciar R2.
+Depois de homologar o A1-Core, iniciar R4. R2 vem depois das funções prioritárias, conforme GOV-012.
 
 ---
 

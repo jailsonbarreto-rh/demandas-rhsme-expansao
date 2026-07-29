@@ -62,6 +62,55 @@ select pg_temp.assert_true(
   'atualizar_status_sme_demanda permanece executável por papel exposto'
 );
 
+create temporary table a1_retirement_counts (
+  demandas bigint not null,
+  historico bigint not null
+) on commit preserve rows;
+
+insert into a1_retirement_counts (demandas, historico)
+select
+  (select count(*) from public.sme_demandas),
+  (select count(*) from public.sme_historico);
+
+begin;
+set local role authenticated;
+do $$
+declare
+  v_create_denied boolean := false;
+  v_status_denied boolean := false;
+begin
+  begin
+    perform public.criar_sme_demanda(
+      'A1-NEGADA', 'Processo', 'Tentativa por contrato obsoleto', '',
+      null, null, 'Aguardando Andamento', 'CTRH', 'Diversos'
+    );
+  exception when insufficient_privilege then
+    v_create_denied := true;
+  end;
+
+  begin
+    perform public.atualizar_status_sme_demanda(
+      1, 'Tramitado', 'Tentativa por contrato obsoleto'
+    );
+  exception when insufficient_privilege then
+    v_status_denied := true;
+  end;
+
+  if not v_create_denied or not v_status_denied then
+    raise exception 'A1-Core: uma RPC obsoleta aceitou execução autenticada';
+  end if;
+end;
+$$;
+rollback;
+
+select pg_temp.assert_true(
+  (select count(*) from public.sme_demandas)
+    = (select demandas from a1_retirement_counts)
+  and (select count(*) from public.sme_historico)
+    = (select historico from a1_retirement_counts),
+  'a tentativa negada alterou demandas ou histórico'
+);
+
 select pg_temp.assert_true(
   has_function_privilege(
     'authenticated',

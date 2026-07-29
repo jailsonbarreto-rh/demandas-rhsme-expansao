@@ -14,7 +14,7 @@ $$;
 create or replace function pg_temp.set_actor(p_user_id uuid)
 returns void
 language plpgsql
-as $$
+as $set_actor$
 begin
   perform set_config('request.jwt.claim.sub', p_user_id::text, true);
   perform set_config(
@@ -23,7 +23,7 @@ begin
     true
   );
 end;
-$;
+$set_actor$;
 
 -- Perfil autenticado, porém inativo, para provar que a proteção vigente permanece.
 insert into auth.users (

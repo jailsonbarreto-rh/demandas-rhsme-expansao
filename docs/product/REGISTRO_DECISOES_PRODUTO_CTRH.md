@@ -432,7 +432,7 @@ A verificação pós-migration confirmou:
 
 Durante a aplicação, a integração Git registrou automaticamente a migration canônica enquanto uma reaplicação idempotente era iniciada. A entrada redundante `20260729135047` foi identificada e removida do histórico por guarda exata, sem reversão de schema, DDL adicional ou alteração de dados. O histórico remoto final contém apenas a versão canônica `20260729133230`.
 
-O E4 está encerrado. Nenhum pacote posterior está automaticamente autorizado; a próxima atividade é o debate pré-implementação do R1.
+O E4 está encerrado. A orientação de iniciar um R1 amplo foi superada por GOV-012 e A1-CORE-A01: a próxima atividade autorizada é somente o A1-Core residual.
 
 ---
 

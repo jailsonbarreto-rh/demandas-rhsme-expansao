@@ -1,6 +1,6 @@
 # Supabase e operação multiusuário
 
-**Atualizado em:** 27 de julho de 2026  
+**Atualizado em:** 29 de julho de 2026  
 **Estado:** vigente após R3, E0, E1 e reconciliação histórica E1A.
 
 O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`.
@@ -90,7 +90,10 @@ restauracao
 - nome livre e responsável externo não são opções atuais;
 - texto legado sem UUID pode ser preservado sem formar carteira pessoal;
 - `Vanessa Migrado` permanece como exceção histórica conhecida;
-- `/minhas-demandas` usa igualdade de UUID.
+- `/minhas-demandas` usa igualdade de UUID;
+- a atribuição não cria posse exclusiva da demanda;
+- permissões de mutação derivam do papel e do estado do perfil, não de `responsavel_id`;
+- ações registram o usuário executor e não mudam o responsável, salvo reatribuição explícita.
 
 ## 5. RPCs operacionais
 
@@ -104,7 +107,7 @@ O frontend utiliza ou possui contratos para:
 - `restaurar_sme_demanda`;
 - `listar_perfis_minimos`.
 
-As mutações obtêm autoria por `auth.uid()`, validam papel no banco e gravam demanda e histórico na mesma transação.
+As mutações autenticadas obtêm autoria por `auth.uid()`, validam papel no banco e gravam demanda e histórico na mesma transação. Administrador ou editor ativo pode executar a ação permitida em demanda atribuída a outra pessoa; `updated_by` e `sme_historico.created_by` registram o executor, enquanto `responsavel_id` permanece inalterado. Rotinas administrativas sem sessão pessoal somente podem preservar ator explicitamente informado depois de validá-lo.
 
 ## 6. RLS e segurança
 
@@ -126,7 +129,7 @@ Na fotografia read-only de 26/07/2026 havia 379 demandas, 378 vínculos oficiais
 Permanecem nos pacotes próprios do Plano Executivo:
 
 - E2: retirada de dados reais da árvore corrente;
-- E4: RLS da lixeira e autoria administrativa;
+- E4: autorizado em 29/07/2026 para RLS da lixeira e autoria administrativa, ainda não aplicado;
 - R1: constraints, contratos, domínios e concorrência;
 - R2: paginação, consulta e histórico sob demanda;
 - R4 e R5: prazos, próxima providência, andamento e prontuário.

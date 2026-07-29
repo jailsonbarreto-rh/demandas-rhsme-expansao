@@ -958,6 +958,7 @@ A sincronização documental de encerramento foi executada em PR próprio após 
 
 ## R1-0 — Tornar o gate de migrations dinâmico
 
+**Estado:** implementado no PR #99 com manifesto canônico e replay efêmero integral.  
 **Classificação:** necessidade técnica.  
 **Decisão nova:** nenhuma.  
 **Pré-condição:** E1A concluído e paridade remoto–Git comprovada.
@@ -966,7 +967,7 @@ A sincronização documental de encerramento foi executada em PR próprio após 
 - Create: `scripts/ci/stage-supabase-migrations.mjs`
 - Create: `scripts/ci/stage-supabase-migrations.test.ts`
 - Modify: `.github/workflows/supabase-local-migrations.yml`
-- Modify: `package.json`
+- Preserve: `package.json`; a descoberta de testes vigente já inclui o novo teste
 
 **Interfaces:**
 
@@ -980,21 +981,21 @@ export interface StagedMigrationManifest {
 }
 ```
 
-- [ ] Escrever teste com migration futura fictícia.
-- [ ] Confirmar que o workflow/lista atual falha em isolá-la.
-- [ ] Implementar descoberta por nome versionado.
-- [ ] Separar dinamicamente todas as migrations posteriores à fronteira:
+- [x] Escrever teste com migration futura fictícia.
+- [x] Confirmar que o workflow/lista atual falha em isolá-la.
+- [x] Implementar descoberta por nome versionado.
+- [x] Separar dinamicamente todas as migrations posteriores à fronteira:
 
   ```text
   20260722101325_20260722090000_central_trabalho_expand.sql
   ```
 
 - [ ] Gerar um único manifesto JSON com o contrato acima: `boundary` é o nome exato da migration-fronteira; `baseline` contém somente arquivos anteriores; `cycle3` contém a própria fronteira; `postCycle3` contém somente arquivos posteriores; `all` é a concatenação cronológica exata dos três estágios.
-- [ ] Restaurar migrations em ordem cronológica.
-- [ ] Executar fixture/invariantes do Ciclo 3.
-- [ ] Aplicar cadeia posterior.
-- [ ] Executar replay integral.
-- [ ] Remover variáveis manuais `CYCLE4_*` e `R3_RESPONSAVEIS`.
+- [x] Restaurar migrations em ordem cronológica.
+- [x] Executar fixture/invariantes do Ciclo 3.
+- [x] Aplicar cadeia posterior.
+- [x] Executar replay integral.
+- [x] Remover variáveis manuais `CYCLE4_*` e `R3_RESPONSAVEIS`.
 - [ ] Commit:
 
   ```bash
@@ -1120,6 +1121,7 @@ export function isDeadlineOrderValid(
 
 ## R1-3 — Retirar contratos e RPCs obsoletos
 
+**Estado:** implementado no PR #99; migration `20260729180927_r1_retire_legacy_operational_rpcs.sql`.  
 **Classificação:** necessidade técnica com decisão de compatibilidade.  
 **Hard gate:** OP-D15.
 
@@ -1130,37 +1132,37 @@ export function isDeadlineOrderValid(
 - Modify: `src/services/localDemandasRepository.ts`
 - Modify: `src/hooks/useDemandasData.ts`
 - Modify: tests de contratos
-- Create: `supabase/migrations/<next>_r1_retire_legacy_operational_rpcs.sql`
+- Create: `supabase/migrations/20260729180927_r1_retire_legacy_operational_rpcs.sql`
 - Create: `supabase/tests/r1_retired_rpc_invariants.sql`
 
 **Contrato final de mutação:**
 
 ```ts
 export interface DemandasMutationRepository {
-  create(input: CreateDemandaInput): Promise<Demanda>;
-  edit(id: number, input: EditDemandaInput): Promise<Demanda>;
-  registerProgress(id: number, input: ProgressInput): Promise<Demanda>;
-  transitionStatus(id: number, input: StatusTransitionInput): Promise<Demanda>;
-  deleteLogically(id: number, input: DeleteDemandaInput): Promise<Demanda>;
-  restore(id: number, input: RestoreDemandaInput): Promise<Demanda>;
+  create(input: CreateDemandaInput): Promise<void>;
+  edit(id: number, input: EditDemandaInput): Promise<void>;
+  registerProgress(id: number, input: ProgressInput): Promise<void>;
+  transitionStatus(id: number, input: StatusTransitionInput): Promise<void>;
+  deleteLogically(id: number, input: DeleteDemandaInput): Promise<void>;
+  restore(id: number, input: RestoreDemandaInput): Promise<void>;
 }
 ```
 
-- [ ] Fazer busca integral por `LegacyCreateDemandaInput`, `.updateStatus(`, `.update(` e `.delete(`.
-- [ ] Escrever testes que falham se esses membros existirem no contrato atual.
-- [ ] Remover adaptadores do hook e repositories.
-- [ ] Remover a chamada cliente a `criar_sme_demanda`.
-- [ ] Revalidar que todas as telas usam RPCs auditáveis.
-- [ ] Revogar `authenticated` de:
+- [x] Fazer busca integral por `LegacyCreateDemandaInput`, `.updateStatus(`, `.update(` e `.delete(`.
+- [x] Escrever testes que falham se esses membros existirem no contrato atual.
+- [x] Remover adaptadores do hook e repositories.
+- [x] Remover a chamada cliente a `criar_sme_demanda`.
+- [x] Revalidar que todas as telas usam RPCs auditáveis.
+- [x] Revogar `public`, `anon`, `authenticated` e `service_role` de:
 
   ```text
   atualizar_status_sme_demanda(bigint,text,text)
   criar_sme_demanda(text,text,text,text,date,date,text,text,text)
   ```
 
-- [ ] Manter temporariamente as funções com corpo que lança erro claro, caso a decisão aprove símbolo inerte.
-- [ ] Não conceder `service_role`: nenhuma ferramenta administrativa consumidora foi identificada ou autorizada; eventual contrato privilegiado futuro exige decisão própria.
-- [ ] Testar que a RPC antiga não altera dados nem cria histórico.
+- [x] Manter temporariamente os símbolos definidos, sem `EXECUTE` para papéis expostos; não alterar o corpo nem criar consumidor privilegiado.
+- [x] Não conceder `service_role`: nenhuma ferramenta administrativa consumidora foi identificada ou autorizada; eventual contrato privilegiado futuro exige decisão própria.
+- [x] Testar que a RPC antiga não altera dados nem cria histórico.
 - [ ] Commit:
 
   ```bash

@@ -8,7 +8,6 @@ import type {
   EditDemandaInput,
   FieldChange,
   HistoryEventType,
-  LegacyCreateDemandaInput,
   ProgressInput,
   RestoreDemandaInput,
   StatusTransitionInput,
@@ -85,15 +84,6 @@ function normalizeHistorico(value: any): ComentarioHistorico {
     autorNome: typeof value.autorNome === 'string' ? value.autorNome : '',
     alteracoes: Array.isArray(value.alteracoes) ? value.alteracoes : [],
   };
-}
-
-function isExpandedCreateInput(
-  input: CreateDemandaInput | LegacyCreateDemandaInput,
-): input is CreateDemandaInput {
-  return 'limite1Situacao' in input
-    && 'limite2Situacao' in input
-    && 'proximaAcao' in input
-    && 'proximaAcaoEm' in input;
 }
 
 function fieldChange(field: string, before: unknown, after: unknown): FieldChange {
@@ -200,7 +190,7 @@ export class LocalDemandasRepository implements DemandasRepository {
     this.persist(this.demandas, this.historico);
   }
 
-  async create(input: CreateDemandaInput | LegacyCreateDemandaInput): Promise<void> {
+  async create(input: CreateDemandaInput): Promise<void> {
     if (this.demandas.some(d => d.numero.trim().toLowerCase() === input.numero.trim().toLowerCase())) {
       throw new Error('Já existe uma demanda cadastrada com este número de processo.');
     }
@@ -210,35 +200,16 @@ export class LocalDemandasRepository implements DemandasRepository {
       : 1;
     const now = new Date().toISOString();
 
-    const demanda: Demanda = isExpandedCreateInput(input)
-      ? {
-          id,
-          ...createDemandaMutationSchema.parse(input),
-          origem: 'sistema',
-          deletedAt: '',
-          deletedBy: null,
-          deletionReason: '',
-          createdAt: now,
-          updatedAt: now,
-        }
-      : {
-          id,
-          ...input,
-          responsavelId: null,
-          limite1Situacao: inferDeadlineState(input.limite1, undefined),
-          limite1Justificativa: '',
-          limite2Situacao: inferDeadlineState(input.limite2, undefined),
-          limite2Justificativa: '',
-          proximaAcao: '',
-          proximaAcaoEm: '',
-          linkOrigem: '',
-          origem: 'sistema',
-          deletedAt: '',
-          deletedBy: null,
-          deletionReason: '',
-          createdAt: now,
-          updatedAt: now,
-        };
+    const demanda: Demanda = {
+      id,
+      ...createDemandaMutationSchema.parse(input),
+      origem: 'sistema',
+      deletedAt: '',
+      deletedBy: null,
+      deletionReason: '',
+      createdAt: now,
+      updatedAt: now,
+    };
 
     const event: ComentarioHistorico = this.createEvent(
       demanda,
@@ -415,37 +386,6 @@ export class LocalDemandasRepository implements DemandasRepository {
       this.demandas.map((demanda) => demanda.id === id ? next : demanda),
       [event, ...this.historico],
     );
-  }
-
-  async update(_id: number, _changes: Partial<Demanda>): Promise<void> {
-    throw new Error('A edição genérica foi descontinuada. Use a edição auditável com justificativa.');
-  }
-
-  async updateStatus(
-    id: number,
-    status: Demanda['status'],
-    comentario: string,
-  ): Promise<void> {
-    const current = this.requireActive(id);
-    if (current.status === status) {
-      throw new Error('O status informado já é o atual.');
-    }
-    const next = { ...current, status, updatedAt: new Date().toISOString() };
-    const event = this.createEvent(
-      next,
-      'mudanca_status',
-      current.status,
-      comentario,
-      [fieldChange('status', current.status, status)],
-    );
-    this.persist(
-      this.demandas.map((demanda) => demanda.id === id ? next : demanda),
-      [event, ...this.historico],
-    );
-  }
-
-  async delete(_id: number): Promise<void> {
-    throw new Error('A exclusão exige motivo explícito. Use a exclusão lógica auditável.');
   }
 
   subscribe(onRemoteChange: () => void): () => void {

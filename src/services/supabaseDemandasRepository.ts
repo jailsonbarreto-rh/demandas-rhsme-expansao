@@ -5,7 +5,6 @@ import type {
   DeleteDemandaInput,
   Demanda,
   EditDemandaInput,
-  LegacyCreateDemandaInput,
   ProgressInput,
   RestoreDemandaInput,
   StatusTransitionInput,
@@ -53,15 +52,6 @@ function isMissingExpandedSchema(error: QueryError): boolean {
     || message.includes('could not find')
     || message.includes('does not exist')
     || message.includes('schema cache');
-}
-
-function isExpandedCreateInput(
-  input: CreateDemandaInput | LegacyCreateDemandaInput,
-): input is CreateDemandaInput {
-  return 'limite1Situacao' in input
-    && 'limite2Situacao' in input
-    && 'proximaAcao' in input
-    && 'proximaAcaoEm' in input;
 }
 
 export class SupabaseDemandasRepository implements DemandasRepository {
@@ -140,23 +130,7 @@ export class SupabaseDemandasRepository implements DemandasRepository {
     return ((data ?? []) as unknown as DemandaRow[]).map(toDemanda);
   }
 
-  async create(input: CreateDemandaInput | LegacyCreateDemandaInput): Promise<void> {
-    if (!isExpandedCreateInput(input)) {
-      const { error } = await this.client.rpc('criar_sme_demanda', {
-        p_numero: input.numero,
-        p_tipo: input.tipo,
-        p_assunto: input.assunto,
-        p_responsavel: input.responsavel,
-        p_limite1: toDatabaseDate(input.limite1),
-        p_limite2: toDatabaseDate(input.limite2),
-        p_status: input.status,
-        p_setor: input.setor,
-        p_classificacao: input.classificacao,
-      });
-      throwIfError(error);
-      return;
-    }
-
+  async create(input: CreateDemandaInput): Promise<void> {
     const { error } = await this.client.rpc('criar_sme_demanda_v2', {
       p_numero: input.numero,
       p_tipo: input.tipo,
@@ -236,23 +210,6 @@ export class SupabaseDemandasRepository implements DemandasRepository {
       p_motivo: input.motivo,
     });
     throwIfError(error);
-  }
-
-  async update(_id: number, _changes: Partial<Demanda>): Promise<void> {
-    throw new Error('A edição genérica foi descontinuada. Use a edição auditável com justificativa.');
-  }
-
-  async updateStatus(id: number, status: Demanda['status'], comentario: string): Promise<void> {
-    const { error } = await this.client.rpc('atualizar_status_sme_demanda', {
-      p_demanda_id: id,
-      p_novo_status: status,
-      p_comentario: comentario,
-    });
-    throwIfError(error);
-  }
-
-  async delete(_id: number): Promise<void> {
-    throw new Error('A exclusão exige motivo explícito. Use a exclusão lógica auditável.');
   }
 
   subscribe(onRemoteChange: () => void): () => void {

@@ -9,6 +9,8 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/tests/**'
       - 'supabase/seed.sql'
+      - 'scripts/ci/stage-supabase-migrations.mjs'
+      - 'scripts/ci/stage-supabase-migrations.test.ts'
       - '.github/workflows/supabase-local-migrations.yml'
   workflow_dispatch:
 
@@ -23,20 +25,19 @@ jobs:
     env:
       SUPABASE_TELEMETRY_DISABLED: '1'
       LOCAL_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      CYCLE3_MIGRATION: supabase/migrations/20260722101325_20260722090000_central_trabalho_expand.sql
-      CYCLE4_CREATE: supabase/migrations/20260722123530_cycle4_helpers_and_create_v2.sql
-      CYCLE4_EDIT: supabase/migrations/20260722123627_cycle4_edit_demand.sql
-      CYCLE4_PROGRESS: supabase/migrations/20260722123713_cycle4_progress_and_status.sql
-      CYCLE4_ADMIN: supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
-      CYCLE4_HARDENING: supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
-      E1A_PG_NET_ENABLE: supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
-      E1A_PG_NET_REMOVE: supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
-      R3_RESPONSAVEIS: supabase/migrations/20260724011303_r3_responsaveis_oficiais.sql
-      E4_SECURITY: supabase/migrations/20260729133230_security_deleted_visibility_and_actor.sql
+      CYCLE3_BOUNDARY: 20260722101325_20260722090000_central_trabalho_expand.sql
+      MIGRATION_STAGE_DIR: /tmp/cthr-staged-supabase-migrations
+      MIGRATION_MANIFEST: /tmp/cthr-staged-supabase-migrations.json
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
 
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v2
@@ -53,21 +54,17 @@ jobs:
           fi
           psql --version
 
-      - name: Start pre-Cycle-3 baseline database
+      - name: Stage every migration from Cycle 3 onward
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/cycle3-migration /tmp/cycle4-migrations /tmp/e1a-pg-net-migrations /tmp/r3-migrations /tmp/e4-migrations
-          mv "$CYCLE3_MIGRATION" /tmp/cycle3-migration/
-          mv "$CYCLE4_CREATE" /tmp/cycle4-migrations/
-          mv "$CYCLE4_EDIT" /tmp/cycle4-migrations/
-          mv "$CYCLE4_PROGRESS" /tmp/cycle4-migrations/
-          mv "$CYCLE4_ADMIN" /tmp/cycle4-migrations/
-          mv "$CYCLE4_HARDENING" /tmp/cycle4-migrations/
-          mv "$E1A_PG_NET_ENABLE" /tmp/e1a-pg-net-migrations/
-          mv "$E1A_PG_NET_REMOVE" /tmp/e1a-pg-net-migrations/
-          mv "$R3_RESPONSAVEIS" /tmp/r3-migrations/
-          mv "$E4_SECURITY" /tmp/e4-migrations/
+          rm -rf /tmp/cthr-staged-supabase-migrations
+          rm -f /tmp/cthr-staged-supabase-migrations.json
+          node scripts/ci/stage-supabase-migrations.mjs stage \
+            --migrations-dir supabase/migrations \
+            --staging-dir "$MIGRATION_STAGE_DIR" \
+            --manifest "$MIGRATION_MANIFEST" \
+            --boundary "$CYCLE3_BOUNDARY"
           supabase db start
 
       - name: Insert synthetic Cycle 3 legacy fixture
@@ -77,88 +74,91 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mv /tmp/cycle3-migration/20260722101325_20260722090000_central_trabalho_expand.sql "$CYCLE3_MIGRATION"
+          node scripts/ci/stage-supabase-migrations.mjs restore \
+            --migrations-dir supabase/migrations \
+            --staging-dir "$MIGRATION_STAGE_DIR" \
+            --manifest "$MIGRATION_MANIFEST" \
+            --stage cycle3
           supabase migration up --local
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle3_invariants.sql
 
-      - name: Insert synthetic Cycle 4 users
+      - name: Insert synthetic users for later mutation invariants
         run: psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_mutations_fixture.sql
 
-      - name: Apply Cycle 4, E1A history and R3 migrations
+      - name: Apply the complete post-Cycle-3 chain
         shell: bash
         run: |
-          set -o pipefail
-          mv /tmp/cycle4-migrations/20260722123530_cycle4_helpers_and_create_v2.sql "$CYCLE4_CREATE"
-          mv /tmp/cycle4-migrations/20260722123627_cycle4_edit_demand.sql "$CYCLE4_EDIT"
-          mv /tmp/cycle4-migrations/20260722123713_cycle4_progress_and_status.sql "$CYCLE4_PROGRESS"
-          mv /tmp/cycle4-migrations/20260722123920_cycle4_admin_restore_and_grants.sql "$CYCLE4_ADMIN"
-          mv /tmp/cycle4-migrations/20260722123935_cycle4_block_direct_writes.sql "$CYCLE4_HARDENING"
-          mv /tmp/e1a-pg-net-migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql "$E1A_PG_NET_ENABLE"
-          mv /tmp/e1a-pg-net-migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql "$E1A_PG_NET_REMOVE"
-          mv /tmp/r3-migrations/20260724011303_r3_responsaveis_oficiais.sql "$R3_RESPONSAVEIS"
-          supabase migration up --local 2>&1 | tee cycle4-migration-report.txt
+          set -euo pipefail
+          node scripts/ci/stage-supabase-migrations.mjs restore \
+            --migrations-dir supabase/migrations \
+            --staging-dir "$MIGRATION_STAGE_DIR" \
+            --manifest "$MIGRATION_MANIFEST" \
+            --stage postCycle3
+          supabase migration up --local 2>&1 | tee post-cycle3-migration-report.txt
+
+      - name: Verify manifest restoration and clean migration tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(find /tmp/cthr-staged-supabase-migrations -maxdepth 1 -type f -name '*.sql' -print -quit)"
+          git diff --exit-code -- supabase/migrations
 
       - name: Validate Cycle 4 roles, transactions and logical deletion
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_mutations_invariants.sql 2>&1 | tee cycle4-invariants-report.txt
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_physical_delete_invariants.sql 2>&1 | tee cycle4-physical-delete-report.txt
 
-      - name: Insert synthetic legacy null-authorship fixture
-        run: psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/e4_legacy_null_authorship_fixture.sql
-
-      - name: Capture authorship baseline before E4
-        shell: bash
-        run: |
-          mkdir -p /tmp/e4-baseline
-          psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_demandas where updated_by is null;" > /tmp/e4-baseline/demandas_updated_by_null.txt
-          psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_historico where created_by is null;" > /tmp/e4-baseline/historico_created_by_null.txt
-
-      - name: Apply E4 and preserve legacy authorship counts
+      - name: Prepare and capture synthetic null-authorship baseline
         shell: bash
         run: |
           set -euo pipefail
-          mv /tmp/e4-migrations/20260729133230_security_deleted_visibility_and_actor.sql "$E4_SECURITY"
-          supabase migration up --local 2>&1 | tee e4-migration-report.txt
-          test "$(cat /tmp/e4-baseline/demandas_updated_by_null.txt)" = "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_demandas where updated_by is null;")"
-          test "$(cat /tmp/e4-baseline/historico_created_by_null.txt)" = "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_historico where created_by is null;")"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/e4_legacy_null_authorship_fixture.sql
+          mkdir -p /tmp/cthr-e4-baseline
+          psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_demandas where updated_by is null;" > /tmp/cthr-e4-baseline/demandas_updated_by_null.txt
+          psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_historico where created_by is null;" > /tmp/cthr-e4-baseline/historico_created_by_null.txt
 
-      - name: Validate E4 deleted visibility and actor invariants
+      - name: Validate E4 visibility, actor and null-authorship invariants
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/security_deleted_visibility_invariants.sql 2>&1 | tee e4-invariants-report.txt
+          test "$(cat /tmp/cthr-e4-baseline/demandas_updated_by_null.txt)" = "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_demandas where updated_by is null;")"
+          test "$(cat /tmp/cthr-e4-baseline/historico_created_by_null.txt)" = "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_historico where created_by is null;")"
+
+      - name: Validate retired and current RPC grants
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/r1_retired_rpc_invariants.sql 2>&1 | tee r1-retired-rpc-report.txt
 
       - name: Verify pg_net is absent after E1A replay
         run: |
           test "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from pg_extension where extname = 'pg_net';")" = "0"
 
-      - name: Upload database reports and validated migrations
+      - name: Upload database reports, manifest and validated migrations
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: cycle4-database-reports
+          name: supabase-database-reports
           path: |
-            cycle4-migration-report.txt
+            /tmp/cthr-staged-supabase-migrations.json
+            post-cycle3-migration-report.txt
             cycle4-invariants-report.txt
             cycle4-physical-delete-report.txt
-            e4-migration-report.txt
             e4-invariants-report.txt
-            supabase/migrations/20260722123530_cycle4_helpers_and_create_v2.sql
-            supabase/migrations/20260722123627_cycle4_edit_demand.sql
-            supabase/migrations/20260722123713_cycle4_progress_and_status.sql
-            supabase/migrations/20260722123920_cycle4_admin_restore_and_grants.sql
-            supabase/migrations/20260722123935_cycle4_block_direct_writes.sql
-            supabase/migrations/20260723231805_enable_pg_net_for_r3_user_provisioning.sql
-            supabase/migrations/20260723232308_remove_pg_net_after_r3_user_provisioning.sql
-            supabase/migrations/20260724011303_r3_responsaveis_oficiais.sql
-            supabase/migrations/20260729133230_security_deleted_visibility_and_actor.sql
+            r1-retired-rpc-report.txt
+            supabase/migrations/*.sql
           if-no-files-found: warn
           retention-days: 14
 
       - name: Replay the complete migration chain from scratch
-        run: supabase db reset --local --no-seed
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase db reset --local --no-seed
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/r1_retired_rpc_invariants.sql
 
       - name: Stop ephemeral Supabase
         if: always()

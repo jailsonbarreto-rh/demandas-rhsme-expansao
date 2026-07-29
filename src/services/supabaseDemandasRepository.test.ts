@@ -194,25 +194,6 @@ describe('SupabaseDemandasRepository', () => {
     });
   });
 
-  it('não mantém escrita genérica nem exclusão sem motivo', async () => {
-    const { client } = createClient();
-    const repository = new SupabaseDemandasRepository(client as never);
-    await expect(repository.update(7, { assunto: 'Alterado' }))
-      .rejects.toThrow('edição genérica');
-    await expect(repository.delete(7)).rejects.toThrow('motivo explícito');
-  });
-
-  it('mantém a RPC v1 somente no adaptador temporário de status', async () => {
-    const { client, rpc } = createClient();
-    await new SupabaseDemandasRepository(client as never)
-      .updateStatus(4, 'Tramitado', 'Encaminhado');
-    expect(rpc).toHaveBeenCalledWith('atualizar_status_sme_demanda', {
-      p_demanda_id: 4,
-      p_novo_status: 'Tramitado',
-      p_comentario: 'Encaminhado',
-    });
-  });
-
   it('assina as duas tabelas e remove o canal no cleanup', () => {
     const { client, channel, removeChannel } = createClient();
     const cleanup = new SupabaseDemandasRepository(client as never).subscribe(vi.fn());

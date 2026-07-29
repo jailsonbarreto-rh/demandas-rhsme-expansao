@@ -108,6 +108,8 @@ O frontend utiliza ou possui contratos para:
 - `restaurar_sme_demanda`;
 - `listar_perfis_minimos`.
 
+As RPCs obsoletas `criar_sme_demanda` e `atualizar_status_sme_demanda` permanecem definidas apenas para rastreabilidade do schema, sem `EXECUTE` para `public`, `anon`, `authenticated` ou `service_role`, conforme migration `20260729180927_r1_retire_legacy_operational_rpcs.sql`. O frontend não expõe tipos, adaptadores nem chamadas para esses contratos.
+
 As mutações autenticadas obtêm autoria por `auth.uid()`, validam papel no banco e gravam demanda e histórico na mesma transação. Administrador ou editor ativo pode executar a ação permitida em demanda atribuída a outra pessoa; `updated_by` e `sme_historico.created_by` registram o executor, enquanto `responsavel_id` permanece inalterado. Rotinas administrativas sem sessão pessoal somente podem preservar ator explicitamente informado depois de validá-lo.
 
 ## 6. RLS e segurança
@@ -131,11 +133,12 @@ Na verificação pós-E4 de 29/07/2026 havia 379 demandas, nenhuma logicamente e
 Permanecem nos pacotes próprios do Plano Executivo:
 
 - E2: retirada de dados reais da árvore corrente, adiada para o pacote final de segurança;
-- R1: constraints, contratos, domínios e concorrência, ainda sujeito a debate e autorização;
-- R2: paginação, consulta e histórico sob demanda;
-- R4 e R5: prazos, próxima providência, andamento e prontuário.
+- A1-Core: R1-0 e R1-3 implementados no PR #99; concorrência R1-5 permanece nos releases aditivos próprios já autorizados;
+- R1-1 e R1-4 autônomo: adiados conforme GOV-012;
+- R2: paginação, consulta e histórico sob demanda, antecipado somente quando for dependência direta de função aprovada;
+- R4 e R5: prazos, próxima providência, andamento e prontuário, ainda dependentes de debate e autorização itemizados.
 
-O E4 está concluído e não autoriza nenhum desses itens posteriores.
+O E4 está concluído. O A1-Core está autorizado nos limites registrados e não pré-autoriza R4, R5 ou R2.
 
 ## 9. Vercel
 

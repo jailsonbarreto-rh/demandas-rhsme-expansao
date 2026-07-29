@@ -278,7 +278,7 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
     }));
   });
 
-  it('rejeita número duplicado, IDs inexistentes e métodos genéricos descontinuados', async () => {
+  it('rejeita número duplicado e IDs inexistentes', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
 
@@ -292,10 +292,6 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
       proximaAcao: 'Verificar registro inexistente',
       proximaAcaoEm: '20/08/2026',
     })).rejects.toThrow('Demanda não encontrada');
-
-    await expect(repository.update(1, { assunto: 'Alteração genérica' }))
-      .rejects.toThrow('edição genérica');
-    await expect(repository.delete(1)).rejects.toThrow('motivo explícito');
   });
 
   it('não cria assinatura remota no modo local', () => {

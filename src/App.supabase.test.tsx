@@ -48,9 +48,6 @@ function createServices(
       transitionStatus: vi.fn().mockResolvedValue(undefined),
       deleteLogically: vi.fn().mockResolvedValue(undefined),
       restore: vi.fn().mockResolvedValue(undefined),
-      update: vi.fn().mockResolvedValue(undefined),
-      updateStatus: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn(() => () => undefined),
     },
     profiles: {

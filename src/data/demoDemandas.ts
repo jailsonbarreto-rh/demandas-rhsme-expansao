@@ -1,6 +1,18 @@
-import type { Demanda, LegacyCreateDemandaInput } from '../types';
+import type { Demanda } from '../types';
 
-type DemoInput = LegacyCreateDemandaInput & Pick<Demanda, 'id'> & Partial<Pick<
+type DemoInput = Pick<
+  Demanda,
+  | 'id'
+  | 'numero'
+  | 'tipo'
+  | 'assunto'
+  | 'responsavel'
+  | 'limite1'
+  | 'limite2'
+  | 'status'
+  | 'setor'
+  | 'classificacao'
+> & Partial<Pick<
   Demanda,
   'proximaAcao' | 'proximaAcaoEm' | 'createdAt' | 'updatedAt'
 >>;

@@ -48,19 +48,6 @@ export interface Demanda {
   updatedAt: string;
 }
 
-export type LegacyCreateDemandaInput = Pick<
-  Demanda,
-  | 'numero'
-  | 'tipo'
-  | 'assunto'
-  | 'responsavel'
-  | 'limite1'
-  | 'limite2'
-  | 'status'
-  | 'setor'
-  | 'classificacao'
->;
-
 export type CreateDemandaInput = Omit<
   Demanda,
   | 'id'

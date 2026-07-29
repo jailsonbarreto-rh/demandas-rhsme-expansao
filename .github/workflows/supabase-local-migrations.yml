@@ -88,7 +88,7 @@ jobs:
       - name: Apply the complete post-Cycle-3 chain
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           node scripts/ci/stage-supabase-migrations.mjs restore \
             --migrations-dir supabase/migrations \
             --staging-dir "$MIGRATION_STAGE_DIR" \
@@ -106,7 +106,7 @@ jobs:
       - name: Validate Cycle 4 roles, transactions and logical deletion
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_mutations_invariants.sql 2>&1 | tee cycle4-invariants-report.txt
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/cycle4_physical_delete_invariants.sql 2>&1 | tee cycle4-physical-delete-report.txt
 
@@ -122,7 +122,7 @@ jobs:
       - name: Validate E4 visibility, actor and null-authorship invariants
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/security_deleted_visibility_invariants.sql 2>&1 | tee e4-invariants-report.txt
           test "$(cat /tmp/cthr-e4-baseline/demandas_updated_by_null.txt)" = "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_demandas where updated_by is null;")"
           test "$(cat /tmp/cthr-e4-baseline/historico_created_by_null.txt)" = "$(psql "$LOCAL_DB_URL" -Atc "select count(*) from public.sme_historico where created_by is null;")"
@@ -130,7 +130,7 @@ jobs:
       - name: Validate retired and current RPC grants
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/r1_retired_rpc_invariants.sql 2>&1 | tee r1-retired-rpc-report.txt
 
       - name: Verify pg_net is absent after E1A replay

@@ -3,8 +3,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import type { ComentarioHistorico, Demanda } from '../types';
 import { presentHistoryEvent } from '../domain/historyPresentation';
-import { getPrazoFinalSemantics } from '../utils/date';
 import { isClosed } from '../domain/workSemantics';
+import { DeadlineDisplay } from './DeadlineDisplay';
 
 interface DemandDetailDrawerProps {
   demanda: Demanda | null;
@@ -46,7 +46,7 @@ export function DemandDetailDrawer({
 }: DemandDetailDrawerProps) {
   const reduceMotion = useReducedMotion();
   if (!demanda) return null;
-  const prazo = getPrazoFinalSemantics(demanda.limite2);
+  const closed = isClosed(demanda);
   const history = historico.filter((item) => item.demandaId === demanda.id);
 
   return (
@@ -92,6 +92,25 @@ export function DemandDetailDrawer({
                     </div>
                   </section>
 
+                  <section className="drawer-section next-action-highlight" aria-labelledby="next-action-title">
+                    <div className="drawer-section-heading">
+                      <h3 id="next-action-title">Próxima providência</h3>
+                      <DeadlineDisplay
+                        date={demanda.proximaAcaoEm}
+                        closed={closed}
+                        compact
+                        missingLabel="Data não informada"
+                      />
+                    </div>
+                    {closed ? (
+                      <p className="next-action-detail-copy muted">Não exigida para demanda encerrada.</p>
+                    ) : demanda.proximaAcao ? (
+                      <p className="next-action-detail-copy">{demanda.proximaAcao}</p>
+                    ) : (
+                      <p className="next-action-detail-copy muted">Não informada no registro atual.</p>
+                    )}
+                  </section>
+
                   <section className="drawer-section">
                     <h3>Responsabilidade</h3>
                     <div className="drawer-meta-grid">
@@ -103,13 +122,21 @@ export function DemandDetailDrawer({
                   <section className="drawer-section">
                     <h3>Prazos</h3>
                     <div className="drawer-meta-grid">
-                      <div className="drawer-meta-item"><MetaLabel>Prazo de Análise (Interno)</MetaLabel><span className="value">{demanda.limite1 || '—'}</span></div>
                       <div className="drawer-meta-item">
-                        <MetaLabel>Prazo Final</MetaLabel>
-                        <div className="prazo-final-container drawer-prazo">
-                          <span className="value strong-value">{prazo.data}</span>
-                          {prazo.label && !isClosed(demanda) && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}
-                        </div>
+                        <MetaLabel>Prazo interno</MetaLabel>
+                        <DeadlineDisplay
+                          date={demanda.limite1}
+                          state={demanda.limite1Situacao}
+                          closed={closed}
+                        />
+                      </div>
+                      <div className="drawer-meta-item">
+                        <MetaLabel>Prazo final</MetaLabel>
+                        <DeadlineDisplay
+                          date={demanda.limite2}
+                          state={demanda.limite2Situacao}
+                          closed={closed}
+                        />
                       </div>
                     </div>
                   </section>
@@ -138,6 +165,16 @@ export function DemandDetailDrawer({
                                   <span className="timeline-setor">{item.setor || 'CTRH'}</span>
                                 </div>
                                 <div className="timeline-comment">{presentation.comment}</div>
+                                {item.alteracoes.length > 0 && (
+                                  <dl className="history-change-list">
+                                    {item.alteracoes.map((change, changeIndex) => (
+                                      <div key={`${item.id}-${change.field}-${changeIndex}`}>
+                                        <dt>{change.field.replaceAll('_', ' ')}</dt>
+                                        <dd><span>{change.before || 'Não informado'}</span><i className="fa-solid fa-arrow-right-long" aria-hidden="true" /><strong>{change.after || 'Não informado'}</strong></dd>
+                                      </div>
+                                    ))}
+                                  </dl>
+                                )}
                               </div>
                             </div>
                           );

@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDemandFixture, createHistoryFixture } from '../test/expandedFixtures';
 import { DemandasTable } from './DemandasTable';
 import { DemandDetailDrawer } from './DemandDetailDrawer';
@@ -48,6 +48,8 @@ const closed = createDemandFixture({
 });
 
 describe('apresentação R4 na carteira e no detalhe', () => {
+  afterEach(cleanup);
+
   it('mantém colunas atuais e acrescenta próxima providência com estados legíveis', () => {
     render(
       <DemandasTable

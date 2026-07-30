@@ -17,7 +17,7 @@ export interface R4Functions {
       p_limite2_situacao: DeadlineState;
       p_proxima_acao: string;
       p_proxima_acao_em: string | null;
-      p_proxima_acao_justificativa: string;
+      p_proxima_acao_justificativa: string | undefined;
       p_status: DemandStatus;
       p_setor: string;
       p_classificacao: string;
@@ -47,7 +47,7 @@ export interface R4Functions {
       p_comentario: string;
       p_proxima_acao: string;
       p_proxima_acao_em: string | null;
-      p_proxima_acao_justificativa: string;
+      p_proxima_acao_justificativa: string | undefined;
     };
     Returns: DemandRow;
   };
@@ -58,7 +58,7 @@ export interface R4Functions {
       p_comentario: string;
       p_proxima_acao: string;
       p_proxima_acao_em: string | null;
-      p_proxima_acao_justificativa: string;
+      p_proxima_acao_justificativa: string | undefined;
     };
     Returns: DemandRow;
   };

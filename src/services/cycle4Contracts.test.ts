@@ -13,23 +13,30 @@ const requiredMethods = [
   'registerProgress',
   'transitionStatus',
   'deleteLogically',
-  'restore',
 ] as const;
 
-describe('contratos de mutação do Ciclo 4', () => {
-  it('expõe métodos nomeados no repositório Supabase', () => {
+const forbiddenProductMethods = ['restore'] as const;
+
+describe('contratos de mutação e auditoria', () => {
+  it('expõe os métodos vigentes no repositório Supabase sem restauração de produto', () => {
     const repository = new SupabaseDemandasRepository({} as never) as unknown as Record<string, unknown>;
 
     for (const method of requiredMethods) {
       expect(repository[method], `método ausente: ${method}`).toBeTypeOf('function');
     }
+    for (const method of forbiddenProductMethods) {
+      expect(repository[method], `método proibido exposto: ${method}`).toBeUndefined();
+    }
   });
 
-  it('espelha os métodos nomeados no modo local sintético', () => {
+  it('espelha o contrato no modo local sintético sem oferecer restauração', () => {
     const repository = new LocalDemandasRepository(storage, []) as unknown as Record<string, unknown>;
 
     for (const method of requiredMethods) {
       expect(repository[method], `método ausente: ${method}`).toBeTypeOf('function');
+    }
+    for (const method of forbiddenProductMethods) {
+      expect(repository[method], `método proibido exposto: ${method}`).toBeUndefined();
     }
   });
 });

@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { ComentarioHistorico, Demanda, PerfilUsuario } from '../types';
+import { getUserFacingError } from '../domain/userFacingErrors';
 import { AdminProfileDialog } from './AdminProfileDialog';
 import { AdminTrashPanel } from './AdminTrashPanel';
 
@@ -62,7 +63,7 @@ export function analyzeAccessIntegrity(servidores: ServidorPerfil[]): AccessInte
     idCounts.set(servidor.id, (idCounts.get(servidor.id) ?? 0) + 1);
 
     if (!servidor.nome.trim()) {
-      issues.push(`Perfil ${servidor.id} sem nome informado.`);
+      issues.push(`Perfil sem nome informado: ${servidor.email || 'e-mail não informado'}.`);
     }
     if (!email.endsWith('@rioeduca.net')) {
       issues.push(`E-mail fora do domínio institucional: ${servidor.email || '(vazio)'}.`);
@@ -72,15 +73,13 @@ export function analyzeAccessIntegrity(servidores: ServidorPerfil[]): AccessInte
   const duplicateEmails = Array.from(emailCounts.entries())
     .filter(([, count]) => count > 1)
     .map(([email]) => email);
-  const duplicateIds = Array.from(idCounts.entries())
-    .filter(([, count]) => count > 1)
-    .map(([id]) => id);
+  const duplicateIds = Array.from(idCounts.values()).some((count) => count > 1);
 
   if (duplicateEmails.length > 0) {
     issues.push(`E-mails duplicados: ${duplicateEmails.join(', ')}.`);
   }
-  if (duplicateIds.length > 0) {
-    issues.push(`Identificadores duplicados: ${duplicateIds.join(', ')}.`);
+  if (duplicateIds) {
+    issues.push('Foram encontrados perfis com identificadores duplicados.');
   }
 
   const activeProfiles = servidores.filter((servidor) => servidor.status === 'Ativo').length;
@@ -142,9 +141,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
       setTrashDemandas(trash);
       setTrashHistorico(current.historico);
     } catch (reason) {
-      setTrashError(reason instanceof Error
-        ? reason.message
-        : 'Não foi possível carregar a lixeira administrativa.');
+      setTrashError(getUserFacingError(reason, 'Não foi possível carregar as demandas excluídas.'));
     } finally {
       setTrashLoading(false);
     }
@@ -187,19 +184,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
         <div className="dashboard-col-card">
           <h2>
             <i className="fa-solid fa-shield-halved" style={{ color: 'var(--accent-color)' }}></i>
-            Segurança & Integridade
+            Segurança e integridade
           </h2>
           <p style={{ fontSize: '0.813rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
-            Exportação dos perfis cadastrados e verificação de consistência dos acessos ao sistema.
+            Cópia dos perfis cadastrados e verificação de consistência dos acessos ao sistema.
           </p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               type="button"
               className="btn btn-secondary-outline"
               onClick={handleExportJSONBackup}
-              title="Exportar perfis e níveis de acesso em JSON"
+              title="Exportar uma cópia dos perfis e níveis de acesso"
             >
-              <i className="fa-solid fa-file-export"></i> Exportar Perfis (JSON)
+              <i className="fa-solid fa-file-export"></i> Exportar cópia de segurança
             </button>
             <button
               type="button"
@@ -207,7 +204,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
               onClick={handleIntegrityCheck}
               title="Verificar duplicidades, domínio institucional e administradores ativos"
             >
-              <i className="fa-solid fa-stethoscope"></i> Verificar Acessos
+              <i className="fa-solid fa-stethoscope"></i> Verificar acessos
             </button>
           </div>
         </div>
@@ -215,17 +212,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
         <div className="dashboard-col-card">
           <h2>
             <i className="fa-solid fa-gears" style={{ color: 'var(--accent-color)' }}></i>
-            Parâmetros do Sistema
+            Parâmetros do sistema
           </h2>
           <p style={{ fontSize: '0.813rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
-            Políticas de tempo limite, prazos semânticos e whitelist de e-mails institucionais aceitos.
+            Regras de sessão, prazo de alerta e domínio institucional autorizado.
           </p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', background: 'var(--border-light)', padding: '6px 12px', borderRadius: '4px' }}>
-              Whitelist Ativa: <strong>@rioeduca.net</strong>
+              Domínio autorizado: <strong>@rioeduca.net</strong>
             </div>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)', background: 'var(--border-light)', padding: '6px 12px', borderRadius: '4px' }}>
-              Prazo Alerta Interno: <strong>7 dias</strong>
+              Alerta de prazo: <strong>7 dias</strong>
             </div>
           </div>
         </div>
@@ -245,10 +242,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
       <div className="dashboard-col-card">
         <h2>
           <i className="fa-solid fa-user-gear" style={{ color: 'var(--accent-color)' }}></i>
-          Servidores Homologados & Controle de Acesso
+          Perfis e níveis de acesso
         </h2>
         <p style={{ fontSize: '0.813rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
-          Visualização dos e-mails corporativos autorizados no sistema da SME e seus respectivos papéis de segurança.
+          E-mails corporativos autorizados e respectivos níveis de acesso.
           {!isSupabase && <span className="demo-label">Demonstração</span>}
         </p>
 
@@ -257,8 +254,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
             <thead>
               <tr>
                 <th style={{ width: '25%', textAlign: 'left' }}>Servidor</th>
-                <th style={{ width: '30%', textAlign: 'left' }}>E-mail Corporativo</th>
-                <th style={{ width: '20%', textAlign: 'left' }}>Nível de Acesso</th>
+                <th style={{ width: '30%', textAlign: 'left' }}>E-mail corporativo</th>
+                <th style={{ width: '20%', textAlign: 'left' }}>Nível de acesso</th>
                 <th style={{ width: '15%', textAlign: 'left' }}>Setor</th>
                 <th style={{ width: '10%' }}>Status</th>
                 {isSupabase && <th>Ações</th>}
@@ -268,7 +265,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
               {servidores.map(serv => (
                 <tr key={serv.id}>
                   <td style={{ textAlign: 'left', fontWeight: 600 }}>{serv.nome}</td>
-                  <td style={{ textAlign: 'left', fontFamily: 'monospace' }}>{serv.email}</td>
+                  <td style={{ textAlign: 'left' }}>{serv.email}</td>
                   <td style={{ textAlign: 'left' }}>
                     <span
                       className={`badge ${serv.nivel === 'Administrador' ? 'encerrado' : serv.nivel === 'Editor' || serv.nivel === 'Avançado' ? 'assinatura' : 'aguardando'}`}

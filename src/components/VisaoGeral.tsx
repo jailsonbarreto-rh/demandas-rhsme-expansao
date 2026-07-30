@@ -117,7 +117,7 @@ function ResponsibleRow({ item }: { item: ResponsibleDistributionItem }) {
         </div>
         <div className="responsible-copy">
           <strong>{item.nome}</strong>
-          {item.vinculo === 'legado_pendente' && <span className="legacy-link-badge">Vínculo legado pendente</span>}
+          {item.vinculo === 'legado_pendente' && <span className="legacy-link-badge">Responsável não vinculado</span>}
           {item.vinculo === 'nao_atribuido' && <span className="unassigned-badge">Não atribuído</span>}
         </div>
       </div>
@@ -186,7 +186,7 @@ export const VisaoGeral: React.FC<VisaoGeralProps> = ({
       return {
         ...item,
         presentation: presentHistoryEvent(item),
-        processoNumero: demandaCorresp?.numero || `Processo #${item.demandaId}`,
+        processoNumero: demandaCorresp?.numero || 'Processo não localizado',
         demanda: demandaCorresp,
       };
     });

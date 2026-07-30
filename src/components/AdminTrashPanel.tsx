@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ComentarioHistorico, Demanda, PerfilUsuario } from '../types';
 import { AdminTrashDetailDialog } from './AdminTrashDetailDialog';
+import './AdminTrashPanel.css';
 
 interface AdminTrashPanelProps {
   demandas: Demanda[];

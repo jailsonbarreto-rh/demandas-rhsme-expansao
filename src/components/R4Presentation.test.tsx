@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDemandFixture, createHistoryFixture } from '../test/expandedFixtures';
 import { DemandasTable } from './DemandasTable';
@@ -97,10 +97,11 @@ describe('apresentação R4 na carteira e no detalhe', () => {
     );
 
     const headings = screen.getAllByRole('heading').map((heading) => heading.textContent);
+    const drawer = within(screen.getByRole('dialog'));
     expect(headings.indexOf('Próxima providência')).toBeLessThan(headings.indexOf('Prazos'));
-    expect(screen.getByText(active.proximaAcao)).toBeInTheDocument();
-    expect(screen.getByText('31/12/1999')).toBeInTheDocument();
-    expect(screen.getByText('01/01/2000')).toBeInTheDocument();
-    expect(screen.getByText('Reprogramação aprovada após nova análise')).toBeInTheDocument();
+    expect(drawer.getByText(active.proximaAcao)).toBeInTheDocument();
+    expect(drawer.getByText('31/12/1999')).toBeInTheDocument();
+    expect(drawer.getByText('01/01/2000')).toBeInTheDocument();
+    expect(drawer.getByText('Reprogramação aprovada após nova análise')).toBeInTheDocument();
   });
 });

@@ -8,14 +8,15 @@ const novaDemanda: CreateDemandaInput = {
   assunto: 'Teste',
   responsavel: 'Pessoa',
   responsavelId: null,
-  limite1: '12/07/2026',
+  limite1: '12/08/2099',
   limite1Situacao: 'definido',
   limite1Justificativa: '',
   limite2: '',
-  limite2Situacao: 'nao_informado',
+  limite2Situacao: 'nao_se_aplica',
   limite2Justificativa: '',
   proximaAcao: 'Conferir documentação recebida',
-  proximaAcaoEm: '20/07/2026',
+  proximaAcaoEm: '20/08/2099',
+  proximaAcaoJustificativa: '',
   linkOrigem: '',
   status: 'Aguardando Andamento',
   setor: 'E/CTRH',
@@ -26,17 +27,15 @@ const editInput: EditDemandaInput = {
   assunto: 'Teste revisado',
   responsavelId: null,
   responsavel: 'Pessoa',
-  limite1: '12/07/2026',
+  limite1: '12/08/2099',
   limite1Situacao: 'definido',
   limite1Justificativa: '',
   limite2: '',
-  limite2Situacao: 'nao_informado',
+  limite2Situacao: 'nao_se_aplica',
   limite2Justificativa: '',
   setor: 'E/CTRH',
   classificacao: 'Diversos',
   linkOrigem: '',
-  proximaAcao: 'Conferir documentação revisada',
-  proximaAcaoEm: '21/07/2026',
   justificativa: 'Correção confirmada na documentação',
 };
 
@@ -67,14 +66,12 @@ describe('SupabaseDemandasRepository', () => {
     }], error: null });
     const demandasIs = vi.fn(() => ({ order: demandasOrder }));
     const demandasSelect = vi.fn(() => ({ is: demandasIs, order: demandasOrder }));
-
     const historyOrder = vi.fn().mockResolvedValue({ data: [{
       id: 2, demanda_id: 7, tipo_evento: 'mudanca_status', status_anterior: null,
       status_novo: 'Tramitado', setor: 'CTRH', comentario: 'Movimentado',
       alteracoes: [], created_by: null, created_at: '2026-07-12T12:00:00Z',
     }], error: null });
     const historySelect = vi.fn(() => ({ order: historyOrder }));
-
     const client = { from: vi.fn((table: string) => ({
       select: table === 'sme_demandas' ? demandasSelect : historySelect,
     })) };
@@ -142,18 +139,21 @@ describe('SupabaseDemandasRepository', () => {
     expect(order).toHaveBeenCalledWith('deleted_at', { ascending: false });
   });
 
-  it('cria demanda pelo contrato v2 com datas do banco', async () => {
+  it('cria demanda pelo contrato R4 com estados e datas do banco', async () => {
     const { client, rpc } = createClient();
     await new SupabaseDemandasRepository(client as never).create(novaDemanda);
-    expect(rpc).toHaveBeenCalledWith('criar_sme_demanda_v2', expect.objectContaining({
+    expect(rpc).toHaveBeenCalledWith('criar_sme_demanda_r4', expect.objectContaining({
       p_numero: novaDemanda.numero,
-      p_limite1: '2026-07-12',
+      p_limite1: '2099-08-12',
+      p_limite1_situacao: 'definido',
       p_limite2: null,
-      p_proxima_acao_em: '2026-07-20',
+      p_limite2_situacao: 'nao_se_aplica',
+      p_proxima_acao_em: '2099-08-20',
+      p_proxima_acao_justificativa: '',
     }));
   });
 
-  it('encaminha edição, andamento, transição, exclusão e restauração às RPCs nomeadas', async () => {
+  it('encaminha edição, andamento e transição às RPCs R4', async () => {
     const { client, rpc } = createClient();
     const repository = new SupabaseDemandasRepository(client as never);
 
@@ -161,26 +161,29 @@ describe('SupabaseDemandasRepository', () => {
     await repository.registerProgress(7, {
       comentario: 'Conferido',
       proximaAcao: 'Cobrar retorno da unidade',
-      proximaAcaoEm: '25/07/2026',
+      proximaAcaoEm: '25/08/2099',
+      proximaAcaoJustificativa: '',
     });
     await repository.transitionStatus(7, {
       status: 'Encerrado',
       comentario: 'Concluído',
       proximaAcao: '',
       proximaAcaoEm: '',
+      proximaAcaoJustificativa: '',
     });
     await repository.deleteLogically(7, { motivo: 'Registro duplicado confirmado' });
     await repository.restore(7, { motivo: 'Registro deve voltar à carteira' });
 
-    expect(rpc).toHaveBeenNthCalledWith(1, 'editar_sme_demanda', expect.objectContaining({
+    expect(rpc).toHaveBeenNthCalledWith(1, 'editar_sme_demanda_r4', expect.objectContaining({
       p_demanda_id: 7,
       p_justificativa: editInput.justificativa,
     }));
-    expect(rpc).toHaveBeenNthCalledWith(2, 'registrar_andamento_sme_demanda', expect.objectContaining({
+    expect(rpc).toHaveBeenNthCalledWith(2, 'registrar_andamento_sme_demanda_r4', expect.objectContaining({
       p_demanda_id: 7,
-      p_proxima_acao_em: '2026-07-25',
+      p_proxima_acao_em: '2099-08-25',
+      p_proxima_acao_justificativa: '',
     }));
-    expect(rpc).toHaveBeenNthCalledWith(3, 'transicionar_status_sme_demanda', expect.objectContaining({
+    expect(rpc).toHaveBeenNthCalledWith(3, 'transicionar_status_sme_demanda_r4', expect.objectContaining({
       p_novo_status: 'Encerrado',
       p_proxima_acao_em: null,
     }));

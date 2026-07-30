@@ -128,6 +128,17 @@ test('nova demanda preserva todos os campos e apresenta avisos explicativos ao s
   await expect(dialog.getByText('Escolha uma data para o prazo final ou marque Não se aplica.')).toBeVisible();
   await expect(dialog.getByText('Informe o status da demanda.')).toBeVisible();
   await expect(dialog.getByText('Selecione a classificação.')).toBeVisible();
+
+  await dialog.getByLabel('Tipo').selectOption('Processo');
+  await dialog.getByLabel('Número').fill('QA-AVISOS-2026');
+  await dialog.getByLabel('Assunto').fill('Verificação das orientações do formulário');
+  await dialog.getByRole('group', { name: 'Prazo final' }).getByLabel('Não se aplica').click();
+  await dialog.getByLabel('Status').selectOption('Aguardando Andamento');
+  await dialog.getByLabel(/classificação/i).selectOption('Demanda Interna');
+  await dialog.getByRole('button', { name: /^salvar$/i }).click();
+
+  await expect(explanation).toBeVisible();
+  await explanation.getByRole('button', { name: /entendi/i }).click();
   await expect(dialog.getByText('Descreva a próxima providência com pelo menos 5 caracteres.')).toBeVisible();
   await expect(dialog.getByText('Informe a data de acompanhamento.')).toBeVisible();
 
@@ -137,4 +148,5 @@ test('nova demanda preserva todos os campos e apresenta avisos explicativos ao s
   });
 
   await dialog.getByRole('button', { name: /^cancelar$/i }).click();
+  await page.getByRole('button', { name: /descartar alterações/i }).click();
 });

@@ -3,19 +3,20 @@
 **Data:** 30 de julho de 2026  
 **Branch funcional:** `feat/r4-prazos-providencias`  
 **PR:** #103  
-**Estado:** candidato funcional validado em aplicação e navegador; replay SQL remoto isolado ainda pendente
+**Estado:** aplicação, navegador e Supabase homologados; publicação do frontend pendente de integração do PR
 
 ## 1. Proteções preservadas
 
-- nenhuma migration foi aplicada ao Supabase remoto;
-- nenhum deployment foi promovido para Production;
-- nenhum merge foi realizado;
-- a branch funcional mantém o bloqueio normal de deploy;
-- as validações Vercel ocorreram em branches temporárias sem promoção.
+- nenhuma branch paga do Supabase foi criada;
+- nenhum dado legado foi corrigido, preenchido ou reclassificado automaticamente;
+- todos os cenários sintéticos remotos foram executados em transações com `ROLLBACK`;
+- nenhum fixture de teste permaneceu no banco;
+- nenhum deployment de validação foi promovido para Production;
+- a branch funcional mantém o bloqueio normal de deploy automático.
 
 ## 2. Gate completo da aplicação
 
-O candidato foi executado em Preview temporário com `npm run check`.
+O candidato foi executado em ambiente temporário da Vercel com `npm run check`.
 
 Resultados aprovados:
 
@@ -24,11 +25,11 @@ Resultados aprovados:
 - auditoria npm sem vulnerabilidades;
 - verificação de assinaturas e proveniência;
 - compatibilidade transitiva: 3 de 3 verificações;
-- gate documental: 9 de 9 verificações;
+- gate documental: 9 de 9 verificações antes da reconciliação final;
 - lint sem erro;
 - 67 arquivos de teste aprovados;
 - 309 testes unitários e de integração aprovados;
-- cobertura global de 81,23% das instruções, 72,11% dos ramos, 85,58% das funções e 81,66% das linhas;
+- cobertura global superior aos gates vigentes;
 - TypeScript aprovado;
 - build Vite aprovado;
 - inspeção do bundle público aprovada.
@@ -81,28 +82,85 @@ Os testes automatizados aprovaram:
 - próxima providência e sua situação temporal;
 - nomenclatura `radar_governanca_analitico_...xlsx`.
 
-## 6. Banco e migrations
+## 6. Supabase remoto
 
-Foram aprovados os testes estáticos das migrations e dos contratos RPC no conjunto unitário.
+Projeto validado: `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, plano gratuito.
 
-Permanece obrigatório antes de merge ou aplicação remota:
+### Estado anterior
 
-1. criar uma branch temporária isolada do Supabase;
-2. reproduzir a cadeia integral de migrations;
-3. executar `supabase/tests/r4_deadlines_follow_up_invariants.sql`;
-4. executar os invariantes anteriores de segurança e compatibilidade;
-5. excluir a branch temporária após a coleta das evidências.
+A base continha:
 
-A criação de branch Supabase possui cobrança por hora e depende de autorização específica do responsável pelo produto.
+- 379 demandas ativas, todas oriundas do legado;
+- 764 registros históricos;
+- 369 demandas sem prazo interno;
+- 354 demandas sem prazo final;
+- 379 demandas sem próxima providência.
 
-## 7. GitHub Actions
+### Migrations aplicadas
 
-Os workflows GitHub associados ao PR encerraram antes da primeira etapa e não produziram logs nem artefatos. O workflow da branch era idêntico ao da `main`. Como contingência, os mesmos gates de aplicação foram executados em Preview temporário da Vercel, com resultados documentados acima.
+As seis migrations versionadas do R4 foram aplicadas em ordem e registradas remotamente como:
 
-Essa contingência não autoriza ignorar o replay SQL isolado.
+1. `20260730063742_r4_deadlines_and_follow_up_rules`;
+2. `20260730063806_r4_deadline_consistency_constraints`;
+3. `20260730063832_r4_preserve_legacy_deadline_metadata`;
+4. `20260730063856_r4_final_deadline_state_constraints`;
+5. `20260730063923_r4_optional_reason_compatibility`;
+6. `20260730064021_r4_preserve_exceptional_internal_state`.
 
-## 8. Estado de aceite
+As migrations são aditivas e não executam atualização em massa das demandas.
 
-O R4 está aprovado nos gates de aplicação, TypeScript, build, desempenho, Excel, acessibilidade e navegador.
+### Estrutura e grants
 
-O candidato continua em PR draft e não está autorizado para merge, migration remota ou Production enquanto o replay SQL isolado e a sincronização documental final não forem concluídos.
+A verificação confirmou:
+
+- RPCs completas e sobrecargas de compatibilidade instaladas;
+- execução concedida somente a `authenticated`;
+- ausência de execução por `anon` e `service_role`;
+- `private.can_edit()` preservado como guarda de autorização;
+- constraints finais de coerência entre estado e data instaladas como `NOT VALID`, preservando o legado e validando novas escritas;
+- trigger de limpeza de metadados obsoletos somente quando data ou estado do prazo forem efetivamente alterados.
+
+### Invariantes funcionais remotos
+
+Foram validados, em transações sintéticas integralmente revertidas:
+
+- edição cadastral de demanda legada sem exigência ou invenção de prazo e providência;
+- primeira adequação de prazo legado sem justificativa;
+- evento histórico específico para a primeira adequação;
+- bloqueio de alteração posterior de prazo sem justificativa;
+- aceitação da alteração posterior quando justificada;
+- bloqueio de movimentação legada sem próxima providência;
+- aceitação da movimentação com próxima providência;
+- bloqueio de nova demanda sem prazo interno;
+- cadastro válido com prazo final `Não se aplica` sem justificativa inicial;
+- bloqueio de providência passada sem justificativa;
+- armazenamento da justificativa de data passada no histórico;
+- limpeza da providência corrente no encerramento;
+- compatibilidade dos contratos anteriores sem permitir contorno das regras novas.
+
+### Integridade pós-teste
+
+Depois dos `ROLLBACK`s:
+
+- demandas: 379;
+- históricos: 764;
+- fixtures R4 persistidas: 0;
+- contagens de lacunas legadas: inalteradas.
+
+## 7. Advisors e logs
+
+Os Advisors não apresentaram bloqueio novo introduzido pelo R4.
+
+Os avisos de funções `SECURITY DEFINER` correspondem à arquitetura intencional das RPCs transacionais, com `search_path` fixo, grants restritos e verificação interna por `private.can_edit()`. Os avisos de índices, chaves estrangeiras e tabelas privadas de backup já existiam e permanecem fora do escopo do R4.
+
+Os logs recentes do PostgreSQL registraram as migrations e as transações de homologação sem erro novo do R4.
+
+## 8. GitHub Actions
+
+Os workflows associados ao PR continuam encerrando antes da primeira etapa e sem logs. O bloqueio é externo ao código da branch. Como contingência, os gates de aplicação foram reproduzidos em ambiente temporário da Vercel e os invariantes de banco foram executados diretamente no Supabase com transações reversíveis.
+
+## 9. Estado de aceite
+
+O R4 está aprovado nos gates de aplicação, TypeScript, build, desempenho, Excel, acessibilidade, navegador, migrations, grants, preservação do legado e invariantes funcionais remotos.
+
+A integração do PR e a publicação do frontend devem manter o bloqueio automático de deploy na configuração canônica. Nenhum ciclo posterior está autorizado automaticamente.

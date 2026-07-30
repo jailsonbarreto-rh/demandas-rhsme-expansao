@@ -1,8 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
+  "buildCommand": "npm test -- src/components/UserFacingInformationAudit.test.tsx src/domain/userFacingErrors.test.ts src/domain/historyPresentation.test.ts src/components/HistoryPresentation.test.tsx",
+  "outputDirectory": ".",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "rewrites": [
     {

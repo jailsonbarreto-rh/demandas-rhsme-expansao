@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
-  "buildCommand": "npx playwright install --with-deps chromium && npm run test:e2e && npm run build",
+  "buildCommand": "npx playwright install chromium && npm run test:e2e && npm run build",
   "git": {
     "deploymentEnabled": true
   },

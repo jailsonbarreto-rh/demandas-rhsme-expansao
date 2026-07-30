@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **30 de julho de 2026 — auditoria transversal de layout homologada, aguardando integração**
+Atualizado em: **30 de julho de 2026 — auditoria transversal de layout publicada e encerrada**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
@@ -11,19 +11,16 @@ Atualizado em: **30 de julho de 2026 — auditoria transversal de layout homolog
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
 | R4 | concluído e publicado |
 | R5-1 | concluído, homologado e publicado |
-| Merge funcional R5-1 | PR #106, merge `6af4110738ca3bcd0b4088a82231790354f97b55` |
-| Release R5-1 | PR #107, merge `f222d5f3fcccf56a1ebb2cd553f39de4119c5d02` |
-| Production vigente | `dpl_HfJTmbcrVdiNeHKChrfuq5otxBGK` — `READY` |
-| SHA publicado | `f222d5f3fcccf56a1ebb2cd553f39de4119c5d02` |
-| Pacote em homologação | auditoria transversal de linguagem e informações internas no layout |
-| Branch do pacote | `fix/layout-user-facing-information-audit` |
-| SHA funcional homologado | `db2623d24fa7a310600e192aae70003c2eec9740` |
+| Auditoria transversal de layout | concluída, homologada e publicada |
+| PR funcional da auditoria | #109, merge `8ae2ff95152371ccc6ada2dc4580010b311b79e4` |
+| PR de release | #110, merge `2bc78dca066b0c4d592b4e6c5bc4c4db5290b507` |
+| Production | `dpl_7G72xFXcQUKtYELrGhXha1xi7UPE` — `READY` |
+| SHA publicado | `2bc78dca066b0c4d592b4e6c5bc4c4db5290b507` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
-| Migration R5-1 | `20260730180713_r5_1_disable_product_restore` aplicada e verificada |
-| Integridade | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
-| Deploy automático | `deploymentEnabled: false` na `main` |
+| Integridade conhecida | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
+| Deploy automático | restaurado para `deploymentEnabled: false` no encerramento |
 | Implementação funcional autorizada | **Nenhuma nova implementação funcional autorizada** |
-| Próxima atividade após publicar o pacote | debate do R5-2 — Andamento, transições e reabertura |
+| Próxima atividade | debate do R5-2 — Andamento, transições e reabertura |
 
 ## R5-1 — regra vigente
 
@@ -68,108 +65,130 @@ O tipo histórico `restauracao` permanece reconhecido apenas para leitura de eve
 
 - remoção do ID numérico do modal de edição;
 - retirada de textos permanentes sobre legado e migração;
-- substituição de `Responsável legado` por informação neutra sobre o responsável atual;
-- campo `Motivo da alteração *` exibido somente quando a ação atual exige justificativa;
-- textarea em largura integral, com altura adequada e sem redimensionamento pelo navegador;
+- remoção da expressão `Responsável legado`;
+- campo `Motivo da alteração *` exibido somente quando a ação exige justificativa;
+- textarea do motivo em largura integral, com altura adequada e sem redimensionamento;
 - remoção de UUIDs e nomes de campos internos do histórico;
 - tradução dos estados e eventos técnicos para linguagem de produto;
-- remoção de referências a migration R3, lote, hash e sistema anterior;
+- remoção de referências a migration, lote, hash e sistema anterior;
 - substituição de `Vínculo legado pendente` por `Responsável não vinculado`;
 - substituição de `Processo #ID` por `Processo não localizado`;
 - barreira comum contra mensagens brutas de Supabase, PostgREST e PostgreSQL;
 - simplificação da linguagem da área administrativa e dos avisos de integridade.
+
+### Verificação final dos formulários
+
+Todos os campos funcionais permaneceram disponíveis.
+
+**Edição:**
+
+- Assunto;
+- Responsável;
+- Prazo interno;
+- Prazo final;
+- Setor;
+- Motivo da alteração, somente quando aplicável.
+
+**Nova demanda:**
+
+- Tipo;
+- Número;
+- Assunto;
+- Responsável;
+- Prazo interno;
+- Prazo final;
+- Status;
+- Setor;
+- Classificação;
+- Próxima providência;
+- Data da próxima providência;
+- justificativa de data passada, quando aplicável.
+
+O campo `Próxima providência` recebeu largura integral, altura mínima, rótulo flutuante, foco e tipografia compatíveis com o padrão profissional do produto.
+
+### Avisos e orientações
+
+Foram confirmadas mensagens explicativas no momento pertinente:
+
+- ao salvar alteração sem motivo obrigatório: `Informe o motivo da alteração para continuar (mínimo de 10 caracteres).`;
+- orientação do motivo: `O motivo será registrado no histórico da demanda.`;
+- ao salvar nova demanda sem prazo interno: diálogo `Prazo interno obrigatório`;
+- orientação do diálogo: `Toda nova demanda deve possuir um prazo interno definido. Informe a data antes de salvar o cadastro.`;
+- em status ativo sem providência: `Descreva a próxima providência com pelo menos 5 caracteres.`;
+- sem data de acompanhamento: `Informe a data de acompanhamento.`
+
+Mensagens específicas, como data parcialmente preenchida, permanecem preservadas. Nenhum aviso de regra usa UUID, código de banco, nome de coluna ou linguagem de infraestrutura.
 
 ### Limites
 
 O pacote não altera:
 
 - regras de prazo e justificativa;
-- tratamento do legado;
+- tratamento dos registros importados;
 - modelo ou dados do Supabase;
 - permissões por papel;
 - indicadores do Radar;
+- filtros e comportamento por carteira;
 - exportação analítica;
 - qualquer decisão ou código do R5-2.
 
-### Gate canônico
+## Validação da aplicação
 
-Deployment de validação: `dpl_6g7e6UUv9Gg88iepSTzchKB31mqa` — `READY`.
+### Gate combinado final
+
+Deployment: `dpl_8vU2o1ojgQDsjck7twsaaYUbJwGd` — `READY`.
 
 - auditoria de dependências: zero vulnerabilidades;
-- assinaturas: 560 pacotes;
-- atestações: 147 pacotes;
+- assinaturas verificadas: 560 pacotes;
+- atestações verificadas: 147 pacotes;
 - compatibilidade transitiva: 3/3;
 - documentação: 9/9;
 - lint: aprovado;
 - 71 arquivos e 328 testes aprovados;
-- cobertura global de linhas: 81,71%;
+- cobertura global de linhas: 81,74%;
 - TypeScript e build Vite: aprovados;
 - bundle inicial: 194.126 bytes, 60,16% abaixo da linha de base;
 - inspeção pública: aprovada.
 
 ### Navegador
 
-Deployment específico: `dpl_HVXwqDrJmgn5CbsvHAbgDj3WVLhN`.
+Foram aprovados quatro cenários focais:
 
-- 2 de 2 cenários novos aprovados;
-- desktop Chromium e mobile de 320 px;
-- ausência de informações internas no modal;
-- exibição contextual do motivo;
-- geometria do campo validada em ambos os tamanhos.
+- edição em desktop;
+- nova demanda em desktop;
+- edição em mobile de 320 px;
+- nova demanda em mobile de 320 px.
 
-A regra de primeira adequação de prazo ausente em registro importado permanece protegida em teste funcional próprio.
+As provas confirmaram preservação dos campos, mensagens ao salvar, qualidade visual dos controles e ausência de overflow horizontal.
 
-Relatório completo: `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`.
+Os 22 cenários regressivos existentes também permaneceram aprovados em desktop e mobile, incluindo acessibilidade, navegação, filtros, modais, exportação e console.
 
-## Supabase remoto
+## Production
 
-A função `restaurar_sme_demanda(bigint, text)` permanece definida, sem permissão de execução para qualquer papel da API:
-
-| Papel | EXECUTE |
-|---|---:|
-| `public` | não |
-| `anon` | não |
-| `authenticated` | não |
-| `service_role` | não |
-
-`excluir_sme_demanda(bigint, text)` continua disponível ao papel `authenticated`, com validação obrigatória de `private.is_admin()` no servidor.
-
-A verificação pós-publicação do R5-1 confirmou:
-
-- 379 demandas;
-- zero demandas excluídas;
-- 764 históricos;
-- 13 perfis;
-- nenhuma fixture ou resíduo;
-- nenhuma atualização em massa, backfill ou exclusão física.
-
-A auditoria transversal não possui migration e não altera o banco.
-
-## Production vigente
-
-- deployment `dpl_HfJTmbcrVdiNeHKChrfuq5otxBGK` em estado `READY`;
+- deployment `dpl_7G72xFXcQUKtYELrGhXha1xi7UPE` em estado `READY`;
 - target `production`;
 - domínio principal: HTTP 200;
 - `/demandas`: HTTP 200;
 - `/admin`: HTTP 200;
 - rewrites SPA preservados;
-- nenhum erro de runtime encontrado após a publicação do R5-1.
+- assets da versão publicada carregados corretamente.
 
-O pacote de auditoria ainda não foi publicado nesta versão do Handoff.
+## Supabase remoto
 
-## Gates ainda obrigatórios para o pacote de auditoria
+A auditoria transversal não possui migration e não alterou o banco.
 
-1. abrir e revisar o PR funcional;
-2. integrar o PR;
-3. publicar Production em release controlado;
-4. verificar domínio principal, `/demandas`, `/admin` e runtime;
-5. confirmar que o Supabase permaneceu inalterado;
-6. restaurar `deploymentEnabled: false`;
-7. registrar PRs, SHAs e deployment final.
+Permanecem inalterados:
+
+- tabelas e colunas;
+- RPCs;
+- policies;
+- grants;
+- dados e históricos;
+- permissões de restauração e exclusão definidas no R5-1.
 
 ## Próxima etapa
 
-Somente depois da publicação e do encerramento documental deste pacote será retomado o debate do **R5-2 — Andamento, transições e reabertura**.
+A próxima atividade é exclusivamente o debate do **R5-2 — Andamento, transições e reabertura**.
 
 Nenhum código do R5-2, R5-3, R5-4 ou R5-5 está autorizado.
 

@@ -25,7 +25,6 @@ begin
 end;
 $$;
 
--- Registro sintético legado: lacunas são preservadas até uma operação pertinente.
 insert into public.sme_demandas (
   numero, tipo, assunto, responsavel, responsavel_id,
   limite1, limite1_situacao, limite2, limite2_situacao,
@@ -40,7 +39,6 @@ begin;
 set local role authenticated;
 select pg_temp.set_actor('22222222-2222-2222-2222-222222222222');
 
--- Edição cadastral não inventa prazo nem próxima providência.
 select public.editar_sme_demanda_r4(
   (select id from public.sme_demandas where numero = 'R4-LEGACY-001'),
   'Demanda legada sintética revisada', null,
@@ -59,11 +57,10 @@ select pg_temp.assert_true(
   'edição cadastral inventou ou exigiu dados ausentes no legado'
 );
 
--- Primeiro preenchimento da lacuna de prazo não exige justificativa.
 select public.editar_sme_demanda_r4(
   (select id from public.sme_demandas where numero = 'R4-LEGACY-001'),
   'Demanda legada sintética revisada', null,
-  private.r4_operational_today() + 5, 'definido', null, 'nao_se_aplica',
+  date '2099-01-05', 'definido', null, 'nao_se_aplica',
   'CTRH', 'Diversos', '', ''
 );
 
@@ -79,7 +76,6 @@ select pg_temp.assert_true(
   'primeira adequação do prazo não ficou auditável'
 );
 
--- Alteração posterior do prazo registrado exige justificativa.
 do $$
 declare
   v_denied boolean := false;
@@ -88,7 +84,7 @@ begin
     perform public.editar_sme_demanda_r4(
       (select id from public.sme_demandas where numero = 'R4-LEGACY-001'),
       'Demanda legada sintética revisada', null,
-      private.r4_operational_today() + 6, 'definido', null, 'nao_se_aplica',
+      date '2099-01-06', 'definido', null, 'nao_se_aplica',
       'CTRH', 'Diversos', '', ''
     );
   exception when others then
@@ -101,11 +97,10 @@ $$;
 select public.editar_sme_demanda_r4(
   (select id from public.sme_demandas where numero = 'R4-LEGACY-001'),
   'Demanda legada sintética revisada', null,
-  private.r4_operational_today() + 6, 'definido', null, 'nao_se_aplica',
+  date '2099-01-06', 'definido', null, 'nao_se_aplica',
   'CTRH', 'Diversos', '', 'Reprogramação aprovada após nova análise'
 );
 
--- Movimentar demanda legada ativa passa a exigir próxima providência.
 do $$
 declare
   v_denied boolean := false;
@@ -125,10 +120,9 @@ $$;
 select public.transicionar_status_sme_demanda_r4(
   (select id from public.sme_demandas where numero = 'R4-LEGACY-001'),
   'Tramitado', 'Encaminhamento realizado.',
-  'Verificar retorno do setor competente', private.r4_operational_today() + 1, ''
+  'Verificar retorno do setor competente', date '2099-02-01', ''
 );
 
--- Cadastro novo exige prazo interno e escolha explícita de prazo final.
 do $$
 declare
   v_denied boolean := false;
@@ -137,7 +131,7 @@ begin
     perform public.criar_sme_demanda_r4(
       'R4-NEW-INVALID', 'Processo', 'Cadastro incompleto', null,
       null, 'nao_informado', null, 'nao_informado',
-      'Analisar documentos recebidos', private.r4_operational_today() + 1, '',
+      'Analisar documentos recebidos', date '2099-02-01', '',
       'Aguardando Andamento', 'CTRH', 'Diversos', ''
     );
   exception when others then
@@ -149,8 +143,8 @@ $$;
 
 select public.criar_sme_demanda_r4(
   'R4-NEW-001', 'Processo', 'Cadastro válido do R4', null,
-  private.r4_operational_today() + 3, 'definido', null, 'nao_se_aplica',
-  'Analisar documentos recebidos', private.r4_operational_today() + 1, '',
+  date '2099-01-03', 'definido', null, 'nao_se_aplica',
+  'Analisar documentos recebidos', date '2099-02-01', '',
   'Aguardando Andamento', 'CTRH', 'Diversos', ''
 );
 
@@ -165,7 +159,6 @@ select pg_temp.assert_true(
   'Não se aplica exigiu ou gravou justificativa inicial indevida'
 );
 
--- Data da próxima providência vencida exige justificativa e integra o histórico.
 do $$
 declare
   v_denied boolean := false;
@@ -174,7 +167,7 @@ begin
     perform public.registrar_andamento_sme_demanda_r4(
       (select id from public.sme_demandas where numero = 'R4-NEW-001'),
       'Análise realizada.', 'Solicitar complementação documental',
-      private.r4_operational_today() - 1, ''
+      date '2000-01-01', ''
     );
   exception when others then
     if sqlerrm like 'A justificativa da data%' then v_denied := true; else raise; end if;
@@ -186,7 +179,7 @@ $$;
 select public.registrar_andamento_sme_demanda_r4(
   (select id from public.sme_demandas where numero = 'R4-NEW-001'),
   'Análise realizada.', 'Solicitar complementação documental',
-  private.r4_operational_today() - 1,
+  date '2000-01-01',
   'Registro tardio após indisponibilidade temporária'
 );
 
@@ -202,7 +195,6 @@ select pg_temp.assert_true(
   'justificativa da providência vencida não integrou o histórico'
 );
 
--- Encerramento limpa a próxima providência sem apagar a trilha.
 select public.transicionar_status_sme_demanda_r4(
   (select id from public.sme_demandas where numero = 'R4-NEW-001'),
   'Encerrado', 'Demanda concluída.', '', null, ''

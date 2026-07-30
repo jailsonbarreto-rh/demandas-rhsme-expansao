@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
-  "buildCommand": "echo '=== OS ===' && cat /etc/os-release && echo '=== PACKAGE MANAGERS ===' && (command -v dnf || true) && (command -v yum || true) && (command -v microdnf || true) && (command -v apk || true) && echo '=== NSPR ===' && (find /usr -name 'libnspr4.so*' 2>/dev/null | head || true) && npm run build",
+  "buildCommand": "node scripts/validation/diagnose-vercel-runner.mjs && npm run build",
   "git": {
     "deploymentEnabled": true
   },

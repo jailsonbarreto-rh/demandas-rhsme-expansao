@@ -12,9 +12,9 @@ test('edição apresenta somente informações úteis e motivo contextual', asyn
   await signIn(page);
   await page.getByRole('button', { name: /^todas as demandas$/i }).click();
 
-  const search = page.getByRole('searchbox', { name: /pesquisar demandas/i });
+  const search = page.getByRole('combobox', { name: /busca por texto/i });
   await search.fill('DEMO-OUT-2026-005');
-  await expect(page.getByText('DEMO-OUT-2026-005', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'DEMO-OUT-2026-005', exact: true })).toBeVisible();
   await page.getByRole('button', { name: /^abrir$/i }).first().click();
   await page.getByRole('button', { name: /^editar$/i }).click();
 

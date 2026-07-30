@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../lib/database.types';
-import type { DatabaseR4 } from '../lib/database.r4.types';
+import type { R4Functions } from '../lib/database.r4.types';
 import type {
   CreateDemandaInput,
   DeleteDemandaInput,
@@ -20,6 +20,13 @@ import {
 } from './dataMappers';
 
 type QueryError = { code?: string; message: string } | null;
+
+type R4RpcClient = {
+  rpc<Name extends keyof R4Functions>(
+    name: Name,
+    args: R4Functions[Name]['Args'],
+  ): Promise<{ data: R4Functions[Name]['Returns'] | null; error: QueryError }>;
+};
 
 const EXPANDED_DEMANDA_COLUMNS = [
   'id', 'numero', 'tipo', 'assunto', 'responsavel', 'responsavel_id',
@@ -55,8 +62,8 @@ function isMissingExpandedSchema(error: QueryError): boolean {
 export class SupabaseDemandasRepository implements DemandasRepository {
   constructor(private readonly client: SupabaseClient<Database>) {}
 
-  private get r4Client(): SupabaseClient<DatabaseR4> {
-    return this.client as unknown as SupabaseClient<DatabaseR4>;
+  private get r4Client(): R4RpcClient {
+    return this.client as unknown as R4RpcClient;
   }
 
   private async loadExpanded(): Promise<{
@@ -133,7 +140,7 @@ export class SupabaseDemandasRepository implements DemandasRepository {
       p_limite2_situacao: input.limite2Situacao,
       p_proxima_acao: input.proximaAcao,
       p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
-      p_proxima_acao_justificativa: input.proximaAcaoJustificativa,
+      p_proxima_acao_justificativa: input.proximaAcaoJustificativa ?? '',
       p_status: input.status,
       p_setor: input.setor,
       p_classificacao: input.classificacao,
@@ -165,7 +172,7 @@ export class SupabaseDemandasRepository implements DemandasRepository {
       p_comentario: input.comentario,
       p_proxima_acao: input.proximaAcao,
       p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
-      p_proxima_acao_justificativa: input.proximaAcaoJustificativa,
+      p_proxima_acao_justificativa: input.proximaAcaoJustificativa ?? '',
     });
     throwIfError(error);
   }
@@ -177,7 +184,7 @@ export class SupabaseDemandasRepository implements DemandasRepository {
       p_comentario: input.comentario,
       p_proxima_acao: input.proximaAcao,
       p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
-      p_proxima_acao_justificativa: input.proximaAcaoJustificativa,
+      p_proxima_acao_justificativa: input.proximaAcaoJustificativa ?? '',
     });
     throwIfError(error);
   }

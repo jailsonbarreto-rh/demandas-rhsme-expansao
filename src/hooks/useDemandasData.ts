@@ -7,7 +7,6 @@ import type {
   Demanda,
   EditDemandaInput,
   ProgressInput,
-  RestoreDemandaInput,
   StatusTransitionInput,
 } from '../types';
 import type { DemandasRepository } from '../services/contracts';
@@ -92,7 +91,5 @@ export function useDemandasData(
       mutate(() => repository.transitionStatus(id, input)),
     deleteLogically: (id: number, input: DeleteDemandaInput) =>
       mutate(() => repository.deleteLogically(id, input)),
-    restore: (id: number, input: RestoreDemandaInput) =>
-      mutate(() => repository.restore(id, input)),
   };
 }

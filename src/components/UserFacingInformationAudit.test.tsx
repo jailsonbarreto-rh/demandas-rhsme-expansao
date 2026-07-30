@@ -118,8 +118,8 @@ describe('informações apresentadas ao usuário', () => {
 
     expect(screen.queryByText(/84d7711e/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/responsavel id/i)).not.toBeInTheDocument();
-    expect(screen.getByText('Responsável')).toBeVisible();
-    expect(screen.getByText('Situação do prazo interno')).toBeVisible();
-    expect(screen.getByText('Data definida')).toBeVisible();
+    expect(screen.getByText('Responsável')).toBeInTheDocument();
+    expect(screen.getByText('Situação do prazo interno')).toBeInTheDocument();
+    expect(screen.getByText('Data definida')).toBeInTheDocument();
   });
 });

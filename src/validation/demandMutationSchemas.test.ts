@@ -8,10 +8,35 @@ import {
   statusTransitionMutationSchema,
 } from './demandMutationSchemas';
 
-const common = {
+const validDeadlines = {
+  limite1: '10/08/2099',
+  limite1Situacao: 'definido' as const,
+  limite1Justificativa: '',
+  limite2: '',
+  limite2Situacao: 'nao_se_aplica' as const,
+  limite2Justificativa: '',
+};
+
+const createBase = {
+  numero: 'R4-001',
+  tipo: 'Processo' as const,
   assunto: 'Analisar documentação',
   responsavelId: null,
-  responsavel: 'Equipe externa',
+  responsavel: '',
+  ...validDeadlines,
+  setor: 'CTRH',
+  classificacao: 'Diversos',
+  linkOrigem: '',
+  proximaAcao: 'Verificar retorno da unidade',
+  proximaAcaoEm: '20/08/2099',
+  proximaAcaoJustificativa: '',
+  status: 'Aguardando Andamento' as const,
+};
+
+const legacyEdit = {
+  assunto: 'Analisar documentação legada',
+  responsavelId: null,
+  responsavel: '',
   limite1: '',
   limite1Situacao: 'nao_informado' as const,
   limite1Justificativa: '',
@@ -21,28 +46,31 @@ const common = {
   setor: 'CTRH',
   classificacao: 'Diversos',
   linkOrigem: '',
-  proximaAcao: 'Verificar retorno da unidade',
-  proximaAcaoEm: '20/08/2026',
+  justificativa: 'Correção cadastral do registro legado',
 };
 
-describe('schemas de mutação do Ciclo 4', () => {
-  it('exige próxima ação e data na criação não encerrada', () => {
+describe('schemas de mutação do R4', () => {
+  it('exige prazo interno definido na criação', () => {
     const result = createDemandaMutationSchema.safeParse({
-      numero: 'C4-001',
-      tipo: 'Processo',
-      ...common,
-      status: 'Aguardando Andamento',
-      proximaAcao: '',
-      proximaAcaoEm: '',
+      ...createBase,
+      limite1: '',
+      limite1Situacao: 'nao_informado',
     });
     expect(result.success).toBe(false);
   });
 
-  it('aceita criação encerrada sem próxima ação', () => {
+  it('exige escolha explícita entre data e não se aplica para prazo final', () => {
+    expect(createDemandaMutationSchema.safeParse({
+      ...createBase,
+      limite2: '',
+      limite2Situacao: 'nao_informado',
+    }).success).toBe(false);
+    expect(createDemandaMutationSchema.safeParse(createBase).success).toBe(true);
+  });
+
+  it('aceita criação encerrada sem próxima providência, mantendo prazos válidos', () => {
     const result = createDemandaMutationSchema.safeParse({
-      numero: 'C4-002',
-      tipo: 'Processo',
-      ...common,
+      ...createBase,
       status: 'Encerrado',
       proximaAcao: '',
       proximaAcaoEm: '',
@@ -50,33 +78,26 @@ describe('schemas de mutação do Ciclo 4', () => {
     expect(result.success).toBe(true);
   });
 
-  it('exige justificativa útil na edição', () => {
-    expect(editDemandaMutationSchema.safeParse({
-      ...common,
-      justificativa: 'curta',
-    }).success).toBe(false);
-    expect(editDemandaMutationSchema.safeParse({
-      ...common,
-      justificativa: 'Correção confirmada na conferência',
-    }).success).toBe(true);
+  it('preserva lacunas de prazo em edição cadastral de demanda legada', () => {
+    expect(editDemandaMutationSchema.safeParse(legacyEdit).success).toBe(true);
   });
 
-  it('valida coerência da situação do prazo', () => {
+  it('rejeita data oculta em estado não informado e inversão de prazos', () => {
     expect(editDemandaMutationSchema.safeParse({
-      ...common,
-      limite1: '20/08/2026',
+      ...legacyEdit,
+      limite1: '20/08/2099',
       limite1Situacao: 'nao_informado',
-      justificativa: 'Ajuste confirmado no processo',
     }).success).toBe(false);
     expect(editDemandaMutationSchema.safeParse({
-      ...common,
-      limite1Situacao: 'nao_se_aplica',
-      limite1Justificativa: 'Não existe prazo interno para este caso',
-      justificativa: 'Ajuste confirmado no processo',
-    }).success).toBe(true);
+      ...legacyEdit,
+      limite1: '21/08/2099',
+      limite1Situacao: 'definido',
+      limite2: '20/08/2099',
+      limite2Situacao: 'definido',
+    }).success).toBe(false);
   });
 
-  it('exige comentário, ação e data no andamento', () => {
+  it('exige comentário, providência e data no andamento', () => {
     expect(progressMutationSchema.safeParse({
       comentario: 'Conferido',
       proximaAcao: '',
@@ -85,11 +106,26 @@ describe('schemas de mutação do Ciclo 4', () => {
     expect(progressMutationSchema.safeParse({
       comentario: 'Conferido',
       proximaAcao: 'Cobrar retorno da unidade',
-      proximaAcaoEm: '25/08/2026',
+      proximaAcaoEm: '25/08/2099',
     }).success).toBe(true);
   });
 
-  it('dispensa próxima ação somente ao encerrar', () => {
+  it('exige justificativa para próxima providência já vencida', () => {
+    expect(progressMutationSchema.safeParse({
+      comentario: 'Conferido',
+      proximaAcao: 'Cobrar retorno da unidade',
+      proximaAcaoEm: '01/01/2000',
+      proximaAcaoJustificativa: '',
+    }).success).toBe(false);
+    expect(progressMutationSchema.safeParse({
+      comentario: 'Conferido',
+      proximaAcao: 'Cobrar retorno da unidade',
+      proximaAcaoEm: '01/01/2000',
+      proximaAcaoJustificativa: 'Registro tardio devidamente explicado',
+    }).success).toBe(true);
+  });
+
+  it('dispensa próxima providência somente ao encerrar', () => {
     expect(statusTransitionMutationSchema.safeParse({
       status: 'Tramitado',
       comentario: 'Encaminhado',

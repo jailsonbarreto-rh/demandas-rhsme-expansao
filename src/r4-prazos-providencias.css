@@ -1,0 +1,253 @@
+.deadline-control {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: #fbfcfd;
+}
+
+.deadline-control legend {
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.deadline-state-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.deadline-state-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.deadline-state-option.selected {
+  border-color: var(--primary-color);
+  background: rgba(23, 50, 77, 0.05);
+  color: var(--primary-color);
+  font-weight: 650;
+}
+
+.deadline-state-option input {
+  accent-color: var(--primary-color);
+}
+
+.deadline-helper,
+.edit-justification-guidance {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.edit-justification-guidance {
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent-color);
+  background: rgba(47, 111, 165, 0.05);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.past-follow-up-justification {
+  display: grid;
+  gap: 8px;
+}
+
+.past-follow-up-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.06);
+  color: #7c2d12;
+  font-size: 0.78rem;
+}
+
+.deadline-display {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.deadline-display.compact {
+  align-items: flex-start;
+}
+
+.deadline-display-date {
+  color: var(--primary-color);
+  font-size: 0.78rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.temporal-state {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.status-overdue,
+.prazo-status-label.status-overdue,
+.alerta-prazo-tag.vencido {
+  color: #991b1b;
+  background: rgba(185, 28, 28, 0.07);
+}
+
+.status-today,
+.prazo-status-label.status-today {
+  color: #854d0e;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.status-next-7-days,
+.prazo-status-label.status-next-7-days {
+  color: #1d4ed8;
+  background: rgba(47, 111, 165, 0.09);
+}
+
+.status-future,
+.prazo-status-label.status-future {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.status-missing {
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+}
+
+.status-not-applicable,
+.status-not-required {
+  color: #475569;
+  background: #eef2f7;
+}
+
+.next-action-cell {
+  display: grid;
+  gap: 7px;
+  min-width: 190px;
+  max-width: 250px;
+}
+
+.next-action-text {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.next-action-text.missing {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.next-action-highlight {
+  border: 1px solid rgba(47, 111, 165, 0.22);
+  border-left: 4px solid var(--accent-color);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(47, 111, 165, 0.07), rgba(255, 255, 255, 0.96));
+}
+
+.drawer-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.next-action-detail-copy {
+  margin-top: 10px;
+  color: var(--text-main);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.next-action-detail-copy.muted {
+  color: var(--text-muted);
+}
+
+.history-change-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+.history-change-list > div {
+  display: grid;
+  gap: 3px;
+}
+
+.history-change-list dt {
+  color: var(--text-muted);
+  font-size: 0.67rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.history-change-list dd {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.history-change-list strong {
+  color: var(--text-main);
+}
+
+.demandas-table {
+  min-width: 1380px;
+}
+
+@media (max-width: 768px) {
+  .deadline-state-options {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .deadline-state-option {
+    width: 100%;
+  }
+
+  .drawer-section-heading {
+    flex-direction: column;
+  }
+
+  .next-action-cell {
+    max-width: 220px;
+  }
+}

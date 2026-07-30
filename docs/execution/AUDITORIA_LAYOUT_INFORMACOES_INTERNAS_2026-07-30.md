@@ -2,13 +2,13 @@
 
 **Data:** 30 de julho de 2026  
 **Projeto:** Central de Demandas CTRH  
-**Branch:** `fix/layout-user-facing-information-audit`  
-**Estado:** implementação e validação concluídas; aguardando integração e publicação controlada  
-**Natureza:** correção transversal de apresentação; sem mudança de regra de negócio, banco ou permissões
+**Branch funcional:** `fix/layout-user-facing-information-audit`  
+**Estado:** implementação integrada, homologada e publicada em Production  
+**Natureza:** correção transversal de apresentação; sem alteração de banco, permissões ou regras do R5-2
 
 ## 1. Objetivo
 
-Revisar todas as superfícies visuais atuais para identificar elementos tecnicamente corretos que não deveriam ter sido expostos ao usuário final, especialmente após as implementações do R4 e do R5-1.
+Revisar todas as superfícies visuais atuais para identificar elementos tecnicamente corretos que não deveriam ser apresentados ao usuário final, especialmente após as implementações do R4 e do R5-1.
 
 A auditoria procurou:
 
@@ -18,7 +18,9 @@ A auditoria procurou:
 - referências a migrations, lotes, hashes e versões técnicas;
 - mensagens brutas do Supabase, PostgREST ou PostgreSQL;
 - jargão de implementação em ações e textos de apoio;
-- dados administrativos sem utilidade operacional para o usuário.
+- dados administrativos sem utilidade operacional para o usuário;
+- campos visualmente incompatíveis com o padrão profissional do produto;
+- orientações de regra que não apareciam no momento adequado do fluxo.
 
 ## 2. Superfícies examinadas
 
@@ -59,19 +61,50 @@ Novo comportamento:
 - o campo `Motivo da alteração *` aparece somente quando a alteração atual exige justificativa;
 - a primeira inclusão de um prazo antes ausente em registro importado continua sem exigir motivo;
 - o campo ocupa toda a largura disponível, possui altura adequada e não pode ser redimensionado pelo navegador;
-- a orientação exibida é: `O motivo será registrado no histórico da demanda.`;
-- a validação informa objetivamente o que falta no momento do salvamento.
+- a orientação exibida é `O motivo será registrado no histórico da demanda.`;
+- ao tentar salvar sem o motivo obrigatório, a interface informa `Informe o motivo da alteração para continuar (mínimo de 10 caracteres).`.
 
-### 3.2 Prazos
+### 3.2 Nova demanda
+
+Todos os campos funcionais foram preservados:
+
+- Tipo;
+- Número;
+- Assunto;
+- Responsável;
+- Prazo interno;
+- Prazo final;
+- Status;
+- Setor;
+- Classificação;
+- Próxima providência;
+- Data da próxima providência;
+- justificativa de data passada, quando aplicável.
+
+A verificação final identificou e corrigiu dois pontos:
+
+1. o campo `Próxima providência` passou a ocupar integralmente a área disponível, com altura mínima, borda, foco, tipografia e rótulo flutuante consistentes com os demais controles;
+2. ao clicar em `Salvar` com prazo interno ausente ou inválido, o sistema passa a abrir a mensagem explicativa `Prazo interno obrigatório`, sem ocultar os erros específicos junto aos campos.
+
+A mensagem apresentada é:
+
+> Toda nova demanda deve possuir um prazo interno definido. Informe a data antes de salvar o cadastro.
+
+Quando o usuário escolhe um status ativo, as regras de continuidade permanecem informadas junto aos campos, em linguagem direta:
+
+- `Descreva a próxima providência com pelo menos 5 caracteres.`;
+- `Informe a data de acompanhamento.`
+
+### 3.3 Prazos
 
 Os controles deixaram de mencionar registro legado ou exceção transitória. Os estados agora usam mensagens diretas:
 
 - `Nenhuma data foi informada para este prazo.`;
 - `Este prazo não se aplica à demanda.`
 
-A regra interna de preservação permanece inalterada.
+A regra interna de preservação permanece inalterada. Mensagens específicas, como data parcialmente preenchida, também foram preservadas.
 
-### 3.3 Histórico e detalhe
+### 3.4 Histórico e detalhe
 
 Foram retirados da apresentação:
 
@@ -88,16 +121,16 @@ O histórico agora:
 - apresenta vinculação técnica de responsável como `Cadastro do responsável atualizado.`;
 - preserva eventos operacionais escritos pelo usuário sem alteração de conteúdo.
 
-### 3.4 Radar de Governança
+### 3.5 Radar de Governança
 
 Foram substituídos:
 
 - `Vínculo legado pendente` por `Responsável não vinculado`;
 - `Processo #<id interno>` por `Processo não localizado` quando não há correlação segura.
 
-Os indicadores e cálculos analíticos não foram alterados.
+Os indicadores, cálculos analíticos e filtros por carteira não foram alterados.
 
-### 3.5 Mensagens de erro
+### 3.6 Mensagens de erro
 
 Foi criada uma barreira comum de apresentação para impedir que o layout revele:
 
@@ -108,7 +141,7 @@ Foi criada uma barreira comum de apresentação para impedir que o layout revele
 
 Mensagens de negócio legíveis são preservadas. Erros comuns de autenticação recebem tradução específica, como `E-mail ou senha incorretos.`
 
-### 3.6 Área administrativa
+### 3.7 Área administrativa
 
 Foram simplificados:
 
@@ -139,7 +172,7 @@ Esta auditoria não altera:
 - regras de prazo ou justificativa;
 - tratamento do legado;
 - modelo de dados;
-- migrations ou grants do Supabase;
+- migrations, RPCs, policies ou grants do Supabase;
 - permissões por papel;
 - indicadores do Radar;
 - exportação analítica;
@@ -156,19 +189,18 @@ Foram adicionados ou atualizados testes para impedir o retorno de:
 - referências a migrations, lotes e hashes;
 - `Vínculo legado pendente` e `Processo #ID` no Radar;
 - mensagens brutas de infraestrutura;
-- UUIDs nos diagnósticos administrativos.
+- UUIDs nos diagnósticos administrativos;
+- perda de campos dos formulários;
+- ausência da orientação de prazo interno ao salvar uma nova demanda;
+- regressão de largura, altura ou overflow nos formulários desktop e mobile.
 
-## 7. Validação
+## 7. Validação final
 
-### 7.1 TDD e suíte focal
+### 7.1 Gate técnico e visual combinado
 
-- RED comprovado no deployment `dpl_AWA5TTQThV46wUo6V4eCxEmehQsv`;
-- suíte focal: `dpl_FPFf5NRfANxgqpzhS95dREM4WWnT` — 8 arquivos e 32 testes aprovados;
-- regressões textuais: `dpl_PKAXbykjmV7sSjan6HqRaZsMe9wQ` — 4 arquivos e 13 testes aprovados.
+Deployment de validação: `dpl_8vU2o1ojgQDsjck7twsaaYUbJwGd` — `READY`.
 
-### 7.2 Gate canônico exato
-
-Deployment `dpl_6g7e6UUv9Gg88iepSTzchKB31mqa` — `READY`, derivado do SHA funcional `db2623d24fa7a310600e192aae70003c2eec9740` com apenas a habilitação temporária do gate.
+Base funcional validada: `a78aa8867ff5704fbeae58a540cf28f9f21ca9c2`.
 
 Resultados:
 
@@ -180,30 +212,51 @@ Resultados:
 - lint: aprovado;
 - 71 arquivos de teste aprovados;
 - 328 testes unitários e de integração aprovados;
-- cobertura global de linhas: 81,71%;
+- cobertura global de linhas: 81,74%;
 - TypeScript e build Vite: aprovados;
 - bundle inicial: 194.126 bytes, 60,16% abaixo da linha de base;
-- limite de bundle preservado em 560.330 bytes;
-- inspeção pública aprovada.
+- inspeção pública: aprovada.
 
-### 7.3 Navegador
+### 7.2 Navegador
 
-Deployment específico `dpl_HVXwqDrJmgn5CbsvHAbgDj3WVLhN`:
+No mesmo deployment foram aprovados quatro cenários focais:
 
-- 2 de 2 novos cenários aprovados;
-- desktop Chromium;
-- mobile com largura de 320 px;
-- ausência de ID e linguagem de transição no modal;
-- campo de motivo oculto inicialmente;
-- exibição contextual após alteração auditável;
-- largura integral, altura mínima e redimensionamento desativado.
+- edição em desktop;
+- nova demanda em desktop;
+- edição em mobile de 320 px;
+- nova demanda em mobile de 320 px.
 
-Os 22 cenários regressivos existentes também foram executados durante a auditoria e permaneceram aprovados após a atualização das expectativas textuais legítimas.
+Os cenários confirmaram:
 
-## 8. Supabase
+- preservação de todos os campos funcionais;
+- ausência de UUIDs, nomes de banco e termos técnicos indevidos;
+- exibição contextual do motivo na edição;
+- mensagem explicativa ao salvar alteração sem motivo;
+- mensagem explicativa ao salvar nova demanda sem prazo interno;
+- erros específicos junto aos campos;
+- largura e altura adequadas dos controles;
+- ausência de overflow horizontal.
+
+Os 22 cenários regressivos existentes também permaneceram aprovados em desktop e mobile, incluindo acessibilidade, navegação, filtros, modais, exportação e console.
+
+## 8. Integração e publicação
+
+- PR funcional: **#109**;
+- merge funcional: `8ae2ff95152371ccc6ada2dc4580010b311b79e4`;
+- PR de release: **#110**;
+- merge de release: `2bc78dca066b0c4d592b4e6c5bc4c4db5290b507`;
+- deployment de Production: `dpl_7G72xFXcQUKtYELrGhXha1xi7UPE` — `READY`;
+- domínio principal: HTTP 200;
+- `/demandas`: HTTP 200;
+- `/admin`: HTTP 200;
+- rewrites SPA preservados.
+
+O bloqueio de deployments automáticos foi restaurado no PR de encerramento operacional.
+
+## 9. Supabase
 
 Nenhuma migration, RPC, policy, grant, coluna ou registro foi alterado. O pacote atua apenas na camada de apresentação, validação do frontend e tratamento seguro das mensagens recebidas.
 
-## 9. Conclusão
+## 10. Conclusão
 
-As ocorrências identificadas eram problemas de apresentação, não de regra ou persistência. A correção mantém todas as decisões de produto vigentes e estabelece uma fronteira explícita: dados e regras técnicas podem existir internamente, mas a interface deve apresentar somente informações compreensíveis, úteis e acionáveis para cada perfil de usuário.
+As ocorrências identificadas eram problemas de apresentação, orientação e consistência visual, não de persistência. A correção mantém as decisões de produto vigentes e estabelece uma fronteira explícita: dados e regras técnicas podem existir internamente, mas a interface deve apresentar somente informações compreensíveis, úteis e acionáveis para cada perfil de usuário.

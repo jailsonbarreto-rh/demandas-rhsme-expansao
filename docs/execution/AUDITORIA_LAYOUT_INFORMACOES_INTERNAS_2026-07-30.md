@@ -3,6 +3,7 @@
 **Data:** 30 de julho de 2026  
 **Projeto:** Central de Demandas CTRH  
 **Branch:** `fix/layout-user-facing-information-audit`  
+**Estado:** implementação e validação concluídas; aguardando integração e publicação controlada  
 **Natureza:** correção transversal de apresentação; sem mudança de regra de negócio, banco ou permissões
 
 ## 1. Objetivo
@@ -56,7 +57,7 @@ Foram removidos:
 Novo comportamento:
 
 - o campo `Motivo da alteração *` aparece somente quando a alteração atual exige justificativa;
-- a primeira inclusão de um prazo antes ausente continua sem exigir motivo;
+- a primeira inclusão de um prazo antes ausente em registro importado continua sem exigir motivo;
 - o campo ocupa toda a largura disponível, possui altura adequada e não pode ser redimensionado pelo navegador;
 - a orientação exibida é: `O motivo será registrado no histórico da demanda.`;
 - a validação informa objetivamente o que falta no momento do salvamento.
@@ -157,6 +158,52 @@ Foram adicionados ou atualizados testes para impedir o retorno de:
 - mensagens brutas de infraestrutura;
 - UUIDs nos diagnósticos administrativos.
 
-## 7. Conclusão
+## 7. Validação
+
+### 7.1 TDD e suíte focal
+
+- RED comprovado no deployment `dpl_AWA5TTQThV46wUo6V4eCxEmehQsv`;
+- suíte focal: `dpl_FPFf5NRfANxgqpzhS95dREM4WWnT` — 8 arquivos e 32 testes aprovados;
+- regressões textuais: `dpl_PKAXbykjmV7sSjan6HqRaZsMe9wQ` — 4 arquivos e 13 testes aprovados.
+
+### 7.2 Gate canônico exato
+
+Deployment `dpl_6g7e6UUv9Gg88iepSTzchKB31mqa` — `READY`, derivado do SHA funcional `db2623d24fa7a310600e192aae70003c2eec9740` com apenas a habilitação temporária do gate.
+
+Resultados:
+
+- auditoria de dependências: zero vulnerabilidades;
+- 560 pacotes com assinaturas verificadas;
+- 147 pacotes com atestações verificadas;
+- compatibilidade transitiva: 3/3;
+- documentação canônica: 9/9;
+- lint: aprovado;
+- 71 arquivos de teste aprovados;
+- 328 testes unitários e de integração aprovados;
+- cobertura global de linhas: 81,71%;
+- TypeScript e build Vite: aprovados;
+- bundle inicial: 194.126 bytes, 60,16% abaixo da linha de base;
+- limite de bundle preservado em 560.330 bytes;
+- inspeção pública aprovada.
+
+### 7.3 Navegador
+
+Deployment específico `dpl_HVXwqDrJmgn5CbsvHAbgDj3WVLhN`:
+
+- 2 de 2 novos cenários aprovados;
+- desktop Chromium;
+- mobile com largura de 320 px;
+- ausência de ID e linguagem de transição no modal;
+- campo de motivo oculto inicialmente;
+- exibição contextual após alteração auditável;
+- largura integral, altura mínima e redimensionamento desativado.
+
+Os 22 cenários regressivos existentes também foram executados durante a auditoria e permaneceram aprovados após a atualização das expectativas textuais legítimas.
+
+## 8. Supabase
+
+Nenhuma migration, RPC, policy, grant, coluna ou registro foi alterado. O pacote atua apenas na camada de apresentação, validação do frontend e tratamento seguro das mensagens recebidas.
+
+## 9. Conclusão
 
 As ocorrências identificadas eram problemas de apresentação, não de regra ou persistência. A correção mantém todas as decisões de produto vigentes e estabelece uma fronteira explícita: dados e regras técnicas podem existir internamente, mas a interface deve apresentar somente informações compreensíveis, úteis e acionáveis para cada perfil de usuário.

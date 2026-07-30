@@ -12,6 +12,7 @@ import type {
   RestoreDemandaInput,
   StatusTransitionInput,
 } from '../types';
+import { requiresDeadlineChangeJustification } from '../domain/deadlineRules';
 import {
   createDemandaMutationSchema,
   deleteMutationSchema,
@@ -29,9 +30,7 @@ const DEMO_AUTHOR = 'Usuário Demonstração';
 export type StorageAdapter = Pick<Storage, 'getItem' | 'setItem'>;
 
 function inferDeadlineState(value: unknown, state: unknown): DeadlineState {
-  if (state === 'definido' || state === 'nao_informado' || state === 'nao_se_aplica') {
-    return state;
-  }
+  if (state === 'definido' || state === 'nao_informado' || state === 'nao_se_aplica') return state;
   return typeof value === 'string' && value.trim() ? 'definido' : 'nao_informado';
 }
 
@@ -45,23 +44,17 @@ function normalizeDemanda(value: any, fallbackOrigin: DemandOrigin): Demanda {
     responsavelId: typeof value.responsavelId === 'string' ? value.responsavelId : null,
     limite1: typeof value.limite1 === 'string' ? value.limite1 : '',
     limite1Situacao: inferDeadlineState(value.limite1, value.limite1Situacao),
-    limite1Justificativa: typeof value.limite1Justificativa === 'string'
-      ? value.limite1Justificativa
-      : '',
+    limite1Justificativa: typeof value.limite1Justificativa === 'string' ? value.limite1Justificativa : '',
     limite2: typeof value.limite2 === 'string' ? value.limite2 : '',
     limite2Situacao: inferDeadlineState(value.limite2, value.limite2Situacao),
-    limite2Justificativa: typeof value.limite2Justificativa === 'string'
-      ? value.limite2Justificativa
-      : '',
+    limite2Justificativa: typeof value.limite2Justificativa === 'string' ? value.limite2Justificativa : '',
     proximaAcao: typeof value.proximaAcao === 'string' ? value.proximaAcao : '',
     proximaAcaoEm: typeof value.proximaAcaoEm === 'string' ? value.proximaAcaoEm : '',
     linkOrigem: typeof value.linkOrigem === 'string' ? value.linkOrigem : '',
     status: value.status,
     setor: typeof value.setor === 'string' ? value.setor : '',
     classificacao: typeof value.classificacao === 'string' ? value.classificacao : '',
-    origem: value.origem === 'legado' || value.origem === 'sistema'
-      ? value.origem
-      : fallbackOrigin,
+    origem: value.origem === 'legado' || value.origem === 'sistema' ? value.origem : fallbackOrigin,
     deletedAt: typeof value.deletedAt === 'string' ? value.deletedAt : '',
     deletedBy: typeof value.deletedBy === 'string' ? value.deletedBy : null,
     deletionReason: typeof value.deletionReason === 'string' ? value.deletionReason : '',
@@ -87,10 +80,17 @@ function normalizeHistorico(value: any): ComentarioHistorico {
 }
 
 function fieldChange(field: string, before: unknown, after: unknown): FieldChange {
-  const normalize = (value: unknown) => value === null || value === undefined
-    ? null
-    : String(value);
+  const normalize = (value: unknown) => value === null || value === undefined ? null : String(value);
   return { field, before: normalize(before), after: normalize(after) };
+}
+
+function usefulLength(value: string): number {
+  return value.replace(/\s+/g, ' ').trim().length;
+}
+
+function appendPastJustification(comment: string, justification: string): string {
+  const clean = justification.trim();
+  return clean ? `${comment.trim()}\nJustificativa da data vencida: ${clean}` : comment.trim();
 }
 
 export class LocalDemandasRepository implements DemandasRepository {
@@ -103,32 +103,25 @@ export class LocalDemandasRepository implements DemandasRepository {
   ) {}
 
   private isValidDemandaArray(arr: any): arr is any[] {
-    if (!Array.isArray(arr)) return false;
-    return arr.every(d =>
-      d &&
-      typeof d.id === 'number' &&
-      typeof d.numero === 'string' && d.numero.trim() !== '' &&
-      typeof d.tipo === 'string' &&
-      typeof d.assunto === 'string' &&
-      typeof d.status === 'string'
-    );
+    return Array.isArray(arr) && arr.every((d) => d
+      && typeof d.id === 'number'
+      && typeof d.numero === 'string' && d.numero.trim() !== ''
+      && typeof d.tipo === 'string'
+      && typeof d.assunto === 'string'
+      && typeof d.status === 'string');
   }
 
   private isValidHistoryArray(arr: any): arr is any[] {
-    if (!Array.isArray(arr)) return false;
-    return arr.every(h =>
-      h &&
-      typeof h.id === 'number' &&
-      typeof h.demandaId === 'number' &&
-      typeof h.status_novo === 'string' &&
-      typeof h.comentario === 'string'
-    );
+    return Array.isArray(arr) && arr.every((h) => h
+      && typeof h.id === 'number'
+      && typeof h.demandaId === 'number'
+      && typeof h.status_novo === 'string'
+      && typeof h.comentario === 'string');
   }
 
   async load(): Promise<AppData> {
     const rawDemandas = this.storage.getItem(DEMANDAS_KEY);
     const rawHistorico = this.storage.getItem(HISTORY_KEY);
-
     let parsedDemandas: Demanda[] | null = null;
     let parsedHistorico: ComentarioHistorico[] | null = null;
     let houveErroParse = false;
@@ -136,15 +129,11 @@ export class LocalDemandasRepository implements DemandasRepository {
     if (rawDemandas !== null && rawHistorico !== null) {
       const storedDemandas = this.read<any[]>(DEMANDAS_KEY);
       const storedHistorico = this.read<any[]>(HISTORY_KEY);
-
       if (storedDemandas === null || storedHistorico === null) houveErroParse = true;
-
       if (this.isValidDemandaArray(storedDemandas) && this.isValidHistoryArray(storedHistorico)) {
-        const demandaIds = new Set(storedDemandas.map(d => d.id));
+        const demandaIds = new Set(storedDemandas.map((d) => d.id));
         parsedDemandas = storedDemandas.map((demanda) => normalizeDemanda(demanda, 'legado'));
-        parsedHistorico = storedHistorico
-          .filter(h => demandaIds.has(h.demandaId))
-          .map(normalizeHistorico);
+        parsedHistorico = storedHistorico.filter((h) => demandaIds.has(h.demandaId)).map(normalizeHistorico);
       }
     }
 
@@ -191,18 +180,16 @@ export class LocalDemandasRepository implements DemandasRepository {
   }
 
   async create(input: CreateDemandaInput): Promise<void> {
-    if (this.demandas.some(d => d.numero.trim().toLowerCase() === input.numero.trim().toLowerCase())) {
+    if (this.demandas.some((d) => d.numero.trim().toLowerCase() === input.numero.trim().toLowerCase())) {
       throw new Error('Já existe uma demanda cadastrada com este número de processo.');
     }
-
-    const id = this.demandas.length > 0
-      ? Math.max(...this.demandas.map((demanda) => demanda.id)) + 1
-      : 1;
+    const parsed = createDemandaMutationSchema.parse(input);
+    const id = this.demandas.length > 0 ? Math.max(...this.demandas.map((d) => d.id)) + 1 : 1;
     const now = new Date().toISOString();
-
+    const { proximaAcaoJustificativa, ...demandFields } = parsed;
     const demanda: Demanda = {
       id,
-      ...createDemandaMutationSchema.parse(input),
+      ...demandFields,
       origem: 'sistema',
       deletedAt: '',
       deletedBy: null,
@@ -211,25 +198,39 @@ export class LocalDemandasRepository implements DemandasRepository {
       updatedAt: now,
     };
 
-    const event: ComentarioHistorico = this.createEvent(
+    const event = this.createEvent(
       demanda,
       'criacao',
       '',
-      'Demanda cadastrada no sistema.',
+      appendPastJustification('Demanda cadastrada no sistema.', proximaAcaoJustificativa),
       [
         fieldChange('status', null, demanda.status),
         fieldChange('setor', null, demanda.setor),
         fieldChange('origem', null, demanda.origem),
+        fieldChange('limite1', null, demanda.limite1),
+        fieldChange('limite1_situacao', null, demanda.limite1Situacao),
+        fieldChange('limite2', null, demanda.limite2),
+        fieldChange('limite2_situacao', null, demanda.limite2Situacao),
+        fieldChange('proxima_acao', null, demanda.proximaAcao),
+        fieldChange('proxima_acao_em', null, demanda.proximaAcaoEm),
       ],
     );
-
     this.persist([demanda, ...this.demandas], [event, ...this.historico]);
   }
 
   async edit(id: number, input: EditDemandaInput): Promise<void> {
     const parsed = editDemandaMutationSchema.parse(input);
     const current = this.requireActive(id);
-    const changes: FieldChange[] = [];
+
+    if (parsed.limite1Situacao === 'nao_se_aplica') {
+      throw new Error('O prazo interno não pode ser marcado como Não se aplica.');
+    }
+    if (current.limite1Situacao !== 'nao_informado' && parsed.limite1Situacao === 'nao_informado') {
+      throw new Error('Um prazo interno já registrado não pode voltar a Não informado.');
+    }
+    if (current.limite2Situacao !== 'nao_informado' && parsed.limite2Situacao === 'nao_informado') {
+      throw new Error('Um prazo final já registrado não pode voltar a Não informado.');
+    }
 
     const next: Demanda = {
       ...current,
@@ -245,8 +246,6 @@ export class LocalDemandasRepository implements DemandasRepository {
       setor: parsed.setor,
       classificacao: parsed.classificacao,
       linkOrigem: parsed.linkOrigem,
-      proximaAcao: current.status === 'Encerrado' ? '' : parsed.proximaAcao,
-      proximaAcaoEm: current.status === 'Encerrado' ? '' : parsed.proximaAcaoEm,
       updatedAt: new Date().toISOString(),
     };
 
@@ -254,32 +253,46 @@ export class LocalDemandasRepository implements DemandasRepository {
       'assunto' | 'responsavelId' | 'responsavel' |
       'limite1' | 'limite1Situacao' | 'limite1Justificativa' |
       'limite2' | 'limite2Situacao' | 'limite2Justificativa' |
-      'setor' | 'classificacao' | 'linkOrigem' | 'proximaAcao' | 'proximaAcaoEm'
+      'setor' | 'classificacao' | 'linkOrigem'
     >> = [
       'assunto', 'responsavelId', 'responsavel',
       'limite1', 'limite1Situacao', 'limite1Justificativa',
       'limite2', 'limite2Situacao', 'limite2Justificativa',
-      'setor', 'classificacao', 'linkOrigem', 'proximaAcao', 'proximaAcaoEm',
+      'setor', 'classificacao', 'linkOrigem',
     ];
-
-    for (const field of fields) {
-      if (current[field] !== next[field]) changes.push(fieldChange(field, current[field], next[field]));
-    }
+    const changes = fields
+      .filter((field) => current[field] !== next[field])
+      .map((field) => fieldChange(field, current[field], next[field]));
     if (changes.length === 0) throw new Error('Nenhuma alteração foi identificada.');
 
-    const responsibilityFields = new Set(['responsavelId', 'responsavel']);
+    const internalNeedsReason = requiresDeadlineChangeJustification(
+      { state: current.limite1Situacao, date: current.limite1 },
+      { state: next.limite1Situacao, date: next.limite1 },
+    );
+    const finalNeedsReason = requiresDeadlineChangeJustification(
+      { state: current.limite2Situacao, date: current.limite2 },
+      { state: next.limite2Situacao, date: next.limite2 },
+    );
     const deadlineFields = new Set([
       'limite1', 'limite1Situacao', 'limite1Justificativa',
       'limite2', 'limite2Situacao', 'limite2Justificativa',
     ]);
+    const onlyDeadlineChanges = changes.every((change) => deadlineFields.has(change.field));
+    const requiresReason = internalNeedsReason || finalNeedsReason || !onlyDeadlineChanges;
+    if (requiresReason && usefulLength(parsed.justificativa) < 10) {
+      throw new Error('Justifique a alteração com pelo menos 10 caracteres.');
+    }
+
+    const responsibilityFields = new Set(['responsavelId', 'responsavel']);
     const changedNames = changes.map((change) => change.field);
     const type: HistoryEventType = changedNames.every((field) => responsibilityFields.has(field))
       ? 'reatribuicao'
-      : changedNames.every((field) => deadlineFields.has(field))
+      : onlyDeadlineChanges
         ? 'alteracao_prazo'
         : 'edicao';
-
-    const event = this.createEvent(next, type, current.status, parsed.justificativa, changes);
+    const comment = parsed.justificativa.trim()
+      || (onlyDeadlineChanges ? 'Prazo ausente no legado preenchido pela primeira vez.' : 'Dados atualizados.');
+    const event = this.createEvent(next, type, current.status, comment, changes);
     this.persist(
       this.demandas.map((demanda) => demanda.id === id ? next : demanda),
       [event, ...this.historico],
@@ -292,7 +305,6 @@ export class LocalDemandasRepository implements DemandasRepository {
     if (current.status === 'Encerrado') {
       throw new Error('Demanda encerrada não recebe andamento. Use a transição de status para reabri-la.');
     }
-
     const next: Demanda = {
       ...current,
       proximaAcao: parsed.proximaAcao,
@@ -300,18 +312,17 @@ export class LocalDemandasRepository implements DemandasRepository {
       updatedAt: new Date().toISOString(),
     };
     const changes = [
-      ...(current.proximaAcao !== next.proximaAcao
-        ? [fieldChange('proximaAcao', current.proximaAcao, next.proximaAcao)]
-        : []),
-      ...(current.proximaAcaoEm !== next.proximaAcaoEm
-        ? [fieldChange('proximaAcaoEm', current.proximaAcaoEm, next.proximaAcaoEm)]
-        : []),
+      ...(current.proximaAcao !== next.proximaAcao ? [fieldChange('proxima_acao', current.proximaAcao, next.proximaAcao)] : []),
+      ...(current.proximaAcaoEm !== next.proximaAcaoEm ? [fieldChange('proxima_acao_em', current.proximaAcaoEm, next.proximaAcaoEm)] : []),
     ];
-    const event = this.createEvent(next, 'andamento', current.status, parsed.comentario, changes);
-    this.persist(
-      this.demandas.map((demanda) => demanda.id === id ? next : demanda),
-      [event, ...this.historico],
+    const event = this.createEvent(
+      next,
+      'andamento',
+      current.status,
+      appendPastJustification(parsed.comentario, parsed.proximaAcaoJustificativa),
+      changes,
     );
+    this.persist(this.demandas.map((demanda) => demanda.id === id ? next : demanda), [event, ...this.historico]);
   }
 
   async transitionStatus(id: number, input: StatusTransitionInput): Promise<void> {
@@ -320,7 +331,6 @@ export class LocalDemandasRepository implements DemandasRepository {
     if (current.status === parsed.status) {
       throw new Error('O status informado já é o atual. Use Registrar andamento para incluir nova movimentação.');
     }
-
     const next: Demanda = {
       ...current,
       status: parsed.status,
@@ -330,18 +340,17 @@ export class LocalDemandasRepository implements DemandasRepository {
     };
     const changes = [
       fieldChange('status', current.status, next.status),
-      ...(current.proximaAcao !== next.proximaAcao
-        ? [fieldChange('proximaAcao', current.proximaAcao, next.proximaAcao)]
-        : []),
-      ...(current.proximaAcaoEm !== next.proximaAcaoEm
-        ? [fieldChange('proximaAcaoEm', current.proximaAcaoEm, next.proximaAcaoEm)]
-        : []),
+      ...(current.proximaAcao !== next.proximaAcao ? [fieldChange('proxima_acao', current.proximaAcao, next.proximaAcao)] : []),
+      ...(current.proximaAcaoEm !== next.proximaAcaoEm ? [fieldChange('proxima_acao_em', current.proximaAcaoEm, next.proximaAcaoEm)] : []),
     ];
-    const event = this.createEvent(next, 'mudanca_status', current.status, parsed.comentario, changes);
-    this.persist(
-      this.demandas.map((demanda) => demanda.id === id ? next : demanda),
-      [event, ...this.historico],
+    const event = this.createEvent(
+      next,
+      'mudanca_status',
+      current.status,
+      appendPastJustification(parsed.comentario, parsed.proximaAcaoJustificativa),
+      changes,
     );
+    this.persist(this.demandas.map((demanda) => demanda.id === id ? next : demanda), [event, ...this.historico]);
   }
 
   async deleteLogically(id: number, input: DeleteDemandaInput): Promise<void> {
@@ -359,10 +368,7 @@ export class LocalDemandasRepository implements DemandasRepository {
       fieldChange('deletedAt', null, deletedAt),
       fieldChange('deletionReason', null, parsed.motivo),
     ]);
-    this.persist(
-      this.demandas.map((demanda) => demanda.id === id ? next : demanda),
-      [event, ...this.historico],
-    );
+    this.persist(this.demandas.map((demanda) => demanda.id === id ? next : demanda), [event, ...this.historico]);
   }
 
   async restore(id: number, input: RestoreDemandaInput): Promise<void> {
@@ -370,7 +376,6 @@ export class LocalDemandasRepository implements DemandasRepository {
     const current = this.demandas.find((demanda) => demanda.id === id);
     if (!current) throw new Error('Demanda não encontrada.');
     if (!current.deletedAt) throw new Error('A demanda não está excluída.');
-
     const next: Demanda = {
       ...current,
       deletedAt: '',
@@ -382,10 +387,7 @@ export class LocalDemandasRepository implements DemandasRepository {
       fieldChange('deletedAt', current.deletedAt, null),
       fieldChange('deletionReason', current.deletionReason, null),
     ]);
-    this.persist(
-      this.demandas.map((demanda) => demanda.id === id ? next : demanda),
-      [event, ...this.historico],
-    );
+    this.persist(this.demandas.map((demanda) => demanda.id === id ? next : demanda), [event, ...this.historico]);
   }
 
   subscribe(onRemoteChange: () => void): () => void {
@@ -424,10 +426,8 @@ export class LocalDemandasRepository implements DemandasRepository {
   }
 
   private persist(nextDemandas: Demanda[], nextHistorico: ComentarioHistorico[]): void {
-    const demandasJson = JSON.stringify(nextDemandas);
-    const historicoJson = JSON.stringify(nextHistorico);
-    this.storage.setItem(DEMANDAS_KEY, demandasJson);
-    this.storage.setItem(HISTORY_KEY, historicoJson);
+    this.storage.setItem(DEMANDAS_KEY, JSON.stringify(nextDemandas));
+    this.storage.setItem(HISTORY_KEY, JSON.stringify(nextHistorico));
     this.demandas = nextDemandas;
     this.historico = nextHistorico;
   }

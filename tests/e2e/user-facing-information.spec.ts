@@ -22,7 +22,7 @@ test('edição apresenta somente informações úteis e motivo contextual', asyn
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText(/registro legado/i)).toHaveCount(0);
   await expect(dialog.getByText(/responsável legado/i)).toHaveCount(0);
-  await expect(dialog.getByDisplayValue(/ID:\s*5/i)).toHaveCount(0);
+  await expect(dialog.locator('input[value^="ID:"]')).toHaveCount(0);
   await expect(dialog.getByLabel(/motivo da alteração/i)).toHaveCount(0);
 
   await dialog.getByRole('radiogroup', { name: /situação de prazo interno/i })

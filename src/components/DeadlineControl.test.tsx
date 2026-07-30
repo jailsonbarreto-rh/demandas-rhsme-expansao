@@ -1,8 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DeadlineControl } from './DeadlineControl';
 
 describe('DeadlineControl', () => {
+  afterEach(cleanup);
+
   it('mostra a data apenas quando o prazo está definido', () => {
     render(
       <DeadlineControl

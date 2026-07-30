@@ -25,7 +25,7 @@ test('edição apresenta somente informações úteis e motivo contextual', asyn
   await expect(dialog.getByDisplayValue(/ID:\s*5/i)).toHaveCount(0);
   await expect(dialog.getByLabel(/motivo da alteração/i)).toHaveCount(0);
 
-  await dialog.getByRole('group', { name: /situação de prazo interno/i })
+  await dialog.getByRole('radiogroup', { name: /situação de prazo interno/i })
     .getByLabel('Data definida')
     .click();
   await dialog.getByLabel('Data de prazo interno').fill('20/08/2099');

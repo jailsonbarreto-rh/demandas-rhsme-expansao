@@ -108,8 +108,8 @@ test('nova demanda preserva todos os campos e apresenta avisos explicativos ao s
   await expect(dialog.getByLabel('Status')).toBeVisible();
   await expect(dialog.getByLabel(/setor/i)).toBeVisible();
   await expect(dialog.getByLabel(/classificação/i)).toBeVisible();
-  await expect(dialog.getByLabel('Próxima providência')).toBeVisible();
-  await expect(dialog.getByLabel('Data da próxima providência')).toBeVisible();
+  await expect(dialog.getByLabel('Próxima providência', { exact: true })).toBeVisible();
+  await expect(dialog.getByLabel('Data da próxima providência', { exact: true })).toBeVisible();
 
   await expect(dialog.getByText(/uuid|supabase|pgrst|sqlstate|responsavel_id|nao_informado|registro legado/i)).toHaveCount(0);
   await expectProfessionalControlLayout(dialog);

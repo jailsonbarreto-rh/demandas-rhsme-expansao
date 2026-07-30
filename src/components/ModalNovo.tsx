@@ -69,10 +69,12 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
     (invalid) => {
       const internalDeadline = getValues('limite1');
       if (invalid.limite1 || invalid.limite1Situacao || !isValidDateString(internalDeadline)) {
-        setError('limite1', {
-          type: 'manual',
-          message: 'Informe uma data válida para o prazo definido.',
-        });
+        if (!invalid.limite1 && !invalid.limite1Situacao) {
+          setError('limite1', {
+            type: 'manual',
+            message: 'Informe uma data válida para o prazo definido.',
+          });
+        }
         setDeadlineRequiredAlert(true);
       }
     },

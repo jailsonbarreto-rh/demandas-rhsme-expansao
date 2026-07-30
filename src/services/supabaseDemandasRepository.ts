@@ -131,20 +131,18 @@ export class SupabaseDemandasRepository implements DemandasRepository {
   }
 
   async create(input: CreateDemandaInput): Promise<void> {
-    const { error } = await this.client.rpc('criar_sme_demanda_v2', {
+    const { error } = await this.client.rpc('criar_sme_demanda_r4', {
       p_numero: input.numero,
       p_tipo: input.tipo,
       p_assunto: input.assunto,
       p_responsavel_id: input.responsavelId,
-      p_responsavel: input.responsavel,
       p_limite1: toDatabaseDate(input.limite1),
       p_limite1_situacao: input.limite1Situacao,
-      p_limite1_justificativa: input.limite1Justificativa,
       p_limite2: toDatabaseDate(input.limite2),
       p_limite2_situacao: input.limite2Situacao,
-      p_limite2_justificativa: input.limite2Justificativa,
       p_proxima_acao: input.proximaAcao,
       p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
+      p_proxima_acao_justificativa: input.proximaAcaoJustificativa,
       p_status: input.status,
       p_setor: input.setor,
       p_classificacao: input.classificacao,
@@ -154,44 +152,41 @@ export class SupabaseDemandasRepository implements DemandasRepository {
   }
 
   async edit(id: number, input: EditDemandaInput): Promise<void> {
-    const { error } = await this.client.rpc('editar_sme_demanda', {
+    const { error } = await this.client.rpc('editar_sme_demanda_r4', {
       p_demanda_id: id,
       p_assunto: input.assunto,
       p_responsavel_id: input.responsavelId,
-      p_responsavel: input.responsavel,
       p_limite1: toDatabaseDate(input.limite1),
       p_limite1_situacao: input.limite1Situacao,
-      p_limite1_justificativa: input.limite1Justificativa,
       p_limite2: toDatabaseDate(input.limite2),
       p_limite2_situacao: input.limite2Situacao,
-      p_limite2_justificativa: input.limite2Justificativa,
       p_setor: input.setor,
       p_classificacao: input.classificacao,
       p_link_origem: input.linkOrigem,
-      p_proxima_acao: input.proximaAcao,
-      p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
       p_justificativa: input.justificativa,
     });
     throwIfError(error);
   }
 
   async registerProgress(id: number, input: ProgressInput): Promise<void> {
-    const { error } = await this.client.rpc('registrar_andamento_sme_demanda', {
+    const { error } = await this.client.rpc('registrar_andamento_sme_demanda_r4', {
       p_demanda_id: id,
       p_comentario: input.comentario,
       p_proxima_acao: input.proximaAcao,
-      p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm) ?? '',
+      p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
+      p_proxima_acao_justificativa: input.proximaAcaoJustificativa,
     });
     throwIfError(error);
   }
 
   async transitionStatus(id: number, input: StatusTransitionInput): Promise<void> {
-    const { error } = await this.client.rpc('transicionar_status_sme_demanda', {
+    const { error } = await this.client.rpc('transicionar_status_sme_demanda_r4', {
       p_demanda_id: id,
       p_novo_status: input.status,
       p_comentario: input.comentario,
       p_proxima_acao: input.proximaAcao,
       p_proxima_acao_em: toDatabaseDate(input.proximaAcaoEm),
+      p_proxima_acao_justificativa: input.proximaAcaoJustificativa,
     });
     throwIfError(error);
   }

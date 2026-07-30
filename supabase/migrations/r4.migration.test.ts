@@ -1,12 +1,15 @@
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+const migrationsDir = dirname(fileURLToPath(import.meta.url));
 const rules = readFileSync(
-  new URL('./20260730023000_r4_deadlines_and_follow_up_rules.sql', import.meta.url),
+  resolve(migrationsDir, '20260730023000_r4_deadlines_and_follow_up_rules.sql'),
   'utf8',
 );
 const constraints = readFileSync(
-  new URL('./20260730023100_r4_deadline_consistency_constraints.sql', import.meta.url),
+  resolve(migrationsDir, '20260730023100_r4_deadline_consistency_constraints.sql'),
   'utf8',
 );
 

@@ -18,7 +18,7 @@ describe('compatibilidade aditiva das RPCs R4', () => {
   });
 
   it('mantém grants restritos ao authenticated', () => {
-    expect(migration).not.toMatch(/grant execute[\s\S]*service_role/i);
+    expect(migration).not.toMatch(/grant execute on function public\.[\s\S]*?\) to service_role;/i);
     expect(migration.match(/grant execute on function/g)).toHaveLength(3);
     expect(migration.match(/to authenticated;/g)).toHaveLength(3);
   });

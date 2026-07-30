@@ -101,7 +101,7 @@ describe('apresentação R4 na carteira e no detalhe', () => {
     expect(headings.indexOf('Próxima providência')).toBeLessThan(headings.indexOf('Prazos'));
     expect(drawer.getByText(active.proximaAcao)).toBeInTheDocument();
     expect(drawer.getByText('31/12/1999')).toBeInTheDocument();
-    expect(drawer.getByText('01/01/2000')).toBeInTheDocument();
+    expect(drawer.getAllByText('01/01/2000').length).toBeGreaterThanOrEqual(2);
     expect(drawer.getByText('Reprogramação aprovada após nova análise')).toBeInTheDocument();
   });
 });

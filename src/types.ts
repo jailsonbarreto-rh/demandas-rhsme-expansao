@@ -48,7 +48,7 @@ export interface Demanda {
   updatedAt: string;
 }
 
-export type CreateDemandaInput = Omit<
+export interface CreateDemandaInput extends Omit<
   Demanda,
   | 'id'
   | 'createdAt'
@@ -57,7 +57,9 @@ export type CreateDemandaInput = Omit<
   | 'deletedAt'
   | 'deletedBy'
   | 'deletionReason'
->;
+> {
+  proximaAcaoJustificativa: string;
+}
 
 export interface EditDemandaInput {
   assunto: string;
@@ -72,8 +74,6 @@ export interface EditDemandaInput {
   setor: string;
   classificacao: string;
   linkOrigem: string;
-  proximaAcao: string;
-  proximaAcaoEm: string;
   justificativa: string;
 }
 
@@ -81,6 +81,7 @@ export interface ProgressInput {
   comentario: string;
   proximaAcao: string;
   proximaAcaoEm: string;
+  proximaAcaoJustificativa: string;
 }
 
 export interface StatusTransitionInput extends ProgressInput {

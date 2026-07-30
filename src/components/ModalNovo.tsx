@@ -3,6 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { DeadlineState, PerfilMinimo } from '../types';
 import { demandaFormSchema, type DemandaFormValues, statusValues, tipoValues } from '../validation/demandaSchemas';
+import { isValidDateString } from '../utils/date';
 import { DateMaskInput } from './DateMaskInput';
 import { DeadlineControl } from './DeadlineControl';
 import { PastFollowUpJustification } from './PastFollowUpJustification';
@@ -29,6 +30,8 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
     register,
     control,
     handleSubmit,
+    getValues,
+    setError,
     setValue,
     watch,
     formState: { errors, isDirty, isSubmitting },
@@ -64,7 +67,14 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
   const submit = handleSubmit(
     async (values) => { await onSalvar(values); },
     (invalid) => {
-      if (invalid.limite1 || invalid.limite1Situacao) setDeadlineRequiredAlert(true);
+      const internalDeadline = getValues('limite1');
+      if (invalid.limite1 || invalid.limite1Situacao || !isValidDateString(internalDeadline)) {
+        setError('limite1', {
+          type: 'manual',
+          message: 'Informe uma data válida para o prazo definido.',
+        });
+        setDeadlineRequiredAlert(true);
+      }
     },
   );
 

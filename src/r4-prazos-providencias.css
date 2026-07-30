@@ -46,19 +46,32 @@
   accent-color: var(--primary-color);
 }
 
-.deadline-helper,
-.edit-justification-guidance {
+.deadline-helper {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.75rem;
   line-height: 1.5;
 }
 
-.edit-justification-guidance {
-  padding: 12px 14px;
-  border-left: 3px solid var(--accent-color);
-  background: rgba(47, 111, 165, 0.05);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+.edit-justification-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.edit-justification-textarea {
+  width: 100%;
+  min-height: 100px;
+  box-sizing: border-box;
+  resize: none;
+  line-height: 1.5;
+}
+
+.form-helper-text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .past-follow-up-justification {
@@ -213,7 +226,6 @@
   color: var(--text-muted);
   font-size: 0.67rem;
   font-weight: 700;
-  text-transform: capitalize;
 }
 
 .history-change-list dd {

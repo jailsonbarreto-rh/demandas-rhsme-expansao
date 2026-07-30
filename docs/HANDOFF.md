@@ -2,7 +2,7 @@
 
 Atualizado em: **30 de julho de 2026 — R5-1 em homologação**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: R5-1 -->
+<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
 ## Estado material
 
@@ -13,7 +13,7 @@ Atualizado em: **30 de julho de 2026 — R5-1 em homologação**
 | Production vigente antes do R5-1 | `dpl_BU1fjhmwwcp9gjLu2v2Kw9oapau3` — `READY` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
 | Dados antes da migration R5-1 | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
-| Pacote funcional autorizado | **R5-1 — Lixeira administrativa e auditoria** |
+| Pacote funcional aprovado | **R5-1 — Lixeira administrativa e auditoria** |
 | Estado do pacote | implementação concluída na branch; gates e publicação em andamento |
 | Demais pacotes do R5 | não autorizados |
 

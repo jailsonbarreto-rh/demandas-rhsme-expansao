@@ -1,33 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
-  "git": {
-    "deploymentEnabled": false
-  },
+  "buildCommand": "npm run check",
+  "git": { "deploymentEnabled": true },
   "rewrites": [
-    {
-      "source": "/demandas",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/demandas/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/minhas-demandas",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/minhas-demandas/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/admin/:path*",
-      "destination": "/index.html"
-    }
+    { "source": "/demandas", "destination": "/index.html" },
+    { "source": "/demandas/:path*", "destination": "/index.html" },
+    { "source": "/minhas-demandas", "destination": "/index.html" },
+    { "source": "/minhas-demandas/:path*", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" }
   ]
 }

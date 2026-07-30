@@ -2,6 +2,11 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
+import { createAppServices } from './services/createAppServices';
+
+function renderLocalApp() {
+  return render(<App services={createAppServices({ mode: 'local' })} />);
+}
 
 describe('segurança e acessibilidade do login', () => {
   afterEach(() => {
@@ -12,7 +17,7 @@ describe('segurança e acessibilidade do login', () => {
   });
 
   it('permite mostrar e ocultar a senha', async () => {
-    render(<App />);
+    renderLocalApp();
     const password = (await screen.findAllByPlaceholderText('••••••••'))[0];
     expect(password).toHaveAttribute('type', 'password');
     await userEvent.setup().click(screen.getByRole('button', { name: /mostrar senha/i }));
@@ -21,7 +26,7 @@ describe('segurança e acessibilidade do login', () => {
   });
 
   it('apresenta validação contextual no login sem recorrer à validação nativa', async () => {
-    render(<App />);
+    renderLocalApp();
     await userEvent.setup().click(await screen.findByRole('button', { name: /acessar sistema/i }));
 
     expect(await screen.findByText(/informe o e-mail corporativo/i)).toBeInTheDocument();
@@ -31,7 +36,7 @@ describe('segurança e acessibilidade do login', () => {
 
   it('mantém no formulário de primeiro acesso os erros junto aos campos', async () => {
     const user = userEvent.setup();
-    render(<App />);
+    renderLocalApp();
     await user.click(screen.getByRole('button', { name: /primeiro acesso/i }));
     await user.type(screen.getByPlaceholderText('nome@rioeduca.net'), 'usuario@exemplo.com');
     await user.type(screen.getAllByPlaceholderText('••••••••')[0], 'fraca');
@@ -44,7 +49,7 @@ describe('segurança e acessibilidade do login', () => {
   it('limpa e-mail e senha dos campos ao sair', async () => {
     const user = userEvent.setup();
     vi.stubGlobal('alert', vi.fn());
-    render(<App />);
+    renderLocalApp();
     await user.type(screen.getByPlaceholderText('usuario@rioeduca.net'), 'teste@rioeduca.net');
     await user.type(screen.getAllByPlaceholderText('••••••••')[0], 'senha-local-teste');
     await user.click(screen.getByRole('button', { name: /acessar sistema/i }));
@@ -55,15 +60,16 @@ describe('segurança e acessibilidade do login', () => {
 
   it('nomeia o controle de fechar o drawer', async () => {
     localStorage.setItem('demandas_user', 'teste@rioeduca.net');
-    render(<App />);
+    renderLocalApp();
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: /^todas as demandas$/i }));
     await user.click((await screen.findAllByRole('button', { name: /^abrir$/i }))[0]);
     expect(await screen.findByRole('button', { name: /fechar painel de detalhes/i })).toHaveAttribute('aria-label');
   });
+
   it('torna o drawer inerte enquanto um modal está aberto sobre ele', async () => {
     localStorage.setItem('demandas_user', 'teste@rioeduca.net');
-    render(<App />);
+    renderLocalApp();
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: /^todas as demandas$/i }));
@@ -77,7 +83,6 @@ describe('segurança e acessibilidade do login', () => {
       expect(drawer).toHaveAttribute('aria-hidden', 'true');
     });
   });
-
 });
 
 describe('navegação persistente', () => {
@@ -90,7 +95,7 @@ describe('navegação persistente', () => {
   it('restaura a tela de demandas pela URL', async () => {
     localStorage.setItem('demandas_user', 'teste@rioeduca.net');
     window.history.replaceState({}, '', '/demandas?status=Todos%20%28exibir%20tudo%29');
-    render(<App />);
+    renderLocalApp();
 
     expect(await screen.findByRole('button', { name: /^todas as demandas$/i })).toHaveClass('active');
     expect(await screen.findByLabelText(/^status$/i)).toHaveValue('todos');
@@ -103,7 +108,7 @@ describe('navegação persistente', () => {
       '',
       '/demandas?status=Somente%20ativos%20%28padr%C3%A3o%29&comando=ignorar',
     );
-    render(<App />);
+    renderLocalApp();
 
     expect(await screen.findByLabelText(/^status$/i)).toHaveValue('acompanhamento');
     await waitFor(() => expect(new URL(window.location.href).searchParams.has('comando')).toBe(false));

@@ -201,10 +201,12 @@ describe('App no modo Supabase', () => {
     await user.type(screen.getByLabelText('Número'), 'SME-TESTE-001');
     await user.type(screen.getByLabelText('Assunto'), 'Demanda de integração');
     await user.selectOptions(screen.getByLabelText('Responsável'), officialResponsible.id);
+    await user.type(screen.getByLabelText('Data de prazo interno'), '15082026');
+    await user.click(screen.getByRole('radio', { name: 'Não se aplica' }));
     await user.selectOptions(screen.getByLabelText('Status'), 'Aguardando Andamento');
     await user.selectOptions(screen.getByLabelText('Selecione a classificação'), 'Outros');
-    await user.type(screen.getByLabelText('Próxima ação'), 'Conferir documentação recebida');
-    await user.type(screen.getByLabelText('Data de acompanhamento'), '20082026');
+    await user.type(screen.getByLabelText('Próxima providência'), 'Conferir documentação recebida');
+    await user.type(screen.getByLabelText('Data da próxima providência'), '20082026');
     await user.click(screen.getByRole('button', { name: /salvar/i }));
 
     await waitFor(() => expect(create).toHaveBeenCalledWith(expect.objectContaining({
@@ -212,6 +214,10 @@ describe('App no modo Supabase', () => {
       assunto: 'Demanda de integração',
       responsavelId: officialResponsible.id,
       responsavel: officialResponsible.nome,
+      limite1: '15/08/2026',
+      limite1Situacao: 'definido',
+      limite2: '',
+      limite2Situacao: 'nao_se_aplica',
       proximaAcao: 'Conferir documentação recebida',
       proximaAcaoEm: '20/08/2026',
     })));
@@ -260,8 +266,8 @@ describe('App no modo Supabase', () => {
     await waitFor(() => {
       expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
       expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
-      expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
-      expectHeaderCount('Filtrar por demandas vencidas', 2);
+      expectHeaderCount('Filtrar por demandas cujo prazo final vence hoje', 2);
+      expectHeaderCount('Filtrar por demandas com prazo final vencido', 2);
     });
 
     await user.click(screen.getByRole('button', { name: /^minhas demandas$/i }));
@@ -270,8 +276,8 @@ describe('App no modo Supabase', () => {
     await waitFor(() => {
       expectHeaderCount('Exibir todas as demandas em acompanhamento', 4);
       expectHeaderCount('Filtrar por demandas aguardando assinatura', 1);
-      expectHeaderCount('Filtrar por demandas com prazo hoje', 1);
-      expectHeaderCount('Filtrar por demandas vencidas', 1);
+      expectHeaderCount('Filtrar por demandas cujo prazo final vence hoje', 1);
+      expectHeaderCount('Filtrar por demandas com prazo final vencido', 1);
     });
 
     await user.click(screen.getByTitle('Filtrar por demandas aguardando assinatura'));
@@ -286,8 +292,8 @@ describe('App no modo Supabase', () => {
     await waitFor(() => {
       expectHeaderCount('Exibir todas as demandas em acompanhamento', 8);
       expectHeaderCount('Filtrar por demandas aguardando assinatura', 2);
-      expectHeaderCount('Filtrar por demandas com prazo hoje', 2);
-      expectHeaderCount('Filtrar por demandas vencidas', 2);
+      expectHeaderCount('Filtrar por demandas cujo prazo final vence hoje', 2);
+      expectHeaderCount('Filtrar por demandas com prazo final vencido', 2);
     });
     expect((await screen.findAllByText('Assinatura da equipe')).length).toBeGreaterThan(0);
   });
@@ -307,10 +313,12 @@ describe('App no modo Supabase', () => {
     await user.type(screen.getByLabelText(/busca por texto/i), 'usuário');
     await user.click(screen.getByRole('button', { name: 'Limpar filtros' }));
 
-    expect(window.location.pathname).toBe('/minhas-demandas');
-    expect(screen.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
-    expect(await screen.findByText('Demanda do usuário conectado')).toBeVisible();
-    expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/minhas-demandas');
+      expect(screen.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();
+      expect(screen.getByText('Demanda do usuário conectado')).toBeVisible();
+      expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
+    });
   });
 
   it('aplica o cartão de status sem sair da carteira pessoal nem restaurar estado antigo', async () => {

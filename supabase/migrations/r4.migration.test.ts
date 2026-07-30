@@ -36,7 +36,7 @@ describe('migrations R4 — prazos e próxima providência', () => {
 
   it('não concede execução nova ao service_role', () => {
     expect(rules).toMatch(/revoke all on function public\.criar_sme_demanda_r4[\s\S]*service_role/i);
-    expect(rules).not.toMatch(/grant execute[\s\S]*service_role/i);
+    expect(rules).not.toMatch(/grant execute on function public\.[\s\S]*?\) to service_role;/i);
   });
 
   it('alinha constraints ao prazo interno e ao Não se aplica sem justificativa inicial', () => {

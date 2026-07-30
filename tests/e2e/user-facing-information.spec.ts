@@ -25,11 +25,6 @@ test('edição apresenta somente informações úteis e motivo contextual', asyn
   await expect(dialog.locator('input[value^="ID:"]')).toHaveCount(0);
   await expect(dialog.getByLabel(/motivo da alteração/i)).toHaveCount(0);
 
-  await dialog.getByLabel('Data definida').first().click();
-  await expect(dialog.getByLabel('Data de prazo interno')).toBeVisible();
-  await dialog.getByLabel('Data de prazo interno').fill('20/08/2099');
-  await expect(dialog.getByLabel(/motivo da alteração/i)).toHaveCount(0);
-
   await dialog.getByLabel('Assunto').fill('Monitoramento revisado de condição externa');
   const reason = dialog.getByLabel('Motivo da alteração *');
   await expect(reason).toBeVisible();

@@ -58,7 +58,7 @@ export interface CreateDemandaInput extends Omit<
   | 'deletedBy'
   | 'deletionReason'
 > {
-  proximaAcaoJustificativa: string;
+  proximaAcaoJustificativa?: string;
 }
 
 export interface EditDemandaInput {
@@ -81,7 +81,7 @@ export interface ProgressInput {
   comentario: string;
   proximaAcao: string;
   proximaAcaoEm: string;
-  proximaAcaoJustificativa: string;
+  proximaAcaoJustificativa?: string;
 }
 
 export interface StatusTransitionInput extends ProgressInput {

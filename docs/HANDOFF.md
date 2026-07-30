@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **30 de julho de 2026 — R4 em Production**
+Atualizado em: **30 de julho de 2026 — R4 encerrado e pauta do R5 aberta**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
@@ -9,17 +9,18 @@ Atualizado em: **30 de julho de 2026 — R4 em Production**
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| Integração funcional | PR #103, merge `1a24586b2045115dd2486bbf1efb498d9521d9d9` |
-| Publicação | PR #104, merge `698d81056a72d9d8e7ef65b8d91cf67ca0fbbaf1` |
+| Integração funcional do R4 | PR #103, merge `1a24586b2045115dd2486bbf1efb498d9521d9d9` |
+| Publicação do R4 | PR #104, merge `698d81056a72d9d8e7ef65b8d91cf67ca0fbbaf1` |
+| Encerramento do release | PR #105, merge `e99cf821ef93016ce17ad93b33960aed468b5616` |
 | Production | `https://demandas-rhsme-expansao.vercel.app/` |
 | Deployment Production | `dpl_BU1fjhmwwcp9gjLu2v2Kw9oapau3` — `READY` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
 | Última migration remota | `20260730064021_r4_preserve_exceptional_internal_state` |
 | Dados preservados | 379 demandas, 764 históricos, 13 perfis |
 | Implementação funcional autorizada | **Nenhuma nova implementação funcional autorizada** |
-| Próxima atividade | iniciar novo debate pré-implementação; nenhum ciclo posterior está autorizado por inferência |
+| Próxima atividade | debate pré-implementação do R5, começando pela análise de andamento, transições e reabertura |
 
-## R4 — estado atual
+## R4 — estado encerrado
 
 O R4 foi aprovado, implementado, homologado e publicado em Production nas camadas de aplicação e banco.
 
@@ -49,6 +50,12 @@ O R4 foi aprovado, implementado, homologado e publicado em Production nas camada
 - a leitura de proximidade usa sete dias corridos;
 - `Atenção agora` permanece com o comportamento atual até reavaliação do R6;
 - o Excel mantém equivalência semântica com a carteira.
+
+### Delimitação preservada
+
+A rota administrativa de qualidade prevista originalmente como proposta em R4-4 não foi autorizada nem implementada. Os filtros operacionais e a equivalência do Excel foram concluídos; o painel `/admin/qualidade` permanece vinculado à futura decisão OP-D06.
+
+A reconciliação completa das propostas antigas do Plano Executivo está em `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`.
 
 ## Validação da aplicação
 
@@ -80,44 +87,42 @@ As migrations foram aplicadas no projeto gratuito existente, sem criação de br
 5. `20260730063923_r4_optional_reason_compatibility`;
 6. `20260730064021_r4_preserve_exceptional_internal_state`.
 
-A homologação remota utilizou operações sintéticas em transações com `ROLLBACK` e confirmou:
-
-- preservação das lacunas legadas;
-- primeira adequação sem justificativa;
-- alteração posterior com justificativa obrigatória;
-- próxima providência obrigatória em movimentações pertinentes;
-- data passada da providência com justificativa;
-- histórico auditável com ator;
-- encerramento sem providência corrente;
-- compatibilidade sem contorno das regras;
-- execução das RPCs apenas por `authenticated`.
-
-Nenhum fixture permaneceu no banco. As contagens finais continuam em 379 demandas e 764 históricos.
+A homologação remota utilizou operações sintéticas em transações com `ROLLBACK` e confirmou preservação do legado, adequação progressiva, justificativas, próxima providência, histórico, encerramento, compatibilidade e grants restritos. Nenhum fixture permaneceu no banco.
 
 ## Verificação de Production
 
 - deployment `dpl_BU1fjhmwwcp9gjLu2v2Kw9oapau3` em estado `READY`;
 - target `production` e SHA `698d81056a72d9d8e7ef65b8d91cf67ca0fbbaf1`;
-- domínio principal respondeu HTTP 200;
-- rota `/demandas` respondeu HTTP 200 e preservou o rewrite SPA;
-- título publicado: `Fluxo CTRH — Radar de Governança`;
+- domínio principal e `/demandas` responderam HTTP 200;
+- rewrite SPA preservado;
 - nenhum erro de runtime detectado após a publicação;
 - Supabase permaneceu `ACTIVE_HEALTHY`;
 - integridade confirmada: 379 demandas, 764 históricos e zero fixture R4.
 
-## Segurança e Advisors
+## Segurança e publicação
 
-Nenhum achado bloqueante novo foi introduzido pelo R4.
-
-Os avisos sobre `SECURITY DEFINER` são compatíveis com a arquitetura vigente: funções com `search_path` fixo, grants restritos e autorização interna por `private.can_edit()`. Avisos preexistentes sobre índices, chaves estrangeiras, tabelas privadas de backup e proteção contra senha vazada permanecem fora do escopo do R4.
-
-## Proteções de publicação
-
-- o PR final de encerramento restaura `vercel.json` para `deploymentEnabled: false`;
-- branches temporárias de validação e release não integram a configuração funcional;
+- nenhum achado bloqueante novo foi introduzido pelo R4;
+- o bloqueio automático foi restaurado para `deploymentEnabled: false`;
 - nenhum deployment temporário foi promovido diretamente;
-- Production foi gerada pela integração da `main`;
 - qualquer publicação futura exige novo release controlado.
+
+## Próximo ciclo — R5
+
+O R5 está em **debate pré-implementação**. Nenhum pacote está autorizado.
+
+Pauta documental: `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`.
+
+Decisões ainda pendentes:
+
+- OP-D07 — reabertura e transições;
+- OP-D08 — prontuário canônico;
+- OP-D09 — identidade legível do autor;
+- OP-D10 — contexto dos eventos;
+- OP-D11 — restauração;
+- OP-D12 — link de origem;
+- OP-D19 — link interno compartilhável.
+
+A primeira discussão recomendada é **R5-2 — Andamento, transições de status e reabertura**, começando pela análise do funcionamento atual no código e no layout.
 
 ## Documentação vigente
 
@@ -128,7 +133,9 @@ Os avisos sobre `SECURITY DEFINER` são compatíveis com a arquitetura vigente: 
 5. `docs/PRODUCT_CONTEXT.md`;
 6. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`;
 7. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`;
-8. este Handoff.
+8. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`;
+9. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`;
+10. este Handoff.
 
 ## Reavaliações futuras registradas
 
@@ -142,4 +149,4 @@ Sem autorização automática:
 
 ## Regra de continuidade
 
-Nenhum item de R5, R6, R2 ou outro ciclo está autorizado por inferência. O próximo ciclo deve voltar ao debate pré-implementação e ao Registro de Decisões.
+Nenhum item de R5, R6, R2 ou outro ciclo está autorizado por inferência. A próxima atividade é exclusivamente o debate pré-implementação do R5 e o registro das decisões expressamente aprovadas.

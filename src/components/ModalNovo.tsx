@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { PerfilMinimo } from '../types';
+import type { DeadlineState, PerfilMinimo } from '../types';
 import { demandaFormSchema, type DemandaFormValues, statusValues, tipoValues } from '../validation/demandaSchemas';
 import { DateMaskInput } from './DateMaskInput';
+import { DeadlineControl } from './DeadlineControl';
+import { PastFollowUpJustification } from './PastFollowUpJustification';
 import { AppDialog } from './ui/AppDialog';
 import { ConfirmDialog } from './ui/ConfirmDialog';
+import { InfoDialog } from './ui/InfoDialog';
 import { FormError } from './ui/FormError';
 import { classificacaoValues } from '../constants/demandaOptions';
 
@@ -17,6 +20,7 @@ interface ModalNovoProps {
 
 export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onSalvar }) => {
   const [confirmClose, setConfirmClose] = useState(false);
+  const [deadlineRequiredAlert, setDeadlineRequiredAlert] = useState(false);
   const responsaveisOrdenados = useMemo(
     () => [...responsaveis].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
     [responsaveis],
@@ -25,6 +29,8 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
     register,
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<DemandaFormValues>({
     resolver: zodResolver(demandaFormSchema),
@@ -33,24 +39,34 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
       numero: '',
       assunto: '',
       responsavelId: '',
+      limite1Situacao: 'definido',
       limite1: '',
+      limite2Situacao: undefined,
       limite2: '',
       status: undefined,
       setor: '',
       classificacao: '',
       proximaAcao: '',
       proximaAcaoEm: '',
+      proximaAcaoJustificativa: '',
     },
   });
+  const limite1State = watch('limite1Situacao');
+  const limite2State = (watch('limite2Situacao') ?? 'nao_informado') as DeadlineState;
+  const selectedStatus = watch('status');
+  const followUpDate = watch('proximaAcaoEm');
 
   const requestClose = () => {
     if (isDirty && !isSubmitting) setConfirmClose(true);
     else onClose();
   };
 
-  const submit = handleSubmit(async (values) => {
-    await onSalvar(values);
-  });
+  const submit = handleSubmit(
+    async (values) => { await onSalvar(values); },
+    (invalid) => {
+      if (invalid.limite1 || invalid.limite1Situacao) setDeadlineRequiredAlert(true);
+    },
+  );
 
   return (
     <>
@@ -120,32 +136,42 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
                 <FormError id="novo-responsavel-error" message={errors.responsavelId?.message} />
               </div>
 
+              <input type="hidden" {...register('limite1Situacao')} />
               <Controller
                 name="limite1"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <DateMaskInput
-                    id="novo-limite1"
+                  <DeadlineControl
+                    idPrefix="novo-limite1"
                     label="Prazo interno"
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    error={fieldState.error?.message}
+                    state={limite1State}
+                    date={field.value}
+                    allowedStates={['definido']}
+                    onStateChange={(state) => setValue('limite1Situacao', state as 'definido', { shouldDirty: true, shouldValidate: true })}
+                    onDateChange={field.onChange}
+                    onDateBlur={field.onBlur}
+                    stateError={errors.limite1Situacao?.message}
+                    dateError={fieldState.error?.message}
                   />
                 )}
               />
 
+              <input type="hidden" {...register('limite2Situacao')} />
               <Controller
                 name="limite2"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <DateMaskInput
-                    id="novo-limite2"
+                  <DeadlineControl
+                    idPrefix="novo-limite2"
                     label="Prazo final"
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    error={fieldState.error?.message}
+                    state={limite2State}
+                    date={field.value}
+                    allowedStates={['definido', 'nao_se_aplica']}
+                    onStateChange={(state) => setValue('limite2Situacao', state as 'definido' | 'nao_se_aplica', { shouldDirty: true, shouldValidate: true })}
+                    onDateChange={field.onChange}
+                    onDateBlur={field.onBlur}
+                    stateError={errors.limite2Situacao?.message}
+                    dateError={fieldState.error?.message}
                   />
                 )}
               />
@@ -185,33 +211,51 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
                 <FormError id="novo-classificacao-error" message={errors.classificacao?.message} />
               </div>
 
-              <div className="input-container-floating col-full">
-                <textarea
-                  id="novo-proxima-acao"
-                  placeholder=" "
-                  {...register('proximaAcao')}
-                  className={errors.proximaAcao ? 'field-invalid' : ''}
-                  aria-invalid={Boolean(errors.proximaAcao)}
-                  aria-describedby={errors.proximaAcao ? 'novo-proxima-acao-error' : undefined}
-                />
-                <label htmlFor="novo-proxima-acao">Próxima ação</label>
-                <FormError id="novo-proxima-acao-error" message={errors.proximaAcao?.message} />
-              </div>
+              {selectedStatus !== 'Encerrado' && (
+                <>
+                  <div className="input-container-floating col-full">
+                    <textarea
+                      id="novo-proxima-acao"
+                      placeholder=" "
+                      {...register('proximaAcao')}
+                      className={errors.proximaAcao ? 'field-invalid' : ''}
+                      aria-invalid={Boolean(errors.proximaAcao)}
+                      aria-describedby={errors.proximaAcao ? 'novo-proxima-acao-error' : undefined}
+                    />
+                    <label htmlFor="novo-proxima-acao">Próxima providência</label>
+                    <FormError id="novo-proxima-acao-error" message={errors.proximaAcao?.message} />
+                  </div>
 
-              <Controller
-                name="proximaAcaoEm"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <DateMaskInput
-                    id="novo-proxima-acao-em"
-                    label="Data de acompanhamento"
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    error={fieldState.error?.message}
+                  <Controller
+                    name="proximaAcaoEm"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <DateMaskInput
+                        id="novo-proxima-acao-em"
+                        label="Data da próxima providência"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        error={fieldState.error?.message}
+                      />
+                    )}
                   />
-                )}
-              />
+
+                  <Controller
+                    name="proximaAcaoJustificativa"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                      <PastFollowUpJustification
+                        id="novo-proxima-acao-justificativa"
+                        date={followUpDate}
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                </>
+              )}
             </div>
           </div>
 
@@ -226,6 +270,13 @@ export const ModalNovo: React.FC<ModalNovoProps> = ({ responsaveis, onClose, onS
           </div>
         </form>
       </AppDialog>
+
+      <InfoDialog
+        open={deadlineRequiredAlert}
+        title="Prazo interno obrigatório"
+        description="Toda nova demanda deve possuir um prazo interno definido. Informe a data antes de salvar o cadastro."
+        onOpenChange={setDeadlineRequiredAlert}
+      />
 
       <ConfirmDialog
         open={confirmClose}

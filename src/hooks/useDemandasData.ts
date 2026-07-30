@@ -10,6 +10,7 @@ import type {
   StatusTransitionInput,
 } from '../types';
 import type { DemandasRepository } from '../services/contracts';
+import { getUserFacingError } from '../domain/userFacingErrors';
 
 export function useDemandasData(
   repository: DemandasRepository,
@@ -30,8 +31,9 @@ export function useDemandasData(
       setHistorico(data.historico);
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Não foi possível carregar as demandas.');
-      throw reason;
+      const message = getUserFacingError(reason, 'Não foi possível carregar as demandas.');
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export function useDemandasData(
           setError(null);
         }
       } catch (reason) {
-        if (active) setError(reason instanceof Error ? reason.message : 'Não foi possível carregar as demandas.');
+        if (active) setError(getUserFacingError(reason, 'Não foi possível carregar as demandas.'));
       } finally {
         if (active) setLoading(false);
       }
@@ -71,8 +73,9 @@ export function useDemandasData(
       await operation();
       await reload();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Não foi possível salvar a alteração.');
-      throw reason;
+      const message = getUserFacingError(reason, 'Não foi possível salvar a alteração.');
+      setError(message);
+      throw new Error(message);
     }
   }, [reload]);
 

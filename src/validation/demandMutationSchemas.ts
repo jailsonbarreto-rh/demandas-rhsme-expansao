@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { isValidDateString } from '../utils/date';
+import type { DeadlineState } from '../types';
+import { validateDeadlinePair } from '../domain/deadlineRules';
+import { getTodayString, isBeforeToday, isValidDateString } from '../utils/date';
 import { statusValues, tipoValues } from './demandaSchemas';
 
 const usefulText = (minimum: number, message: string) => z.string().trim().refine(
@@ -19,85 +21,73 @@ const requiredDate = z.string().trim().refine(
 
 const deadlineState = z.enum(['definido', 'nao_informado', 'nao_se_aplica']);
 
-type DeadlineFields = {
-  limite1: string;
-  limite1Situacao: 'definido' | 'nao_informado' | 'nao_se_aplica';
-  limite1Justificativa: string;
-  limite2: string;
-  limite2Situacao: 'definido' | 'nao_informado' | 'nao_se_aplica';
-  limite2Justificativa: string;
-};
-
-function validateDeadline(
-  value: { date: string; state: 'definido' | 'nao_informado' | 'nao_se_aplica'; justification: string },
+function validateDeadlineValue(
+  state: DeadlineState,
+  date: string,
   context: z.RefinementCtx,
-  pathPrefix: 'limite1' | 'limite2',
+  path: 'limite1' | 'limite2',
 ): void {
-  if (value.state === 'definido') {
-    if (!value.date || !isValidDateString(value.date)) {
-      context.addIssue({
-        code: 'custom',
-        path: [pathPrefix],
-        message: 'Informe uma data válida para o prazo definido.',
-      });
-    }
-    if (value.justification.trim()) {
-      context.addIssue({
-        code: 'custom',
-        path: [`${pathPrefix}Justificativa`],
-        message: 'Prazo definido não utiliza justificativa de não aplicabilidade.',
-      });
-    }
-    return;
-  }
-
-  if (value.date.trim()) {
+  if (state === 'definido' && !isValidDateString(date)) {
     context.addIssue({
       code: 'custom',
-      path: [pathPrefix],
+      path: [path],
+      message: 'Informe uma data válida para o prazo definido.',
+    });
+  }
+  if (state !== 'definido' && date.trim()) {
+    context.addIssue({
+      code: 'custom',
+      path: [path],
       message: 'Remova a data quando o prazo não estiver definido.',
     });
   }
-
-  if (value.state === 'nao_informado' && value.justification.trim()) {
-    context.addIssue({
-      code: 'custom',
-      path: [`${pathPrefix}Justificativa`],
-      message: 'Prazo não informado não utiliza justificativa.',
-    });
-  }
-
-  if (value.state === 'nao_se_aplica' && value.justification.trim().length < 10) {
-    context.addIssue({
-      code: 'custom',
-      path: [`${pathPrefix}Justificativa`],
-      message: 'Justifique por que o prazo não se aplica com pelo menos 10 caracteres.',
-    });
-  }
 }
 
-function validateDeadlines(value: DeadlineFields, context: z.RefinementCtx): void {
-  validateDeadline({
-    date: value.limite1,
-    state: value.limite1Situacao,
-    justification: value.limite1Justificativa,
-  }, context, 'limite1');
-  validateDeadline({
-    date: value.limite2,
-    state: value.limite2Situacao,
-    justification: value.limite2Justificativa,
-  }, context, 'limite2');
+function validateDeadlineFields(
+  value: {
+    limite1: string;
+    limite1Situacao: DeadlineState;
+    limite2: string;
+    limite2Situacao: DeadlineState;
+  },
+  context: z.RefinementCtx,
+): void {
+  validateDeadlineValue(value.limite1Situacao, value.limite1, context, 'limite1');
+  validateDeadlineValue(value.limite2Situacao, value.limite2, context, 'limite2');
+  const orderError = validateDeadlinePair(
+    { state: value.limite1Situacao, date: value.limite1 },
+    { state: value.limite2Situacao, date: value.limite2 },
+  );
+  if (orderError) context.addIssue({ code: 'custom', path: ['limite1'], message: orderError });
+}
+
+function validatePastFollowUp(
+  value: { proximaAcaoEm: string; proximaAcaoJustificativa: string },
+  context: z.RefinementCtx,
+): void {
+  if (!value.proximaAcaoEm || !isValidDateString(value.proximaAcaoEm)) return;
+  if (!isBeforeToday(value.proximaAcaoEm, getTodayString())) return;
+  if (value.proximaAcaoJustificativa.replace(/\s+/g, ' ').trim().length >= 10) return;
+  context.addIssue({
+    code: 'custom',
+    path: ['proximaAcaoJustificativa'],
+    message: 'Justifique a data de acompanhamento já vencida com pelo menos 10 caracteres.',
+  });
 }
 
 function validateRequiredNextAction(
-  value: { proximaAcao: string; proximaAcaoEm: string },
+  value: {
+    proximaAcao: string;
+    proximaAcaoEm: string;
+    proximaAcaoJustificativa: string;
+  },
   context: z.RefinementCtx,
 ): void {
   if (value.proximaAcao.replace(/\s+/g, ' ').trim().length < 5) {
     context.addIssue({
       code: 'custom',
       path: ['proximaAcao'],
-      message: 'Descreva a próxima ação com pelo menos 5 caracteres.',
+      message: 'Descreva a próxima providência com pelo menos 5 caracteres.',
     });
   }
   if (!value.proximaAcaoEm || !isValidDateString(value.proximaAcaoEm)) {
@@ -106,19 +96,27 @@ function validateRequiredNextAction(
       path: ['proximaAcaoEm'],
       message: 'Informe a data de acompanhamento.',
     });
+    return;
   }
+  validatePastFollowUp(value, context);
 }
 
-const commonDemandFields = {
-  assunto: usefulText(1, 'Informe o assunto da demanda.'),
-  responsavelId: z.string().uuid().nullable(),
-  responsavel: z.string().trim(),
+const commonDeadlineFields = {
   limite1: optionalDate,
   limite1Situacao: deadlineState,
   limite1Justificativa: z.string().trim(),
   limite2: optionalDate,
   limite2Situacao: deadlineState,
   limite2Justificativa: z.string().trim(),
+};
+
+export const createDemandaMutationSchema = z.object({
+  numero: usefulText(1, 'Informe o número do processo ou documento.'),
+  tipo: z.enum(tipoValues),
+  assunto: usefulText(1, 'Informe o assunto da demanda.'),
+  responsavelId: z.string().uuid().nullable(),
+  responsavel: z.string().trim(),
+  ...commonDeadlineFields,
   setor: z.string().trim(),
   classificacao: usefulText(1, 'Selecione a classificação.'),
   linkOrigem: z.string().trim().refine(
@@ -127,34 +125,54 @@ const commonDemandFields = {
   ),
   proximaAcao: z.string().trim(),
   proximaAcaoEm: optionalDate,
-};
-
-export const createDemandaMutationSchema = z.object({
-  numero: usefulText(1, 'Informe o número do processo ou documento.'),
-  tipo: z.enum(tipoValues),
-  ...commonDemandFields,
+  proximaAcaoJustificativa: z.string().trim(),
   status: z.enum(statusValues),
 }).superRefine((value, context) => {
-  validateDeadlines(value, context);
+  validateDeadlineFields(value, context);
+  if (value.limite1Situacao !== 'definido') {
+    context.addIssue({
+      code: 'custom',
+      path: ['limite1Situacao'],
+      message: 'O prazo interno é obrigatório em novas demandas.',
+    });
+  }
+  if (!['definido', 'nao_se_aplica'].includes(value.limite2Situacao)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['limite2Situacao'],
+      message: 'Escolha uma data para o prazo final ou marque Não se aplica.',
+    });
+  }
   if (value.status !== 'Encerrado') validateRequiredNextAction(value, context);
 });
 
 export const editDemandaMutationSchema = z.object({
-  ...commonDemandFields,
-  justificativa: usefulText(10, 'Justifique a edição com pelo menos 10 caracteres.'),
-}).superRefine(validateDeadlines);
+  assunto: usefulText(1, 'Informe o assunto da demanda.'),
+  responsavelId: z.string().uuid().nullable(),
+  responsavel: z.string().trim(),
+  ...commonDeadlineFields,
+  setor: z.string().trim(),
+  classificacao: usefulText(1, 'Selecione a classificação.'),
+  linkOrigem: z.string().trim().refine(
+    (value) => value === '' || /^https?:\/\//i.test(value),
+    'Informe um link iniciado por http:// ou https://.',
+  ),
+  justificativa: z.string().trim(),
+}).superRefine(validateDeadlineFields);
 
 export const progressMutationSchema = z.object({
   comentario: usefulText(1, 'Registre o andamento realizado.'),
-  proximaAcao: usefulText(5, 'Descreva a próxima ação com pelo menos 5 caracteres.'),
+  proximaAcao: usefulText(5, 'Descreva a próxima providência com pelo menos 5 caracteres.'),
   proximaAcaoEm: requiredDate,
-});
+  proximaAcaoJustificativa: z.string().trim(),
+}).superRefine(validatePastFollowUp);
 
 export const statusTransitionMutationSchema = z.object({
   status: z.enum(statusValues),
   comentario: usefulText(1, 'Registre um comentário para justificar a mudança.'),
   proximaAcao: z.string().trim(),
   proximaAcaoEm: optionalDate,
+  proximaAcaoJustificativa: z.string().trim(),
 }).superRefine((value, context) => {
   if (value.status !== 'Encerrado') validateRequiredNextAction(value, context);
 });

@@ -5,6 +5,7 @@ import {
   DEFAULT_DEMAND_FILTERS,
   DEFAULT_QUICK_FILTERS,
   type DemandFilters,
+  type QuickFilters,
 } from '../filters/filterTypes';
 import { FilterPanel } from './FilterPanel';
 
@@ -13,7 +14,7 @@ function FilterSummaryHarness() {
     ...DEFAULT_DEMAND_FILTERS,
     query: 'processo',
   });
-  const [quickFilters, setQuickFilters] = React.useState({ ...DEFAULT_QUICK_FILTERS });
+  const [quickFilters, setQuickFilters] = React.useState<QuickFilters>({ ...DEFAULT_QUICK_FILTERS });
 
   return (
     <FilterPanel

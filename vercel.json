@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
-  "buildCommand": "npm test -- src/components/UserFacingInformationAudit.test.tsx src/domain/userFacingErrors.test.ts src/domain/historyPresentation.test.ts src/components/HistoryPresentation.test.tsx src/components/AdminPanel.test.tsx src/components/ModalDateValidation.test.tsx src/components/AuthPanel.test.tsx src/services/supabaseProfilesService.test.ts",
+  "buildCommand": "npm test -- UserFacingInformationAudit userFacingErrors historyPresentation HistoryPresentation AdminPanel ModalDateValidation AuthPanel supabaseProfilesService",
   "outputDirectory": ".",
   "git": {
     "deploymentEnabled": true

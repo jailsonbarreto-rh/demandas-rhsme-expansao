@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+dnf install -y \
+  alsa-lib \
+  atk \
+  at-spi2-atk \
+  cups-libs \
+  libdrm \
+  libX11 \
+  libXcomposite \
+  libXdamage \
+  libXext \
+  libXfixes \
+  libXrandr \
+  libxcb \
+  libxkbcommon \
+  mesa-libgbm \
+  pango \
+  nspr \
+  nss
+
+npx playwright install chromium
+npm run test:e2e

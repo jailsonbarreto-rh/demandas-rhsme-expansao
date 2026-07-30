@@ -158,7 +158,3 @@ export const statusTransitionMutationSchema = z.object({
 export const deleteMutationSchema = z.object({
   motivo: usefulText(10, 'Informe o motivo da exclusão com pelo menos 10 caracteres.'),
 });
-
-export const restoreMutationSchema = z.object({
-  motivo: usefulText(10, 'Informe o motivo da restauração com pelo menos 10 caracteres.'),
-});

@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import type { ComentarioHistorico, Demanda } from '../types';
-import { presentHistoryEvent } from '../domain/historyPresentation';
+import { presentHistoryChanges, presentHistoryEvent } from '../domain/historyPresentation';
 import { isClosed } from '../domain/workSemantics';
 import { DeadlineDisplay } from './DeadlineDisplay';
 
@@ -114,8 +114,8 @@ export function DemandDetailDrawer({
                   <section className="drawer-section">
                     <h3>Responsabilidade</h3>
                     <div className="drawer-meta-grid">
-                      <div className="drawer-meta-item"><MetaLabel>Responsável Atual</MetaLabel><span className="value strong-value">{demanda.responsavel || 'Não atribuído'}</span></div>
-                      <div className="drawer-meta-item"><MetaLabel>Setor Vinculado</MetaLabel><span className="value">{demanda.setor || '—'}</span></div>
+                      <div className="drawer-meta-item"><MetaLabel>Responsável atual</MetaLabel><span className="value strong-value">{demanda.responsavel || 'Não atribuído'}</span></div>
+                      <div className="drawer-meta-item"><MetaLabel>Setor vinculado</MetaLabel><span className="value">{demanda.setor || '—'}</span></div>
                     </div>
                   </section>
 
@@ -142,7 +142,7 @@ export function DemandDetailDrawer({
                   </section>
 
                   <section className="drawer-section">
-                    <h3>Situação Atual</h3>
+                    <h3>Situação atual</h3>
                     <span className={badgeClass(demanda.status)}>{demanda.status}</span>
                   </section>
 
@@ -152,6 +152,7 @@ export function DemandDetailDrawer({
                       <div className="timeline-container drawer-timeline">
                         {history.map((item, index) => {
                           const presentation = presentHistoryEvent(item);
+                          const changes = presentHistoryChanges(item.alteracoes);
                           return (
                             <div key={item.id} className={`timeline-item ${index === 0 ? 'latest' : ''}`}>
                               <div className="timeline-circle" />
@@ -165,12 +166,12 @@ export function DemandDetailDrawer({
                                   <span className="timeline-setor">{item.setor || 'CTRH'}</span>
                                 </div>
                                 <div className="timeline-comment">{presentation.comment}</div>
-                                {item.alteracoes.length > 0 && (
+                                {changes.length > 0 && (
                                   <dl className="history-change-list">
-                                    {item.alteracoes.map((change, changeIndex) => (
-                                      <div key={`${item.id}-${change.field}-${changeIndex}`}>
-                                        <dt>{change.field.replaceAll('_', ' ')}</dt>
-                                        <dd><span>{change.before || 'Não informado'}</span><i className="fa-solid fa-arrow-right-long" aria-hidden="true" /><strong>{change.after || 'Não informado'}</strong></dd>
+                                    {changes.map((change, changeIndex) => (
+                                      <div key={`${item.id}-${change.label}-${changeIndex}`}>
+                                        <dt>{change.label}</dt>
+                                        <dd><span>{change.before}</span><i className="fa-solid fa-arrow-right-long" aria-hidden="true" /><strong>{change.after}</strong></dd>
                                       </div>
                                     ))}
                                   </dl>

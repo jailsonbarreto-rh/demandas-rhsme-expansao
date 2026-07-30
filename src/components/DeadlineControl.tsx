@@ -68,10 +68,10 @@ export function DeadlineControl({
         />
       )}
       {state === 'nao_informado' && (
-        <p className="deadline-helper">Informação preservada como ausente no registro legado.</p>
+        <p className="deadline-helper">Nenhuma data foi informada para este prazo.</p>
       )}
       {state === 'nao_se_aplica' && (
-        <p className="deadline-helper">Este prazo não se aplica à demanda e não exige justificativa inicial.</p>
+        <p className="deadline-helper">Este prazo não se aplica à demanda.</p>
       )}
     </fieldset>
   );

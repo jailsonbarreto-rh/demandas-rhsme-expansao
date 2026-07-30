@@ -1,33 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
+  "buildCommand": "npm test -- src/components/UserFacingInformationAudit.test.tsx src/domain/userFacingErrors.test.ts src/domain/historyPresentation.test.ts src/components/HistoryPresentation.test.tsx src/components/AdminPanel.test.tsx src/components/ModalDateValidation.test.tsx src/components/AuthPanel.test.tsx src/services/supabaseProfilesService.test.ts",
+  "outputDirectory": ".",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "rewrites": [
-    {
-      "source": "/demandas",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/demandas/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/minhas-demandas",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/minhas-demandas/:path*",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/admin/:path*",
-      "destination": "/index.html"
-    }
+    { "source": "/demandas", "destination": "/index.html" },
+    { "source": "/demandas/:path*", "destination": "/index.html" },
+    { "source": "/minhas-demandas", "destination": "/index.html" },
+    { "source": "/minhas-demandas/:path*", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" }
   ]
 }

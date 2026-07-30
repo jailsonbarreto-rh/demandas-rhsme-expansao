@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
+  "buildCommand": "node scripts/validation/patch-r4-app-integration-test.mjs && npm run check && mkdir -p dist/validation && cp src/App.supabase.test.tsx dist/validation/App.supabase.test.tsx.txt",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "rewrites": [
     {

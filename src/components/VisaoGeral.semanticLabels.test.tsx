@@ -20,7 +20,7 @@ const demandas = [
   createMinimalDemandFixture({
     id: 902,
     numero: 'SME-PRO-2026/00902',
-    assunto: 'Demanda legada de teste',
+    assunto: 'Demanda importada de teste',
     responsavel: 'Vanessa Migrado',
     responsavelId: null,
     setor: 'E/CTRH',
@@ -50,7 +50,8 @@ describe('semânticas do Radar de Governança', () => {
     expect(screen.getByRole('heading', { name: 'Distribuição por responsável' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Demandas por setor informado' })).toBeVisible();
     expect(screen.getByText('Vanessa Migrado')).toBeVisible();
-    expect(screen.getByText('Vínculo legado pendente')).toBeVisible();
+    expect(screen.getByText('Responsável não vinculado')).toBeVisible();
+    expect(screen.queryByText(/vínculo legado/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/setores mais ativos/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/ranking/i)).not.toBeInTheDocument();
     expect(screen.queryByText('Distribuições calculadas sobre as demandas atualmente registradas, sem inferência de produtividade ou desempenho.')).not.toBeInTheDocument();

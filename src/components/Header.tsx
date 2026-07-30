@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
   )).length;
   const legendaCriticas = totalCriticas > 0
     ? `${totalCriticas} ${totalCriticas === 1 ? 'demanda exige' : 'demandas exigem'} providência imediata.`
-    : 'Todas as demandas de prazo crítico estão em dia.';
+    : 'Todas as demandas de prazo final crítico estão em dia.';
   const connectionPresentation = CONNECTION_STATUS_PRESENTATION[connectionStatus];
 
   return (
@@ -205,10 +205,10 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           className={`stat-card hoje-card ${filtrosAtivos.quickFilters.hoje ? 'active' : ''}`}
           onClick={() => onToggleQuickFilter('hoje')}
-          title="Filtrar por demandas com prazo hoje"
+          title="Filtrar por demandas cujo prazo final vence hoje"
         >
           <div className="stat-info">
-            <h3>Vencem Hoje</h3>
+            <h3>Prazo final hoje</h3>
             <div className="stat-number">{totalHoje}</div>
           </div>
         </button>
@@ -217,10 +217,10 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           className={`stat-card vencido-card ${filtrosAtivos.quickFilters.vencido ? 'active' : ''}`}
           onClick={() => onToggleQuickFilter('vencido')}
-          title="Filtrar por demandas vencidas"
+          title="Filtrar por demandas com prazo final vencido"
         >
           <div className="stat-info">
-            <h3>Vencidas</h3>
+            <h3>Prazo final vencido</h3>
             <div className="stat-number">{totalVencidos}</div>
           </div>
         </button>

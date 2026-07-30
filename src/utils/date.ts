@@ -1,21 +1,26 @@
-// Utilitário de gerenciamento de datas e semântica de prazos
-export const getTodayString = (): string => {
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const yyyy = today.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+import {
+  classifyDateSignal,
+  getTemporalSignalPresentation,
+  parseBrazilianDateOnly,
+} from '../domain/temporalSignals';
+
+export const OPERATIONAL_TIME_ZONE = 'America/Sao_Paulo';
+
+export const getTodayString = (now = new Date()): string => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: OPERATIONAL_TIME_ZONE,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.day}/${values.month}/${values.year}`;
 };
 
-export const isBeforeToday = (dateStr: string): boolean => {
-  if (!dateStr || dateStr === 'dd/mm/aaaa') return false;
-  const [day, month, year] = dateStr.split('/').map(Number);
-  const dateObj = new Date(year, month - 1, day);
-  
-  const today = new Date();
-  const todayObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  
-  return dateObj < todayObj;
+export const isBeforeToday = (dateStr: string, today = getTodayString()): boolean => {
+  const date = parseBrazilianDateOnly(dateStr);
+  const todayDate = parseBrazilianDateOnly(today);
+  return date !== null && todayDate !== null && date < todayDate;
 };
 
 export interface PrazoSemantics {
@@ -24,68 +29,32 @@ export interface PrazoSemantics {
   classe: string;
 }
 
-export const getPrazoFinalSemantics = (dateStr: string | undefined): PrazoSemantics => {
-  if (!dateStr || dateStr === 'dd/mm/aaaa') {
+function formatDate(value: string): string {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return '—';
+  const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  return `${match[1]} ${meses[Number(match[2]) - 1]} ${match[3]}`;
+}
+
+export const getPrazoFinalSemantics = (
+  dateStr: string | undefined,
+  today = getTodayString(),
+): PrazoSemantics => {
+  if (!dateStr || parseBrazilianDateOnly(dateStr) === null) {
     return { data: '—', label: null, classe: '' };
   }
 
-  try {
-    const [day, month, year] = dateStr.split('/').map(Number);
-    const dateObj = new Date(year, month - 1, day);
-    
-    const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-    const dataFormatada = `${String(day).padStart(2, '0')} ${meses[month - 1]} ${year}`;
+  const signal = classifyDateSignal(dateStr, today);
+  const presentation = getTemporalSignalPresentation(signal);
+  const label = signal.kind === 'future' ? 'No prazo' : presentation.label;
 
-    const today = new Date();
-    const todayObj = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-    const diffTime = dateObj.getTime() - todayObj.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      const absDays = Math.abs(diffDays);
-      return {
-        data: dataFormatada,
-        label: `${absDays} ${absDays === 1 ? 'dia' : 'dias'} em atraso`,
-        classe: 'status-atrasado'
-      };
-    } else if (diffDays === 0) {
-      return {
-        data: dataFormatada,
-        label: 'Vence hoje',
-        classe: 'status-hoje'
-      };
-    } else if (diffDays <= 5) {
-      return {
-        data: dataFormatada,
-        label: `Vence em ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`,
-        classe: 'status-alerta'
-      };
-    } else {
-      return {
-        data: dataFormatada,
-        label: `Prazo em ${diffDays} dias`,
-        classe: 'status-normal'
-      };
-    }
-  } catch {
-    return { data: '—', label: null, classe: '' };
-  }
+  return {
+    data: formatDate(dateStr),
+    label,
+    classe: presentation.className,
+  };
 };
 
-export const isValidDateString = (value: string): boolean => {
-  if (!value) return false;
-  const trimmed = value.trim();
-  const regexCompleta = /^\d{2}\/\d{2}\/\d{4}$/;
-  if (!regexCompleta.test(trimmed)) {
-    return false;
-  }
-
-  const parts = trimmed.split('/');
-  const day = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const year = parseInt(parts[2], 10);
-  
-  const dateObj = new Date(year, month - 1, day);
-  return (dateObj.getFullYear() === year && dateObj.getMonth() === month - 1 && dateObj.getDate() === day);
-};
+export const isValidDateString = (value: string): boolean => (
+  parseBrazilianDateOnly(value.trim()) !== null
+);

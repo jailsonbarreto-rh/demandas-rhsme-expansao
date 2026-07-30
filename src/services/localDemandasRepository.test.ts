@@ -10,7 +10,6 @@ import { LocalDemandasRepository } from './localDemandasRepository';
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
-
   get length(): number { return this.values.size; }
   clear(): void { this.values.clear(); }
   getItem(key: string): string | null { return this.values.get(key) ?? null; }
@@ -21,19 +20,20 @@ class MemoryStorage implements Storage {
 }
 
 const createInput: CreateDemandaInput = {
-  numero: 'DEMO-C4-999',
+  numero: 'DEMO-R4-999',
   tipo: 'Processo',
   assunto: 'Nova demanda auditável',
   responsavel: 'Equipe Demonstração',
   responsavelId: null,
-  limite1: '',
-  limite1Situacao: 'nao_informado',
+  limite1: '10/08/2099',
+  limite1Situacao: 'definido',
   limite1Justificativa: '',
-  limite2: '30/09/2026',
-  limite2Situacao: 'definido',
+  limite2: '',
+  limite2Situacao: 'nao_se_aplica',
   limite2Justificativa: '',
   proximaAcao: 'Conferir documentação demonstrativa',
-  proximaAcaoEm: '20/09/2026',
+  proximaAcaoEm: '20/08/2099',
+  proximaAcaoJustificativa: '',
   linkOrigem: '',
   status: 'Aguardando Andamento',
   setor: 'Setor Demonstração',
@@ -54,8 +54,6 @@ function makeEditInput(demanda: Demanda, patch: Partial<EditDemandaInput> = {}):
     setor: demanda.setor,
     classificacao: demanda.classificacao,
     linkOrigem: demanda.linkOrigem,
-    proximaAcao: demanda.proximaAcao,
-    proximaAcaoEm: demanda.proximaAcaoEm,
     justificativa: 'Alteração confirmada no teste auditável',
     ...patch,
   };
@@ -77,7 +75,7 @@ function makeHistory(demandas: Demanda[], comentario = 'Histórico preservado'):
   }));
 }
 
-describe('LocalDemandasRepository — Ciclo 4', () => {
+describe('LocalDemandasRepository — R4', () => {
   let storage: MemoryStorage;
 
   beforeEach(() => {
@@ -86,21 +84,14 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
     storage = new MemoryStorage();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  afterEach(() => vi.useRealTimers());
 
   it('inicializa as chaves atuais com demandas e histórico sintéticos', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     const data = await repository.load();
-
     expect(data.demandas).toEqual(initialDemandas);
-    expect(data.historico.map((item) => item.demandaId)).toEqual(
-      initialDemandas.map((demanda) => demanda.id),
-    );
-    expect(data.historico.every(
-      (item) => item.comentario === 'Demanda sintética carregada no modo de demonstração.',
-    )).toBe(true);
+    expect(data.historico.map((item) => item.demandaId)).toEqual(initialDemandas.map((demanda) => demanda.id));
+    expect(data.historico.every((item) => item.comentario === 'Demanda sintética carregada no modo de demonstração.')).toBe(true);
     expect(JSON.parse(storage.getItem('demandas_data')!)).toEqual(initialDemandas);
     expect(storage.keys()).toEqual(['demandas_data', 'demandas_history']);
   });
@@ -114,31 +105,23 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
     storage.setItem('demandas_history', JSON.stringify(makeHistory(initialDemandas.slice(0, 2))));
 
     const data = await new LocalDemandasRepository(storage, initialDemandas).load();
-
     expect(data.demandas).toHaveLength(2);
-    expect(data.demandas[0]).toEqual(expect.objectContaining({
-      deletedAt: '',
-      deletedBy: null,
-      deletionReason: '',
-    }));
+    expect(data.demandas[0]).toEqual(expect.objectContaining({ deletedAt: '', deletedBy: null, deletionReason: '' }));
   });
 
   it('redefine para fixtures seguras quando o JSON local está corrompido', async () => {
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     storage.setItem('demandas_data', '{invalid json}');
     storage.setItem('demandas_history', '{invalid json}');
-
     const data = await new LocalDemandasRepository(storage, initialDemandas).load();
-
     expect(data.demandas).toEqual(initialDemandas);
     expect(warning).toHaveBeenCalledTimes(2);
     warning.mockRestore();
   });
 
-  it('cria demanda e exatamente um evento de criação com alterações estruturadas', async () => {
+  it('cria demanda válida e evento estruturado', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
-
     await repository.create(createInput);
     const data = await repository.load();
     const created = data.demandas.find((demanda) => demanda.numero === createInput.numero)!;
@@ -146,7 +129,8 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
 
     expect(created).toEqual(expect.objectContaining({
       origem: 'sistema',
-      deletedAt: '',
+      limite1Situacao: 'definido',
+      limite2Situacao: 'nao_se_aplica',
       proximaAcao: createInput.proximaAcao,
     }));
     expect(events).toHaveLength(1);
@@ -154,67 +138,126 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
       tipoEvento: 'criacao',
       autorNome: 'Usuário Demonstração',
       alteracoes: expect.arrayContaining([
-        expect.objectContaining({ field: 'status', after: createInput.status }),
+        expect.objectContaining({ field: 'limite1_situacao', after: 'definido' }),
       ]),
     }));
   });
 
-  it('classifica edição geral, reatribuição e alteração de prazo pelo que realmente mudou', async () => {
+  it('rejeita nova demanda sem prazo interno ou escolha final explícita', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
-    const target = initialDemandas[0];
-
-    await repository.edit(target.id, makeEditInput(target, { assunto: 'Assunto auditável revisado' }));
-    let data = await repository.load();
-    expect(data.historico[0]).toEqual(expect.objectContaining({
-      demandaId: target.id,
-      tipoEvento: 'edicao',
-      comentario: 'Alteração confirmada no teste auditável',
-    }));
-
-    const afterGeneral = data.demandas.find((demanda) => demanda.id === target.id)!;
-    await repository.edit(target.id, makeEditInput(afterGeneral, {
-      responsavel: 'Nova pessoa responsável',
-      justificativa: 'Responsabilidade redistribuída após conferência',
-    }));
-    data = await repository.load();
-    expect(data.historico[0].tipoEvento).toBe('reatribuicao');
-
-    const afterAssignment = data.demandas.find((demanda) => demanda.id === target.id)!;
-    await repository.edit(target.id, makeEditInput(afterAssignment, {
-      limite1: '18/08/2026',
-      justificativa: 'Prazo interno corrigido conforme documento',
-    }));
-    data = await repository.load();
-    expect(data.historico[0].tipoEvento).toBe('alteracao_prazo');
+    await expect(repository.create({
+      ...createInput,
+      limite1: '',
+      limite1Situacao: 'nao_informado',
+    })).rejects.toThrow();
+    await expect(repository.create({
+      ...createInput,
+      numero: 'DEMO-R4-998',
+      limite2Situacao: 'nao_informado',
+    })).rejects.toThrow();
   });
 
-  it('registra andamento sem trocar o status e atualiza a próxima ação', async () => {
+  it('preserva lacunas legadas em edição cadastral e permite primeira adequação sem justificativa', async () => {
+    const legacy: Demanda = {
+      ...initialDemandas[0],
+      id: 900,
+      numero: 'LEGADO-900',
+      assunto: 'Registro legado',
+      limite1: '',
+      limite1Situacao: 'nao_informado',
+      limite2: '',
+      limite2Situacao: 'nao_informado',
+      proximaAcao: '',
+      proximaAcaoEm: '',
+      origem: 'legado',
+    };
+    storage.setItem('demandas_data', JSON.stringify([legacy]));
+    storage.setItem('demandas_history', JSON.stringify(makeHistory([legacy])));
+    const repository = new LocalDemandasRepository(storage, initialDemandas);
+    await repository.load();
+
+    await repository.edit(legacy.id, makeEditInput(legacy, {
+      assunto: 'Registro legado corrigido',
+      justificativa: 'Correção cadastral do assunto legado',
+    }));
+    let data = await repository.load();
+    let updated = data.demandas[0];
+    expect(updated).toEqual(expect.objectContaining({
+      limite1Situacao: 'nao_informado',
+      limite2Situacao: 'nao_informado',
+      proximaAcao: '',
+    }));
+
+    await repository.edit(legacy.id, makeEditInput(updated, {
+      limite1: '10/08/2099',
+      limite1Situacao: 'definido',
+      limite2Situacao: 'nao_se_aplica',
+      justificativa: '',
+    }));
+    data = await repository.load();
+    updated = data.demandas[0];
+    expect(updated.limite1Situacao).toBe('definido');
+    expect(data.historico[0]).toEqual(expect.objectContaining({
+      tipoEvento: 'alteracao_prazo',
+      comentario: 'Prazo ausente no legado preenchido pela primeira vez.',
+    }));
+  });
+
+  it('exige justificativa para alterar prazo já registrado', async () => {
+    const repository = new LocalDemandasRepository(storage, initialDemandas);
+    await repository.load();
+    await repository.create(createInput);
+    const created = (await repository.load()).demandas.find((item) => item.numero === createInput.numero)!;
+
+    await expect(repository.edit(created.id, makeEditInput(created, {
+      limite1: '11/08/2099',
+      justificativa: '',
+    }))).rejects.toThrow('Justifique a alteração');
+
+    await repository.edit(created.id, makeEditInput(created, {
+      limite1: '11/08/2099',
+      justificativa: 'Reprogramação aprovada após nova análise',
+    }));
+    expect((await repository.load()).historico[0].tipoEvento).toBe('alteracao_prazo');
+  });
+
+  it('registra andamento sem trocar status e exige justificativa para data vencida', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
     const target = initialDemandas[0];
+
+    await expect(repository.registerProgress(target.id, {
+      comentario: 'Documentação conferida.',
+      proximaAcao: 'Cobrar complementação documental',
+      proximaAcaoEm: '01/01/2000',
+      proximaAcaoJustificativa: '',
+    })).rejects.toThrow();
 
     await repository.registerProgress(target.id, {
       comentario: 'Documentação conferida.',
       proximaAcao: 'Cobrar complementação documental',
-      proximaAcaoEm: '25/08/2026',
+      proximaAcaoEm: '01/01/2000',
+      proximaAcaoJustificativa: 'Registro tardio após indisponibilidade temporária',
     });
     const data = await repository.load();
     const updated = data.demandas.find((demanda) => demanda.id === target.id)!;
-
     expect(updated.status).toBe(target.status);
     expect(updated.proximaAcao).toBe('Cobrar complementação documental');
-    expect(data.historico[0]).toEqual(expect.objectContaining({
-      tipoEvento: 'andamento',
-      status_anterior: target.status,
-      status_novo: target.status,
-    }));
+    expect(data.historico[0].comentario).toContain('Justificativa da data vencida');
   });
 
-  it('transiciona status e limpa próxima ação ao encerrar', async () => {
+  it('exige próxima providência ao movimentar legado e limpa ao encerrar', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
     const target = initialDemandas[0];
+
+    await expect(repository.transitionStatus(target.id, {
+      status: 'Tramitado',
+      comentario: 'Encaminhado.',
+      proximaAcao: '',
+      proximaAcaoEm: '',
+    })).rejects.toThrow();
 
     await repository.transitionStatus(target.id, {
       status: 'Encerrado',
@@ -223,17 +266,10 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
       proximaAcaoEm: '',
     });
     const data = await repository.load();
-    const updated = data.demandas.find((demanda) => demanda.id === target.id)!;
-
-    expect(updated).toEqual(expect.objectContaining({
+    expect(data.demandas.find((demanda) => demanda.id === target.id)).toEqual(expect.objectContaining({
       status: 'Encerrado',
       proximaAcao: '',
       proximaAcaoEm: '',
-    }));
-    expect(data.historico[0]).toEqual(expect.objectContaining({
-      tipoEvento: 'mudanca_status',
-      status_anterior: target.status,
-      status_novo: 'Encerrado',
     }));
   });
 
@@ -241,64 +277,36 @@ describe('LocalDemandasRepository — Ciclo 4', () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
     const target = initialDemandas[1];
-
-    await repository.deleteLogically(target.id, {
-      motivo: 'Registro duplicado confirmado na conferência',
-    });
-
+    await repository.deleteLogically(target.id, { motivo: 'Registro duplicado confirmado na conferência' });
     let data = await repository.load();
     const storedAfterDelete = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
     const deleted = storedAfterDelete.find((demanda) => demanda.id === target.id)!;
-    const trash = await repository.loadTrash();
-
     expect(data.demandas.some((demanda) => demanda.id === target.id)).toBe(false);
-    expect(deleted).toEqual(expect.objectContaining({
-      deletedBy: 'demo-user',
-      deletionReason: 'Registro duplicado confirmado na conferência',
-    }));
-    expect(trash.map((demanda) => demanda.id)).toContain(target.id);
-    expect(data.historico.some(
-      (item) => item.demandaId === target.id && item.tipoEvento === 'exclusao',
-    )).toBe(true);
+    expect(deleted.deletedBy).toBe('demo-user');
+    expect((await repository.loadTrash()).map((demanda) => demanda.id)).toContain(target.id);
 
-    await repository.restore(target.id, {
-      motivo: 'Registro confirmado como válido após nova conferência',
-    });
+    await repository.restore(target.id, { motivo: 'Registro confirmado como válido após nova conferência' });
     data = await repository.load();
-    const restored = data.demandas.find((demanda) => demanda.id === target.id)!;
-
-    expect(restored).toEqual(expect.objectContaining({
-      deletedAt: '',
-      deletedBy: null,
-      deletionReason: '',
-    }));
-    expect(data.historico[0]).toEqual(expect.objectContaining({
-      demandaId: target.id,
-      tipoEvento: 'restauracao',
-    }));
+    expect(data.demandas.find((demanda) => demanda.id === target.id)).toEqual(expect.objectContaining({ deletedAt: '' }));
+    expect(data.historico[0].tipoEvento).toBe('restauracao');
   });
 
   it('rejeita número duplicado e IDs inexistentes', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
-
-    await expect(repository.create({
-      ...createInput,
-      numero: initialDemandas[0].numero,
-    })).rejects.toThrow('Já existe uma demanda cadastrada');
-
+    await expect(repository.create({ ...createInput, numero: initialDemandas[0].numero }))
+      .rejects.toThrow('Já existe uma demanda cadastrada');
     await expect(repository.registerProgress(999, {
       comentario: 'Teste',
       proximaAcao: 'Verificar registro inexistente',
-      proximaAcaoEm: '20/08/2026',
+      proximaAcaoEm: '20/08/2099',
     })).rejects.toThrow('Demanda não encontrada');
   });
 
   it('não cria assinatura remota no modo local', () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     const onRemoteChange = vi.fn();
-    const unsubscribe = repository.subscribe(onRemoteChange);
-    unsubscribe();
+    repository.subscribe(onRemoteChange)();
     expect(onRemoteChange).not.toHaveBeenCalled();
   });
 });

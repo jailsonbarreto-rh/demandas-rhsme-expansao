@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Demanda, PerfilMinimo } from '../types';
-import { editarDemandaSchema, type EditarDemandaValues } from '../validation/demandaSchemas';
-import { DateMaskInput } from './DateMaskInput';
+import type { DeadlineState, Demanda, PerfilMinimo } from '../types';
+import { createEditarDemandaSchema, type EditarDemandaValues } from '../validation/demandaSchemas';
+import { DeadlineControl } from './DeadlineControl';
 import { AppDialog } from './ui/AppDialog';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { FormError } from './ui/FormError';
@@ -21,6 +21,7 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
     () => [...responsaveis].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
     [responsaveis],
   );
+  const schema = useMemo(() => createEditarDemandaSchema(demanda), [demanda]);
   const responsavelLegado = !demanda.responsavelId && demanda.responsavel.trim()
     ? demanda.responsavel.trim()
     : '';
@@ -28,20 +29,30 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
     register,
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<EditarDemandaValues>({
-    resolver: zodResolver(editarDemandaSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       assunto: demanda.assunto,
       responsavelId: demanda.responsavelId ?? '',
+      limite1Situacao: demanda.limite1Situacao,
       limite1: demanda.limite1 || '',
+      limite2Situacao: demanda.limite2Situacao,
       limite2: demanda.limite2 || '',
       setor: demanda.setor || '',
-      proximaAcao: demanda.proximaAcao || '',
-      proximaAcaoEm: demanda.proximaAcaoEm || '',
       justificativa: '',
     },
   });
+  const limite1State = watch('limite1Situacao');
+  const limite2State = watch('limite2Situacao');
+  const internalStates: DeadlineState[] = demanda.limite1Situacao === 'nao_informado'
+    ? ['nao_informado', 'definido']
+    : ['definido'];
+  const finalStates: DeadlineState[] = demanda.limite2Situacao === 'nao_informado'
+    ? ['nao_informado', 'definido', 'nao_se_aplica']
+    : ['definido', 'nao_se_aplica'];
 
   const requestClose = () => {
     if (isDirty && !isSubmitting) setConfirmClose(true);
@@ -113,18 +124,43 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
                 <FormError id="edit-responsavel-error" message={errors.responsavelId?.message} />
               </div>
 
+              <input type="hidden" {...register('limite1Situacao')} />
               <Controller
                 name="limite1"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <DateMaskInput id="edit_limite1" label="Prazo interno" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
+                  <DeadlineControl
+                    idPrefix="edit-limite1"
+                    label="Prazo interno"
+                    state={limite1State}
+                    date={field.value}
+                    allowedStates={internalStates}
+                    onStateChange={(state) => setValue('limite1Situacao', state, { shouldDirty: true, shouldValidate: true })}
+                    onDateChange={field.onChange}
+                    onDateBlur={field.onBlur}
+                    stateError={errors.limite1Situacao?.message}
+                    dateError={fieldState.error?.message}
+                  />
                 )}
               />
+
+              <input type="hidden" {...register('limite2Situacao')} />
               <Controller
                 name="limite2"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <DateMaskInput id="edit_limite2" label="Prazo final" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
+                  <DeadlineControl
+                    idPrefix="edit-limite2"
+                    label="Prazo final"
+                    state={limite2State}
+                    date={field.value}
+                    allowedStates={finalStates}
+                    onStateChange={(state) => setValue('limite2Situacao', state, { shouldDirty: true, shouldValidate: true })}
+                    onDateChange={field.onChange}
+                    onDateBlur={field.onBlur}
+                    stateError={errors.limite2Situacao?.message}
+                    dateError={fieldState.error?.message}
+                  />
                 )}
               />
 
@@ -133,29 +169,9 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
                 <label htmlFor="edit_setor">Setor</label>
               </div>
 
-              {demanda.status !== 'Encerrado' && (
-                <>
-                  <div className="input-container-floating col-full">
-                    <textarea
-                      id="edit_proxima_acao"
-                      placeholder=" "
-                      {...register('proximaAcao')}
-                      className={errors.proximaAcao ? 'field-invalid' : ''}
-                      aria-invalid={Boolean(errors.proximaAcao)}
-                    />
-                    <label htmlFor="edit_proxima_acao">Próxima ação</label>
-                    <FormError message={errors.proximaAcao?.message} />
-                  </div>
-                  <Controller
-                    name="proximaAcaoEm"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <DateMaskInput id="edit_proxima_acao_em" label="Data de acompanhamento" value={field.value} onChange={field.onChange} onBlur={field.onBlur} error={fieldState.error?.message} />
-                    )}
-                  />
-                </>
-              )}
-
+              <div className="edit-justification-guidance col-full">
+                A primeira inclusão de um prazo ausente no legado não exige justificativa. Alterações de prazos já registrados e demais mudanças cadastrais permanecem justificadas e auditáveis.
+              </div>
               <div className="input-container-floating col-full">
                 <textarea
                   id="edit_justificativa"
@@ -165,7 +181,7 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
                   aria-invalid={Boolean(errors.justificativa)}
                   aria-describedby={errors.justificativa ? 'edit-justificativa-error' : undefined}
                 />
-                <label htmlFor="edit_justificativa">Justificativa da edição</label>
+                <label htmlFor="edit_justificativa">Justificativa da alteração, quando exigida</label>
                 <FormError id="edit-justificativa-error" message={errors.justificativa?.message} />
               </div>
             </div>

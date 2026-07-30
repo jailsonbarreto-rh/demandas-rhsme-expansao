@@ -1,9 +1,9 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: A1-CORE -->
+<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
 **Status:** vigente  
-**Atualizado em:** 29 de julho de 2026  
+**Atualizado em:** 30 de julho de 2026  
 **Finalidade:** registrar somente decisões expressamente aprovadas pelo responsável pelo produto antes da implementação de cada pacote.
 
 ## 1. Regra de uso
@@ -501,7 +501,146 @@ Está autorizada a implementação sequencial do A1-Core para:
 
 O A1-Core é uma autorização guarda-chuva, mas não um único release: fundação, banco aditivo, frontend e limpeza final usam branches e PRs próprios. Ficam fora do A1-Core: validação das cinco constraints, dois índices residuais, limites de texto, catálogo definitivo, importação futura, paginação R2 e as funcionalidades visuais do R4/R5. Após o encerramento do A1-Core começa o debate itemizado do R4; sua implementação depende de autorização expressa própria.
 
-## 8. Modelo de registro de decisão do ciclo
+## 8. Decisões e autorização do Ciclo R4
+
+### R4-D01 — Regra de prazo interno para novos cadastros
+
+**Data:** 30 de julho de 2026  
+**Classificação:** nova regra de negócio e coerência temporal  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+Toda nova demanda exige prazo interno com data definida. O prazo interno não admite `Não se aplica` nem `Não informado` em cadastro novo. Quando prazo interno e prazo final estiverem definidos, o prazo interno não pode ser posterior ao prazo final.
+
+Data passada pode ser informada no primeiro registro do prazo e, isoladamente, não exige justificativa.
+
+### R4-D02 — Regra de prazo final para novos cadastros
+
+**Data:** 30 de julho de 2026  
+**Classificação:** nova regra de negócio  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+Toda nova demanda exige escolha explícita entre:
+
+- prazo final com data definida; ou
+- `Não se aplica`.
+
+`Não informado` não é opção para cadastro novo. Marcar `Não se aplica` não exige justificativa inicial.
+
+### R4-D03 — Preservação dos prazos legados e adequação progressiva
+
+**Data:** 30 de julho de 2026  
+**Classificação:** preservação informacional e transição operacional  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+A ausência de prazo interno ou final em demanda legada não bloqueia consulta nem edição de campos não relacionados. O sistema não exige que usuários inventem datas históricas desconhecidas e não classifica ausência de prazo como vencimento.
+
+O primeiro preenchimento de prazo ausente no legado é adequação progressiva, não alteração de prazo, e não exige justificativa. Toda alteração posterior de prazo já registrado exige justificativa, independentemente de antecipação, prorrogação, data passada ou futura, prazo interno ou final, inclusive mudança entre data e `Não se aplica`.
+
+O histórico registra campo alterado, valor anterior, valor novo, justificativa, usuário e momento da operação.
+
+### R4-D04 — Próxima providência nas operações atuais e no legado
+
+**Data:** 30 de julho de 2026  
+**Classificação:** continuidade operacional e adequação progressiva  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+Toda demanda não encerrada criada pelo sistema exige próxima providência e data de acompanhamento.
+
+Nas demandas legadas, a ausência anterior desses campos não bloqueia consulta nem edição meramente cadastral. Entretanto, quando o usuário registrar andamento, alterar para status não encerrado, reabrir ou realizar outra movimentação que exija continuidade operacional, deverá informar a próxima providência e sua data. O primeiro preenchimento nesses casos não exige justificativa por estar anteriormente vazio.
+
+Ao encerrar a demanda, os campos correntes de próxima providência são limpos; os eventos anteriores permanecem preservados no histórico.
+
+### R4-D05 — Data passada da próxima providência
+
+**Data:** 30 de julho de 2026  
+**Classificação:** auditabilidade de operação excepcional  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+A data da próxima providência pode ser passada, mas o salvamento exige justificativa obrigatória com registro no histórico. Sem justificativa, a operação é bloqueada.
+
+### R4-D06 — Leitura temporal e apresentação na carteira
+
+**Data:** 30 de julho de 2026  
+**Classificação:** arquitetura da informação e clareza operacional  
+**Decisão:** APROVADA E IMPLEMENTADA.
+
+A organização atual da carteira, do banco e das rotas é preservada. A implementação complementa as superfícies existentes:
+
+- cartões `Vencem Hoje` e `Vencidas` passam a `Prazo final hoje` e `Prazo final vencido`;
+- filtros específicos permitem localizar prazo interno vencido ou hoje e próxima providência vencida ou hoje;
+- o seletor de período inclui a data da próxima providência;
+- a tabela mantém suas colunas e acrescenta `Próxima providência`;
+- o detalhe apresenta a próxima providência em destaque antes dos prazos;
+- a faixa comum de proximidade é de sete dias corridos;
+- `Atenção agora` permanece sem novo motor combinado no R4;
+- a exportação Excel preserva equivalência semântica com a carteira.
+
+A faixa de sete dias informa proximidade e não transforma automaticamente a demanda em urgente.
+
+### R4-D07 — Reavaliações futuras obrigatórias
+
+**Data:** 30 de julho de 2026  
+**Classificação:** compromisso de reavaliação, sem autorização automática  
+**Decisão:** APROVADA.
+
+Devem permanecer registradas para avaliação futura:
+
+1. representação conjunta de prazo interno, prazo final e próxima providência quando houver cobertura real suficiente;
+2. eventual maior destaque dos filtros operacionais depois do início do uso pelos usuários;
+3. revisão da apresentação da próxima providência em tabela, detalhe e mobile com dados reais;
+4. evolução obrigatória do bloco `Atenção agora` no R6;
+5. novos indicadores do Radar somente após cobertura e uso consistentes dos novos campos.
+
+Esses itens não autorizam implementação futura sem novo debate e aprovação.
+
+### R4-A01 — Autorização consolidada
+
+**Data:** 30 de julho de 2026  
+**Classificação:** autorização de implementação  
+**Decisão:** APROVADA.
+
+Foi autorizada a implementação integral das decisões R4-D01 a R4-D07 em todas as camadas afetadas: domínio, validações, formulários, carteira, detalhe, filtros, histórico, Excel, repositórios, RPCs, constraints, migrations, testes e documentação.
+
+A autorização exigiu preservação integral dos dados legados, ausência de preenchimento automático, validação duplicada no cliente e no banco, migrations aditivas, testes transacionais e manutenção do bloqueio de deploy automático fora das branches temporárias de homologação.
+
+### R4-C01 — Homologação técnica e remota
+
+**Data:** 30 de julho de 2026  
+**Classificação:** encerramento técnico e sincronização documental  
+**Estado:** IMPLEMENTAÇÃO HOMOLOGADA; PUBLICAÇÃO DO FRONTEND PELO PR #103.
+
+A aplicação foi validada com 67 arquivos e 309 testes unitários e de integração, lint, TypeScript, build, auditoria, documentação, Excel, orçamento de bundle e 22 cenários Playwright em desktop e mobile de 320 px.
+
+As seis migrations do R4 foram aplicadas ao projeto Supabase `CTRH PROCESSOS` (`kdhekkzwcokfrpcrsllr`) e registradas remotamente como:
+
+- `20260730063742_r4_deadlines_and_follow_up_rules`;
+- `20260730063806_r4_deadline_consistency_constraints`;
+- `20260730063832_r4_preserve_legacy_deadline_metadata`;
+- `20260730063856_r4_final_deadline_state_constraints`;
+- `20260730063923_r4_optional_reason_compatibility`;
+- `20260730064021_r4_preserve_exceptional_internal_state`.
+
+A homologação remota confirmou, em transações sintéticas integralmente revertidas:
+
+- edição cadastral do legado sem exigência ou invenção de prazo e providência;
+- primeira adequação de prazo sem justificativa e com evento auditável;
+- bloqueio de alteração posterior sem justificativa;
+- exigência de próxima providência nas movimentações pertinentes;
+- bloqueio de novo cadastro sem prazo interno;
+- prazo final `Não se aplica` sem justificativa inicial;
+- bloqueio de providência passada sem justificativa;
+- histórico com autoria e justificativa;
+- limpeza da providência corrente no encerramento;
+- sobrecargas de compatibilidade sem contorno das novas regras;
+- grants apenas para `authenticated`, sem execução por `anon` ou `service_role`.
+
+As contagens permaneceram inalteradas após migrations e testes: 379 demandas, todas legadas; 764 registros históricos; 369 demandas sem prazo interno; 354 sem prazo final; 379 sem próxima providência; zero fixture de homologação persistida. Não houve backfill, reclassificação ou atualização em massa.
+
+Os Advisors não apresentaram bloqueio novo introduzido pelo R4. Os avisos de `SECURITY DEFINER` correspondem à arquitetura intencional das RPCs protegidas por `private.can_edit()` e grants restritos; os demais avisos são preexistentes e informativos.
+
+Nenhum pacote posterior ao R4 está automaticamente autorizado.
+
+## 9. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
 |---|---|
@@ -520,7 +659,7 @@ O A1-Core é uma autorização guarda-chuva, mas não um único release: fundaç
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 9. Controle por ciclo
+## 10. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
@@ -532,13 +671,13 @@ O A1-Core é uma autorização guarda-chuva, mas não um único release: fundaç
 | UX-RADAR-001 | Concluído | UX-RADAR-001 | Concluída | PR #88, publicação #89 e bloqueio #90 |
 | UX-RADAR-002 | Concluído | UX-RADAR-002 | Concluída | PR #91, publicação #92 e bloqueio #93 |
 | E4 | Concluído | OP-D17, E4-D01, E4-A01 e E4-C01 | Concluída | PR #96 integrado; migration `20260729133230` verificada em Production |
-| A1-Core | Concluído | GOV-012, OP-D15, OP-D01 e A1-CORE-A01 | Sim | Implementação autorizada; ainda não iniciada |
+| A1-Core | Concluído | GOV-012, OP-D15, OP-D01 e A1-CORE-A01 | Concluída | Núcleo residual concluído antes do R4 |
 | R1 residual fora do Core | Parcial | GOV-012 | Não no momento | R1-1 e R1-4 adiados; R1-2 incorporado ao R4-1 |
 | R2 | Não iniciado | Não | Não | Futuro |
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |
-| R4 | Não concluído | Não | Não | Próximo debate após A1-Core; a sequência não pré-autoriza implementação |
-| R5 | Não iniciado | Não | Não | Suspenso até R4 |
-| R6 | Não iniciado | Não | Não | Futuro |
+| R4 | Concluído | R4-D01 a R4-D07, R4-A01 e R4-C01 | Concluída | Banco homologado; frontend no PR #103 |
+| R5 | Não iniciado | Não | Não | Aguardar novo debate e autorização |
+| R6 | Não iniciado | Não | Não | Reavaliação de `Atenção agora` registrada, sem autorização automática |
 | R7 | Não iniciado | Não | Não | Futuro |
 | R8 | Não iniciado | Não | Não | Futuro |
 | R9 | Não iniciado | Não | Não | Futuro |

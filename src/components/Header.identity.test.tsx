@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Header } from './Header';
 
 describe('Header — identidade única do produto', () => {
-  it('apresenta a identidade consolidada do Radar e um estado operacional neutro', () => {
+  it('apresenta identidade consolidada, estado operacional e cartões inequívocos', () => {
     render(
       <Header
         userEmail="servidor@rioeduca.net"
@@ -33,6 +33,8 @@ describe('Header — identidade única do produto', () => {
     expect(screen.queryByText('Painel de Demandas')).not.toBeInTheDocument();
     expect(screen.queryByText(/Supabase/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /em acompanhamento/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /prazo final hoje/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /prazo final vencido/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /minhas demandas.*acompanhe sua carteira/i })).toBeInTheDocument();
     expect(screen.queryByText('Demandas Ativas')).not.toBeInTheDocument();
   });

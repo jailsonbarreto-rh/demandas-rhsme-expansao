@@ -23,6 +23,16 @@ interface FilterPanelProps {
   periodError?: string | null;
 }
 
+const QUICK_FILTER_LABELS: Array<[keyof QuickFilters, string]> = [
+  ['assinatura', 'Para assinatura'],
+  ['hoje', 'Prazo final hoje'],
+  ['vencido', 'Prazo final vencido'],
+  ['internoHoje', 'Prazo interno hoje'],
+  ['internoVencido', 'Prazo interno vencido'],
+  ['providenciaHoje', 'Providência hoje'],
+  ['providenciaVencida', 'Providência vencida'],
+];
+
 export const FilterPanel: React.FC<FilterPanelProps> = ({
   filtros,
   setFiltros,
@@ -77,47 +87,31 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     'Ajustar',
   ];
 
-  let filtrosAtivosCount = 0;
+  let filtrosAtivosCount = Object.values(quickFilters).filter(Boolean).length;
   if (filtros.query.trim()) filtrosAtivosCount += 1;
   if (filtros.type !== 'Todos') filtrosAtivosCount += 1;
   if (filtros.classification !== 'Todas') filtrosAtivosCount += 1;
   if (filtros.status !== 'acompanhamento') filtrosAtivosCount += 1;
   if (filtros.sector !== 'Todos') filtrosAtivosCount += 1;
   if (filtros.periodStart || filtros.periodEnd) filtrosAtivosCount += 1;
-  if (quickFilters.assinatura) filtrosAtivosCount += 1;
-  if (quickFilters.hoje) filtrosAtivosCount += 1;
-  if (quickFilters.vencido) filtrosAtivosCount += 1;
 
   const showRecentSearches = searchFocused && !filtros.query.trim() && recentSearches.length > 0;
 
   return (
     <div className="filters-panel">
       <div className="filters-header" style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
-        <div className="filters-quick-buttons" aria-label="Filtros rápidos">
-          <button
-            type="button"
-            className={`btn-toggle ${quickFilters.assinatura ? 'active' : ''}`}
-            onClick={() => toggleQuickFilter('assinatura')}
-            aria-pressed={quickFilters.assinatura}
-          >
-            Para assinatura
-          </button>
-          <button
-            type="button"
-            className={`btn-toggle ${quickFilters.hoje ? 'active' : ''}`}
-            onClick={() => toggleQuickFilter('hoje')}
-            aria-pressed={quickFilters.hoje}
-          >
-            Hoje
-          </button>
-          <button
-            type="button"
-            className={`btn-toggle ${quickFilters.vencido ? 'active' : ''}`}
-            onClick={() => toggleQuickFilter('vencido')}
-            aria-pressed={quickFilters.vencido}
-          >
-            Vencido
-          </button>
+        <div className="filters-quick-buttons" aria-label="Filtros rápidos de acompanhamento">
+          {QUICK_FILTER_LABELS.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              className={`btn-toggle ${quickFilters[key] ? 'active' : ''}`}
+              onClick={() => toggleQuickFilter(key)}
+              aria-pressed={quickFilters[key]}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -275,6 +269,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               >
                 <option value="limite1">Prazo interno</option>
                 <option value="limite2">Prazo final</option>
+                <option value="proxima_acao">Data da próxima providência</option>
                 <option value="historico">Movimentação do histórico</option>
               </select>
             </div>
@@ -319,8 +314,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {filtrosAtivosCount > 0 && (
             <div className="filters-active-state" data-testid="active-filters-state">
               <i className="fa-solid fa-filter" aria-hidden="true" />
-              <span className="badge-count">{filtrosAtivosCount}</span>
-              {' '}
+              <span className="badge-count">{filtrosAtivosCount}</span>{' '}
               <strong>{filtrosAtivosCount === 1 ? 'filtro ativo' : 'filtros ativos'}</strong>
             </div>
           )}

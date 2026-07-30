@@ -21,9 +21,12 @@ const demandas = statuses.map((status, index) => createDemandFixture({
   assunto: index === 1 ? 'Consulta a setor externo' : `Assunto ${index + 1}`,
   responsavel: index === 0 ? 'Usuário Demonstração A' : '',
   responsavelId: index === 0 ? 'user-a' : null,
-  limite1: index === 0 ? '10/07/2026' : '',
+  limite1: index === 0 ? '20/07/2026' : index === 1 ? '22/07/2026' : '',
+  limite1Situacao: index < 2 ? 'definido' : 'nao_informado',
   limite2: index === 0 ? '20/07/2026' : index === 3 ? '01/07/2026' : '',
-  proximaAcaoEm: index === 0 ? '25/07/2026' : '',
+  limite2Situacao: index === 0 || index === 3 ? 'definido' : 'nao_informado',
+  proximaAcao: index === 0 ? 'Cobrar retorno da unidade' : index === 1 ? 'Verificar resposta recebida' : '',
+  proximaAcaoEm: index === 0 ? '21/07/2026' : index === 1 ? '22/07/2026' : '',
   status,
   setor: index < 3 ? 'CTRH' : 'Externo',
   classificacao: index === 0 ? 'Cessão' : 'Outros',
@@ -54,12 +57,11 @@ describe('applyDemandFilters', () => {
   it('preserva o recorte exato da busca atual entre campos e histórico', () => {
     const query = 'externo cobrança';
     const expected = demandas.filter((demanda) => matchDemandSearch(demanda, historico, query).matches);
-
     expect(applyDemandFilters(demandas, filters({ query, status: 'todos' }), { historico }))
       .toEqual(expected);
   });
 
-  it('combina tipo, classificação, setor e período sem alterar as regras existentes', () => {
+  it('combina tipo, classificação, setor e período sem alterar regras existentes', () => {
     expect(applyDemandFilters(demandas, filters({
       status: 'todos',
       type: 'Processo',
@@ -71,6 +73,15 @@ describe('applyDemandFilters', () => {
     }), { historico })).toEqual([demandas[0]]);
   });
 
+  it('filtra período pela data da próxima providência', () => {
+    expect(applyDemandFilters(demandas, filters({
+      status: 'todos',
+      periodField: 'proxima_acao',
+      periodStart: '2026-07-22',
+      periodEnd: '2026-07-22',
+    }), { historico })).toEqual([demandas[1]]);
+  });
+
   it('usa exclusivamente UUID no escopo pessoal, sem aproximar pelo nome', () => {
     const sameNameWithoutId = {
       ...demandas[1],
@@ -78,7 +89,6 @@ describe('applyDemandFilters', () => {
       responsavel: 'Usuário Demonstração A',
       responsavelId: null,
     };
-
     expect(applyDemandFilters(
       [...demandas, sameNameWithoutId],
       filters({ status: 'todos', scope: 'meu' }),
@@ -91,6 +101,35 @@ describe('applyDemandFilters', () => {
       historico,
       today: '22/07/2026',
       quickFilters: { assinatura: false, hoje: false, vencido: true },
+    })).toEqual([demandas[0]]);
+  });
+
+  it('combina alertas temporais por OU e demais filtros por E', () => {
+    const result = applyDemandFilters(demandas, filters({ status: 'todos', sector: 'CTRH' }), {
+      historico,
+      today: '22/07/2026',
+      quickFilters: {
+        assinatura: false,
+        hoje: false,
+        vencido: false,
+        internoVencido: true,
+        providenciaHoje: true,
+      },
+    });
+    expect(result).toEqual([demandas[0], demandas[1]]);
+  });
+
+  it('não transforma ausência legada em vencimento', () => {
+    expect(applyDemandFilters(demandas, filters({ status: 'todos' }), {
+      historico,
+      today: '22/07/2026',
+      quickFilters: {
+        assinatura: false,
+        hoje: false,
+        vencido: false,
+        internoVencido: true,
+        providenciaVencida: true,
+      },
     })).toEqual([demandas[0]]);
   });
 });

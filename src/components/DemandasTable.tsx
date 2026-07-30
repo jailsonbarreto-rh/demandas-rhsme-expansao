@@ -12,8 +12,8 @@ import {
 import type { DeleteDemandaInput, Demanda } from '../types';
 import type { DemandSearchField, DemandSearchMatch } from '../search/searchTypes';
 import { HighlightedText } from '../search/searchHighlight';
-import { getPrazoFinalSemantics } from '../utils/date';
 import { isClosed } from '../domain/workSemantics';
+import { DeadlineDisplay } from './DeadlineDisplay';
 import { DeleteDemandaDialog } from './DeleteDemandaDialog';
 
 interface DemandasTableProps {
@@ -174,7 +174,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         );
       },
       enableSorting: false,
-      size: 330,
+      size: 300,
     }),
     columnHelper.accessor('responsavel', {
       header: ({ column }) => (
@@ -196,13 +196,20 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         );
       },
       sortingFn: (a, b) => (a.original.responsavel || '').localeCompare(b.original.responsavel || '', 'pt-BR'),
-      size: 180,
+      size: 170,
     }),
     columnHelper.accessor('limite1', {
       header: 'Prazo Interno',
-      cell: ({ getValue }) => getValue() && getValue() !== 'dd/mm/aaaa' ? getValue() : '—',
-      enableSorting: false,
-      size: 110,
+      cell: ({ row }) => (
+        <DeadlineDisplay
+          date={row.original.limite1}
+          state={row.original.limite1Situacao}
+          closed={isClosed(row.original)}
+          compact
+        />
+      ),
+      sortingFn: (a, b) => sortableDate(a.original.limite1) - sortableDate(b.original.limite1),
+      size: 130,
     }),
     columnHelper.accessor('limite2', {
       header: ({ column }) => (
@@ -210,17 +217,44 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           Prazo Final <SortIcon direction={column.getIsSorted()} />
         </button>
       ),
+      cell: ({ row }) => (
+        <DeadlineDisplay
+          date={row.original.limite2}
+          state={row.original.limite2Situacao}
+          closed={isClosed(row.original)}
+          compact
+        />
+      ),
+      sortingFn: (a, b) => sortableDate(a.original.limite2) - sortableDate(b.original.limite2),
+      size: 130,
+    }),
+    columnHelper.accessor('proximaAcaoEm', {
+      header: ({ column }) => (
+        <button type="button" className="table-sort-button" onClick={column.getToggleSortingHandler()} aria-label="Ordenar por próxima providência">
+          Próxima Providência <SortIcon direction={column.getIsSorted()} />
+        </button>
+      ),
       cell: ({ row }) => {
-        const prazo = getPrazoFinalSemantics(row.original.limite2);
+        const demanda = row.original;
+        const closed = isClosed(demanda);
         return (
-          <div className="prazo-final-container">
-            <span className="prazo-final-data">{prazo.data}</span>
-            {prazo.label && !isClosed(row.original) && <span className={`prazo-status-label ${prazo.classe}`}>{prazo.label}</span>}
+          <div className={`next-action-cell ${closed ? 'closed' : ''}`}>
+            {!closed && demanda.proximaAcao ? (
+              <span className="next-action-text" title={demanda.proximaAcao}>{demanda.proximaAcao}</span>
+            ) : !closed ? (
+              <span className="next-action-text missing">Não informada</span>
+            ) : null}
+            <DeadlineDisplay
+              date={demanda.proximaAcaoEm}
+              closed={closed}
+              compact
+              missingLabel="Data não informada"
+            />
           </div>
         );
       },
-      sortingFn: (a, b) => sortableDate(a.original.limite2) - sortableDate(b.original.limite2),
-      size: 120,
+      sortingFn: (a, b) => sortableDate(a.original.proximaAcaoEm) - sortableDate(b.original.proximaAcaoEm),
+      size: 230,
     }),
     columnHelper.accessor('status', {
       header: ({ column }) => (
@@ -294,6 +328,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   const start = total === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
   const end = Math.min(total, start + pagination.pageSize - 1);
   const approximateTermCount = searchMatches.values().next().value?.totalTermCount ?? 0;
+  const leftAlignedColumns = ['numero', 'assunto', 'responsavel', 'proximaAcaoEm'];
 
   return (
     <>
@@ -313,7 +348,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
               {table.getHeaderGroups().map((group) => (
                 <tr key={group.id}>
                   {group.headers.map((header) => (
-                    <th key={header.id} style={{ width: header.getSize(), textAlign: ['numero', 'assunto', 'responsavel'].includes(header.column.id) ? 'left' : 'center' }}>
+                    <th key={header.id} style={{ width: header.getSize(), textAlign: leftAlignedColumns.includes(header.column.id) ? 'left' : 'center' }}>
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -324,7 +359,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
               {table.getRowModel().rows.length > 0 ? table.getRowModel().rows.map((row) => (
                 <tr key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className={cell.column.id === 'assunto' ? 'text-start-cell' : ''} style={{ textAlign: ['numero', 'assunto', 'responsavel'].includes(cell.column.id) ? 'left' : 'center' }}>
+                    <td key={cell.id} className={['assunto', 'proximaAcaoEm'].includes(cell.column.id) ? 'text-start-cell' : ''} style={{ textAlign: leftAlignedColumns.includes(cell.column.id) ? 'left' : 'center' }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

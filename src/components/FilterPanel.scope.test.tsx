@@ -6,6 +6,7 @@ import {
   DEFAULT_DEMAND_FILTERS,
   DEFAULT_QUICK_FILTERS,
   type DemandFilters,
+  type QuickFilters,
 } from '../filters/filterTypes';
 import { FilterPanel } from './FilterPanel';
 
@@ -15,7 +16,7 @@ function ScopeHarness() {
     query: 'processo',
     scope: 'meu',
   });
-  const [quickFilters, setQuickFilters] = React.useState({
+  const [quickFilters, setQuickFilters] = React.useState<QuickFilters>({
     ...DEFAULT_QUICK_FILTERS,
     assinatura: true,
   });

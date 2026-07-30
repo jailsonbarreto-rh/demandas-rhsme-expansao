@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDemandFixture, createHistoryFixture } from '../test/expandedFixtures';
 import { DemandDetailDrawer } from './DemandDetailDrawer';
 import { ModalEditar } from './ModalEditar';
+import { VisaoGeral } from './VisaoGeral';
 
 const legacyDemand = createDemandFixture({
   id: 42,
@@ -121,5 +122,43 @@ describe('informações apresentadas ao usuário', () => {
     expect(screen.getByText('Responsável')).toBeInTheDocument();
     expect(screen.getByText('Situação do prazo interno')).toBeInTheDocument();
     expect(screen.getByText('Data definida')).toBeInTheDocument();
+  });
+
+  it('usa linguagem neutra para cadastros de responsável ainda não associados', () => {
+    render(
+      <VisaoGeral
+        demandas={[legacyDemand]}
+        historico={[]}
+        onOpenEditar={vi.fn()}
+        renderAtencaoImediata={() => null}
+      />,
+    );
+
+    expect(screen.getByText('Responsável não vinculado')).toBeVisible();
+    expect(screen.queryByText(/vínculo legado/i)).not.toBeInTheDocument();
+  });
+
+  it('não usa o identificador numérico como substituto do processo no histórico do Radar', () => {
+    const unmatchedHistory = createHistoryFixture({
+      id: 700,
+      demandaId: 999,
+      data_hora: '30/07/2026, 10:00:00',
+      status_novo: 'Aguardando Andamento',
+      setor: 'E/CTRH',
+      comentario: 'Documento encaminhado para conferência.',
+      tipoEvento: 'andamento',
+    });
+
+    render(
+      <VisaoGeral
+        demandas={[]}
+        historico={[unmatchedHistory]}
+        onOpenEditar={vi.fn()}
+        renderAtencaoImediata={() => null}
+      />,
+    );
+
+    expect(screen.getByText('Processo não localizado')).toBeVisible();
+    expect(screen.queryByText(/Processo #999/i)).not.toBeInTheDocument();
   });
 });

@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
+  "buildCommand": "npm test -- src/services/cycle4Contracts.test.ts && mkdir -p dist && printf '<!doctype html><title>R5-1 contract green</title>' > dist/index.html",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "rewrites": [
     {

@@ -3,8 +3,8 @@
 **Data:** 30 de julho de 2026  
 **Projeto:** Central de Demandas CTRH  
 **Branch funcional:** `feat/r5-1-admin-trash-audit`  
-**PR:** #106  
-**Estado deste relatório:** aplicação e banco homologados; publicação do frontend ainda pendente
+**PR funcional:** #106  
+**Estado deste relatório:** pacote homologado, integrado e publicado em Production
 
 ## 1. Escopo validado
 
@@ -104,7 +104,7 @@ Também registrou comentário explicando o caráter técnico excepcional da fun�
 
 `excluir_sme_demanda` continua protegida internamente por `private.is_admin()`. O grant autenticado não permite exclusão por editor ou leitor.
 
-### Integridade pós-migration
+### Integridade pós-migration e pós-publicação
 
 | Item | Antes | Depois |
 |---|---:|---:|
@@ -127,14 +127,28 @@ Confirmado por código, testes e RLS:
 - a função técnica de restauração não é executável por qualquer papel da API;
 - a exclusão física permanece indisponível no produto.
 
-## 7. Conclusão técnica
+## 7. Integração e publicação
 
-A implementação está apta para integração e publicação controlada. A aprovação deste relatório não autoriza R5-2 nem qualquer outro pacote funcional.
+- PR funcional #106 integrado no merge `6af4110738ca3bcd0b4088a82231790354f97b55`;
+- PR de release #107 integrado no merge `f222d5f3fcccf56a1ebb2cd553f39de4119c5d02`;
+- deployment Production: `dpl_HfJTmbcrVdiNeHKChrfuq5otxBGK`;
+- estado: `READY`;
+- target: `production`;
+- SHA publicado: `f222d5f3fcccf56a1ebb2cd553f39de4119c5d02`.
 
-Gates ainda posteriores a este documento:
+Verificações pós-publicação:
 
-1. merge do PR #106;
-2. deployment Production do SHA integrado;
-3. verificação de domínio, `/admin`, runtime e Supabase;
-4. restauração de `deploymentEnabled: false`;
-5. atualização final do Handoff com SHAs e deployment de Production.
+- domínio principal: HTTP 200;
+- `/demandas`: HTTP 200;
+- `/admin`: HTTP 200;
+- rewrites SPA preservados;
+- nenhum erro de runtime encontrado;
+- Supabase permaneceu saudável e com as contagens inalteradas.
+
+O deploy automático foi restaurado para `deploymentEnabled: false` no PR de encerramento.
+
+## 8. Conclusão
+
+O R5-1 está concluído em Production. A próxima atividade autorizada é somente o debate do R5-2 — Andamento, transições e reabertura.
+
+A conclusão deste relatório não autoriza qualquer implementação de R5-2, R5-3, R5-4 ou R5-5.

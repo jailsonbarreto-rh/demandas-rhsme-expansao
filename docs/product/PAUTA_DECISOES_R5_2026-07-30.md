@@ -2,7 +2,7 @@
 
 **Data:** 30 de julho de 2026  
 **Estado:** execução sequencial por pequenos blocos  
-**Autorização funcional vigente:** somente R5-1 — Lixeira administrativa e auditoria
+**Autorização funcional vigente:** nenhuma; próxima atividade é o debate do R5-2
 
 ## Objetivo do ciclo
 
@@ -31,8 +31,8 @@ Cada discussão deverá considerar todas as decisões anteriores, o layout vigen
 
 ## Ordem de execução
 
-1. R5-1 — Lixeira administrativa e auditoria;
-2. R5-2 — Andamento, transições e reabertura;
+1. R5-1 — Lixeira administrativa e auditoria — **concluído**;
+2. R5-2 — Andamento, transições e reabertura — **próximo debate**;
 3. R5-3 — Prontuário canônico;
 4. R5-4 — Autoria legível e contexto dos eventos;
 5. R5-5 — Busca histórica, links e retorno.
@@ -41,7 +41,7 @@ Cada discussão deverá considerar todas as decisões anteriores, o layout vigen
 
 ## R5-1 — Lixeira administrativa e auditoria
 
-**Estado:** DECISÕES APROVADAS E IMPLEMENTAÇÃO AUTORIZADA.
+**Estado:** CONCLUÍDO EM PRODUCTION.
 
 ### Decisão aprovada — exclusão lógica
 
@@ -54,7 +54,7 @@ Cada discussão deverá considerar todas as decisões anteriores, o layout vigen
 
 ### Decisão aprovada — lixeira administrativa
 
-A área `/admin` terá a seção `Demandas excluídas`, exclusivamente para administradores, com:
+A área `/admin` possui a seção `Demandas excluídas`, exclusivamente para administradores, com:
 
 - listagem dos registros logicamente excluídos;
 - pesquisa por número, assunto, responsável e motivo;
@@ -65,7 +65,7 @@ A área `/admin` terá a seção `Demandas excluídas`, exclusivamente para admi
 
 ### Decisão aprovada — ausência de restauração no produto
 
-Não haverá:
+Não existe:
 
 - botão ou fluxo de restauração;
 - escolha de status para retorno;
@@ -73,15 +73,25 @@ Não haverá:
 - execução da restauração por usuário autenticado, inclusive administrador;
 - retorno automático à carteira.
 
-A expressão `recuperável` significa apenas que a exclusão não destrói o registro. Uma recuperação excepcional poderá ser realizada tecnicamente pelo proprietário do banco, fora do produto, mediante necessidade administrativa específica e procedimento controlado. A função técnica existente pode permanecer no banco, mas sem `EXECUTE` para `public`, `anon`, `authenticated` ou `service_role`.
+A expressão `recuperável` significa apenas que a exclusão não destrói o registro. Uma recuperação excepcional poderá ser realizada tecnicamente pelo proprietário do banco, fora do produto, mediante necessidade administrativa específica e procedimento controlado. A função técnica existente permanece no banco, mas sem `EXECUTE` para `public`, `anon`, `authenticated` ou `service_role`.
 
-Decisão pendente OP-D11 fica encerrada por esta regra.
+A decisão OP-D11 foi encerrada por esta regra.
+
+### Evidências de conclusão
+
+- PR funcional #106, merge `6af4110738ca3bcd0b4088a82231790354f97b55`;
+- PR de release #107, merge `f222d5f3fcccf56a1ebb2cd553f39de4119c5d02`;
+- Production `dpl_HfJTmbcrVdiNeHKChrfuq5otxBGK`, estado `READY`;
+- migration `20260730180713_r5_1_disable_product_restore`;
+- 69 arquivos e 317 testes aprovados;
+- 22 de 22 cenários Playwright aprovados;
+- 379 demandas, zero excluídas, 764 históricos e 13 perfis preservados.
 
 ---
 
 ## R5-2 — Andamento, transições e reabertura
 
-**Estado:** próximo debate após a conclusão do R5-1; nenhuma implementação autorizada.
+**Estado:** próximo debate; nenhuma implementação autorizada.
 
 Questões a decidir:
 

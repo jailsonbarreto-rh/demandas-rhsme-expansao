@@ -2,17 +2,19 @@
 
 **Data:** 30 de julho de 2026  
 **Branch funcional:** `feat/r4-prazos-providencias`  
-**PR:** #103  
-**Estado:** aplicação, navegador e Supabase homologados; publicação do frontend pendente de integração do PR
+**PR funcional:** #103  
+**PR de publicação:** #104  
+**Estado:** aplicação, navegador, Supabase e Production homologados
 
 ## 1. Proteções preservadas
 
 - nenhuma branch paga do Supabase foi criada;
+- nenhuma cobrança adicional foi gerada para a homologação;
 - nenhum dado legado foi corrigido, preenchido ou reclassificado automaticamente;
 - todos os cenários sintéticos remotos foram executados em transações com `ROLLBACK`;
 - nenhum fixture de teste permaneceu no banco;
 - nenhum deployment de validação foi promovido para Production;
-- a branch funcional mantém o bloqueio normal de deploy automático.
+- o bloqueio automático é restaurado após a publicação.
 
 ## 2. Gate completo da aplicação
 
@@ -25,7 +27,7 @@ Resultados aprovados:
 - auditoria npm sem vulnerabilidades;
 - verificação de assinaturas e proveniência;
 - compatibilidade transitiva: 3 de 3 verificações;
-- gate documental: 9 de 9 verificações antes da reconciliação final;
+- gate documental: 9 de 9 verificações;
 - lint sem erro;
 - 67 arquivos de teste aprovados;
 - 309 testes unitários e de integração aprovados;
@@ -86,15 +88,16 @@ Os testes automatizados aprovaram:
 
 Projeto validado: `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, plano gratuito.
 
-### Estado anterior
+### Estado anterior e posterior
 
-A base continha:
+A base permaneceu com:
 
 - 379 demandas ativas, todas oriundas do legado;
 - 764 registros históricos;
 - 369 demandas sem prazo interno;
 - 354 demandas sem prazo final;
-- 379 demandas sem próxima providência.
+- 379 demandas sem próxima providência;
+- zero fixture R4 persistida.
 
 ### Migrations aplicadas
 
@@ -138,15 +141,6 @@ Foram validados, em transações sintéticas integralmente revertidas:
 - limpeza da providência corrente no encerramento;
 - compatibilidade dos contratos anteriores sem permitir contorno das regras novas.
 
-### Integridade pós-teste
-
-Depois dos `ROLLBACK`s:
-
-- demandas: 379;
-- históricos: 764;
-- fixtures R4 persistidas: 0;
-- contagens de lacunas legadas: inalteradas.
-
 ## 7. Advisors e logs
 
 Os Advisors não apresentaram bloqueio novo introduzido pelo R4.
@@ -157,10 +151,24 @@ Os logs recentes do PostgreSQL registraram as migrations e as transações de ho
 
 ## 8. GitHub Actions
 
-Os workflows associados ao PR continuam encerrando antes da primeira etapa e sem logs. O bloqueio é externo ao código da branch. Como contingência, os gates de aplicação foram reproduzidos em ambiente temporário da Vercel e os invariantes de banco foram executados diretamente no Supabase com transações reversíveis.
+Os workflows associados ao PR encerraram antes da primeira etapa e sem logs. O bloqueio foi externo ao código da branch. Como contingência, os gates de aplicação foram reproduzidos em ambiente temporário da Vercel e os invariantes de banco foram executados diretamente no Supabase com transações reversíveis.
 
-## 9. Estado de aceite
+## 9. Integração e Production
 
-O R4 está aprovado nos gates de aplicação, TypeScript, build, desempenho, Excel, acessibilidade, navegador, migrations, grants, preservação do legado e invariantes funcionais remotos.
+- PR funcional #103 integrado no merge `1a24586b2045115dd2486bbf1efb498d9521d9d9`;
+- PR de publicação #104 integrado no merge `698d81056a72d9d8e7ef65b8d91cf67ca0fbbaf1`;
+- deployment Production: `dpl_BU1fjhmwwcp9gjLu2v2Kw9oapau3`;
+- target: `production`;
+- estado: `READY`;
+- domínio: `https://demandas-rhsme-expansao.vercel.app/`;
+- domínio principal e rota `/demandas`: HTTP 200;
+- título publicado: `Fluxo CTRH — Radar de Governança`;
+- erros de runtime após a publicação: nenhum;
+- Supabase após a publicação: `ACTIVE_HEALTHY`;
+- dados após a publicação: 379 demandas, 764 históricos e zero fixture R4.
 
-A integração do PR e a publicação do frontend devem manter o bloqueio automático de deploy na configuração canônica. Nenhum ciclo posterior está autorizado automaticamente.
+## 10. Estado de aceite
+
+O R4 está aprovado e publicado nos gates de aplicação, TypeScript, build, desempenho, Excel, acessibilidade, navegador, migrations, grants, preservação do legado, invariantes funcionais remotos e Production.
+
+O PR final de encerramento restaura o bloqueio automático de deploy. Nenhum ciclo posterior está autorizado automaticamente.

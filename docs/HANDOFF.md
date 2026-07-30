@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **30 de julho de 2026 — R4 homologado**
+Atualizado em: **30 de julho de 2026 — R4 em Production**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
@@ -9,18 +9,19 @@ Atualizado em: **30 de julho de 2026 — R4 homologado**
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| Branch funcional | `feat/r4-prazos-providencias` |
-| Pull request | #103 — R4: prazos e próxima providência |
-| Production atual | `https://demandas-rhsme-expansao.vercel.app/` |
-| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1` |
+| Integração funcional | PR #103, merge `1a24586b2045115dd2486bbf1efb498d9521d9d9` |
+| Publicação | PR #104, merge `698d81056a72d9d8e7ef65b8d91cf67ca0fbbaf1` |
+| Production | `https://demandas-rhsme-expansao.vercel.app/` |
+| Deployment Production | `dpl_BU1fjhmwwcp9gjLu2v2Kw9oapau3` — `READY` |
+| Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
 | Última migration remota | `20260730064021_r4_preserve_exceptional_internal_state` |
 | Dados preservados | 379 demandas, 764 históricos, 13 perfis |
 | Implementação funcional autorizada | **Nenhuma nova implementação funcional autorizada** |
-| Próxima atividade | integrar o PR #103, publicar o frontend validado e verificar Production; qualquer ciclo posterior exige novo debate e autorização |
+| Próxima atividade | iniciar novo debate pré-implementação; nenhum ciclo posterior está autorizado por inferência |
 
 ## R4 — estado atual
 
-O R4 foi aprovado, implementado e homologado nas camadas de aplicação e banco.
+O R4 foi aprovado, implementado, homologado e publicado em Production nas camadas de aplicação e banco.
 
 ### Regras vigentes
 
@@ -56,7 +57,7 @@ Evidências aprovadas:
 - `npm ci` e patches transitivos;
 - auditoria sem vulnerabilidades;
 - assinaturas e proveniência de dependências;
-- gate documental;
+- gate documental: 9 de 9 verificações;
 - lint;
 - 67 arquivos e 309 testes unitários e de integração;
 - TypeScript;
@@ -70,7 +71,7 @@ Relatório detalhado: `docs/execution/RELATORIO_VALIDACAO_R4_2026-07-30.md`.
 
 ## Supabase remoto
 
-As migrations foram aplicadas no projeto gratuito existente, sem criação de branch paga:
+As migrations foram aplicadas no projeto gratuito existente, sem criação de branch paga e sem cobrança adicional:
 
 1. `20260730063742_r4_deadlines_and_follow_up_rules`;
 2. `20260730063806_r4_deadline_consistency_constraints`;
@@ -93,6 +94,17 @@ A homologação remota utilizou operações sintéticas em transações com `ROL
 
 Nenhum fixture permaneceu no banco. As contagens finais continuam em 379 demandas e 764 históricos.
 
+## Verificação de Production
+
+- deployment `dpl_BU1fjhmwwcp9gjLu2v2Kw9oapau3` em estado `READY`;
+- target `production` e SHA `698d81056a72d9d8e7ef65b8d91cf67ca0fbbaf1`;
+- domínio principal respondeu HTTP 200;
+- rota `/demandas` respondeu HTTP 200 e preservou o rewrite SPA;
+- título publicado: `Fluxo CTRH — Radar de Governança`;
+- nenhum erro de runtime detectado após a publicação;
+- Supabase permaneceu `ACTIVE_HEALTHY`;
+- integridade confirmada: 379 demandas, 764 históricos e zero fixture R4.
+
 ## Segurança e Advisors
 
 Nenhum achado bloqueante novo foi introduzido pelo R4.
@@ -101,12 +113,11 @@ Os avisos sobre `SECURITY DEFINER` são compatíveis com a arquitetura vigente: 
 
 ## Proteções de publicação
 
-- `vercel.json` da branch funcional mantém `deploymentEnabled: false`;
-- branches temporárias de validação não devem ser mescladas;
-- nenhum deployment temporário deve ser promovido diretamente;
-- a publicação deve usar o SHA integrado à `main`;
-- após a publicação, confirmar domínio principal, autenticação, carteira, criação, edição, andamento, status e leitura do Supabase;
-- o bloqueio automático de deploy deve permanecer ativo na configuração canônica.
+- o PR final de encerramento restaura `vercel.json` para `deploymentEnabled: false`;
+- branches temporárias de validação e release não integram a configuração funcional;
+- nenhum deployment temporário foi promovido diretamente;
+- Production foi gerada pela integração da `main`;
+- qualquer publicação futura exige novo release controlado.
 
 ## Documentação vigente
 
@@ -131,4 +142,4 @@ Sem autorização automática:
 
 ## Regra de continuidade
 
-Nenhum item de R5, R6, R2 ou outro ciclo está autorizado por inferência. Depois da publicação e verificação do R4, o próximo ciclo deverá voltar ao debate pré-implementação e ao Registro de Decisões.
+Nenhum item de R5, R6, R2 ou outro ciclo está autorizado por inferência. O próximo ciclo deve voltar ao debate pré-implementação e ao Registro de Decisões.

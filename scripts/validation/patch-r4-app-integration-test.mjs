@@ -12,6 +12,10 @@ const replacements = [
   ["screen.getByLabelText('Data de acompanhamento')", "screen.getByLabelText('Data da próxima providência')"],
   ["'Filtrar por demandas com prazo hoje'", "'Filtrar por demandas cujo prazo final vence hoje'"],
   ["'Filtrar por demandas vencidas'", "'Filtrar por demandas com prazo final vencido'"],
+  [
+    "    expect(window.location.pathname).toBe('/minhas-demandas');\n    expect(screen.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();\n    expect(await screen.findByText('Demanda do usuário conectado')).toBeVisible();\n    expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();",
+    "    await waitFor(() => {\n      expect(window.location.pathname).toBe('/minhas-demandas');\n      expect(screen.getByRole('heading', { name: 'Minhas demandas' })).toBeVisible();\n      expect(screen.getByText('Demanda do usuário conectado')).toBeVisible();\n      expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();\n    });",
+  ],
 ];
 
 for (const [before, after] of replacements) {

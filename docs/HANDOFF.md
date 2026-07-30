@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **30 de julho de 2026 — R5-1 em homologação**
+Atualizado em: **30 de julho de 2026 — R5-1 homologado, aguardando integração e publicação**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
 
@@ -12,10 +12,11 @@ Atualizado em: **30 de julho de 2026 — R5-1 em homologação**
 | R4 | concluído e publicado |
 | Production vigente antes do R5-1 | `dpl_BU1fjhmwwcp9gjLu2v2Kw9oapau3` — `READY` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
-| Dados antes da migration R5-1 | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
-| Pacote aprovado em homologação | **R5-1 — Lixeira administrativa e auditoria** |
+| Migration R5-1 | `20260730180713_r5_1_disable_product_restore` aplicada e verificada |
+| Dados após a migration R5-1 | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
+| Pacote homologado | **R5-1 — Lixeira administrativa e auditoria** |
 | Implementação funcional autorizada | **Nenhuma nova implementação funcional autorizada** |
-| Estado do pacote | implementação concluída na branch; gates e publicação em andamento |
+| Estado do pacote | aplicação e banco homologados; PR #106 aguarda integração e release controlado |
 | Demais pacotes do R5 | não autorizados |
 
 ## Decisão vigente do R5-1
@@ -50,14 +51,15 @@ Não existe restauração no produto:
 - não há botão ou fluxo visual;
 - não há método público nos tipos, hooks ou repositórios;
 - não há edição ou mudança de status na lixeira;
-- a função técnica do banco será preservada, mas perderá `EXECUTE` para `public`, `anon`, `authenticated` e `service_role`;
+- a função técnica do banco permanece definida, mas não possui `EXECUTE` para `public`, `anon`, `authenticated` ou `service_role`;
 - recuperação excepcional somente poderá ocorrer fora da aplicação, por procedimento controlado do proprietário do banco.
 
 O tipo histórico `restauracao` permanece reconhecido apenas para leitura de eventual evento anterior.
 
 ## Implementação na branch
 
-Branch funcional: `feat/r5-1-admin-trash-audit`.
+Branch funcional: `feat/r5-1-admin-trash-audit`.  
+Pull request: **#106 — R5-1: lixeira administrativa e auditoria**.
 
 Principais mudanças:
 
@@ -66,11 +68,11 @@ Principais mudanças:
 - integração com a área administrativa vigente;
 - carregamento da lixeira somente no contexto administrativo Supabase;
 - retirada de `RestoreDemandaInput`, `restoreMutationSchema` e `restore()` do contrato do produto;
-- migration `20260730170000_r5_1_disable_product_restore.sql`;
+- migration versionada `20260730170000_r5_1_disable_product_restore.sql`;
 - testes de contrato, migration, repositórios, tabela, painel e detalhe;
 - documentação canônica atualizada.
 
-## TDD e evidências já obtidas
+## TDD e validação da aplicação
 
 ### RED
 
@@ -78,59 +80,73 @@ Principais mudanças:
 - teste de migration falhou enquanto a revogação não existia;
 - teste da interface falhou enquanto a lixeira administrativa não existia.
 
-### GREEN focal
+### GREEN e gate canônico final
 
-- contrato Supabase/local sem restauração: aprovado;
-- migration aditiva de revogação: aprovada;
-- painel da lixeira: 4 testes aprovados;
-- integração focal: testes de painel, tabela, contratos e migration aprovados;
-- editor sem ação de exclusão: comprovado por teste de componente.
+Deployment de validação: `dpl_CHWakBVPusk3xKwrvWiZSpq7wENf` — `READY`.
 
-### Gate canônico da aplicação
+- auditoria de dependências: zero vulnerabilidades;
+- assinaturas: 560 pacotes verificados;
+- atestações: 147 pacotes;
+- compatibilidade transitiva: 3/3;
+- gate documental: 9/9;
+- lint: aprovado;
+- arquivos de teste: 69 aprovados;
+- testes unitários e de integração: 317 aprovados;
+- cobertura global de linhas: 81,46%;
+- TypeScript e build Vite: aprovados;
+- bundle inicial: 194.114 bytes, 60,16% abaixo da linha de base;
+- inspeção pública: aprovada.
 
-Um candidato intermediário aprovou:
+### Navegador
 
-- auditoria de dependências e assinaturas;
-- compatibilidade transitiva;
-- gate documental 9/9;
-- lint;
-- suíte unitária e de integração incluindo os testes R5-1;
-- TypeScript, build, orçamento do bundle e inspeção pública.
+Deployment E2E: `dpl_GGKDV2Ek7MKhjMMXXJN2zmJbaD6t`.
 
-A evidência final deverá ser repetida sobre o HEAD documental definitivo antes do merge.
+- 22 de 22 cenários Playwright aprovados;
+- desktop Chromium;
+- mobile de 320 px;
+- acessibilidade, navegação, filtros, modais, exportação, console e ausência de overflow horizontal.
 
-## Supabase — pré-validação remota
+Relatório detalhado: `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`.
 
-Estado confirmado antes da migration:
+## Supabase remoto
+
+Migration aplicada pelo fluxo gratuito normal:
+
+- versão remota: `20260730180713`;
+- nome: `r5_1_disable_product_restore`.
+
+A função `restaurar_sme_demanda(bigint, text)` foi preservada e passou a ter:
+
+| Papel | EXECUTE |
+|---|---:|
+| `public` | não |
+| `anon` | não |
+| `authenticated` | não |
+| `service_role` | não |
+
+`excluir_sme_demanda(bigint, text)` continua disponível para o papel `authenticated`, mas valida `private.is_admin()` internamente. Assim, editor e leitor não conseguem excluir mesmo por chamada direta.
+
+Integridade confirmada após a migration:
 
 - 379 demandas;
 - zero demandas excluídas;
 - 764 históricos;
 - 13 perfis;
-- RLS de `sme_demandas`: usuário ativo consulta registros não excluídos; excluídos exigem `private.is_admin()`;
-- RLS de `sme_historico`: eventos de demanda excluída exigem `private.is_admin()`;
-- `excluir_sme_demanda` possui grant para `authenticated`, mas valida `private.is_admin()` internamente;
-- `restaurar_sme_demanda` ainda possui grant para `authenticated` e `service_role`, ponto que a migration R5-1 revogará.
-
-Nenhuma alteração remota do R5-1 foi aplicada até este estado do Handoff.
+- nenhuma fixture ou resíduo;
+- nenhuma atualização de linha, backfill ou exclusão física.
 
 ## Gates ainda obrigatórios
 
-1. repetir `npm run check` sobre o HEAD final da branch;
-2. executar Playwright desktop e mobile;
-3. revisar diff e PR;
-4. aplicar a migration no Supabase pelo fluxo gratuito normal;
-5. confirmar função preservada e grants de restauração totalmente revogados;
-6. confirmar contagens inalteradas e ausência de resíduos;
-7. integrar o PR;
-8. publicar Production por release controlado;
-9. verificar domínio, `/admin`, runtime e Supabase;
-10. restaurar `deploymentEnabled: false`;
-11. registrar PR, SHA e deployment finais.
+1. revisar o estado final do PR #106;
+2. integrar o PR #106;
+3. publicar Production por release controlado;
+4. verificar domínio principal, `/demandas`, `/admin`, runtime e Supabase;
+5. restaurar `deploymentEnabled: false`;
+6. registrar os SHAs e o deployment final de Production.
 
 ## Próxima etapa após o R5-1
 
-Somente depois da homologação e publicação do R5-1 será iniciado o debate do **R5-2 — Andamento, transições e reabertura**.
+Somente depois da publicação e do encerramento documental do R5-1 será iniciado o debate do **R5-2 — Andamento, transições e reabertura**.
 
 Nenhum código do R5-2, R5-3, R5-4 ou R5-5 está autorizado.
 
@@ -146,7 +162,8 @@ Nenhum código do R5-2, R5-3, R5-4 ou R5-5 está autorizado.
 8. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`;
 9. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`;
 10. `docs/adr/ADR-003-historico-e-exclusao-logica.md`;
-11. este Handoff.
+11. `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`;
+12. este Handoff.
 
 ## Regra de continuidade
 

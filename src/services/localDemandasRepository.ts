@@ -9,7 +9,6 @@ import type {
   FieldChange,
   HistoryEventType,
   ProgressInput,
-  RestoreDemandaInput,
   StatusTransitionInput,
 } from '../types';
 import { requiresDeadlineChangeJustification } from '../domain/deadlineRules';
@@ -18,7 +17,6 @@ import {
   deleteMutationSchema,
   editDemandaMutationSchema,
   progressMutationSchema,
-  restoreMutationSchema,
   statusTransitionMutationSchema,
 } from '../validation/demandMutationSchemas';
 import type { AppData, DemandasRepository } from './contracts';
@@ -367,25 +365,6 @@ export class LocalDemandasRepository implements DemandasRepository {
     const event = this.createEvent(next, 'exclusao', current.status, parsed.motivo, [
       fieldChange('deletedAt', null, deletedAt),
       fieldChange('deletionReason', null, parsed.motivo),
-    ]);
-    this.persist(this.demandas.map((demanda) => demanda.id === id ? next : demanda), [event, ...this.historico]);
-  }
-
-  async restore(id: number, input: RestoreDemandaInput): Promise<void> {
-    const parsed = restoreMutationSchema.parse(input);
-    const current = this.demandas.find((demanda) => demanda.id === id);
-    if (!current) throw new Error('Demanda não encontrada.');
-    if (!current.deletedAt) throw new Error('A demanda não está excluída.');
-    const next: Demanda = {
-      ...current,
-      deletedAt: '',
-      deletedBy: null,
-      deletionReason: '',
-      updatedAt: new Date().toISOString(),
-    };
-    const event = this.createEvent(next, 'restauracao', current.status, parsed.motivo, [
-      fieldChange('deletedAt', current.deletedAt, null),
-      fieldChange('deletionReason', current.deletionReason, null),
     ]);
     this.persist(this.demandas.map((demanda) => demanda.id === id ? next : demanda), [event, ...this.historico]);
   }

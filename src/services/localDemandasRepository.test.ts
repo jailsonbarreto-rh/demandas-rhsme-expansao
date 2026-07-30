@@ -273,22 +273,20 @@ describe('LocalDemandasRepository — R4', () => {
     }));
   });
 
-  it('exclui logicamente, preserva o histórico e permite restauração', async () => {
+  it('exclui logicamente, preserva dados e histórico e não oferece restauração', async () => {
     const repository = new LocalDemandasRepository(storage, initialDemandas);
     await repository.load();
     const target = initialDemandas[1];
     await repository.deleteLogically(target.id, { motivo: 'Registro duplicado confirmado na conferência' });
-    let data = await repository.load();
+    const data = await repository.load();
     const storedAfterDelete = JSON.parse(storage.getItem('demandas_data')!) as Demanda[];
     const deleted = storedAfterDelete.find((demanda) => demanda.id === target.id)!;
     expect(data.demandas.some((demanda) => demanda.id === target.id)).toBe(false);
     expect(deleted.deletedBy).toBe('demo-user');
+    expect(deleted.deletionReason).toBe('Registro duplicado confirmado na conferência');
     expect((await repository.loadTrash()).map((demanda) => demanda.id)).toContain(target.id);
-
-    await repository.restore(target.id, { motivo: 'Registro confirmado como válido após nova conferência' });
-    data = await repository.load();
-    expect(data.demandas.find((demanda) => demanda.id === target.id)).toEqual(expect.objectContaining({ deletedAt: '' }));
-    expect(data.historico[0].tipoEvento).toBe('restauracao');
+    expect(data.historico[0]).toEqual(expect.objectContaining({ tipoEvento: 'exclusao' }));
+    expect((repository as unknown as Record<string, unknown>).restore).toBeUndefined();
   });
 
   it('rejeita número duplicado e IDs inexistentes', async () => {

@@ -92,10 +92,6 @@ export interface DeleteDemandaInput {
   motivo: string;
 }
 
-export interface RestoreDemandaInput {
-  motivo: string;
-}
-
 export type HistoryEventType =
   | 'criacao'
   | 'andamento'

@@ -1,7 +1,8 @@
 import { toast } from 'sonner';
-import React, { useState } from 'react';
-import type { PerfilUsuario } from '../types';
+import React, { useCallback, useEffect, useState } from 'react';
+import type { ComentarioHistorico, Demanda, PerfilUsuario } from '../types';
 import { AdminProfileDialog } from './AdminProfileDialog';
+import { AdminTrashPanel } from './AdminTrashPanel';
 
 export interface ServidorPerfil {
   id: string;
@@ -103,6 +104,10 @@ export function analyzeAccessIntegrity(servidores: ServidorPerfil[]): AccessInte
 export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }) => {
   const isSupabase = perfis !== undefined;
   const [perfilEmEdicao, setPerfilEmEdicao] = useState<PerfilUsuario | null>(null);
+  const [trashDemandas, setTrashDemandas] = useState<Demanda[]>([]);
+  const [trashHistorico, setTrashHistorico] = useState<ComentarioHistorico[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
+  const [trashError, setTrashError] = useState<string | null>(null);
   const servidores: ServidorPerfil[] = perfis?.map((perfil) => ({
     id: perfil.id,
     nome: perfil.nome || perfil.email,
@@ -117,8 +122,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
     { id: '2', nome: 'Erica Ramos', email: 'erica.ramos@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Ativo' },
     { id: '3', nome: 'Ricardo Silva', email: 'ricardo.silva@rioeduca.net', nivel: 'Básico', setor: 'CARH', status: 'Ativo' },
     { id: '4', nome: 'Servidor SME Teste', email: 'teste@rioeduca.net', nivel: 'Básico', setor: 'SME', status: 'Ativo' },
-    { id: '5', nome: 'Mariana Costa', email: 'mariana.costa@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Pendente' }
+    { id: '5', nome: 'Mariana Costa', email: 'mariana.costa@rioeduca.net', nivel: 'Avançado', setor: 'E/CTRH', status: 'Pendente' },
   ];
+
+  const loadTrash = useCallback(async () => {
+    if (!isSupabase) return;
+    setTrashLoading(true);
+    setTrashError(null);
+    try {
+      const [{ createAppServices }, { resolveAppConfig }] = await Promise.all([
+        import('../services/createAppServices'),
+        import('../config/appConfig'),
+      ]);
+      const services = createAppServices(resolveAppConfig(import.meta.env));
+      const [trash, current] = await Promise.all([
+        services.demandas.loadTrash(),
+        services.demandas.load(),
+      ]);
+      setTrashDemandas(trash);
+      setTrashHistorico(current.historico);
+    } catch (reason) {
+      setTrashError(reason instanceof Error
+        ? reason.message
+        : 'Não foi possível carregar a lixeira administrativa.');
+    } finally {
+      setTrashLoading(false);
+    }
+  }, [isSupabase]);
+
+  useEffect(() => {
+    void loadTrash();
+  }, [loadTrash]);
 
   const handleExportJSONBackup = () => {
     const backupData = buildAccessBackup(servidores);
@@ -196,6 +230,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ perfis, onUpdatePerfil }
           </div>
         </div>
       </div>
+
+      {isSupabase && (
+        <AdminTrashPanel
+          demandas={trashDemandas}
+          historico={trashHistorico}
+          perfis={perfis}
+          loading={trashLoading}
+          error={trashError}
+          onRetry={() => { void loadTrash(); }}
+        />
+      )}
 
       <div className="dashboard-col-card">
         <h2>

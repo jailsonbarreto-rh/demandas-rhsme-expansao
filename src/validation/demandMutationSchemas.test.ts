@@ -4,7 +4,6 @@ import {
   deleteMutationSchema,
   editDemandaMutationSchema,
   progressMutationSchema,
-  restoreMutationSchema,
   statusTransitionMutationSchema,
 } from './demandMutationSchemas';
 
@@ -140,10 +139,8 @@ describe('schemas de mutação do R4', () => {
     }).success).toBe(true);
   });
 
-  it('exige motivo com dez caracteres na exclusão e restauração', () => {
+  it('exige motivo com dez caracteres na exclusão lógica', () => {
     expect(deleteMutationSchema.safeParse({ motivo: 'curto' }).success).toBe(false);
-    expect(restoreMutationSchema.safeParse({ motivo: 'curto' }).success).toBe(false);
     expect(deleteMutationSchema.safeParse({ motivo: 'Registro duplicado confirmado' }).success).toBe(true);
-    expect(restoreMutationSchema.safeParse({ motivo: 'Registro deve voltar à carteira' }).success).toBe(true);
   });
 });

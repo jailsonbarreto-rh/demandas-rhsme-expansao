@@ -7,7 +7,6 @@ import type {
   Demanda,
   EditDemandaInput,
   ProgressInput,
-  RestoreDemandaInput,
   StatusTransitionInput,
 } from '../types';
 import type { AppData, DemandasRepository } from './contracts';
@@ -191,11 +190,6 @@ export class SupabaseDemandasRepository implements DemandasRepository {
 
   async deleteLogically(id: number, input: DeleteDemandaInput): Promise<void> {
     const { error } = await this.client.rpc('excluir_sme_demanda', { p_demanda_id: id, p_motivo: input.motivo });
-    throwIfError(error);
-  }
-
-  async restore(id: number, input: RestoreDemandaInput): Promise<void> {
-    const { error } = await this.client.rpc('restaurar_sme_demanda', { p_demanda_id: id, p_motivo: input.motivo });
     throwIfError(error);
   }
 

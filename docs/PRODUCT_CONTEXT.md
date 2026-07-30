@@ -1,7 +1,7 @@
 # Contexto do Produto — Central de Demandas CTRH
 
-**Estado documental:** vigente após as decisões R3-D01 a R3-D10 e a adoção da cadeia documental do E0.  
-**Atualizado em:** 29 de julho de 2026.
+**Estado documental:** vigente após o R4 e as decisões R5-1-D01/R5-1-A01.  
+**Atualizado em:** 30 de julho de 2026.
 
 Este documento é a referência operacional para a semântica atual do produto. Decisões expressamente aprovadas estão exclusivamente em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`; a estratégia geral está em `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`; o roteiro do Trilho A está em `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`; a governança está no Adendo e no Protocolo vigentes indicados por `AGENTS.md`.
 
@@ -29,7 +29,8 @@ Ao final do plano, o sistema oferece:
 - fila de saneamento do legado sem inferência automática;
 - andamento separado de mudança de status;
 - histórico com autoria, momento, conteúdo, justificativa e antes/depois;
-- reatribuição rastreada e exclusão lógica recuperável;
+- reatribuição rastreada e exclusão lógica auditável;
+- consulta administrativa somente leitura das demandas excluídas, sem restauração no produto;
 - busca avançada com responsável oficial, carteira pessoal e link profundo;
 - sete modelos Excel parametrizados;
 - painel gerencial de estoque, risco, carga e fluxo, acompanhado de cobertura e limitações;
@@ -65,7 +66,7 @@ Preservar uma linha legada não significa necessariamente publicá-la de imediat
 
 ### Administrador ou gestor
 
-Precisa enxergar a equipe sem abrir centenas de registros: estoque em acompanhamento, providências do CTRH, riscos, itens sem responsável ou próxima ação, espera externa e qualidade dos dados. Também aprova acessos, corrige cadastros, restaura exclusões e produz relatórios. O objetivo é distribuir atenção e reduzir risco operacional, não vigiar desempenho individual.
+Precisa enxergar a equipe sem abrir centenas de registros: estoque em acompanhamento, providências do CTRH, riscos, itens sem responsável ou próxima ação, espera externa e qualidade dos dados. Também aprova acessos, corrige cadastros, consulta e audita exclusões lógicas e produz relatórios. O objetivo é distribuir atenção e reduzir risco operacional, não vigiar desempenho individual.
 
 ### Editor ou analista
 
@@ -145,6 +146,10 @@ O gestor escolhe modelo e recorte e recebe Excel com resumo, base e rastreabilid
 
 Uma demanda antiga sem prazo ou vínculo oficial de responsável continua consultável. O sistema não inventa dados nem chama o item de vencido; identifica a lacuna e leva o administrador à fila de saneamento.
 
+### Uma exclusão precisa ser auditada
+
+Um administrador consulta a área `Demandas excluídas`, localiza o registro pelo número ou motivo e verifica os dados preservados, a data, a autoria comprovável e o histórico. O registro permanece somente leitura e não pode ser restaurado pelo produto.
+
 ### Uma regra foi alterada
 
 A decisão é registrada, implementada e sincronizada nos documentos vigentes no mesmo trabalho. Um plano ou relatório histórico permanece preservado, mas não volta a ser usado como regra atual.
@@ -194,7 +199,7 @@ As colunas físicas permanecem, com estes nomes na experiência:
 - `limite1`: **Prazo interno**;
 - `limite2`: **Prazo final**.
 
-Cada prazo é `definido` com data, `nao_informado` sem data e com pendência de qualidade, ou `nao_se_aplica` sem data e com justificativa mínima de dez caracteres. Ausência de prazo nunca é atraso.
+Cada prazo pode ser `definido` com data, `nao_informado` sem data e com pendência de qualidade, ou `nao_se_aplica` sem data quando essa opção for permitida. Em nova demanda, o prazo interno exige data; o prazo final exige data ou `Não se aplica`, sem justificativa inicial. Ausência de prazo legado nunca é atraso.
 
 ### Próxima ação
 
@@ -224,9 +229,11 @@ As decisões R3-D01 a R3-D09 prevalecem sobre descrições anteriores de respons
 
 ### Eventos e exclusão
 
-Os tipos oficiais são `criacao`, `andamento`, `mudanca_status`, `edicao`, `reatribuicao`, `alteracao_prazo`, `exclusao` e `restauracao`. Todo evento mostra data e hora, autor ou “Autor não identificado”, setor, tipo, status resultante e descrição. Em operação autenticada, o ator é sempre o `auth.uid()` que executou a ação, ainda que outra pessoa seja a responsável pela demanda. A demanda registra esse último ator em `updated_by`, o evento registra em `created_by` e `responsavel_id` permanece inalterado, salvo reatribuição explícita. Autoria legada não é inventada.
+Os tipos históricos reconhecidos são `criacao`, `andamento`, `mudanca_status`, `edicao`, `reatribuicao`, `alteracao_prazo`, `exclusao` e `restauracao`. O tipo `restauracao` permanece reconhecido apenas para leitura de eventual histórico anterior; o produto vigente não oferece restauração.
 
-Exclusão é lógica e recuperável; preserva demanda e histórico, exige motivo e registra autoria. Consulte `docs/adr/ADR-003-historico-e-exclusao-logica.md`.
+Todo evento mostra data e hora, autor ou `Autor não identificado`, setor, tipo, status resultante e descrição. Em operação autenticada, o ator é sempre o `auth.uid()` que executou a ação, ainda que outra pessoa seja a responsável pela demanda. A demanda registra esse último ator em `updated_by`, o evento registra em `created_by` e `responsavel_id` permanece inalterado, salvo reatribuição explícita. Autoria legada não é inventada.
+
+Exclusão é lógica: preserva demanda e histórico, exige motivo e registra autoria e momento. Somente administrador ativo pode excluir ou consultar registros excluídos. Editor e leitor não veem a ação e não recebem os dados pela API. A área administrativa apresenta a lixeira somente para consulta e auditoria. Não existe exclusão física nem restauração disponível aos usuários. `Recuperável` significa apenas que o proprietário do banco pode realizar recuperação técnica excepcional fora do produto. Consulte `docs/adr/ADR-003-historico-e-exclusao-logica.md`.
 
 ### Alertas e priorização
 
@@ -286,15 +293,15 @@ Estados de infraestrutura são traduzidos para linguagem operacional — sistema
 
 ### Administrador
 
-Início padrão com visão da equipe e alternância Equipe/Minha carteira. Mostra estoque, providências, riscos, ausência de responsável ou próxima ação e fila de saneamento. Administração reúne perfis, qualidade de dados e lixeira.
+Início padrão com visão da equipe e alternância Equipe/Minha carteira. Mostra estoque, providências, riscos, ausência de responsável ou próxima ação e fila de saneamento. Administração reúne perfis, parâmetros atuais e a consulta auditável das demandas excluídas. Somente administradores recebem a ação `Excluir`; a lixeira é somente leitura e não possui restauração.
 
 ### Editor
 
-Início padrão “Meu trabalho” com carteira própria, próximas ações, atrasos, assinaturas e itens parados. Permite visão da equipe sem ações administrativas.
+Início padrão “Meu trabalho” com carteira própria, próximas ações, atrasos, assinaturas e itens parados. Permite visão da equipe sem ações administrativas. Pode atuar conforme as permissões editoriais, mas não vê `Excluir`, não acessa a Administração e não consulta a lixeira.
 
 ### Leitor
 
-Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar filtros e exportar modelos permitidos. Não recebe controles de mutação.
+Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar filtros e exportar modelos permitidos. Não recebe controles de mutação, não vê `Excluir` e não consulta dados logicamente excluídos.
 
 ### Rotas vigentes e rotas-alvo
 
@@ -306,10 +313,11 @@ Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar f
 | `/demandas/:id` | detalhe/prontuário preservando a carteira da equipe | autenticados | vigente; prontuário ainda evoluirá |
 | `/minhas-demandas/:id` | detalhe/prontuário preservando a carteira pessoal | autenticados | vigente; prontuário ainda evoluirá |
 | `/relatorios` | Central de Relatórios | autenticados, por papel | futura |
-| `/admin` | perfis e parâmetros | administrador | vigente parcialmente |
+| `/admin` | perfis, parâmetros e auditoria somente leitura das demandas excluídas | administrador | vigente |
 | `/admin/qualidade-dados` | saneamento | administrador | futura |
-| `/admin/lixeira` | exclusões recuperáveis | administrador | futura |
 | `/redefinir-senha` | nova senha | sessão de recuperação | futura |
+
+A lixeira integra a área `/admin`; não existe rota operacional de restauração.
 
 ### Hierarquia de “Meu trabalho”
 
@@ -339,6 +347,9 @@ Gráficos nunca antecedem a fila de ação.
 - Modais acessíveis, confirmação de descarte e drawer navegável.
 - Responsividade desktop e mobile.
 - Responsabilidade oficial por UUID sem reintrodução de nome livre.
+- Exclusão lógica somente por administrador, com motivo e histórico.
+- Lixeira invisível para editor e leitor, inclusive por acesso direto.
+- Dados excluídos preservados e auditáveis sem restauração no produto.
 
 ## Antipadrões
 
@@ -356,6 +367,7 @@ Uma implementação está errada se:
 - usa recorte diferente entre tela e relatório;
 - perde filtros, rota ou carteira ao abrir e fechar demanda;
 - aplica saneamento repetitivo sem dry-run;
+- expõe exclusão a editor/leitor ou permite restauração pela interface/API;
 - cria notificações ou arquitetura mais complexas que o trabalho exige;
 - usa documento histórico para desfazer decisão posterior;
 - passa tecnicamente, mas incentiva planilha paralela.
@@ -370,24 +382,26 @@ Uma implementação está errada se:
 - Cartão e lista filtrada sempre com a mesma quantidade.
 - Nenhuma demanda nova ou movimentada não encerrada sem próxima ação e data.
 - Nenhum dado real entregue a usuário não autenticado.
+- Nenhum editor ou leitor acessa demanda ou histórico excluído.
+- Toda exclusão realizada pelo produto possui motivo e registro auditável.
 - Redução progressiva de “não informado” e “não atribuído”.
 - Abandono de planilhas operacionais paralelas para a rotina coberta.
 - Nenhuma regra implantada permanece contradita por documento vigente.
 
 Esses indicadores avaliam o produto, nunca pessoas.
 
+## Sequência funcional vigente
 
-## Sequência funcional vigente após o E4
+A decisão GOV-012 retira a chegada e o formato dos dados futuros do caminho crítico. R4 está concluído. O R5 segue em pequenos blocos, alinhando debate e execução:
 
-A decisão GOV-012 retira a chegada e o formato dos dados futuros do caminho crítico. A evolução atual prioriza:
+1. R5-1 — lixeira administrativa e auditoria, único pacote atualmente autorizado;
+2. R5-2 — andamento, transições e reabertura, somente após conclusão do R5-1 e novo debate;
+3. R5-3 — prontuário canônico;
+4. R5-4 — autoria e contexto dos eventos;
+5. R5-5 — busca histórica, links e retorno;
+6. R2 remanescente e otimizações de escala quando forem dependência concreta ou necessárias antes da entrega final.
 
-1. A1-Core residual em releases reversíveis: fundação, banco aditivo, frontend v2 e limpeza pós-Produção;
-2. debate itemizado do R4 e implementação somente das decisões expressamente autorizadas;
-3. R5 e demais funções da rotina, antecipando apenas os recortes de R2 que forem dependência técnica direta da função aprovada;
-4. R2 remanescente e otimizações de escala depois das funções prioritárias, antes da entrega final quando necessárias ao produto atual.
-
-R1-1 e R1-4 autônomo permanecem adiados. A ordem canônica dos prazos será consumida no R4-1. A prioridade de sequência não pré-autoriza R4, R5 ou R2. Nenhum desses ajustes autoriza inventar, corrigir ou reclassificar dados atuais ou futuros.
-
+Nenhuma etapa posterior é autorizada pela conclusão da anterior. Cada pacote exige análise do funcionamento atual, decisão expressa, registro, implementação e homologação próprios. Nenhum ajuste autoriza inventar, corrigir ou reclassificar dados atuais ou futuros.
 
 ## Gate de consciência do produto
 

@@ -153,7 +153,7 @@ describe('SupabaseDemandasRepository', () => {
     }));
   });
 
-  it('encaminha edição, andamento e transição às RPCs R4', async () => {
+  it('encaminha edição, andamento, transição e exclusão às RPCs vigentes', async () => {
     const { client, rpc } = createClient();
     const repository = new SupabaseDemandasRepository(client as never);
 
@@ -172,7 +172,6 @@ describe('SupabaseDemandasRepository', () => {
       proximaAcaoJustificativa: '',
     });
     await repository.deleteLogically(7, { motivo: 'Registro duplicado confirmado' });
-    await repository.restore(7, { motivo: 'Registro deve voltar à carteira' });
 
     expect(rpc).toHaveBeenNthCalledWith(1, 'editar_sme_demanda_r4', expect.objectContaining({
       p_demanda_id: 7,
@@ -191,10 +190,7 @@ describe('SupabaseDemandasRepository', () => {
       p_demanda_id: 7,
       p_motivo: 'Registro duplicado confirmado',
     });
-    expect(rpc).toHaveBeenNthCalledWith(5, 'restaurar_sme_demanda', {
-      p_demanda_id: 7,
-      p_motivo: 'Registro deve voltar à carteira',
-    });
+    expect((repository as unknown as Record<string, unknown>).restore).toBeUndefined();
   });
 
   it('assina as duas tabelas e remove o canal no cleanup', () => {

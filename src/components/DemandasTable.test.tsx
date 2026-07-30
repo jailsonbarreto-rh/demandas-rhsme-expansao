@@ -48,4 +48,21 @@ describe('DemandasTable', () => {
     expect(screen.queryByRole('menuitem', { name: /^editar$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^editar$/i })).not.toBeInTheDocument();
   });
+
+  it('não oferece exclusão quando o perfil não possui permissão administrativa', async () => {
+    render(<DemandasTable
+      demandas={[demanda]}
+      onOpenEditar={vi.fn()}
+      onOpenStatus={vi.fn()}
+      onOpenHistorico={vi.fn()}
+      onExcluir={vi.fn()}
+      canEdit
+      canDelete={false}
+    />);
+
+    await userEvent.setup().click(screen.getByRole('button', { name: /mais ações da demanda sme-001/i }));
+    expect(screen.getByRole('menuitem', { name: /alterar status/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /histórico/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /excluir/i })).not.toBeInTheDocument();
+  });
 });

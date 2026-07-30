@@ -1,8 +1,8 @@
-# Atualização pós-R4 e preparação do R5
+# Atualização pós-R4 e execução sequencial do R5
 
 **Data:** 30 de julho de 2026  
-**Estado:** vigente como reconciliação operacional entre o encerramento do R4 e o debate do R5  
-**Efeito autorizativo:** nenhum item funcional do R5 está autorizado por este documento
+**Estado:** vigente como reconciliação operacional após o R4  
+**Efeito autorizativo:** somente o pacote R5-1 está autorizado; os demais itens do R5 dependem de novo debate
 
 ## 1. Estado material consolidado
 
@@ -44,50 +44,65 @@ Ficam expressamente superadas, para execução atual, as seguintes orientações
 7. **`Atenção agora`**  
    O componente foi preservado no R4. Sua evolução obrigatória permanece registrada para o R6, sem autorização automática.
 
-## 3. Estado do R5
+## 3. Método vigente para o R5
 
-O R5 é o próximo ciclo funcional a ser debatido. Nenhum de seus pacotes possui autorização de implementação.
-
-As decisões ainda pendentes são:
-
-| Pacote | Tema | Decisões necessárias |
-|---|---|---|
-| R5-1 | Lixeira administrativa e restauração | OP-D11; OP-D17 já foi implementada no E4 |
-| R5-2 | Andamento, transições e reabertura | OP-D07 |
-| R5-3 | Prontuário canônico | OP-D08 |
-| R5-4 | Autoria legível e contexto dos eventos | OP-D09 e OP-D10 |
-| R5-5 | Busca histórica, link e retorno | OP-D12 e OP-D19 |
-
-## 4. Dependências a reavaliar antes da implementação
-
-1. O R1-5 de concorrência otimista foi adiado. Referências do plano a `expectedUpdatedAt` não podem ser tratadas como capacidade disponível nem como requisito automático do R5.
-2. R2-1 e R2-3 somente podem ser antecipados quando forem dependência técnica concreta de uma função do R5 já aprovada.
-3. A ausência quase total de próxima providência na base legada não pode ser convertida em erro geral, urgência ou preenchimento automático.
-4. O prontuário deve aproveitar o histórico existente sem inventar autoria, origem ou contexto retroativo.
-5. Lixeira e restauração devem preservar a proteção de banco já implantada no E4.
-
-## 5. Ordem recomendada para o debate
-
-A ordem abaixo organiza a discussão, mas não aprova qualquer decisão:
-
-1. **R5-2 — Andamento, transições e reabertura**: fecha o fluxo operacional cotidiano já parcialmente existente.
-2. **R5-3 — Prontuário canônico**: define a superfície central onde estado atual, ações e histórico serão reunidos.
-3. **R5-1 — Lixeira e restauração**: completa a capacidade administrativa sobre uma proteção de banco já existente.
-4. **R5-4 — Autoria e contexto dos eventos**: decide o modelo futuro de leitura histórica e os limites de qualquer classificação retroativa.
-5. **R5-5 — Busca, links e retorno**: estabiliza navegação e compartilhamento depois de definida a superfície canônica.
-
-## 6. Próxima atividade autorizada
-
-Somente o debate pré-implementação do R5, seguindo a governança vigente:
+O R5 será discutido e implementado em pequenos blocos, alinhando debate e ordem de execução:
 
 ```text
-análise do funcionamento atual
-→ identificação das lacunas reais
-→ apresentação das alternativas
-→ decisão expressa do responsável pelo produto
-→ registro da decisão
-→ autorização do pacote
-→ implementação
+discussão de um pacote
+→ decisão expressa
+→ registro documental
+→ implementação completa do pacote
+→ testes e publicação
+→ início da discussão seguinte
 ```
 
-A primeira pauta recomendada é **R5-2 — Andamento, transições de status e reabertura**. Nenhum código, migration, Preview ou Production deve ser iniciado antes da consolidação e autorização expressa desse escopo.
+As alternativas apresentadas em cada discussão deverão considerar as decisões anteriores, o layout vigente, as regras do banco, o tratamento do legado e as permissões por papel, evitando decisões locais que entrem em conflito com o produto consolidado.
+
+A ordem vigente é:
+
+1. R5-1 — Lixeira administrativa e auditoria;
+2. R5-2 — Andamento, transições e reabertura;
+3. R5-3 — Prontuário canônico;
+4. R5-4 — Autoria e contexto dos eventos;
+5. R5-5 — Busca histórica, links e retorno.
+
+## 4. R5-1 — Escopo autorizado
+
+O antigo tema `Lixeira administrativa e restauração` foi simplificado para **Lixeira administrativa e auditoria**.
+
+Regras aprovadas:
+
+- somente administrador ativo pode excluir demandas;
+- editores e leitores não visualizam a ação de exclusão;
+- a exclusão permanece lógica e nunca destrói dados;
+- motivo, autor, data e hora são registrados;
+- dados e histórico permanecem preservados;
+- somente administrador ativo consulta demandas e históricos excluídos;
+- a área administrativa apresenta listagem, pesquisa e detalhe somente leitura;
+- não existe botão, fluxo ou RPC executável pelos papéis de API para restauração;
+- eventual recuperação excepcional ocorre fora do produto, pelo proprietário do banco, mediante procedimento controlado.
+
+A decisão pendente OP-D11 fica encerrada. A implementação deve abranger frontend, contratos, Supabase, grants, testes, documentação e publicação controlada.
+
+## 5. Estado dos demais pacotes
+
+| Pacote | Tema | Estado |
+|---|---|---|
+| R5-1 | Lixeira administrativa e auditoria | autorizado e em implementação |
+| R5-2 | Andamento, transições e reabertura | próximo debate; OP-D07 pendente |
+| R5-3 | Prontuário canônico | não iniciado; OP-D08 pendente |
+| R5-4 | Autoria legível e contexto dos eventos | não iniciado; OP-D09 e OP-D10 pendentes |
+| R5-5 | Busca histórica, links e retorno | não iniciado; OP-D12 e OP-D19 pendentes |
+
+## 6. Dependências preservadas
+
+1. O R1-5 de concorrência otimista foi adiado. Referências a `expectedUpdatedAt` não podem ser tratadas como capacidade disponível nem como requisito automático do R5.
+2. R2-1 e R2-3 somente podem ser antecipados quando forem dependência técnica concreta de uma função já aprovada.
+3. A ausência quase total de próxima providência na base legada não pode ser convertida em erro geral, urgência ou preenchimento automático.
+4. O prontuário futuro deve aproveitar o histórico existente sem inventar autoria, origem ou contexto retroativo.
+5. A lixeira preserva a proteção de banco implantada no E4 e não reabre automaticamente demandas nem estados anteriores.
+
+## 7. Regra de continuidade
+
+A conclusão do R5-1 autorizará somente o início do debate do R5-2. Nenhum código de andamento, reabertura, prontuário, autoria, busca ou links deve ser iniciado por inferência.

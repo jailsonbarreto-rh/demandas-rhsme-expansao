@@ -45,13 +45,15 @@ describe('apresentação do histórico', () => {
     );
 
     expect(screen.getByText('Histórico da demanda')).toBeVisible();
-    expect(screen.getByText('Demanda importada do sistema legado.')).toBeVisible();
-    expect(screen.getByText('Responsável vinculado ao perfil oficial.')).toBeVisible();
-    expect(screen.getByText('Importação')).toBeVisible();
+    expect(screen.getByText('Registro incorporado à base de demandas.')).toBeVisible();
+    expect(screen.getByText('Cadastro do responsável atualizado.')).toBeVisible();
+    expect(screen.getByText('Cadastro inicial')).toBeVisible();
     expect(screen.getByText('Alteração de responsável')).toBeVisible();
     expect(screen.queryByText(/R3/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/2ac7da80b744/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/lote saneado/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/sistema legado/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/perfil oficial/i)).not.toBeInTheDocument();
   });
 
   it('não apresenta eventos técnicos como movimentações globais de trabalho', () => {

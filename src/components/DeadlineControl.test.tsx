@@ -40,7 +40,7 @@ describe('DeadlineControl', () => {
     expect(onDateChange).toHaveBeenCalledWith('');
   });
 
-  it('explica a ausência legada sem classificá-la como atraso', () => {
+  it('explica a ausência sem classificá-la como atraso', () => {
     render(
       <DeadlineControl
         idPrefix="prazo-interno"
@@ -52,7 +52,8 @@ describe('DeadlineControl', () => {
         onDateChange={vi.fn()}
       />,
     );
-    expect(screen.getByText('Informação preservada como ausente no registro legado.')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma data foi informada para este prazo.')).toBeInTheDocument();
+    expect(screen.queryByText(/legado/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/vencid/i)).not.toBeInTheDocument();
   });
 });

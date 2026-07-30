@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AppUser } from '../types';
 import type { AuthService } from '../services/contracts';
+import { getUserFacingError } from '../domain/userFacingErrors';
 
 export function useAppSession(auth: AuthService) {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -11,7 +12,9 @@ export function useAppSession(auth: AuthService) {
     let active = true;
     void auth.restore()
       .then((restored) => { if (active) setUser(restored); })
-      .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : 'Falha ao restaurar a sessão.'); })
+      .catch((reason: unknown) => {
+        if (active) setError(getUserFacingError(reason, 'Não foi possível restaurar a sessão.'));
+      })
       .finally(() => { if (active) setLoading(false); });
     const cleanup = auth.subscribe((nextUser) => { if (active) setUser(nextUser); });
     return () => { active = false; cleanup(); };
@@ -23,9 +26,9 @@ export function useAppSession(auth: AuthService) {
     try {
       setUser(await auth.signIn(email, password));
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : 'Não foi possível entrar.';
+      const message = getUserFacingError(reason, 'Não foi possível entrar.');
       setError(message);
-      throw reason;
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -37,9 +40,9 @@ export function useAppSession(auth: AuthService) {
     try {
       await auth.requestAccess(email, password);
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : 'Não foi possível solicitar acesso.';
+      const message = getUserFacingError(reason, 'Não foi possível solicitar acesso.');
       setError(message);
-      throw reason;
+      throw new Error(message);
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,7 @@ import './r3-refinements.css';
 import './radar-governanca.css';
 import './radar-governanca-accessibility.css';
 import './r4-prazos-providencias.css';
+import './form-field-polish.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

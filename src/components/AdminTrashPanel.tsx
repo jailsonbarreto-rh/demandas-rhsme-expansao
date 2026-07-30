@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ComentarioHistorico, Demanda, PerfilUsuario } from '../types';
+import { getUserFacingError } from '../domain/userFacingErrors';
 import { AdminTrashDetailDialog } from './AdminTrashDetailDialog';
 import './AdminTrashPanel.css';
 
@@ -23,7 +24,7 @@ function normalize(value: string): string {
 function formatDeletedAt(value: string): string {
   if (!value) return 'Data não identificada';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) return 'Data não identificada';
   return date.toLocaleString('pt-BR', {
     timeZone: 'America/Sao_Paulo',
     day: '2-digit',
@@ -64,6 +65,9 @@ export function AdminTrashPanel({
   const selectedAuthor = selected?.deletedBy
     ? profileNames.get(selected.deletedBy) ?? 'Autor não identificado'
     : 'Autor não identificado';
+  const visibleError = error
+    ? getUserFacingError(error, 'Não foi possível carregar as demandas excluídas.')
+    : null;
 
   return (
     <section className="dashboard-col-card admin-trash-panel" aria-labelledby="admin-trash-title">
@@ -81,13 +85,10 @@ export function AdminTrashPanel({
         </span>
       </div>
 
-      {error ? (
+      {visibleError ? (
         <div className="alert-error-banner admin-trash-error" role="alert">
           <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
-          <div>
-            <strong>Não foi possível carregar as demandas excluídas.</strong>
-            <span>{error}</span>
-          </div>
+          <strong>{visibleError}</strong>
           <button type="button" className="btn btn-secondary-outline" onClick={onRetry}>Tentar novamente</button>
         </div>
       ) : (

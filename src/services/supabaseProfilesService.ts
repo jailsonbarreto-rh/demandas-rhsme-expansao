@@ -11,13 +11,13 @@ export class SupabaseProfilesService implements ProfilesService {
       .from('perfis_usuarios')
       .select('id,nome,email,setor,nivel,status')
       .order('nome', { ascending: true });
-    if (error) throw error;
+    if (error) throw new Error('Não foi possível carregar os perfis de acesso.');
     return data ?? [];
   }
 
   async listMinimal(): Promise<PerfilMinimo[]> {
     const { data, error } = await this.client.rpc('listar_perfis_minimos');
-    if (error) throw error;
+    if (error) throw new Error('Não foi possível carregar os responsáveis cadastrados.');
     return data ?? [];
   }
 
@@ -31,6 +31,6 @@ export class SupabaseProfilesService implements ProfilesService {
     if (patch.setor !== undefined) allowed.setor = patch.setor;
     if (Object.keys(allowed).length === 0) return;
     const { error } = await this.client.from('perfis_usuarios').update(allowed).eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error('Não foi possível atualizar o perfil de acesso.');
   }
 }

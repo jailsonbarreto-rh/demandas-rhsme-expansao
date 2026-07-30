@@ -44,7 +44,7 @@ test('visão geral, demandas e administração são acessíveis', async ({ page 
   await expectAccessible(page, 'demandas');
 
   await page.getByRole('button', { name: /^administração$/i }).click();
-  await expect(page.getByRole('heading', { name: /segurança & integridade/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /segurança e integridade/i })).toBeVisible();
   await expectAccessible(page, 'administração');
 });
 

@@ -152,16 +152,38 @@ const editarDemandaBaseSchema = z.object({
   justificativa: z.string().trim(),
 });
 
+export type EditarDemandaValues = z.infer<typeof editarDemandaBaseSchema>;
+
+export function editRequiresJustification(
+  demanda: Demanda,
+  values: Pick<
+    EditarDemandaValues,
+    'assunto' | 'responsavelId' | 'limite1Situacao' | 'limite1' | 'limite2Situacao' | 'limite2' | 'setor'
+  >,
+): boolean {
+  const originalInternal = deadlineSnapshot(demanda.limite1Situacao, demanda.limite1);
+  const nextInternal = deadlineSnapshot(values.limite1Situacao, values.limite1);
+  const originalFinal = deadlineSnapshot(demanda.limite2Situacao, demanda.limite2);
+  const nextFinal = deadlineSnapshot(values.limite2Situacao, values.limite2);
+
+  const deadlineChanged = (
+    requiresDeadlineChangeJustification(originalInternal, nextInternal)
+    || requiresDeadlineChangeJustification(originalFinal, nextFinal)
+  );
+  const registrationChanged = (
+    values.assunto.trim() !== demanda.assunto.trim()
+    || values.responsavelId !== (demanda.responsavelId ?? '')
+    || values.setor.trim() !== demanda.setor.trim()
+  );
+
+  return deadlineChanged || registrationChanged;
+}
+
 export function createEditarDemandaSchema(demanda: Demanda) {
   return editarDemandaBaseSchema.superRefine((values, context) => {
     validateDefinedDeadline(values.limite1Situacao, values.limite1, 'limite1', context);
     validateDefinedDeadline(values.limite2Situacao, values.limite2, 'limite2', context);
     validateDeadlineOrder(values, context);
-
-    const originalInternal = deadlineSnapshot(demanda.limite1Situacao, demanda.limite1);
-    const nextInternal = deadlineSnapshot(values.limite1Situacao, values.limite1);
-    const originalFinal = deadlineSnapshot(demanda.limite2Situacao, demanda.limite2);
-    const nextFinal = deadlineSnapshot(values.limite2Situacao, values.limite2);
 
     if (values.limite1Situacao === 'nao_se_aplica') {
       context.addIssue({
@@ -185,22 +207,11 @@ export function createEditarDemandaSchema(demanda: Demanda) {
       });
     }
 
-    const deadlineChangeNeedsJustification = (
-      requiresDeadlineChangeJustification(originalInternal, nextInternal)
-      || requiresDeadlineChangeJustification(originalFinal, nextFinal)
-    );
-    const nonDeadlineChanged = (
-      values.assunto.trim() !== demanda.assunto.trim()
-      || values.responsavelId !== (demanda.responsavelId ?? '')
-      || values.setor.trim() !== demanda.setor.trim()
-    );
-
-    if ((deadlineChangeNeedsJustification || nonDeadlineChanged)
-      && usefulTextLength(values.justificativa) < 10) {
+    if (editRequiresJustification(demanda, values) && usefulTextLength(values.justificativa) < 10) {
       context.addIssue({
         code: 'custom',
         path: ['justificativa'],
-        message: 'Justifique a alteração com pelo menos 10 caracteres.',
+        message: 'Informe o motivo da alteração para continuar (mínimo de 10 caracteres).',
       });
     }
   });
@@ -215,5 +226,4 @@ export const statusDemandaSchema = z.object({
 }).superRefine(validateNextAction);
 
 export type DemandaFormValues = z.infer<typeof demandaFormSchema>;
-export type EditarDemandaValues = z.infer<typeof editarDemandaBaseSchema>;
 export type StatusDemandaValues = z.infer<typeof statusDemandaSchema>;

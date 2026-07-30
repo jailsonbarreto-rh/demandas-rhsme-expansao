@@ -95,7 +95,7 @@ describe('AdminPanel', () => {
   it('executa de verdade a exportação pelo botão administrativo', async () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     render(<AdminPanel perfis={[activeAdmin]} onUpdatePerfil={vi.fn()} />);
-    await userEvent.setup().click(screen.getByRole('button', { name: /exportar perfis/i }));
+    await userEvent.setup().click(screen.getByRole('button', { name: /exportar cópia de segurança/i }));
     expect(click).toHaveBeenCalledOnce();
   });
 
@@ -106,6 +106,16 @@ describe('AdminPanel', () => {
       expect.stringMatching(/verificação concluída/i),
       expect.objectContaining({ description: expect.stringMatching(/nenhum administrador ativo/i) }),
     );
+  });
+
+  it('não expõe identificadores internos nos avisos de integridade', () => {
+    const report = analyzeAccessIntegrity([
+      { ...servidorAdmin, id: '84d7711e-4d9f-4994-a52a-b5238ac92ae0', nome: '' },
+      { ...servidorAdmin, id: '84d7711e-4d9f-4994-a52a-b5238ac92ae0', email: 'outro@rioeduca.net' },
+    ]);
+
+    expect(report.issues.join(' ')).not.toContain('84d7711e-4d9f-4994-a52a-b5238ac92ae0');
+    expect(report.issues.join(' ')).toContain('identificadores duplicados');
   });
 
   it('considera íntegra uma lista institucional sem duplicidades e com administrador ativo', () => {

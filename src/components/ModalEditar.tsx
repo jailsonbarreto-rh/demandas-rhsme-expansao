@@ -2,7 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { DeadlineState, Demanda, PerfilMinimo } from '../types';
-import { createEditarDemandaSchema, type EditarDemandaValues } from '../validation/demandaSchemas';
+import {
+  createEditarDemandaSchema,
+  editRequiresJustification,
+  type EditarDemandaValues,
+} from '../validation/demandaSchemas';
 import { DeadlineControl } from './DeadlineControl';
 import { AppDialog } from './ui/AppDialog';
 import { ConfirmDialog } from './ui/ConfirmDialog';
@@ -22,7 +26,7 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
     [responsaveis],
   );
   const schema = useMemo(() => createEditarDemandaSchema(demanda), [demanda]);
-  const responsavelLegado = !demanda.responsavelId && demanda.responsavel.trim()
+  const responsavelAtualSemVinculo = !demanda.responsavelId && demanda.responsavel.trim()
     ? demanda.responsavel.trim()
     : '';
   const {
@@ -45,8 +49,10 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
       justificativa: '',
     },
   });
-  const limite1State = watch('limite1Situacao');
-  const limite2State = watch('limite2Situacao');
+  const currentValues = watch();
+  const limite1State = currentValues.limite1Situacao;
+  const limite2State = currentValues.limite2Situacao;
+  const justificationRequired = editRequiresJustification(demanda, currentValues);
   const internalStates: DeadlineState[] = demanda.limite1Situacao === 'nao_informado'
     ? ['nao_informado', 'definido']
     : ['definido'];
@@ -65,13 +71,10 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
 
   return (
     <>
-      <AppDialog title="Editar Dados da Demanda" onClose={requestClose}>
+      <AppDialog title="Editar dados da demanda" onClose={requestClose}>
         <form onSubmit={(event) => { void submit(event); }} noValidate>
           <div className="modal-body">
             <div className="form-grid-modal">
-              <div className="input-container-floating col-full read-only-field">
-                <input type="text" id="edit_id" className="form-control" value={`ID: ${demanda.id}`} readOnly />
-              </div>
               <div className="input-container-floating col-full read-only-field">
                 <input type="text" id="edit_numero" className="form-control" value={`Número: ${demanda.numero}`} readOnly />
               </div>
@@ -93,13 +96,13 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
                 <FormError id="edit-assunto-error" message={errors.assunto?.message} />
               </div>
 
-              {responsavelLegado && (
+              {responsavelAtualSemVinculo && (
                 <div className="input-container-floating col-full read-only-field">
                   <input
                     type="text"
-                    id="edit_responsavel_legado"
+                    id="edit_responsavel_atual"
                     className="form-control"
-                    value={`Responsável legado: ${responsavelLegado}`}
+                    value={`Responsável atual: ${responsavelAtualSemVinculo}`}
                     readOnly
                   />
                 </div>
@@ -169,28 +172,34 @@ export const ModalEditar: React.FC<ModalEditarProps> = ({ demanda, responsaveis,
                 <label htmlFor="edit_setor">Setor</label>
               </div>
 
-              <div className="edit-justification-guidance col-full">
-                A primeira inclusão de um prazo ausente no legado não exige justificativa. Alterações de prazos já registrados e demais mudanças cadastrais permanecem justificadas e auditáveis.
-              </div>
-              <div className="input-container-floating col-full">
-                <textarea
-                  id="edit_justificativa"
-                  placeholder=" "
-                  {...register('justificativa')}
-                  className={errors.justificativa ? 'field-invalid' : ''}
-                  aria-invalid={Boolean(errors.justificativa)}
-                  aria-describedby={errors.justificativa ? 'edit-justificativa-error' : undefined}
-                />
-                <label htmlFor="edit_justificativa">Justificativa da alteração, quando exigida</label>
-                <FormError id="edit-justificativa-error" message={errors.justificativa?.message} />
-              </div>
+              {justificationRequired && (
+                <div className="edit-justification-field col-full">
+                  <label htmlFor="edit_justificativa" className="input-label-externa">
+                    Motivo da alteração <span aria-hidden="true">*</span>
+                  </label>
+                  <textarea
+                    id="edit_justificativa"
+                    {...register('justificativa')}
+                    className={`form-control edit-justification-textarea ${errors.justificativa ? 'field-invalid' : ''}`.trim()}
+                    placeholder="Descreva brevemente por que esta informação está sendo alterada."
+                    aria-invalid={Boolean(errors.justificativa)}
+                    aria-describedby={errors.justificativa
+                      ? 'edit-justificativa-help edit-justificativa-error'
+                      : 'edit-justificativa-help'}
+                  />
+                  <p id="edit-justificativa-help" className="form-helper-text">
+                    O motivo será registrado no histórico da demanda.
+                  </p>
+                  <FormError id="edit-justificativa-error" message={errors.justificativa?.message} />
+                </div>
+              )}
             </div>
           </div>
 
           <div className="modal-footer">
             <button type="submit" className="btn btn-primary" disabled={isSubmitting} aria-busy={isSubmitting}>
               <i className={`fa-solid ${isSubmitting ? 'fa-spinner fa-spin' : 'fa-floppy-disk'}`} aria-hidden="true" />
-              {isSubmitting ? 'Salvando…' : 'Salvar Alterações'}
+              {isSubmitting ? 'Salvando…' : 'Salvar alterações'}
             </button>
             <button type="button" className="btn" onClick={requestClose} disabled={isSubmitting}>
               <i className="fa-solid fa-xmark" aria-hidden="true" /> Cancelar

@@ -54,21 +54,22 @@ describe('seleção oficial de responsável', () => {
     expect(select).toHaveTextContent('Wilson Peixoto — SME');
   });
 
-  it('mantém responsável legado como informação e não como opção livre', () => {
-    const legacy = demandWith('Vanessa Migrado', null);
+  it('mantém o responsável atual como informação e não como opção livre', () => {
+    const imported = demandWith('Vanessa Migrado', null);
 
     render(
       <ModalEditar
-        demanda={legacy}
+        demanda={imported}
         responsaveis={responsaveis}
         onClose={vi.fn()}
         onSalvar={vi.fn()}
       />,
     );
 
-    expect(screen.getByDisplayValue('Responsável legado: Vanessa Migrado')).toBeVisible();
+    expect(screen.getByDisplayValue('Responsável atual: Vanessa Migrado')).toBeVisible();
     expect(screen.getByRole('combobox', { name: 'Responsável' })).toHaveValue('');
     expect(screen.queryByRole('textbox', { name: 'Responsável' })).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/responsável legado/i)).not.toBeInTheDocument();
   });
 
   it('pré-seleciona o UUID oficial na edição de demanda vinculada', () => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { getUserFacingError } from '../domain/userFacingErrors';
 import {
   accessRequestFormSchema,
   loginFormSchema,
@@ -44,7 +45,7 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
     try {
       await onSignIn(values.email, values.senha);
     } catch (reason) {
-      toast.error(reason instanceof Error ? reason.message : 'Não foi possível entrar.');
+      toast.error(getUserFacingError(reason, 'Não foi possível entrar.'));
     }
   });
 
@@ -58,7 +59,7 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
       cadastroForm.reset();
       setActiveTab('login');
     } catch (reason) {
-      toast.error(reason instanceof Error ? reason.message : 'Não foi possível solicitar acesso.');
+      toast.error(getUserFacingError(reason, 'Não foi possível solicitar acesso.'));
     }
   });
 
@@ -81,21 +82,21 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
               <div className="feature-icon-wrapper"><i className="fa-solid fa-calendar-check" aria-hidden="true" /></div>
               <div className="feature-text">
                 <strong>Prazos</strong>
-                <span>Alertas visuais e semânticos sobre datas limites e providências em atraso.</span>
+                <span>Alertas claros sobre datas-limite e providências em atraso.</span>
               </div>
             </div>
             <div className="feature-item">
               <div className="feature-icon-wrapper"><i className="fa-solid fa-user-check" aria-hidden="true" /></div>
               <div className="feature-text">
                 <strong>Responsáveis</strong>
-                <span>Atribuição clara de tarefas com suporte a avatares e vinculação por setores.</span>
+                <span>Distribuição clara das demandas entre pessoas e setores.</span>
               </div>
             </div>
             <div className="feature-item">
               <div className="feature-icon-wrapper"><i className="fa-solid fa-clock-rotate-left" aria-hidden="true" /></div>
               <div className="feature-text">
                 <strong>Histórico</strong>
-                <span>Rastreabilidade completa de logs e comentários de status por processo.</span>
+                <span>Registro completo das movimentações e observações de cada processo.</span>
               </div>
             </div>
           </div>
@@ -110,7 +111,7 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
           </div>
 
           <div className="login-card-header">
-            <h3>Painel de Acesso</h3>
+            <h3>Painel de acesso</h3>
             <p>Identifique-se com a sua credencial @rioeduca.net</p>
           </div>
 
@@ -129,14 +130,14 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
               className={`login-tab-btn ${activeTab === 'cadastro' ? 'active' : ''}`}
               onClick={() => setActiveTab('cadastro')}
             >
-              Primeiro Acesso
+              Primeiro acesso
             </button>
           </div>
 
           {activeTab === 'login' ? (
             <form onSubmit={(event) => { void submitLogin(event); }} noValidate>
               <div className="login-form-group">
-                <label htmlFor="login-email">E-mail Corporativo</label>
+                <label htmlFor="login-email">E-mail corporativo</label>
                 <div className="input-icon-group">
                   <i className="fa-solid fa-envelope" aria-hidden="true" />
                   <input
@@ -187,13 +188,13 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
                 disabled={loading || loginForm.formState.isSubmitting}
                 aria-busy={loading || loginForm.formState.isSubmitting}
               >
-                {loading || loginForm.formState.isSubmitting ? 'Acessando…' : 'Acessar Sistema'}
+                {loading || loginForm.formState.isSubmitting ? 'Acessando…' : 'Acessar sistema'}
               </button>
             </form>
           ) : (
             <form onSubmit={(event) => { void submitCadastro(event); }} noValidate>
               <div className="login-form-group">
-                <label htmlFor="cadastro-email">Seu E-mail Corporativo</label>
+                <label htmlFor="cadastro-email">Seu e-mail corporativo</label>
                 <div className="input-icon-group">
                   <i className="fa-solid fa-envelope" aria-hidden="true" />
                   <input
@@ -211,7 +212,7 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
               </div>
 
               <div className="login-form-group" style={{ marginBottom: '20px' }}>
-                <label htmlFor="cadastro-senha">Criar Nova Senha</label>
+                <label htmlFor="cadastro-senha">Criar nova senha</label>
                 <div className="input-icon-group has-visibility-toggle">
                   <i className="fa-solid fa-lock" aria-hidden="true" />
                   <input

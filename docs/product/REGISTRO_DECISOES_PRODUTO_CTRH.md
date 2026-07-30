@@ -640,7 +640,50 @@ Os Advisors não apresentaram bloqueio novo introduzido pelo R4. Os avisos de `S
 
 Nenhum pacote posterior ao R4 está automaticamente autorizado.
 
-## 9. Modelo de registro de decisão do ciclo
+## 9. Decisões e autorização do R5-1
+
+### R5-1-D01 — Lixeira administrativa sem restauração de produto
+
+**Data:** 30 de julho de 2026  
+**Classificação:** simplificação de produto, permissão e auditabilidade  
+**Decisão:** APROVADA.
+
+O pacote R5-1 passa a se chamar **Lixeira administrativa e auditoria**. A decisão pendente OP-D11 fica encerrada sem criação de fluxo de restauração.
+
+A regra vigente é:
+
+- somente perfil ativo de nível `administrador` pode excluir demandas;
+- editor e leitor não visualizam a ação `Excluir` e não podem consultar a lixeira;
+- a exclusão é lógica, exige motivo e registra autoria, data e hora;
+- não existe exclusão física disponível aos usuários;
+- a demanda excluída conserva todos os seus dados e todo o histórico;
+- a área `/admin` apresenta aos administradores a relação de demandas excluídas, pesquisa e detalhe somente leitura;
+- o detalhe informa dados preservados, status, motivo, data e autor da exclusão quando comprováveis, além do histórico completo;
+- não há botão, fluxo, edição, mudança de status ou retorno automático da demanda à carteira;
+- a restauração não pode ser executada por `public`, `anon`, `authenticated` ou `service_role`, inclusive quando o usuário autenticado é administrador.
+
+A expressão `recuperável` significa somente que o registro não foi destruído. Uma recuperação excepcional poderá ocorrer fora do produto, mediante procedimento técnico controlado pelo proprietário do banco e necessidade administrativa específica. A função técnica existente pode ser preservada sem grants para os papéis da API.
+
+### R5-1-A01 — Autorização consolidada
+
+**Data:** 30 de julho de 2026  
+**Classificação:** autorização de implementação  
+**Decisão:** APROVADA.
+
+Está autorizada a implementação integral e isolada do R5-1 em todas as camadas afetadas:
+
+1. retirar restauração dos tipos, contratos, hooks e repositórios públicos do frontend;
+2. preservar a leitura de eventuais eventos históricos antigos do tipo `restauracao`;
+3. revogar a execução da função técnica de restauração para todos os papéis da API, sem apagar a função e sem alterar linhas existentes;
+4. manter `excluir_sme_demanda` restrita internamente a administrador ativo, com motivo e histórico;
+5. criar na área administrativa a consulta pesquisável das demandas excluídas e o detalhe somente leitura;
+6. provar que editor e leitor não veem a ação de exclusão nem consultam dados excluídos;
+7. preservar RLS, dados, históricos, autoria, legado e bloqueio de deployment automático;
+8. executar testes unitários, integração, build, browser, validação remota do Supabase, documentação e release controlado.
+
+A autorização não abrange andamento, reabertura, prontuário, autoria futura, busca histórica, links, exclusão física ou qualquer outro pacote do R5.
+
+## 10. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
 |---|---|
@@ -659,7 +702,7 @@ Nenhum pacote posterior ao R4 está automaticamente autorizado.
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 10. Controle por ciclo
+## 11. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
@@ -676,7 +719,8 @@ Nenhum pacote posterior ao R4 está automaticamente autorizado.
 | R2 | Não iniciado | Não | Não | Futuro |
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |
 | R4 | Concluído | R4-D01 a R4-D07, R4-A01 e R4-C01 | Concluída | Banco homologado; frontend no PR #103 |
-| R5 | Não iniciado | Não | Não | Aguardar novo debate e autorização |
+| R5-1 | Concluído o debate | R5-1-D01 e R5-1-A01 | Sim, somente R5-1 | Em implementação e homologação |
+| R5-2 a R5-5 | Não iniciados | Não | Não | Aguardar conclusão do R5-1 e novo debate |
 | R6 | Não iniciado | Não | Não | Reavaliação de `Atenção agora` registrada, sem autorização automática |
 | R7 | Não iniciado | Não | Não | Futuro |
 | R8 | Não iniciado | Não | Não | Futuro |

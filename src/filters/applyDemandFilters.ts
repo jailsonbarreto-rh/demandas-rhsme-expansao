@@ -1,8 +1,9 @@
 import type { ComentarioHistorico, Demanda } from '../types';
 import { isInFollowUp, needsCtrhAction } from '../domain/workSemantics';
+import { classifyDateSignal } from '../domain/temporalSignals';
 import { matchDemandSearch } from '../search/demandSearch';
 import { matchesPeriod } from '../search/periodFilter';
-import { getTodayString, isBeforeToday } from '../utils/date';
+import { getTodayString } from '../utils/date';
 import { DEFAULT_QUICK_FILTERS, type DemandFilters, type QuickFilters } from './filterTypes';
 
 type FilterableDemanda = Demanda & {
@@ -49,6 +50,29 @@ function matchesResponsible(
   return demanda.responsavelId === filters.responsibleId;
 }
 
+function matchesTemporalQuickFilters(
+  demanda: FilterableDemanda,
+  filters: QuickFilters,
+  today: string,
+): boolean {
+  if (filters.assinatura && demanda.status === 'Para Assinatura') return true;
+  if (!isInFollowUp(demanda)) return false;
+
+  const finalSignal = classifyDateSignal(demanda.limite2, today).kind;
+  if (filters.hoje && finalSignal === 'today') return true;
+  if (filters.vencido && finalSignal === 'overdue') return true;
+
+  const internalSignal = classifyDateSignal(demanda.limite1, today).kind;
+  if (filters.internoHoje && internalSignal === 'today') return true;
+  if (filters.internoVencido && internalSignal === 'overdue') return true;
+
+  const followUpSignal = classifyDateSignal(demanda.proximaAcaoEm, today).kind;
+  if (filters.providenciaHoje && followUpSignal === 'today') return true;
+  if (filters.providenciaVencida && followUpSignal === 'overdue') return true;
+
+  return false;
+}
+
 export function applyDemandBaseFilters(
   demandas: FilterableDemanda[],
   filters: DemandFilters,
@@ -56,22 +80,10 @@ export function applyDemandBaseFilters(
 ): FilterableDemanda[] {
   const quickFilters = context.quickFilters ?? DEFAULT_QUICK_FILTERS;
   const today = context.today ?? getTodayString();
-  const hasQuickFilter = quickFilters.assinatura || quickFilters.hoje || quickFilters.vencido;
+  const hasQuickFilter = Object.values(quickFilters).some(Boolean);
 
   return demandas.filter((demanda) => {
-    if (hasQuickFilter) {
-      const matchesQuickFilter = (
-        (quickFilters.assinatura && demanda.status === 'Para Assinatura')
-        || (quickFilters.hoje && isInFollowUp(demanda) && demanda.limite2 === today)
-        || (
-          quickFilters.vencido
-          && isInFollowUp(demanda)
-          && Boolean(demanda.limite2)
-          && isBeforeToday(demanda.limite2)
-        )
-      );
-      if (!matchesQuickFilter) return false;
-    }
+    if (hasQuickFilter && !matchesTemporalQuickFilters(demanda, quickFilters, today)) return false;
 
     const matchesSelectedPeriod = filters.periodField === 'proxima_acao'
       ? matchesFuturePeriod(demanda, filters)

@@ -18,10 +18,10 @@ export interface QuickFilters {
   assinatura: boolean;
   hoje: boolean;
   vencido: boolean;
-  internoHoje: boolean;
-  internoVencido: boolean;
-  providenciaHoje: boolean;
-  providenciaVencida: boolean;
+  internoHoje?: boolean;
+  internoVencido?: boolean;
+  providenciaHoje?: boolean;
+  providenciaVencida?: boolean;
 }
 
 export const DEFAULT_DEMAND_FILTERS: DemandFilters = {
@@ -38,7 +38,7 @@ export const DEFAULT_DEMAND_FILTERS: DemandFilters = {
   alert: '',
 };
 
-export const DEFAULT_QUICK_FILTERS: QuickFilters = {
+export const DEFAULT_QUICK_FILTERS: Required<QuickFilters> = {
   assinatura: false,
   hoje: false,
   vencido: false,

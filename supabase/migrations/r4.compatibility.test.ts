@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+const migrationsDir = dirname(fileURLToPath(import.meta.url));
 const migration = readFileSync(
-  new URL('./20260730023400_r4_optional_reason_compatibility.sql', import.meta.url),
+  resolve(migrationsDir, '20260730023400_r4_optional_reason_compatibility.sql'),
   'utf8',
 );
 

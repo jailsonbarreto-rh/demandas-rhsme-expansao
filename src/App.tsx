@@ -50,6 +50,29 @@ interface AppProps {
   services?: AppServices;
 }
 
+const QUICK_FILTER_QUERY_KEYS: Record<keyof QuickFilters, string> = {
+  assinatura: 'assinatura',
+  hoje: 'prazoFinalHoje',
+  vencido: 'prazoFinalVencido',
+  internoHoje: 'prazoInternoHoje',
+  internoVencido: 'prazoInternoVencido',
+  providenciaHoje: 'providenciaHoje',
+  providenciaVencida: 'providenciaVencida',
+};
+
+function parseQuickFilters(params: URLSearchParams): QuickFilters {
+  return Object.fromEntries(
+    Object.entries(QUICK_FILTER_QUERY_KEYS).map(([key, queryKey]) => [key, params.get(queryKey) === '1']),
+  ) as unknown as QuickFilters;
+}
+
+function appendQuickFilters(params: URLSearchParams, filters: QuickFilters): URLSearchParams {
+  for (const [key, queryKey] of Object.entries(QUICK_FILTER_QUERY_KEYS) as Array<[keyof QuickFilters, string]>) {
+    if (filters[key]) params.set(queryKey, '1');
+  }
+  return params;
+}
+
 const AppContent: React.FC<AppProps> = ({ services }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -82,11 +105,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     if (location.pathname.startsWith('/minhas-demandas')) return { ...parsed, scope: 'meu' };
     return parsed;
   });
-  const [quickFilters, setQuickFilters] = useState<QuickFilters>(() => ({
-    assinatura: searchParams.get('assinatura') === '1',
-    hoje: searchParams.get('hoje') === '1',
-    vencido: searchParams.get('vencido') === '1',
-  }));
+  const [quickFilters, setQuickFilters] = useState<QuickFilters>(() => parseQuickFilters(searchParams));
 
   const activeTab: ActiveTab = location.pathname.startsWith('/admin')
     ? 'admin'
@@ -113,12 +132,10 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
         ? 'todos'
         : filterPatch.responsibleId ?? filtros.responsibleId,
     };
-    const nextParams = serializeDemandFilters(nextFilters);
-    if (nextQuickFilters.assinatura) nextParams.set('assinatura', '1');
-    if (nextQuickFilters.hoje) nextParams.set('hoje', '1');
-    if (nextQuickFilters.vencido) nextParams.set('vencido', '1');
+    const nextParams = appendQuickFilters(serializeDemandFilters(nextFilters), nextQuickFilters);
 
     setFiltros(nextFilters);
+    setQuickFilters(nextQuickFilters);
     void navigate({
       pathname: scope === 'meu' ? '/minhas-demandas' : '/demandas',
       search: nextParams.toString(),
@@ -189,20 +206,17 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     return () => window.cancelAnimationFrame(frame);
   }, [data.loading, isDemandWorkspace, searchFocusRequested]);
 
-  const [modalNovoAberto, setModalNovoAberto] = useState<boolean>(false);
+  const [modalNovoAberto, setModalNovoAberto] = useState(false);
   const [demandaSelecionada, setDemandaSelecionada] = useState<Demanda | null>(null);
-  const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false);
-  const [modalStatusAberto, setModalStatusAberto] = useState<boolean>(false);
-  const [modalHistoricoAberto, setModalHistoricoAberto] = useState<boolean>(false);
+  const [modalEditarAberto, setModalEditarAberto] = useState(false);
+  const [modalStatusAberto, setModalStatusAberto] = useState(false);
+  const [modalHistoricoAberto, setModalHistoricoAberto] = useState(false);
   const [exportandoExcel, setExportandoExcel] = useState(false);
   const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
 
   useEffect(() => {
     if (!isDemandWorkspace || legacyPersonalUrl) return;
-    const next = serializeDemandFilters(filtros);
-    if (quickFilters.assinatura) next.set('assinatura', '1');
-    if (quickFilters.hoje) next.set('hoje', '1');
-    if (quickFilters.vencido) next.set('vencido', '1');
+    const next = appendQuickFilters(serializeDemandFilters(filtros), quickFilters);
     if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
   }, [filtros, isDemandWorkspace, legacyPersonalUrl, quickFilters, searchParams, setSearchParams]);
 
@@ -229,9 +243,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     }
     let active = true;
     void appServices.profiles.listMinimal()
-      .then((items) => {
-        if (active) setResponsaveisDisponiveis(items);
-      })
+      .then((items) => { if (active) setResponsaveisDisponiveis(items); })
       .catch((reason: unknown) => {
         if (active) toast.error(reason instanceof Error
           ? reason.message
@@ -308,13 +320,14 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       responsavel: responsavelSelecionado?.nome ?? '',
       responsavelId: responsavelSelecionado?.id ?? null,
       limite1: values.limite1,
-      limite1Situacao: values.limite1 ? 'definido' : 'nao_informado',
+      limite1Situacao: values.limite1Situacao,
       limite1Justificativa: '',
       limite2: values.limite2,
-      limite2Situacao: values.limite2 ? 'definido' : 'nao_informado',
+      limite2Situacao: values.limite2Situacao,
       limite2Justificativa: '',
       proximaAcao: values.status === 'Encerrado' ? '' : values.proximaAcao,
       proximaAcaoEm: values.status === 'Encerrado' ? '' : values.proximaAcaoEm,
+      proximaAcaoJustificativa: values.status === 'Encerrado' ? '' : values.proximaAcaoJustificativa,
       linkOrigem: '',
       status: values.status,
       setor: values.setor,
@@ -344,16 +357,14 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       responsavelId: responsavelSelecionado?.id ?? null,
       responsavel: responsavelSelecionado?.nome ?? (preserveLegacy ? current.responsavel : ''),
       limite1: values.limite1,
-      limite1Situacao: values.limite1 ? 'definido' : 'nao_informado',
-      limite1Justificativa: '',
+      limite1Situacao: values.limite1Situacao,
+      limite1Justificativa: current.limite1Justificativa,
       limite2: values.limite2,
-      limite2Situacao: values.limite2 ? 'definido' : 'nao_informado',
-      limite2Justificativa: '',
+      limite2Situacao: values.limite2Situacao,
+      limite2Justificativa: current.limite2Justificativa,
       setor: values.setor,
       classificacao: current.classificacao,
       linkOrigem: current.linkOrigem,
-      proximaAcao: current.status === 'Encerrado' ? '' : values.proximaAcao,
-      proximaAcaoEm: current.status === 'Encerrado' ? '' : values.proximaAcaoEm,
       justificativa: values.justificativa,
     };
 
@@ -388,10 +399,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     }
   };
 
-  const handleCommitSearch = (query: string) => {
-    setRecentSearches(saveRecentSearch(query));
-  };
-
+  const handleCommitSearch = (query: string) => setRecentSearches(saveRecentSearch(query));
   const handleClearRecentSearches = () => {
     clearRecentSearches();
     setRecentSearches([]);
@@ -449,12 +457,10 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       toast.info('Os resultados próximos são sugestões. Ajuste a pesquisa antes de exportar como resultado exato.');
       return;
     }
-
     if (demandasFiltradas.length === 0) {
       toast.info('Nenhum registro disponível para exportação na filtragem atual.');
       return;
     }
-
     if (exportandoExcel) return;
     setExportandoExcel(true);
 
@@ -508,16 +514,18 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
           exportingExcel={exportandoExcel}
           filtrosAtivos={{
             status: filtros.status,
-            quickFilters,
+            quickFilters: {
+              assinatura: quickFilters.assinatura,
+              hoje: quickFilters.hoje,
+              vencido: quickFilters.vencido,
+            },
           }}
           onToggleFiltroStatus={(novoStatus) => {
             const resetQuickFilters = { ...DEFAULT_QUICK_FILTERS };
-            setQuickFilters(resetQuickFilters);
             navigateToWorkspace(targetScopeForHeaderFilters, { status: novoStatus }, resetQuickFilters);
           }}
           onToggleQuickFilter={(filtro) => {
             const nextQuickFilters = { ...quickFilters, [filtro]: !quickFilters[filtro] };
-            setQuickFilters(nextQuickFilters);
             navigateToWorkspace(targetScopeForHeaderFilters, {}, nextQuickFilters);
           }}
           canEdit={canEdit}
@@ -535,7 +543,6 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             <i className="fa-solid fa-chart-pie" aria-hidden="true" />
             <span>Radar de Governança</span>
           </button>
-
           <button
             type="button"
             className={`nav-tab-link ${activeTab === 'demandas' ? 'active' : ''}`}
@@ -546,7 +553,6 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             <i className="fa-solid fa-list-check" aria-hidden="true" />
             <span>Todas as demandas</span>
           </button>
-
           <button
             type="button"
             className={`nav-tab-link ${activeTab === 'minhas-demandas' ? 'active' : ''}`}
@@ -557,7 +563,6 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             <i className="fa-solid fa-folder-open" aria-hidden="true" />
             <span>Minhas demandas</span>
           </button>
-
           {canAccessAdmin && (
             <button
               type="button"
@@ -574,21 +579,9 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
 
         {data.error && (
           <div style={{ padding: '0 24px', marginTop: '20px' }}>
-            <div className="alert-error-banner" style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fee2e2',
-              borderLeft: '4px solid #ef4444',
-              borderRadius: '8px',
-              padding: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              color: '#991b1b',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}>
-              <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '1.125rem', color: '#ef4444' }} />
-              <div><strong>Erro de Conectividade:</strong> {data.error}</div>
+            <div className="alert-error-banner">
+              <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
+              <div><strong>Erro de conectividade:</strong> {data.error}</div>
             </div>
           </div>
         )}
@@ -608,11 +601,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   historico={historico}
                   onOpenEditar={openDemand}
                   renderAtencaoImediata={() => (
-                    <AtencaoImediata
-                      demandas={demandas}
-                      historico={historico}
-                      onOpenEditar={openDemand}
-                    />
+                    <AtencaoImediata demandas={demandas} historico={historico} onOpenEditar={openDemand} />
                   )}
                 />
               </div>
@@ -624,13 +613,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   mode={activeTab === 'minhas-demandas' ? 'pessoal' : 'geral'}
                   onSwitch={() => navigateToWorkspace(activeTab === 'minhas-demandas' ? 'equipe' : 'meu')}
                 />
-
-                <AtencaoImediata
-                  demandas={workspaceDemandas}
-                  historico={historico}
-                  onOpenEditar={openDemand}
-                />
-
+                <AtencaoImediata demandas={workspaceDemandas} historico={historico} onOpenEditar={openDemand} />
                 <FilterPanel
                   filtros={filtros}
                   setFiltros={setFiltros}
@@ -645,7 +628,6 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   onClearRecentSearches={handleClearRecentSearches}
                   periodError={periodError}
                 />
-
                 <DemandasTable
                   demandas={demandasFiltradas}
                   searchQuery={filtros.query}
@@ -704,14 +686,12 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   responsavelId: selected?.id ?? null,
                   responsavel: selected?.nome ?? (preserveLegacy ? current.responsavel : ''),
                   limite1: values.limite1,
+                  limite1Situacao: values.limite1Situacao,
                   limite2: values.limite2,
+                  limite2Situacao: values.limite2Situacao,
                   setor: values.setor,
-                  proximaAcao: previous.status === 'Encerrado' ? '' : values.proximaAcao,
-                  proximaAcaoEm: previous.status === 'Encerrado' ? '' : values.proximaAcaoEm,
                 } : null);
-              } else {
-                setDemandaSelecionada(null);
-              }
+              } else setDemandaSelecionada(null);
             }}
           />
         )}
@@ -733,9 +713,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   proximaAcao: input.status === 'Encerrado' ? '' : input.proximaAcao,
                   proximaAcaoEm: input.status === 'Encerrado' ? '' : input.proximaAcaoEm,
                 } : null);
-              } else {
-                setDemandaSelecionada(null);
-              }
+              } else setDemandaSelecionada(null);
             }}
           />
         )}

@@ -773,6 +773,8 @@ Fica autorizada, na mesma linha de completude operacional, a implementação e h
 
 Não estão autorizados motor avançado de alertas, Central de Relatórios, novos painéis, visões salvas, métricas temporais imaturas, R1 residual, R2 antecipado ou execução do Trilho B sem fonte real. A ampliação simples de `Atenção agora` permanece recomendável, mas separável e condicionada à evidência de uso.
 
+**Resultado de execução:** o escopo foi implementado pelo PR #112, homologado no Preview `dpl_GkBQLRVNk98sJyU4z5e8eNz48Vry` e publicado pelo PR #113 em Production no deployment `dpl_AZARXi92PqtR5WrRJtgpvDZgxZjD`, SHA `501f8cfb6c193f90a71ffabc2456230dbe0dc026`. O PR #114 restaura o bloqueio de deployments automáticos. Nenhuma extensão condicionada foi promovida por inferência.
+
 ## 11. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
@@ -810,13 +812,13 @@ Não estão autorizados motor avançado de alertas, Central de Relatórios, novo
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |
 | R4 | Concluído | R4-D01 a R4-D07, R4-A01 e R4-C01 | Concluída | Banco homologado; frontend no PR #103 |
 | R5-1 | Concluído | R5-1-D01 e R5-1-A01 | Concluída | Publicado em Production |
-| R5 Essencial | Concluído o debate | GOV-013, R5-E-D01, OP-D07, OP-D08, R5-E-D02 e R5-E-A01 | Sim, somente o escopo essencial | Implementado na branch funcional; homologação e release em execução |
-| Conclusão funcional inicial | Concluído o debate | AUTH-E-D01 e V1-E-A01 | Sim, R5 Essencial e recuperação de senha | Implementada na branch funcional e configurada no Supabase; homologação e release em execução |
+| R5 Essencial | Concluído | GOV-013, R5-E-D01, OP-D07, OP-D08, R5-E-D02 e R5-E-A01 | Concluída no escopo essencial | Homologado e publicado em Production pelos PRs #112 e #113 |
+| Conclusão funcional inicial | Concluído | AUTH-E-D01 e V1-E-A01 | Concluída | R5 Essencial e recuperação de senha publicados; encerramento pelo PR #114 |
 | R5 avançado | Reclassificado | GOV-013 | Não | Evolução condicionada; sem continuidade automática |
 | R6 | Parcialmente materializado | GOV-013 | Não para extensões | Radar, carteiras e alertas atuais preservados; motor adicional condicionado a evidência |
 | R7 | Parcialmente materializado | GOV-013 | Não para extensões | Exportação Excel vigente; Central adicional condicionada a necessidade |
 | R8 | Parcialmente materializado | GOV-013 | Não para extensões | leituras gerenciais atuais preservadas; painéis adicionais condicionados |
 | R9 | Parcialmente materializado | GOV-013 | Não para extensões | filtros na URL e buscas recentes preservados; visões salvas condicionadas |
-| R10 | Parcialmente materializado | GOV-013 e AUTH-E-D01 | Sim, somente recuperação de senha | autenticação e controle de acesso vigentes; recuperação implementada como complemento essencial; demais extensões condicionadas |
+| R10 | Parcialmente materializado | GOV-013 e AUTH-E-D01 | Concluída somente para recuperação de senha | autenticação, controle de acesso e recuperação vigentes e publicados; demais extensões condicionadas |
 | R11 | Parcialmente materializado | GOV-013 | Não para extensões | controles de release vigentes; observabilidade proporcional e correções continuam obrigatórias |
 | R12 | Gate final | GOV-013 | Obrigatório na entrega | contrato, segurança e homologação final não são backlog opcional |

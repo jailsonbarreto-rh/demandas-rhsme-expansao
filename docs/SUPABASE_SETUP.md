@@ -1,7 +1,7 @@
 # Supabase e operação multiusuário
 
 **Atualizado em:** 1º de agosto de 2026
-**Estado:** vigente após R4, R5-1 e a implementação da conclusão funcional inicial; homologação e release em execução.
+**Estado:** vigente após R4, R5-1 e a publicação da conclusão funcional inicial.
 
 O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`.
 

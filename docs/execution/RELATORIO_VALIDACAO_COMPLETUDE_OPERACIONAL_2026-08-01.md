@@ -2,12 +2,12 @@
 
 **Data:** 1º de agosto de 2026<br>
 **Escopo:** R5 Essencial, recuperação de senha e rebaseline por completude operacional<br>
-**Branch:** `feat/r5-essencial-completude-operacional`<br>
-**Estado:** implementação e configuração remota concluídas; PR, Preview e publicação controlada ainda sujeitos aos gates de release
+**Branch funcional:** `feat/r5-essencial-completude-operacional`<br>
+**Estado:** implementação, configuração remota, homologação, publicação controlada e encerramento concluídos
 
 ## 1. Resultado
 
-A implementação local atende ao escopo autorizado por GOV-013, R5-E-A01, AUTH-E-D01 e V1-E-A01 sem introduzir a arquitetura avançada anteriormente prevista para o R5. O pacote:
+A implementação publicada atende ao escopo autorizado por GOV-013, R5-E-A01, AUTH-E-D01 e V1-E-A01 sem introduzir a arquitetura avançada anteriormente prevista para o R5. O pacote:
 
 - expõe `Registrar andamento` sem alterar o status;
 - usa a transição auditável existente para reabrir uma demanda encerrada;
@@ -119,15 +119,19 @@ Referências de remediação do linter:
 - [RLS sem policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy);
 - [chaves estrangeiras sem índice](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys).
 
-## 5. Gates de release
+## 5. Resultado dos gates de release
 
-Este relatório encerra a validação local e remota pré-PR. A conclusão publicada somente pode ser registrada depois de:
+| Gate | Resultado e evidência |
+|---|---|
+| rastreabilidade funcional | PR #112 integrado no merge `1a1a8bec6eb0d6acc1ff4890b7ec45c3d6339e09` |
+| CI funcional | gates do SHA `22bd92623fe7e0c67f29aacec33503032322053c` aprovados, inclusive replay integral das migrations e 36/36 cenários Playwright |
+| Preview | `dpl_GkBQLRVNk98sJyU4z5e8eNz48Vry`, `READY`, no SHA `a1b26235fff5ec83377eab066bf3e12c5959c398` |
+| homologação do Preview | acesso, confirmação neutra, retorno seguro, abertura direta de `/redefinir-senha`, rotas profundas e console aprovados |
+| release | PR #113 integrado no merge `501f8cfb6c193f90a71ffabc2456230dbe0dc026` após novo CI integral aprovado |
+| Production | `dpl_AZARXi92PqtR5WrRJtgpvDZgxZjD`, `READY`, com alias canônico e SHA de merge confirmados |
+| verificação em Production | acesso, confirmação neutra, `/redefinir-senha`, `/demandas`, `/minhas-demandas` e `/admin` aprovados; console e runtime sem erros |
+| encerramento | PR #114 restaura `deploymentEnabled: false` a partir do commit `6335fbd87e70a9b13ce11ab2140d226f596c8d18` |
 
-1. commits e PR rastreáveis;
-2. CI integral aprovado;
-3. Preview homologado nos fluxos de andamento, reabertura e recuperação;
-4. merge controlado;
-5. deployment de Production verificado no SHA promovido;
-6. restauração do bloqueio de deployment automático, se alguma exceção temporária for necessária.
+Os fluxos autenticados de andamento, reabertura e permissões foram comprovados pela suíte comportamental e pelos 36 cenários de navegador executados no CI. A verificação manual de Preview e Production concentrou-se nas superfícies públicas e rotas profundas, sem usar ou inventar credenciais operacionais.
 
 O encerramento deste pacote não autoriza automaticamente R5 avançado, R1 residual, R2, extensões de R6 a R11 ou qualquer incorporação do legado. E2 e a homologação consolidada permanecem gates separados antes da entrega final do produto.

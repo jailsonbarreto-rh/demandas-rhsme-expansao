@@ -1,7 +1,7 @@
 # Atualização de direção — completude operacional do produto inicial
 
 **Data:** 1º de agosto de 2026<br>
-**Estado:** decisão aprovada; conclusão funcional inicial implementada, com homologação e release em execução<br>
+**Estado:** decisão aprovada; conclusão funcional inicial homologada, publicada e encerrada<br>
 **Abrangência:** todo o roteiro remanescente dos Trilhos A e B<br>
 **Fonte decisória:** GOV-013, OP-D07, OP-D08, R5-E-D01, R5-E-D02, R5-E-A01, AUTH-E-D01 e V1-E-A01
 
@@ -156,4 +156,19 @@ O pacote estará pronto para homologação quando:
 - somente uma sessão de recuperação válida puder definir a nova senha;
 - link inválido ou expirado não abrir o formulário de alteração.
 
-Após homologação e publicação controlada do R5 Essencial e da recuperação de senha, não há continuação funcional automática do plano. A próxima atividade deve ser escolhida pelo valor operacional comprovado, mantendo E2 e o encerramento consolidado como gates obrigatórios antes da entrega final.
+Todos esses critérios foram comprovados pela suíte automatizada, pelo replay integral das migrations, pela validação do Supabase remoto, pela homologação do Preview e pela verificação da URL canônica em Production.
+
+Após a publicação controlada do R5 Essencial e da recuperação de senha, não há continuação funcional automática do plano. A próxima atividade deve ser escolhida pelo valor operacional comprovado, mantendo E2 e o encerramento consolidado como gates obrigatórios antes da entrega final.
+
+## 8. Evidência de publicação e encerramento
+
+| Etapa | Evidência |
+|---|---|
+| Implementação funcional | PR #112, merge `1a1a8bec6eb0d6acc1ff4890b7ec45c3d6339e09` |
+| Supabase | migration `20260801044712_r5_essential_harden_pre_r4_progress_status` presente; Auth e política de senha alinhados |
+| CI funcional | auditoria, assinaturas, lint, 354 testes, cobertura, build, 36/36 cenários de navegador e replay integral aprovados |
+| Preview | `dpl_GkBQLRVNk98sJyU4z5e8eNz48Vry`, `READY`, homologado no SHA `a1b26235fff5ec83377eab066bf3e12c5959c398` |
+| Release | PR #113, merge `501f8cfb6c193f90a71ffabc2456230dbe0dc026` |
+| Production | `dpl_AZARXi92PqtR5WrRJtgpvDZgxZjD`, `READY`, alias canônico e SHA publicados confirmados |
+| Verificação pública | acesso, confirmação neutra, `/redefinir-senha` e rotas profundas aprovados; console e runtime sem erros |
+| Encerramento | PR #114; commit `6335fbd87e70a9b13ce11ab2140d226f596c8d18` restaura `deploymentEnabled: false` |

@@ -1,6 +1,6 @@
 # Contexto do Produto — Central de Demandas CTRH
 
-**Estado documental:** vigente após GOV-013 e a implementação da conclusão funcional inicial autorizada por V1-E-A01; homologação e release em execução.
+**Estado documental:** vigente após GOV-013 e a publicação da conclusão funcional inicial autorizada por V1-E-A01.
 **Atualizado em:** 1º de agosto de 2026.
 
 Este documento é a referência operacional para a semântica atual do produto. Decisões expressamente aprovadas estão exclusivamente em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`; a estratégia geral está em `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`; o roteiro do Trilho A está em `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`; a governança está no Adendo e no Protocolo vigentes indicados por `AGENTS.md`.
@@ -331,7 +331,7 @@ Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar f
 | `/relatorios` | Central de Relatórios | autenticados, por papel | futura |
 | `/admin` | perfis, parâmetros e auditoria somente leitura das demandas excluídas | administrador | vigente |
 | `/admin/qualidade-dados` | saneamento | administrador | futura |
-| `/redefinir-senha` | nova senha | sessão de recuperação | implementada por V1-E-A01; homologação e release em execução |
+| `/redefinir-senha` | nova senha | sessão de recuperação | vigente e publicada por V1-E-A01 |
 
 A lixeira integra a área `/admin`; não existe rota operacional de restauração.
 

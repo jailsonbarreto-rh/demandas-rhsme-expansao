@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **1º de agosto de 2026 — conclusão funcional inicial implementada; homologação e release em execução**
+Atualizado em: **1º de agosto de 2026 — conclusão funcional inicial homologada, publicada e encerrada**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -12,23 +12,25 @@ Atualizado em: **1º de agosto de 2026 — conclusão funcional inicial implemen
 | R4 | concluído e publicado |
 | R5-1 | concluído, homologado e publicado |
 | Auditoria transversal de layout | concluída, homologada e publicada |
-| R5 Essencial | implementação concluída na branch `feat/r5-essencial-completude-operacional`; gate de homologação em execução |
-| Recuperação de senha | implementação e configuração do Supabase concluídas na mesma branch; gate de homologação em execução |
-| PR funcional da auditoria | #109, merge `8ae2ff95152371ccc6ada2dc4580010b311b79e4` |
-| PR de release | #110, merge `2bc78dca066b0c4d592b4e6c5bc4c4db5290b507` |
-| Production | `dpl_7G72xFXcQUKtYELrGhXha1xi7UPE` — `READY` |
-| SHA publicado | `2bc78dca066b0c4d592b4e6c5bc4c4db5290b507` |
+| R5 Essencial | concluído, homologado e publicado pelos PRs #112 e #113 |
+| Recuperação de senha | concluída, configurada no Supabase, homologada e publicada pelos PRs #112 e #113 |
+| PR funcional | #112, merge `1a1a8bec6eb0d6acc1ff4890b7ec45c3d6339e09` |
+| PR de release | #113, merge `501f8cfb6c193f90a71ffabc2456230dbe0dc026` |
+| PR de encerramento | #114, com restauração do bloqueio no commit `6335fbd87e70a9b13ce11ab2140d226f596c8d18` |
+| Preview homologado | `dpl_GkBQLRVNk98sJyU4z5e8eNz48Vry` — `READY` |
+| Production | `dpl_AZARXi92PqtR5WrRJtgpvDZgxZjD` — `READY` |
+| SHA publicado | `501f8cfb6c193f90a71ffabc2456230dbe0dc026` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
 | Integridade conhecida | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
-| Deploy automático | restaurado para `deploymentEnabled: false` no encerramento |
+| Deploy automático | restaurado para `deploymentEnabled: false` pelo PR #114 |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
-| Próxima atividade | concluir gates, PR, homologação de Preview e publicação controlada da conclusão funcional inicial |
+| Próxima atividade | nenhuma continuação funcional automática; escolher por valor comprovado, preservando E2 e R12 como gates antes da entrega final |
 
 ## R5 Essencial — direção e escopo vigente
 
 GOV-013 adota completude operacional em lugar de exaustão documental. Código, Supabase, interface e testes atuais foram confrontados antes da autorização.
 
-O pacote em curso limita-se a:
+O pacote publicado limita-se a:
 
 - expor `Registrar andamento` para administrador/editor em demanda não encerrada;
 - preservar o status no andamento e atualizar próxima providência e data;
@@ -45,7 +47,7 @@ AUTH-E-D01 autoriza o fluxo mínimo `Esqueci minha senha` → confirmação neut
 
 Em 1º de agosto de 2026, o redirect exato `https://demandas-rhsme-expansao.vercel.app/redefinir-senha` foi adicionado e confirmado no Supabase Auth. A política remota de senha foi alinhada à aplicação: mínimo de oito caracteres, com minúscula, maiúscula e número. A verificação de senhas vazadas permanece indisponível no plano Free e não houve contratação ou mudança de plano.
 
-A evidência pré-release consolidada está em `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`: zero vulnerabilidades, 76 arquivos/354 testes Vitest, cobertura acima dos limites, 36/36 cenários Playwright, build e bundle aprovados, rota direta de recuperação protegida na Vercel, migration remota presente e ACLs dos wrappers confirmadas.
+A evidência consolidada está em `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`: zero vulnerabilidades, 76 arquivos/354 testes Vitest, cobertura acima dos limites, 36/36 cenários Playwright, build e bundle aprovados, rota direta de recuperação protegida na Vercel, migration remota presente, ACLs dos wrappers confirmadas e Preview/Production verificados.
 
 ## R5-1 — regra vigente
 
@@ -215,9 +217,9 @@ Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_ha
 
 ## Próxima etapa
 
-A implementação da **conclusão funcional inicial**, autorizada por V1-E-A01 e composta pelo R5 Essencial e pela recuperação de senha, está concluída na branch funcional. A próxima atividade é encerrar os gates locais, a PR, a homologação de Preview e a publicação controlada.
+A **conclusão funcional inicial**, autorizada por V1-E-A01 e composta pelo R5 Essencial e pela recuperação de senha, foi homologada e publicada em Production no SHA `501f8cfb6c193f90a71ffabc2456230dbe0dc026`. O PR #114 encerra a janela de release e restaura o bloqueio de deployments automáticos.
 
-Nenhuma extensão do R5 avançado, R1 residual, R2 ou ciclos posteriores está autorizada por inferência. Segurança, E2, release proporcional e homologação final continuam obrigatórios.
+Não há próxima etapa funcional automática. Nenhuma extensão do R5 avançado, R1 residual, R2 ou ciclos posteriores está autorizada por inferência. A atividade seguinte deve ser escolhida por valor, risco ou limite comprovado; E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
 
 ## Documentação vigente
 

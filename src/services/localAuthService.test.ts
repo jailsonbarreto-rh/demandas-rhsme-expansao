@@ -40,4 +40,14 @@ describe('LocalAuthService', () => {
     await service.signOut();
     expect(await service.restore()).toBeNull();
   });
+
+  it('simula recuperação sem armazenar e-mail ou senha', async () => {
+    const storage = createStorage();
+    const service = new LocalAuthService(storage);
+
+    await service.requestPasswordReset('teste@rioeduca.net', 'http://localhost:5173/redefinir-senha');
+    await service.completePasswordReset('NovaSenha9');
+
+    expect(storage.setItem).not.toHaveBeenCalled();
+  });
 });

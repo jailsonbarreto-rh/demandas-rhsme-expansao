@@ -1,8 +1,10 @@
 # Atualização pós-R4 e execução sequencial do R5
 
 **Data:** 30 de julho de 2026  
-**Estado:** vigente como reconciliação operacional após o R4  
-**Efeito autorizativo:** somente o pacote R5-1 está autorizado; os demais itens do R5 dependem de novo debate
+**Estado:** histórico após a decisão GOV-013 de 1º de agosto de 2026
+**Efeito autorizativo:** superado pelo R5 Essencial registrado em `ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`
+
+> Este documento preserva a sequência que vigorou entre R4 e R5-1. Não determina mais a próxima atividade nem restaura a obrigação de executar R5-2 a R5-5 separadamente.
 
 ## 1. Estado material consolidado
 
@@ -42,7 +44,7 @@ Ficam expressamente superadas, para execução atual, as seguintes orientações
    A leitura comum de proximidade aprovada é de sete dias corridos. Essa indicação não transforma automaticamente a demanda em urgente.
 
 7. **`Atenção agora`**  
-   O componente foi preservado no R4. Sua evolução obrigatória permanece registrada para o R6, sem autorização automática.
+   O componente foi preservado no R4. GOV-013 superou o calendário obrigatório do R6; qualquer evolução depende de evidência de limitação real.
 
 ## 3. Método vigente para o R5
 
@@ -89,18 +91,16 @@ A decisão pendente OP-D11 fica encerrada. A implementação deve abranger front
 
 | Pacote | Tema | Estado |
 |---|---|---|
-| R5-1 | Lixeira administrativa e auditoria | autorizado e em implementação |
-| R5-2 | Andamento, transições e reabertura | próximo debate; OP-D07 pendente |
-| R5-3 | Prontuário canônico | não iniciado; OP-D08 pendente |
-| R5-4 | Autoria legível e contexto dos eventos | não iniciado; OP-D09 e OP-D10 pendentes |
-| R5-5 | Busca histórica, links e retorno | não iniciado; OP-D12 e OP-D19 pendentes |
+| R5-1 | Lixeira administrativa e auditoria | concluído e publicado |
+| R5 Essencial | Andamento, reabertura e prontuário atual | autorizado por R5-E-A01 |
+| R5 avançado | Página, autoria e refinamentos de consulta | evolução condicionada por GOV-013 |
 
 ## 6. Dependências preservadas
 
 1. O R1-5 de concorrência otimista foi adiado. Referências a `expectedUpdatedAt` não podem ser tratadas como capacidade disponível nem como requisito automático do R5.
 2. R2-1 e R2-3 somente podem ser antecipados quando forem dependência técnica concreta de uma função já aprovada.
 3. A ausência quase total de próxima providência na base legada não pode ser convertida em erro geral, urgência ou preenchimento automático.
-4. O prontuário futuro deve aproveitar o histórico existente sem inventar autoria, origem ou contexto retroativo.
+4. O prontuário atual aproveita o histórico existente sem inventar autoria, origem ou contexto retroativo.
 5. A lixeira preserva a proteção de banco implantada no E4 e não reabre automaticamente demandas nem estados anteriores.
 
 ## 7. Regra de continuidade

@@ -113,6 +113,7 @@ describe('informações apresentadas ao usuário', () => {
         canEdit
         onClose={vi.fn()}
         onEdit={vi.fn()}
+        onProgress={vi.fn()}
         onStatus={vi.fn()}
       />,
     );

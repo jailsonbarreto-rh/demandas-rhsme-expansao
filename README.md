@@ -19,9 +19,12 @@ O estado funcional atual inclui:
 - carteira pessoal por UUID em `/minhas-demandas`;
 - indicadores contextuais conforme a carteira aberta;
 - filtros, paginação visual e rotas profundas preservando o contexto;
-- mutações auditáveis preparadas no Supabase.
+- prontuário operacional no drawer com prazos, próxima providência, status e histórico;
+- andamento separado da mudança de status;
+- reabertura como transição explícita e auditável;
+- mutações auditáveis no Supabase.
 
-A evolução está organizada em dois trilhos coordenados: o Trilho A continua a operação atual sem depender da data de chegada do legado, e o Trilho B preservará e incorporará as futuras cargas. A base atual representa menos de 10% do acervo legado esperado. Nenhum pacote, ciclo ou decisão `OP-Dxx` está automaticamente autorizado.
+A evolução está organizada em dois trilhos coordenados: o Trilho A continua a operação atual sem depender da data de chegada do legado, e o Trilho B preservará e incorporará as futuras cargas. A base atual representa menos de 10% do acervo legado esperado. GOV-013 adota completude operacional: capacidades já suficientes são preservadas, somente lacunas essenciais entram no lançamento e extensões dependem de evidência concreta. V1-E-A01 limita a conclusão funcional inicial ao R5 Essencial e à recuperação de senha; os ciclos históricos 6 a 13 não constituem fila. Nenhum outro pacote, ciclo ou decisão `OP-Dxx` está automaticamente autorizado.
 
 ## Governança e documentação
 
@@ -36,6 +39,7 @@ As referências vigentes são:
 - [Contexto do Produto](docs/PRODUCT_CONTEXT.md);
 - [Plano Integrado Reformulado v3.1](docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md), como estratégia geral;
 - [Plano Executivo da Operação Atual v1.2](docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md), como roteiro do Trilho A;
+- [Atualização de Completude Operacional](docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md), como controle de mudança vigente;
 - [Handoff Operacional](docs/HANDOFF.md).
 
 Toda alteração de regra de negócio, lógica, permissão, obrigatoriedade, cálculo, dado ou rota deve atualizar no mesmo PR todos os documentos vigentes afetados. Código correto com documentação divergente não constitui entrega concluída.

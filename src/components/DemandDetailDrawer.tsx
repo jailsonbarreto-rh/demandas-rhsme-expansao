@@ -14,6 +14,7 @@ interface DemandDetailDrawerProps {
   canEdit: boolean;
   onClose: () => void;
   onEdit: () => void;
+  onProgress: () => void;
   onStatus: () => void;
 }
 
@@ -42,6 +43,7 @@ export function DemandDetailDrawer({
   canEdit,
   onClose,
   onEdit,
+  onProgress,
   onStatus,
 }: DemandDetailDrawerProps) {
   const reduceMotion = useReducedMotion();
@@ -186,7 +188,8 @@ export function DemandDetailDrawer({
                 </div>
 
                 <div className="drawer-footer">
-                  {canEdit && <button type="button" className="btn btn-secondary-outline" onClick={onStatus}><i className="fa-solid fa-rotate-left" aria-hidden="true" /> Status</button>}
+                  {canEdit && !closed && <button type="button" className="btn btn-secondary-outline" onClick={onProgress}><i className="fa-solid fa-list-check" aria-hidden="true" /> Registrar andamento</button>}
+                  {canEdit && <button type="button" className="btn btn-secondary-outline" onClick={onStatus}><i className="fa-solid fa-rotate-left" aria-hidden="true" /> {closed ? 'Reabrir demanda' : 'Alterar status'}</button>}
                   {canEdit && <button type="button" className="btn btn-secondary-outline" onClick={onEdit}><i className="fa-solid fa-pen-to-square" aria-hidden="true" /> Editar</button>}
                   <Dialog.Close asChild><button type="button" className="btn btn-primary"><i className="fa-solid fa-check" aria-hidden="true" /> Fechar</button></Dialog.Close>
                 </div>

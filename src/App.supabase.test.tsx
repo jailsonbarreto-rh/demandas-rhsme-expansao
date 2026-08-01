@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppServices } from './services/createAppServices';
@@ -29,22 +29,35 @@ function createServices(
 ) {
   const load = vi.fn().mockResolvedValue(initialData);
   const create = vi.fn().mockResolvedValue(undefined);
+  const registerProgress = vi.fn().mockResolvedValue(undefined);
+  const requestPasswordReset = vi.fn().mockResolvedValue(undefined);
+  const completePasswordReset = vi.fn().mockResolvedValue(undefined);
   const listMinimal = vi.fn().mockResolvedValue([officialResponsible]);
+  let passwordRecoveryCallback: (() => void) | undefined;
+  const authSubscribe = vi.fn((
+    _onChange: (user: AppUser | null) => void,
+    onPasswordRecovery?: () => void,
+  ) => {
+    passwordRecoveryCallback = onPasswordRecovery;
+    return () => undefined;
+  });
   const services: AppServices = {
     mode: 'supabase',
     auth: {
       restore: vi.fn().mockResolvedValue(null),
       signIn,
       requestAccess: vi.fn().mockResolvedValue(undefined),
+      requestPasswordReset,
+      completePasswordReset,
       signOut: vi.fn().mockResolvedValue(undefined),
-      subscribe: vi.fn(() => () => undefined),
+      subscribe: authSubscribe,
     },
     demandas: {
       load,
       loadTrash: vi.fn().mockResolvedValue([]),
       create,
       edit: vi.fn().mockResolvedValue(undefined),
-      registerProgress: vi.fn().mockResolvedValue(undefined),
+      registerProgress,
       transitionStatus: vi.fn().mockResolvedValue(undefined),
       deleteLogically: vi.fn().mockResolvedValue(undefined),
       subscribe: vi.fn(() => () => undefined),
@@ -55,7 +68,17 @@ function createServices(
       updateAccess: vi.fn().mockResolvedValue(undefined),
     },
   };
-  return { services, load, create, listMinimal };
+  return {
+    services,
+    load,
+    create,
+    registerProgress,
+    requestPasswordReset,
+    completePasswordReset,
+    listMinimal,
+    authSubscribe,
+    emitPasswordRecovery: () => passwordRecoveryCallback?.(),
+  };
 }
 
 async function fillLogin(user: ReturnType<typeof userEvent.setup>) {
@@ -200,12 +223,12 @@ describe('App no modo Supabase', () => {
     await user.type(screen.getByLabelText('Número'), 'SME-TESTE-001');
     await user.type(screen.getByLabelText('Assunto'), 'Demanda de integração');
     await user.selectOptions(screen.getByLabelText('Responsável'), officialResponsible.id);
-    await user.type(screen.getByLabelText('Data de prazo interno'), '15082026');
+    await user.type(screen.getByLabelText('Data de prazo interno'), '15082099');
     await user.click(screen.getByRole('radio', { name: 'Não se aplica' }));
     await user.selectOptions(screen.getByLabelText('Status'), 'Aguardando Andamento');
     await user.selectOptions(screen.getByLabelText('Selecione a classificação'), 'Outros');
     await user.type(screen.getByLabelText('Próxima providência'), 'Conferir documentação recebida');
-    await user.type(screen.getByLabelText('Data da próxima providência'), '20082026');
+    await user.type(screen.getByLabelText('Data da próxima providência'), '20082099');
     await user.click(screen.getByRole('button', { name: /salvar/i }));
 
     await waitFor(() => expect(create).toHaveBeenCalledWith(expect.objectContaining({
@@ -213,12 +236,12 @@ describe('App no modo Supabase', () => {
       assunto: 'Demanda de integração',
       responsavelId: officialResponsible.id,
       responsavel: officialResponsible.nome,
-      limite1: '15/08/2026',
+      limite1: '15/08/2099',
       limite1Situacao: 'definido',
       limite2: '',
       limite2Situacao: 'nao_se_aplica',
       proximaAcao: 'Conferir documentação recebida',
-      proximaAcaoEm: '20/08/2026',
+      proximaAcaoEm: '20/08/2099',
     })));
   });
 
@@ -318,6 +341,96 @@ describe('App no modo Supabase', () => {
       expect(screen.getByText('Demanda do usuário conectado')).toBeVisible();
       expect(screen.queryByText('Demanda de outro usuário')).not.toBeInTheDocument();
     });
+  });
+
+  it('liga a solicitação neutra ao destino de recuperação da origem atual', async () => {
+    const user = userEvent.setup();
+    const { services, requestPasswordReset } = createServices();
+    render(<App services={services} />);
+
+    await user.click(await screen.findByRole('button', { name: /esqueci minha senha/i }));
+    await user.type(screen.getByLabelText(/e-mail corporativo/i), 'pessoa@rioeduca.net');
+    await user.click(screen.getByRole('button', { name: /enviar link de recuperação/i }));
+
+    expect(requestPasswordReset).toHaveBeenCalledWith(
+      'pessoa@rioeduca.net',
+      `${window.location.origin}/redefinir-senha`,
+    );
+    expect(await screen.findByText(/se houver uma conta vinculada a esse e-mail/i)).toBeVisible();
+  });
+
+  it('só libera a rota de nova senha após PASSWORD_RECOVERY e encerra o fluxo', async () => {
+    window.history.replaceState({}, '', '/redefinir-senha#type=recovery&access_token=token-sintetico');
+    const {
+      services,
+      completePasswordReset,
+      authSubscribe,
+      emitPasswordRecovery,
+      load,
+    } = createServices();
+    const user = userEvent.setup();
+    render(<App services={services} />);
+
+    expect(await screen.findByRole('heading', { name: /validando link de recuperação/i })).toBeVisible();
+    await waitFor(() => expect(authSubscribe).toHaveBeenCalled());
+    act(() => emitPasswordRecovery());
+
+    await user.type(await screen.findByLabelText(/^nova senha$/i), 'NovaSenha9');
+    await user.type(screen.getByLabelText(/confirmar nova senha/i), 'NovaSenha9');
+    await user.click(screen.getByRole('button', { name: /salvar nova senha/i }));
+
+    await waitFor(() => expect(completePasswordReset).toHaveBeenCalledWith('NovaSenha9'));
+    await waitFor(() => expect(window.location.pathname).toBe('/'));
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia acesso manual à rota de redefinição sem sessão de recuperação', async () => {
+    window.history.replaceState({}, '', '/redefinir-senha');
+    const { services, load } = createServices();
+    render(<App services={services} />);
+
+    expect(await screen.findByRole('heading', { name: /link inválido ou expirado/i })).toBeVisible();
+    expect(screen.queryByLabelText(/^nova senha$/i)).not.toBeInTheDocument();
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it('registra andamento sem perder a carteira e a busca atuais', async () => {
+    const demanda = createMinimalDemandFixture({
+      id: 31,
+      numero: 'SME-PROGRESS-031',
+      assunto: 'Demanda para andamento',
+      responsavel: 'Teste',
+      status: 'Aguardando Andamento',
+      proximaAcao: 'Aguardar resposta inicial',
+      proximaAcaoEm: '20/08/2099',
+    });
+    const { services, registerProgress } = createServices(undefined, {
+      demandas: [demanda],
+      historico: [],
+    });
+    const user = userEvent.setup();
+
+    window.history.replaceState({}, '', '/demandas?busca=SME-PROGRESS-031');
+    render(<App services={services} />);
+    await fillLogin(user);
+    await waitFor(() => expect(window.location.search).toContain('busca=SME-PROGRESS-031'));
+    await user.click(await screen.findByRole('button', { name: /mais ações da demanda sme-progress-031/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /registrar andamento/i }));
+    await user.type(await screen.findByLabelText(/o que foi realizado/i), 'Contato realizado com a unidade.');
+    await user.clear(screen.getByLabelText(/^próxima providência$/i));
+    await user.type(screen.getByLabelText(/^próxima providência$/i), 'Conferir a resposta recebida');
+    await user.clear(screen.getByLabelText(/data da próxima providência/i));
+    await user.type(screen.getByLabelText(/data da próxima providência/i), '25082099');
+    await user.click(screen.getByRole('button', { name: /^registrar andamento$/i }));
+
+    await waitFor(() => expect(registerProgress).toHaveBeenCalledWith(demanda.id, {
+      comentario: 'Contato realizado com a unidade.',
+      proximaAcao: 'Conferir a resposta recebida',
+      proximaAcaoEm: '25/08/2099',
+      proximaAcaoJustificativa: '',
+    }));
+    expect(window.location.pathname).toBe('/demandas');
+    expect(window.location.search).toContain('busca=SME-PROGRESS-031');
   });
 
   it('aplica o cartão de status sem sair da carteira pessoal nem restaurar estado antigo', async () => {

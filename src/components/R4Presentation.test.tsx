@@ -55,6 +55,7 @@ describe('apresentação R4 na carteira e no detalhe', () => {
       <DemandasTable
         demandas={[active, legacy, closed]}
         onOpenEditar={vi.fn()}
+        onOpenProgress={vi.fn()}
         onOpenStatus={vi.fn()}
         onOpenHistorico={vi.fn()}
         onExcluir={vi.fn()}
@@ -92,6 +93,7 @@ describe('apresentação R4 na carteira e no detalhe', () => {
         canEdit
         onClose={vi.fn()}
         onEdit={vi.fn()}
+        onProgress={vi.fn()}
         onStatus={vi.fn()}
       />,
     );

@@ -57,6 +57,7 @@ describe('experiência profissional de formulários e tabela', () => {
       <DemandasTable
         demandas={demandas}
         onOpenEditar={vi.fn()}
+        onOpenProgress={vi.fn()}
         onOpenStatus={vi.fn()}
         onOpenHistorico={vi.fn()}
         onExcluir={vi.fn()}
@@ -86,6 +87,7 @@ describe('experiência profissional de formulários e tabela', () => {
       <DemandasTable
         demandas={[base]}
         onOpenEditar={vi.fn()}
+        onOpenProgress={vi.fn()}
         onOpenStatus={vi.fn()}
         onOpenHistorico={vi.fn()}
         onExcluir={onExcluir}

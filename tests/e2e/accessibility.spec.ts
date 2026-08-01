@@ -35,6 +35,22 @@ test('login e solicitação de acesso não apresentam violações críticas de a
   await expectAccessible(page, 'primeiro acesso');
 });
 
+test('solicitação e link inválido de recuperação de senha são acessíveis', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /esqueci minha senha/i }).click();
+  await expect(page.getByRole('heading', { name: /recuperar acesso/i })).toBeVisible();
+  await expectAccessible(page, 'solicitação de recuperação');
+
+  await page.getByLabel(/e-mail corporativo para recuperação/i).fill('pessoa@rioeduca.net');
+  await page.getByRole('button', { name: /enviar link de recuperação/i }).click();
+  await expect(page.getByRole('heading', { name: /confira seu e-mail/i })).toBeVisible();
+  await expectAccessible(page, 'confirmação de recuperação');
+
+  await page.goto('/redefinir-senha');
+  await expect(page.getByRole('heading', { name: /link inválido ou expirado/i })).toBeVisible();
+  await expectAccessible(page, 'link de recuperação inválido');
+});
+
 test('visão geral, demandas e administração são acessíveis', async ({ page }) => {
   await login(page);
   await expectAccessible(page, 'visão geral');

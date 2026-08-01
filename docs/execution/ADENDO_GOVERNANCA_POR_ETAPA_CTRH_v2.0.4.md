@@ -126,9 +126,9 @@ O R3 não será refeito. O Plano Executivo v1.2 preserva esse marco e organiza o
 
 ## 10. Próxima atividade autorizada
 
-O E0 está concluído. Conforme GOV-012, OP-D15, OP-D01 e A1-CORE-A01, a única implementação funcional atualmente autorizada é o A1-Core residual, em releases reversíveis e sem antecipar R4, R5, R2 ou regras dependentes do legado futuro.
+E0, A1-Core, R4 e R5-1 estão concluídos. Conforme GOV-013, R5-E-A01, AUTH-E-D01 e V1-E-A01, a única implementação funcional atualmente autorizada é a **conclusão funcional inicial**, limitada ao R5 Essencial e à recuperação de senha nos limites registrados.
 
-Após o encerramento do A1-Core, a atividade seguinte será o debate itemizado do R4. A prioridade de sequência não pré-autoriza nenhuma decisão funcional do R4.
+Nenhum pacote posterior decorre automaticamente de sua conclusão. R1 residual, R2, R5 avançado e extensões de R6 a R11 são evoluções condicionadas a evidência de necessidade. Capacidades já materializadas são preservadas; segurança, release proporcional, E2 e a homologação final de R12 continuam obrigatórios. O Trilho B permanece preservado para decisão com a fonte real do legado.
 
 ## 11. Precedência
 

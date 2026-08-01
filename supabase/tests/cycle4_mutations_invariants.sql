@@ -41,7 +41,7 @@ begin
     perform public.criar_sme_demanda_v2(
       'C4-LEITOR-NEGADO', 'Processo', 'Tentativa do leitor', null, '',
       null, 'nao_informado', '', null, 'nao_informado', '',
-      'Revisar tentativa', date '2026-09-01', 'Aguardando Andamento',
+      'Revisar tentativa', date '2099-09-01', 'Aguardando Andamento',
       'CTRH', 'Diversos', ''
     );
   exception when others then
@@ -58,22 +58,22 @@ set local role authenticated;
 select pg_temp.set_actor('22222222-2222-2222-2222-222222222222');
 select public.criar_sme_demanda_v2(
   'C4-AUDIT-001', 'Processo', 'Demanda auditável do Ciclo 4', null, 'Equipe externa',
-  date '2026-09-10', 'definido', '', null, 'nao_informado', '',
-  'Conferir documentação recebida', date '2026-08-15',
+  date '2099-09-10', 'definido', '', null, 'nao_informado', '',
+  'Conferir documentação recebida', date '2099-08-15',
   'Aguardando Andamento', 'CTRH', 'Diversos', 'https://example.invalid/processo'
 );
 select public.editar_sme_demanda(
   (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
   'Demanda auditável revisada', null, 'Equipe externa',
-  date '2026-09-10', 'definido', '', null, 'nao_informado', '',
+  date '2099-09-10', 'definido', '', null, 'nao_informado', '',
   'CTRH', 'Diversos', 'https://example.invalid/processo',
-  'Conferir documentação atualizada', date '2026-08-16',
+  'Conferir documentação atualizada', date '2099-08-16',
   'Ajuste de assunto e próxima providência'
 );
 select public.registrar_andamento_sme_demanda(
   (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
   'Documentação conferida e devolvida para complementação.',
-  'Verificar retorno da complementação', date '2026-08-20'
+  'Verificar retorno da complementação', date '2099-08-20'
 );
 select public.transicionar_status_sme_demanda(
   (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
@@ -133,7 +133,7 @@ end;
 $$;
 rollback;
 
--- Administrador exclui logicamente e restaura, preservando demanda e histórico.
+-- Administrador exclui logicamente; a restauração de produto permanece revogada.
 begin;
 set local role authenticated;
 select pg_temp.set_actor('11111111-1111-1111-1111-111111111111');
@@ -150,27 +150,23 @@ select pg_temp.assert_true(
   ),
   'exclusão lógica não registrou os metadados administrativos'
 );
-select public.restaurar_sme_demanda(
-  (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
-  'Duplicidade descartada após nova conferência'
-);
-commit;
+rollback;
 select pg_temp.assert_true(
   exists (
     select 1 from public.sme_demandas
     where numero = 'C4-AUDIT-001'
       and deleted_at is null and deleted_by is null and deletion_reason is null
   ),
-  'restauração não limpou os metadados de exclusão'
+  'rollback da exclusão administrativa não preservou a demanda de teste'
 );
 select pg_temp.assert_true(
   (
-    select count(*) = 6
+    select count(*) = 4
     from public.sme_historico h
     join public.sme_demandas d on d.id = h.demanda_id
     where d.numero = 'C4-AUDIT-001'
   ),
-  'exclusão ou restauração apagou ou duplicou a trilha'
+  'exclusão revertida alterou a trilha anterior'
 );
 
 -- Reabre e força falha de auditoria para comprovar rollback da demanda.
@@ -180,7 +176,7 @@ select pg_temp.set_actor('22222222-2222-2222-2222-222222222222');
 select public.transicionar_status_sme_demanda(
   (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
   'Ajustar', 'Reabertura para complementar a documentação.',
-  'Complementar documentação pendente', date '2026-08-25'
+  'Complementar documentação pendente', date '2099-08-25'
 );
 commit;
 
@@ -213,7 +209,7 @@ begin
   begin
     perform public.registrar_andamento_sme_demanda(
       (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
-      'FORCAR-FALHA-HISTORICO', 'Ação que deve ser revertida', date '2026-08-30'
+      'FORCAR-FALHA-HISTORICO', 'Ação que deve ser revertida', date '2099-08-30'
     );
   exception when others then
     if sqlerrm = 'Falha sintética de auditoria' then v_failed := true; else raise; end if;
@@ -241,9 +237,9 @@ select pg_temp.set_actor('22222222-2222-2222-2222-222222222222');
 select public.editar_sme_demanda(
   (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
   'Primeira edição sequencial', null, 'Equipe externa',
-  date '2026-09-10', 'definido', '', null, 'nao_informado', '',
+  date '2099-09-10', 'definido', '', null, 'nao_informado', '',
   'CTRH', 'Diversos', 'https://example.invalid/processo',
-  'Complementar documentação pendente', date '2026-08-25',
+  'Complementar documentação pendente', date '2099-08-25',
   'Primeira edição sequencial de teste'
 );
 insert into cycle4_first_edit_timestamp
@@ -257,9 +253,9 @@ select pg_temp.set_actor('22222222-2222-2222-2222-222222222222');
 select public.editar_sme_demanda(
   (select id from public.sme_demandas where numero = 'C4-AUDIT-001'),
   'Segunda edição sequencial', null, 'Equipe externa',
-  date '2026-09-10', 'definido', '', null, 'nao_informado', '',
+  date '2099-09-10', 'definido', '', null, 'nao_informado', '',
   'CTRH', 'Diversos', 'https://example.invalid/processo',
-  'Complementar documentação pendente', date '2026-08-25',
+  'Complementar documentação pendente', date '2099-08-25',
   'Segunda edição sequencial de teste'
 );
 commit;
@@ -288,4 +284,4 @@ select pg_temp.assert_true(
   not exists (select 1 from public.sme_demandas where numero = 'C4-LEITOR-NEGADO'),
   'tentativa negada do leitor deixou registro parcial'
 );
-select 'Ciclo 4 homologado: papéis, autoria, transações, exclusão e restauração' as resultado;
+select 'Ciclo 4 homologado: papéis, autoria, transações e exclusão lógica' as resultado;

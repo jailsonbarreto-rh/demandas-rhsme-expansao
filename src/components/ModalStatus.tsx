@@ -17,6 +17,8 @@ interface ModalStatusProps {
 
 export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAtualizar }) => {
   const [confirmClose, setConfirmClose] = useState(false);
+  const reopening = demanda.status === 'Encerrado';
+  const availableStatuses = statusValues.filter((status) => status !== demanda.status);
   const {
     register,
     control,
@@ -26,7 +28,6 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
   } = useForm<StatusDemandaValues>({
     resolver: zodResolver(statusDemandaSchema),
     defaultValues: {
-      status: demanda.status,
       comentario: '',
       proximaAcao: demanda.proximaAcao,
       proximaAcaoEm: demanda.proximaAcaoEm,
@@ -47,23 +48,35 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
 
   return (
     <>
-      <AppDialog title="Atualizar Status" onClose={requestClose} contentClassName="modal-compact">
+      <AppDialog title={reopening ? 'Reabrir demanda' : 'Alterar status'} onClose={requestClose} contentClassName="modal-compact">
         <form onSubmit={(event) => { void submit(event); }} noValidate>
           <div className="modal-body">
             <div className="form-stack">
               <div>
-                <label htmlFor="modal_status_select" className="input-label-externa">Status da Demanda</label>
-                <select id="modal_status_select" className="form-select" {...register('status')}>
-                  {statusValues.map((status) => <option key={status} value={status}>{status}</option>)}
+                <label htmlFor="modal_status_select" className="input-label-externa">Novo status da demanda</label>
+                <select
+                  id="modal_status_select"
+                  className="form-select"
+                  defaultValue=""
+                  {...register('status')}
+                  aria-invalid={Boolean(errors.status)}
+                  aria-describedby={errors.status ? 'status-destino-error' : undefined}
+                >
+                  <option value="" disabled>Selecione o novo status</option>
+                  {availableStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
-                <FormError message={errors.status?.message} />
+                <FormError id="status-destino-error" message={errors.status?.message} />
               </div>
               <div>
-                <label htmlFor="modal_status_comentario" className="input-label-externa">Comentário / Observação</label>
+                <label htmlFor="modal_status_comentario" className="input-label-externa">
+                  {reopening ? 'Motivo da reabertura' : 'Comentário / Observação'}
+                </label>
                 <textarea
                   id="modal_status_comentario"
                   className={`form-control status-comment ${errors.comentario ? 'field-invalid' : ''}`.trim()}
-                  placeholder="Descreva a movimentação e o motivo da mudança de status..."
+                  placeholder={reopening
+                    ? 'Explique por que a demanda voltou ao acompanhamento...'
+                    : 'Descreva a movimentação e o motivo da mudança de status...'}
                   {...register('comentario')}
                   aria-invalid={Boolean(errors.comentario)}
                   aria-describedby={errors.comentario ? 'status-comentario-error' : undefined}
@@ -118,7 +131,7 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
           <div className="modal-footer">
             <button type="submit" className="btn btn-primary" disabled={isSubmitting} aria-busy={isSubmitting}>
               <i className={`fa-solid ${isSubmitting ? 'fa-spinner fa-spin' : 'fa-floppy-disk'}`} aria-hidden="true" />
-              {isSubmitting ? 'Atualizando…' : 'Atualizar'}
+              {isSubmitting ? (reopening ? 'Reabrindo…' : 'Atualizando…') : (reopening ? 'Reabrir demanda' : 'Alterar status')}
             </button>
             <button type="button" className="btn" onClick={requestClose} disabled={isSubmitting}>
               <i className="fa-solid fa-xmark" aria-hidden="true" /> Cancelar
@@ -129,7 +142,7 @@ export const ModalStatus: React.FC<ModalStatusProps> = ({ demanda, onClose, onAt
 
       <ConfirmDialog
         open={confirmClose}
-        title="Descartar alteração de status?"
+        title={reopening ? 'Descartar reabertura?' : 'Descartar alteração de status?'}
         description="O status, o comentário ou a próxima providência ainda não foram registrados."
         confirmLabel="Descartar alterações"
         onConfirm={onClose}

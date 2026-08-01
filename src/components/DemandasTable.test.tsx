@@ -16,6 +16,7 @@ describe('DemandasTable', () => {
     render(<DemandasTable
       demandas={[demanda]}
       onOpenEditar={vi.fn()}
+      onOpenProgress={vi.fn()}
       onOpenStatus={vi.fn()}
       onOpenHistorico={vi.fn()}
       onExcluir={vi.fn()}
@@ -31,6 +32,7 @@ describe('DemandasTable', () => {
     render(<DemandasTable
       demandas={[demanda]}
       onOpenEditar={onOpenDetalhes}
+      onOpenProgress={vi.fn()}
       onOpenStatus={vi.fn()}
       onOpenHistorico={vi.fn()}
       onExcluir={vi.fn()}
@@ -53,6 +55,7 @@ describe('DemandasTable', () => {
     render(<DemandasTable
       demandas={[demanda]}
       onOpenEditar={vi.fn()}
+      onOpenProgress={vi.fn()}
       onOpenStatus={vi.fn()}
       onOpenHistorico={vi.fn()}
       onExcluir={vi.fn()}

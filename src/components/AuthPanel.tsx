@@ -6,8 +6,10 @@ import { getUserFacingError } from '../domain/userFacingErrors';
 import {
   accessRequestFormSchema,
   loginFormSchema,
+  passwordRecoveryRequestSchema,
   type AccessRequestFormValues,
   type LoginFormValues,
+  type PasswordRecoveryRequestValues,
 } from '../validation/authSchemas';
 import { BrandLogo } from './BrandLogo';
 import { FormError } from './ui/FormError';
@@ -17,10 +19,19 @@ interface AuthPanelProps {
   loading: boolean;
   onSignIn: (email: string, senha: string) => Promise<void>;
   onRequestAccess: (email: string, senha: string) => Promise<void>;
+  onRequestPasswordReset: (email: string) => Promise<void>;
 }
 
-export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPanelProps) {
+export function AuthPanel({
+  mode,
+  loading,
+  onSignIn,
+  onRequestAccess,
+  onRequestPasswordReset,
+}: AuthPanelProps) {
   const [activeTab, setActiveTab] = useState<'login' | 'cadastro'>('login');
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [recoveryRequested, setRecoveryRequested] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showCadastroPassword, setShowCadastroPassword] = useState(false);
 
@@ -31,6 +42,10 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
   const cadastroForm = useForm<AccessRequestFormValues>({
     resolver: zodResolver(accessRequestFormSchema),
     defaultValues: { email: '', senha: '' },
+  });
+  const recoveryForm = useForm<PasswordRecoveryRequestValues>({
+    resolver: zodResolver(passwordRecoveryRequestSchema),
+    defaultValues: { email: '' },
   });
 
   const cadastroSenha = useWatch({ control: cadastroForm.control, name: 'senha' }) ?? '';
@@ -62,6 +77,27 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
       toast.error(getUserFacingError(reason, 'Não foi possível solicitar acesso.'));
     }
   });
+
+  const submitRecovery = recoveryForm.handleSubmit(async (values) => {
+    try {
+      await onRequestPasswordReset(values.email);
+      setRecoveryRequested(true);
+    } catch (reason) {
+      toast.error(getUserFacingError(reason, 'Não foi possível enviar o link de recuperação agora.'));
+    }
+  });
+
+  const openRecovery = () => {
+    recoveryForm.reset({ email: loginForm.getValues('email') });
+    setRecoveryRequested(false);
+    setRecoveryMode(true);
+  };
+
+  const closeRecovery = () => {
+    setRecoveryMode(false);
+    setRecoveryRequested(false);
+    setActiveTab('login');
+  };
 
   return (
     <div className="login-split-container">
@@ -115,7 +151,7 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
             <p>Identifique-se com a sua credencial @rioeduca.net</p>
           </div>
 
-          <div className="login-tabs" aria-label="Modalidade de acesso">
+          {!recoveryMode && <div className="login-tabs" aria-label="Modalidade de acesso">
             <button
               type="button"
               aria-pressed={activeTab === 'login'}
@@ -132,9 +168,61 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
             >
               Primeiro acesso
             </button>
-          </div>
+          </div>}
 
-          {activeTab === 'login' ? (
+          {recoveryMode ? (
+            <div className="auth-flow-content">
+              <div className="auth-flow-heading">
+                <h4>{recoveryRequested ? 'Confira seu e-mail' : 'Recuperar acesso'}</h4>
+                <p>
+                  {recoveryRequested
+                    ? 'Se houver uma conta vinculada a esse e-mail, você receberá um link para criar uma nova senha.'
+                    : 'Informe seu e-mail institucional. O link terá validade limitada e poderá ser usado uma única vez.'}
+                </p>
+              </div>
+
+              {recoveryRequested ? (
+                <div className="auth-feedback" role="status">
+                  <i className="fa-solid fa-envelope-circle-check" aria-hidden="true" />
+                  <p>Verifique também a pasta de spam. Por segurança, esta confirmação é igual para todos os e-mails.</p>
+                </div>
+              ) : (
+                <form onSubmit={(event) => { void submitRecovery(event); }} noValidate>
+                  <div className="login-form-group">
+                    <label htmlFor="recovery-email">E-mail corporativo para recuperação</label>
+                    <div className="input-icon-group">
+                      <i className="fa-solid fa-envelope" aria-hidden="true" />
+                      <input
+                        type="email"
+                        id="recovery-email"
+                        className={recoveryForm.formState.errors.email ? 'form-control field-invalid' : 'form-control'}
+                        placeholder="usuario@rioeduca.net"
+                        autoComplete="email"
+                        {...recoveryForm.register('email')}
+                        aria-invalid={Boolean(recoveryForm.formState.errors.email)}
+                        aria-describedby={recoveryForm.formState.errors.email ? 'recovery-email-error' : undefined}
+                      />
+                    </div>
+                    <FormError id="recovery-email-error" message={recoveryForm.formState.errors.email?.message} />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary auth-full-width"
+                    disabled={loading || recoveryForm.formState.isSubmitting}
+                    aria-busy={loading || recoveryForm.formState.isSubmitting}
+                  >
+                    {loading || recoveryForm.formState.isSubmitting ? 'Enviando…' : 'Enviar link de recuperação'}
+                  </button>
+                </form>
+              )}
+
+              <button type="button" className="auth-link-button auth-back-button" onClick={closeRecovery}>
+                <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+                Voltar para entrar
+              </button>
+            </div>
+          ) : activeTab === 'login' ? (
             <form onSubmit={(event) => { void submitLogin(event); }} noValidate>
               <div className="login-form-group">
                 <label htmlFor="login-email">E-mail corporativo</label>
@@ -179,6 +267,12 @@ export function AuthPanel({ mode, loading, onSignIn, onRequestAccess }: AuthPane
                   </button>
                 </div>
                 <FormError id="login-senha-error" message={loginForm.formState.errors.senha?.message} />
+              </div>
+
+              <div className="auth-forgot-row">
+                <button type="button" className="auth-link-button" onClick={openRecovery}>
+                  Esqueci minha senha
+                </button>
               </div>
 
               <button

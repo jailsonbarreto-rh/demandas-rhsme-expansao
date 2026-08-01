@@ -1,8 +1,10 @@
 # Pauta de decisões — Ciclo R5
 
 **Data:** 30 de julho de 2026  
-**Estado:** execução sequencial por pequenos blocos  
-**Autorização funcional vigente:** nenhuma; próxima atividade é o debate do R5-2
+**Estado:** pauta histórica reconciliada por GOV-013 em 1º de agosto de 2026
+**Autorização funcional vigente:** R5 Essencial
+
+> As perguntas abaixo preservam o contexto do debate original. GOV-013 encerrou a obrigação de implementar R5-2 a R5-5 como quatro pacotes sucessivos. OP-D07, OP-D08, R5-E-D01, R5-E-D02 e R5-E-A01 definem a menor solução completa; os itens avançados passam a evolução condicionada. Consulte `../execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`.
 
 ## Objetivo do ciclo
 
@@ -32,10 +34,8 @@ Cada discussão deverá considerar todas as decisões anteriores, o layout vigen
 ## Ordem de execução
 
 1. R5-1 — Lixeira administrativa e auditoria — **concluído**;
-2. R5-2 — Andamento, transições e reabertura — **próximo debate**;
-3. R5-3 — Prontuário canônico;
-4. R5-4 — Autoria legível e contexto dos eventos;
-5. R5-5 — Busca histórica, links e retorno.
+2. R5 Essencial — andamento, reabertura e consolidação do prontuário atual — **autorizado**;
+3. R5 avançado — autoria, página separada e refinamentos de consulta — **evolução condicionada**.
 
 ---
 
@@ -91,7 +91,7 @@ A decisão OP-D11 foi encerrada por esta regra.
 
 ## R5-2 — Andamento, transições e reabertura
 
-**Estado:** próximo debate; nenhuma implementação autorizada.
+**Estado:** escopo essencial decidido e autorizado; a lista abaixo é o registro das questões originais.
 
 Questões a decidir:
 
@@ -104,11 +104,11 @@ Questões a decidir:
 - próxima providência exigida na reabertura;
 - preservação da posição, filtros e conteúdo digitado.
 
-Decisão pendente principal: **OP-D07**.
+Situação posterior: **OP-D07 aprovada** por GOV-013 e pelo R5 Essencial.
 
 ## R5-3 — Prontuário canônico
 
-**Estado:** não iniciado.
+**Estado:** atendido para o produto inicial pelo drawer e pelas rotas atuais; página separada adiada.
 
 Questões a decidir:
 
@@ -120,11 +120,11 @@ Questões a decidir:
 - comportamento das rotas `/demandas/:id` e `/minhas-demandas/:id`;
 - carregamento independente da lista e dependências mínimas de consulta.
 
-Decisão pendente principal: **OP-D08**.
+Situação posterior: **OP-D08 aprovada com simplificação**; drawer e rotas atuais são o prontuário inicial.
 
 ## R5-4 — Autoria legível e contexto dos eventos
 
-**Estado:** não iniciado.
+**Estado:** evolução condicionada; nenhuma mudança autorizada.
 
 Questões a decidir:
 
@@ -135,11 +135,11 @@ Questões a decidir:
 - limites de qualquer backfill;
 - distinção visual entre atividade humana, migração e registro técnico.
 
-Decisões pendentes: **OP-D09** e **OP-D10**.
+Situação posterior: **OP-D09 e OP-D10 adiadas** como evolução condicionada, sem backfill ou inferência.
 
 ## R5-5 — Busca histórica, links e retorno
 
-**Estado:** não iniciado.
+**Estado:** capacidade básica materializada; refinamentos avançados adiados.
 
 Questões a decidir:
 
@@ -150,7 +150,7 @@ Questões a decidir:
 - tratamento do campo `link_origem`;
 - dependências de paginação e consulta remota.
 
-Decisões pendentes: **OP-D12** e **OP-D19**.
+Situação posterior: **OP-D12 adiada** e capacidade básica de **OP-D19 já materializada** pelas rotas profundas.
 
 ## Regras já protegidas
 

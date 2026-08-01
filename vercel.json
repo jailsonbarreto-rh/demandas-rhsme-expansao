@@ -22,6 +22,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/redefinir-senha",
+      "destination": "/index.html"
+    },
+    {
       "source": "/admin",
       "destination": "/index.html"
     },

@@ -18,6 +18,17 @@ function validateCredentials(email: string, password: string): string {
   return normalizedEmail;
 }
 
+function validateStrongPassword(password: string): void {
+  if (
+    password.length < 8
+    || !/[A-Z]/.test(password)
+    || !/[a-z]/.test(password)
+    || !/[0-9]/.test(password)
+  ) {
+    throw new InvalidCredentialsError('A nova senha não atende aos requisitos de segurança.');
+  }
+}
+
 function toLocalUser(email: string): AppUser {
   const perfil: PerfilUsuario = {
     id: `local:${email}`,
@@ -46,6 +57,14 @@ export class LocalAuthService implements AuthService {
 
   async requestAccess(email: string, password: string): Promise<void> {
     validateCredentials(email, password);
+  }
+
+  async requestPasswordReset(email: string, _redirectTo: string): Promise<void> {
+    validateCredentials(email, 'senha-local-segura');
+  }
+
+  async completePasswordReset(password: string): Promise<void> {
+    validateStrongPassword(password);
   }
 
   async signOut(): Promise<void> {

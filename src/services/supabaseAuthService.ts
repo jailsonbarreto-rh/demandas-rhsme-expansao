@@ -1,14 +1,48 @@
-import type { SupabaseClient, User } from '@supabase/supabase-js';
+import type { AuthChangeEvent, SupabaseClient, User } from '@supabase/supabase-js';
 import type { AppUser, PerfilUsuario } from '../types';
 import type { AuthService } from './contracts';
 import { AccessPendingError, InvalidCredentialsError } from './errors';
 
-function validateCredentials(email: string, password: string): string {
+function normalizeInstitutionalEmail(email: string): string {
   const normalizedEmail = email.trim().toLowerCase();
-  if (!normalizedEmail.endsWith('@rioeduca.net') || password.length < 8) {
+  if (!normalizedEmail.endsWith('@rioeduca.net')) {
     throw new InvalidCredentialsError();
   }
   return normalizedEmail;
+}
+
+function validateCredentials(email: string, password: string): string {
+  const normalizedEmail = normalizeInstitutionalEmail(email);
+  if (password.length < 8) throw new InvalidCredentialsError();
+  return normalizedEmail;
+}
+
+function validateStrongPassword(password: string): void {
+  if (
+    password.length < 8
+    || !/[A-Z]/.test(password)
+    || !/[a-z]/.test(password)
+    || !/[0-9]/.test(password)
+  ) {
+    throw new InvalidCredentialsError('A nova senha não atende aos requisitos de segurança.');
+  }
+}
+
+function validateRecoveryRedirect(redirectTo: string): string {
+  let url: URL;
+  try {
+    url = new URL(redirectTo);
+  } catch {
+    throw new Error('O endereço de recuperação configurado é inválido.');
+  }
+  const localDevelopment = ['localhost', '127.0.0.1'].includes(url.hostname);
+  const productionOrigin = 'https://demandas-rhsme-expansao.vercel.app';
+  const authorizedOrigin = url.origin === productionOrigin
+    || (localDevelopment && url.protocol === 'http:');
+  if (url.pathname !== '/redefinir-senha' || url.search || url.hash || !authorizedOrigin) {
+    throw new Error('O endereço de recuperação configurado é inválido.');
+  }
+  return url.toString();
 }
 
 export class SupabaseAuthService implements AuthService {
@@ -25,7 +59,7 @@ export class SupabaseAuthService implements AuthService {
     const perfil = data as PerfilUsuario | null;
 
     if (error || !perfil || perfil.status !== 'ativo') {
-      await this.client.auth.signOut();
+      await this.client.auth.signOut({ scope: 'local' });
       throw new AccessPendingError();
     }
 
@@ -65,12 +99,39 @@ export class SupabaseAuthService implements AuthService {
     if (error) throw new InvalidCredentialsError(error.message);
   }
 
-  async signOut(): Promise<void> {
-    await this.client.auth.signOut();
+  async requestPasswordReset(email: string, redirectTo: string): Promise<void> {
+    const normalizedEmail = normalizeInstitutionalEmail(email);
+    const { error } = await this.client.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: validateRecoveryRedirect(redirectTo),
+    });
+    if (error) throw new Error('Não foi possível enviar o link de recuperação agora. Tente novamente.');
   }
 
-  subscribe(onChange: (user: AppUser | null) => void): () => void {
-    const { data } = this.client.auth.onAuthStateChange((_event, session) => {
+  async completePasswordReset(password: string): Promise<void> {
+    validateStrongPassword(password);
+    const { error } = await this.client.auth.updateUser({ password });
+    if (error) throw new Error('Não foi possível redefinir a senha. Solicite um novo link.');
+    const { error: signOutError } = await this.client.auth.signOut({ scope: 'local' });
+    if (signOutError) {
+      throw new Error(
+        'A senha foi alterada, mas não foi possível encerrar a sessão de recuperação. Feche esta aba e entre novamente.',
+      );
+    }
+  }
+
+  async signOut(): Promise<void> {
+    await this.client.auth.signOut({ scope: 'local' });
+  }
+
+  subscribe(
+    onChange: (user: AppUser | null) => void,
+    onPasswordRecovery?: () => void,
+  ): () => void {
+    const { data } = this.client.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        onPasswordRecovery?.();
+        return;
+      }
       void this.toAppUser(session?.user ?? null)
         .then(onChange)
         .catch(() => onChange(null));

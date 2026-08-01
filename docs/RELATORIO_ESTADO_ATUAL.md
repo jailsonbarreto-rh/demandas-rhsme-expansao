@@ -1,5 +1,7 @@
 # Relatório de implementação e estado atual
 
+> **Documento histórico:** este relatório retrata a consolidação de 21 de julho de 2026. Para o estado vigente, use `PRODUCT_CONTEXT.md`, `HANDOFF.md` e `execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`; código, interface publicada e Supabase permanecem como fontes materiais de verdade.
+
 Data de consolidação: **21 de julho de 2026**
 
 ## Resumo executivo

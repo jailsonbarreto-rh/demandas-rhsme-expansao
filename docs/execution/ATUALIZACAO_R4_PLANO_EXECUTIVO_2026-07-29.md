@@ -1,8 +1,10 @@
 # Atualização do Plano Executivo — R4 Prazos e Próxima Providência
 
+> **Documento histórico:** preserva as decisões e evidências do R4. O pacote foi homologado posteriormente; estados de branch e indicações de continuidade retratam apenas 29 de julho de 2026. GOV-013 e R5-E-A01 superam qualquer calendário obrigatório de evolução no R6 ou sequência automática pelo R5-2. Consulte `ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md` e `../HANDOFF.md` para o estado vigente.
+
 **Data:** 29 de julho de 2026  
 **Documento-base:** `Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`  
-**Situação:** atualização vinculante do recorte R4 na branch funcional  
+**Situação atual:** registro histórico de pacote já homologado
 **Efeito:** substitui, para este pacote, recomendações e decisões pendentes incompatíveis do plano-base
 
 ## 1. Escopo aprovado
@@ -136,5 +138,5 @@ Depois da homologação do R4:
 
 1. iniciar debate do R5-2 para expor `Registrar andamento` e corrigir transições deliberadas;
 2. preservar a lista `docs/product/REAVALIACOES_FUTURAS_R4.md`;
-3. reavaliar `Atenção agora` obrigatoriamente no R6;
+3. reavaliar `Atenção agora` somente se o uso comprovar limitação operacional, conforme GOV-013;
 4. incorporar indicadores de providência ao Radar somente após cobertura suficiente.

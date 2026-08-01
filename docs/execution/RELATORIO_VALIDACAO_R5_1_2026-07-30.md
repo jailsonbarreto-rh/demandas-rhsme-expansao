@@ -1,5 +1,7 @@
 # Relatório de Validação — R5-1 Lixeira Administrativa e Auditoria
 
+> **Documento histórico:** registra a validação material do R5-1. As frases finais sobre a próxima atividade e a falta de autorização posterior retratam 30 de julho de 2026 e foram superadas por GOV-013 e R5-E-A01; consulte `ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md` e `../HANDOFF.md`.
+
 **Data:** 30 de julho de 2026  
 **Projeto:** Central de Demandas CTRH  
 **Branch funcional:** `feat/r5-1-admin-trash-audit`  

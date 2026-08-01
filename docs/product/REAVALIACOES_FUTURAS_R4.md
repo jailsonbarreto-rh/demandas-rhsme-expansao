@@ -1,7 +1,7 @@
 # Reavaliações futuras decorrentes do R4
 
 **Criado em:** 29 de julho de 2026  
-**Natureza:** lista de continuidade de produto  
+**Natureza:** observações de evolução condicionada após GOV-013
 **Efeito autorizativo:** nenhum item deste documento autoriza implementação automática
 
 Esta lista preserva questões que devem voltar ao debate após o início do uso real do sistema e a formação de dados com cobertura suficiente.
@@ -31,9 +31,9 @@ Revisar:
 - legibilidade para textos longos;
 - necessidade de ajustes na hierarquia do detalhe.
 
-## FUT-R4-04 — Reformulação do Atenção agora no R6
+## FUT-R4-04 — Possível reformulação do Atenção agora
 
-**Momento obrigatório:** debate e implementação do R6 — Meu Trabalho e motor preventivo.
+**Reavaliar quando:** o uso real demonstrar limitação do componente atual ou necessidade de agenda preventiva adicional.
 
 Reavaliar a substituição do componente atual por agenda priorizada que possa considerar, com regras expressamente aprovadas:
 

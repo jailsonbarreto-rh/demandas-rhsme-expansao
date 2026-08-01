@@ -45,7 +45,7 @@ AUTH-E-D01 autoriza o fluxo mínimo `Esqueci minha senha` → confirmação neut
 
 Em 1º de agosto de 2026, o redirect exato `https://demandas-rhsme-expansao.vercel.app/redefinir-senha` foi adicionado e confirmado no Supabase Auth. A política remota de senha foi alinhada à aplicação: mínimo de oito caracteres, com minúscula, maiúscula e número. A verificação de senhas vazadas permanece indisponível no plano Free e não houve contratação ou mudança de plano.
 
-A evidência pré-release consolidada está em `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`: zero vulnerabilidades, 75 arquivos/353 testes Vitest, cobertura acima dos limites, 36/36 cenários Playwright, build e bundle aprovados, migration remota presente e ACLs dos wrappers confirmadas.
+A evidência pré-release consolidada está em `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`: zero vulnerabilidades, 76 arquivos/354 testes Vitest, cobertura acima dos limites, 36/36 cenários Playwright, build e bundle aprovados, rota direta de recuperação protegida na Vercel, migration remota presente e ACLs dos wrappers confirmadas.
 
 ## R5-1 — regra vigente
 

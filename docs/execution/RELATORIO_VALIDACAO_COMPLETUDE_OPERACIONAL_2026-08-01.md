@@ -29,11 +29,11 @@ O gate foi executado em instalação limpa administrada pelo `npm` 11 e Node 24:
 | compatibilidade de dependências | 3/3 casos aprovados |
 | coerência documental | 9/9 testes e verificador canônico aprovados |
 | lint | aprovado com zero avisos |
-| testes Vitest | 75 arquivos e 353 testes aprovados |
-| cobertura — statements | 79,60% |
-| cobertura — branches | 73,78% |
-| cobertura — functions | 82,29% |
-| cobertura — lines | 82,46% |
+| testes Vitest | 76 arquivos e 354 testes aprovados |
+| cobertura — statements | 79,73% |
+| cobertura — branches | 73,82% |
+| cobertura — functions | 82,54% |
+| cobertura — lines | 82,54% |
 | TypeScript | aprovado |
 | build de produção | 750 módulos transformados |
 | bundle inicial | 194.126 bytes, 60,16% abaixo da linha de base e dentro do limite de 560.330 bytes |
@@ -65,6 +65,7 @@ O chunk de exportação Excel permanece carregado sob demanda. Seu tamanho gera 
 - a senha exige oito caracteres, minúscula, maiúscula e número, com confirmação idêntica;
 - a sessão temporária é encerrada localmente após a alteração;
 - a rota de recuperação não carrega dados operacionais.
+- a abertura direta de `/redefinir-senha` é encaminhada para a SPA pela configuração da Vercel e protegida por teste automatizado.
 
 ## 4. Supabase remoto
 

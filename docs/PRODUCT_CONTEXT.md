@@ -1,7 +1,7 @@
 # Contexto do Produto — Central de Demandas CTRH
 
-**Estado documental:** vigente após o R4 e as decisões R5-1-D01/R5-1-A01.  
-**Atualizado em:** 30 de julho de 2026.
+**Estado documental:** vigente após GOV-013 e a implementação da conclusão funcional inicial autorizada por V1-E-A01; homologação e release em execução.
+**Atualizado em:** 1º de agosto de 2026.
 
 Este documento é a referência operacional para a semântica atual do produto. Decisões expressamente aprovadas estão exclusivamente em `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`; a estratégia geral está em `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`; o roteiro do Trilho A está em `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`; a governança está no Adendo e no Protocolo vigentes indicados por `AGENTS.md`.
 
@@ -15,27 +15,26 @@ O produto não é um sistema genérico de tickets, CRM, Kanban ou uma simples pl
 
 O uso principal ocorre em desktop, com consultas rápidas e verificação de prazos também utilizáveis em celular. Não existe público externo, autoatendimento cidadão ou demanda de escala para milhares de acessos simultâneos.
 
-## Resultado esperado
+## Resultado esperado do produto inicial
 
-Ao final do plano, o sistema oferece:
+O produto inicial é considerado operacionalmente completo quando oferece:
 
-- início personalizado por login e papel;
+- autenticação por login e capacidades coerentes com o papel;
 - carteira da equipe em `/demandas`;
 - carteira “Minhas demandas” em `/minhas-demandas`, baseada exclusivamente no UUID do perfil;
 - separação entre acompanhamento, providência CTRH, espera externa, sobrestamento e encerramento;
 - próxima ação e data de acompanhamento para toda demanda nova ou movimentada que não esteja encerrada;
-- alertas completos, consolidados e preventivos;
+- alertas e sinais temporais suficientes para ordenar o trabalho;
 - prazos classificados como definido, não informado ou não aplicável;
-- fila de saneamento do legado sem inferência automática;
 - andamento separado de mudança de status;
-- histórico com autoria, momento, conteúdo, justificativa e antes/depois;
+- histórico com momento, conteúdo, justificativa, antes/depois e autoria somente quando comprovável;
 - reatribuição rastreada e exclusão lógica auditável;
 - consulta administrativa somente leitura das demandas excluídas, sem restauração no produto;
-- busca avançada com responsável oficial, carteira pessoal e link profundo;
-- sete modelos Excel parametrizados;
-- painel gerencial de estoque, risco, carga e fluxo, acompanhado de cobertura e limitações;
-- preferências e visões salvas por usuário;
-- recuperação de senha, login mais direto, documentação e rollback comprovado.
+- busca em dados atuais e históricos, carteira pessoal e link profundo;
+- exportação Excel com o mesmo recorte da interface;
+- login, documentação e rollback comprovado.
+
+Painéis adicionais, preferências salvas, página completa separada para a demanda, paginação remota, snapshots históricos e demais possibilidades dos planos são evoluções condicionadas. Só entram no caminho de implementação quando resolverem necessidade operacional, risco ou limite de escala comprovado.
 
 Ficam fora do escopo: ranking competitivo, avaliação de desempenho, workflow de múltiplas aprovações, centro complexo de notificações, mecanismo externo de busca, data warehouse, BI separado, microserviços, infraestrutura de mensagens e e-mail recorrente antes de trinta dias de uso dos alertas internos.
 
@@ -150,6 +149,10 @@ Uma demanda antiga sem prazo ou vínculo oficial de responsável continua consul
 
 Um administrador consulta a área `Demandas excluídas`, localiza o registro pelo número ou motivo e verifica os dados preservados, a data, a autoria comprovável e o histórico. O registro permanece somente leitura e não pode ser restaurado pelo produto.
 
+### Um usuário esqueceu a senha
+
+Na tela de acesso, informa o e-mail institucional e recebe uma confirmação neutra. Se a conta existir, o link autorizado abre `/redefinir-senha`; somente a sessão marcada pelo evento `PASSWORD_RECOVERY` permite definir e confirmar uma nova senha forte. Link ausente, inválido ou expirado não abre o formulário e orienta uma nova solicitação.
+
 ### Uma regra foi alterada
 
 A decisão é registrada, implementada e sincronizada nos documentos vigentes no mesmo trabalho. Um plano ou relatório histórico permanece preservado, mas não volta a ser usado como regra atual.
@@ -166,6 +169,7 @@ A decisão é registrada, implementada e sincronizada nos documentos vigentes no
 - **Continuidade institucional:** autoria e histórico permitem que outra pessoa compreenda a demanda.
 - **Familiaridade:** usar Processo, Responsável, Prazo interno, Prazo final, Próxima ação, Andamento, Tramitado e Encerrado.
 - **Coerência documental:** mudança de regra só está concluída quando código, banco e documentos vigentes concordam.
+- **Completude antes de exaustão:** preservar o que já atende, completar apenas lacunas dos trabalhos centrais e manter possibilidades adicionais como evolução condicionada.
 
 ## Decisões funcionais fixadas
 
@@ -207,6 +211,18 @@ Toda demanda não encerrada criada ou movimentada após a ativação exige descr
 
 Consulte `docs/adr/ADR-002-prazos-proxima-acao.md`.
 
+### Andamento e transições
+
+`Registrar andamento` descreve trabalho realizado, atualiza a próxima providência e sua data e preserva o status. A ação aparece para administrador ou editor ativo somente em demanda não encerrada. Alteração de status sempre escolhe um destino diferente do atual.
+
+Uma demanda encerrada é reaberta pela mesma transição auditável de status, com comentário, próxima providência e data. Data passada também exige justificativa temporal. Não existe estado, tabela ou evento separado de reabertura.
+
+### Recuperação de senha
+
+O login oferece `Esqueci minha senha` sem consultar previamente se existe conta. Para e-mail institucional válido, a aplicação solicita ao Supabase um link com retorno para `/redefinir-senha` e mostra sempre a mesma confirmação neutra. A nova senha exige no mínimo oito caracteres, maiúscula, minúscula e número, além de confirmação idêntica.
+
+Somente o evento `PASSWORD_RECOVERY` habilita a troca. A rota acessada manualmente ou por link inválido/expirado permanece bloqueada. Após a alteração, a sessão temporária é encerrada e o usuário retorna ao login. Senha, token e existência da conta nunca são gravados em log, armazenamento local, tabela ou histórico operacional.
+
 ### Responsabilidade
 
 `responsavel_id` é a identidade operacional oficial. O texto `responsavel` é snapshot legível e compatibilidade legada.
@@ -231,7 +247,7 @@ As decisões R3-D01 a R3-D09 prevalecem sobre descrições anteriores de respons
 
 Os tipos históricos reconhecidos são `criacao`, `andamento`, `mudanca_status`, `edicao`, `reatribuicao`, `alteracao_prazo`, `exclusao` e `restauracao`. O tipo `restauracao` permanece reconhecido apenas para leitura de eventual histórico anterior; o produto vigente não oferece restauração.
 
-Todo evento mostra data e hora, autor ou `Autor não identificado`, setor, tipo, status resultante e descrição. Em operação autenticada, o ator é sempre o `auth.uid()` que executou a ação, ainda que outra pessoa seja a responsável pela demanda. A demanda registra esse último ator em `updated_by`, o evento registra em `created_by` e `responsavel_id` permanece inalterado, salvo reatribuição explícita. Autoria legada não é inventada.
+O prontuário atual mostra data e hora, setor, tipo, status resultante, descrição e alterações antes/depois. Em operação autenticada, o ator é o `auth.uid()` que executou a ação, ainda que outra pessoa seja a responsável pela demanda. A demanda registra esse último ator em `updated_by`, o evento registra em `created_by` e `responsavel_id` permanece inalterado, salvo reatribuição explícita. A apresentação nominal completa da autoria não é requisito do lançamento: lacunas permanecem como `Autor não identificado`, sem snapshot ou backfill inventado.
 
 Exclusão é lógica: preserva demanda e histórico, exige motivo e registra autoria e momento. Somente administrador ativo pode excluir ou consultar registros excluídos. Editor e leitor não veem a ação e não recebem os dados pela API. A área administrativa apresenta a lixeira somente para consulta e auditoria. Não existe exclusão física nem restauração disponível aos usuários. `Recuperável` significa apenas que o proprietário do banco pode realizar recuperação técnica excepcional fora do produto. Consulte `docs/adr/ADR-003-historico-e-exclusao-logica.md`.
 
@@ -310,12 +326,12 @@ Início padrão de consulta. Pode pesquisar, abrir detalhes, copiar link, usar f
 | `/` | Radar de Governança e leituras atuais da carteira; futuramente início personalizado | autenticados | vigente |
 | `/demandas` | carteira completa da equipe, busca e filtros | autenticados | vigente |
 | `/minhas-demandas` | carteira pessoal por UUID, busca e filtros | autenticados | vigente |
-| `/demandas/:id` | detalhe/prontuário preservando a carteira da equipe | autenticados | vigente; prontuário ainda evoluirá |
-| `/minhas-demandas/:id` | detalhe/prontuário preservando a carteira pessoal | autenticados | vigente; prontuário ainda evoluirá |
+| `/demandas/:id` | prontuário operacional preservando a carteira da equipe | autenticados | vigente e suficiente para o produto inicial |
+| `/minhas-demandas/:id` | prontuário operacional preservando a carteira pessoal | autenticados | vigente e suficiente para o produto inicial |
 | `/relatorios` | Central de Relatórios | autenticados, por papel | futura |
 | `/admin` | perfis, parâmetros e auditoria somente leitura das demandas excluídas | administrador | vigente |
 | `/admin/qualidade-dados` | saneamento | administrador | futura |
-| `/redefinir-senha` | nova senha | sessão de recuperação | futura |
+| `/redefinir-senha` | nova senha | sessão de recuperação | implementada por V1-E-A01; homologação e release em execução |
 
 A lixeira integra a área `/admin`; não existe rota operacional de restauração.
 
@@ -392,16 +408,17 @@ Esses indicadores avaliam o produto, nunca pessoas.
 
 ## Sequência funcional vigente
 
-A decisão GOV-012 retira a chegada e o formato dos dados futuros do caminho crítico. R4 está concluído. O R5 segue em pequenos blocos, alinhando debate e execução:
+GOV-013 substitui a obrigação de percorrer sequencialmente todo o roteiro por uma avaliação de completude operacional. R4 e R5-1 estão concluídos. V1-E-A01 autorizou e a branch funcional implementou somente a **conclusão funcional inicial**:
 
-1. R5-1 — lixeira administrativa e auditoria, único pacote atualmente autorizado;
-2. R5-2 — andamento, transições e reabertura, somente após conclusão do R5-1 e novo debate;
-3. R5-3 — prontuário canônico;
-4. R5-4 — autoria e contexto dos eventos;
-5. R5-5 — busca histórica, links e retorno;
-6. R2 remanescente e otimizações de escala quando forem dependência concreta ou necessárias antes da entrega final.
+1. expor o andamento simples já suportado pelo banco;
+2. corrigir as opções de transição e apresentar a reabertura de forma contextual;
+3. consolidar o drawer e as rotas profundas atuais como prontuário do produto inicial;
+4. preservar a busca histórica, os links profundos e o retorno com filtros já existentes.
+5. completar a recuperação segura de senha sem criar estrutura de banco ou revelar a existência da conta.
 
-Nenhuma etapa posterior é autorizada pela conclusão da anterior. Cada pacote exige análise do funcionamento atual, decisão expressa, registro, implementação e homologação próprios. Nenhum ajuste autoriza inventar, corrigir ou reclassificar dados atuais ou futuros.
+Os ciclos 6 a 13 do Plano Mestre histórico também não formam uma fila: prazos, carteira pessoal, Excel, Radar e preservação de filtros estão materializados em graus suficientes; alertas avançados, novos relatórios, painéis e preferências ficam condicionados. R5 avançado, R1 residual, R2 e extensões dos pacotes vigentes tampouco abrem sequência automática. Segurança, release proporcional, E2 e a homologação final permanecem gates obrigatórios. O Trilho B continua preservado e será decidido com a fonte real do legado.
+
+Nenhuma conclusão autoriza a próxima evolução por inferência. Nenhum ajuste autoriza inventar, corrigir ou reclassificar dados atuais ou futuros. A classificação completa está em `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`.
 
 ## Gate de consciência do produto
 

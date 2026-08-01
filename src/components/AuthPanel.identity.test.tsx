@@ -10,6 +10,7 @@ describe('AuthPanel — identidade única do produto', () => {
         loading={false}
         onSignIn={vi.fn()}
         onRequestAccess={vi.fn()}
+        onRequestPasswordReset={vi.fn()}
       />,
     );
 

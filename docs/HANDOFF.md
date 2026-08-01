@@ -1,8 +1,8 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **30 de julho de 2026 — auditoria transversal de layout publicada e encerrada**
+Atualizado em: **1º de agosto de 2026 — conclusão funcional inicial implementada; homologação e release em execução**
 
-<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
+<!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
 ## Estado material
 
@@ -12,6 +12,8 @@ Atualizado em: **30 de julho de 2026 — auditoria transversal de layout publica
 | R4 | concluído e publicado |
 | R5-1 | concluído, homologado e publicado |
 | Auditoria transversal de layout | concluída, homologada e publicada |
+| R5 Essencial | implementação concluída na branch `feat/r5-essencial-completude-operacional`; gate de homologação em execução |
+| Recuperação de senha | implementação e configuração do Supabase concluídas na mesma branch; gate de homologação em execução |
 | PR funcional da auditoria | #109, merge `8ae2ff95152371ccc6ada2dc4580010b311b79e4` |
 | PR de release | #110, merge `2bc78dca066b0c4d592b4e6c5bc4c4db5290b507` |
 | Production | `dpl_7G72xFXcQUKtYELrGhXha1xi7UPE` — `READY` |
@@ -19,8 +21,31 @@ Atualizado em: **30 de julho de 2026 — auditoria transversal de layout publica
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
 | Integridade conhecida | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
 | Deploy automático | restaurado para `deploymentEnabled: false` no encerramento |
-| Implementação funcional autorizada | **Nenhuma nova implementação funcional autorizada** |
-| Próxima atividade | debate do R5-2 — Andamento, transições e reabertura |
+| Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
+| Próxima atividade | concluir gates, PR, homologação de Preview e publicação controlada da conclusão funcional inicial |
+
+## R5 Essencial — direção e escopo vigente
+
+GOV-013 adota completude operacional em lugar de exaustão documental. Código, Supabase, interface e testes atuais foram confrontados antes da autorização.
+
+O pacote em curso limita-se a:
+
+- expor `Registrar andamento` para administrador/editor em demanda não encerrada;
+- preservar o status no andamento e atualizar próxima providência e data;
+- reutilizar a transição existente para reabrir demanda encerrada;
+- retirar o status atual das opções de destino e usar rótulos contextuais;
+- reconhecer o drawer e as rotas profundas como prontuário operacional inicial;
+- endurecer as duas RPCs anteriores ao R4 como wrappers das regras atuais, sem nova estrutura ou alteração de dados.
+
+Página completa, snapshots, backfill, categorias de evento, paginação remota, refinamentos avançados de retorno e demais extensões não estão autorizados. O modal histórico permanece como atalho compatível, sem evolução concorrente ao drawer.
+
+## Recuperação de senha essencial
+
+AUTH-E-D01 autoriza o fluxo mínimo `Esqueci minha senha` → confirmação neutra → link do Supabase → `/redefinir-senha` → nova senha. Somente o evento `PASSWORD_RECOVERY` habilita a alteração; links ausentes, inválidos ou expirados permanecem sem acesso ao formulário. O pacote não cria estrutura de banco nem consulta a existência da conta.
+
+Em 1º de agosto de 2026, o redirect exato `https://demandas-rhsme-expansao.vercel.app/redefinir-senha` foi adicionado e confirmado no Supabase Auth. A política remota de senha foi alinhada à aplicação: mínimo de oito caracteres, com minúscula, maiúscula e número. A verificação de senhas vazadas permanece indisponível no plano Free e não houve contratação ou mudança de plano.
+
+A evidência pré-release consolidada está em `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`: zero vulnerabilidades, 75 arquivos/353 testes Vitest, cobertura acima dos limites, 36/36 cenários Playwright, build e bundle aprovados, migration remota presente e ACLs dos wrappers confirmadas.
 
 ## R5-1 — regra vigente
 
@@ -132,7 +157,7 @@ O pacote não altera:
 - exportação analítica;
 - qualquer decisão ou código do R5-2.
 
-## Validação da aplicação
+## Auditoria transversal já publicada — validação
 
 ### Gate combinado final
 
@@ -163,7 +188,7 @@ As provas confirmaram preservação dos campos, mensagens ao salvar, qualidade v
 
 Os 22 cenários regressivos existentes também permaneceram aprovados em desktop e mobile, incluindo acessibilidade, navegação, filtros, modais, exportação e console.
 
-## Production
+## Auditoria transversal já publicada — Production
 
 - deployment `dpl_7G72xFXcQUKtYELrGhXha1xi7UPE` em estado `READY`;
 - target `production`;
@@ -175,7 +200,7 @@ Os 22 cenários regressivos existentes também permaneceram aprovados em desktop
 
 ## Supabase remoto
 
-A auditoria transversal não possui migration e não alterou o banco.
+A auditoria transversal já publicada não possui migration e não alterou o banco naquele release.
 
 Permanecem inalterados:
 
@@ -186,11 +211,13 @@ Permanecem inalterados:
 - dados e históricos;
 - permissões de restauração e exclusão definidas no R5-1.
 
+Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_harden_pre_r4_progress_status` já está registrada remotamente. Ela não altera dados: apenas converte os dois contratos anteriores ao R4 em wrappers e deixa `EXECUTE` somente para `authenticated`. A verificação posterior confirmou 379 demandas ativas, zero excluídas, 764 históricos, `search_path` vazio e ausência de execução por `anon` ou `service_role` nesses wrappers.
+
 ## Próxima etapa
 
-A próxima atividade é exclusivamente o debate do **R5-2 — Andamento, transições e reabertura**.
+A implementação da **conclusão funcional inicial**, autorizada por V1-E-A01 e composta pelo R5 Essencial e pela recuperação de senha, está concluída na branch funcional. A próxima atividade é encerrar os gates locais, a PR, a homologação de Preview e a publicação controlada.
 
-Nenhum código do R5-2, R5-3, R5-4 ou R5-5 está autorizado.
+Nenhuma extensão do R5 avançado, R1 residual, R2 ou ciclos posteriores está autorizada por inferência. Segurança, E2, release proporcional e homologação final continuam obrigatórios.
 
 ## Documentação vigente
 
@@ -201,14 +228,16 @@ Nenhum código do R5-2, R5-3, R5-4 ou R5-5 está autorizado.
 5. `docs/PRODUCT_CONTEXT.md`;
 6. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`;
 7. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`;
-8. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`;
-9. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`;
-10. `docs/adr/ADR-003-historico-e-exclusao-logica.md`;
-11. `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`;
-12. `docs/execution/ENCERRAMENTO_R5_1_2026-07-30.md`;
-13. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
-14. este Handoff.
+8. `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
+9. `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
+10. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`, como histórico de sequência;
+11. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`, como pauta reconciliada;
+12. `docs/adr/ADR-003-historico-e-exclusao-logica.md`;
+13. `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`;
+14. `docs/execution/ENCERRAMENTO_R5_1_2026-07-30.md`;
+15. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
+16. este Handoff.
 
 ## Regra de continuidade
 
-O R5 segue em pequenos blocos: discutir, decidir, registrar, implementar, homologar e somente então abrir o próximo pacote. Nenhuma conclusão autoriza etapa posterior por inferência.
+O pacote atual segue a sequência discutir, decidir, registrar, implementar e homologar. Depois dele, nenhuma fila funcional se abre automaticamente: o próximo trabalho será escolhido por valor, risco ou limite comprovado, conforme GOV-013.

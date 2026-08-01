@@ -1,5 +1,7 @@
 # Cycle 4 Auditable Mutations Implementation Plan
 
+> **Status posterior:** HISTÓRICO. O R5-1 retirou restauração do produto e o R4 substituiu os contratos de andamento/status; este plano não autoriza reintroduzi-los.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. The repository explicitly requires the main agent to execute all work without subagents.
 
 **Goal:** Replace generic operational writes with named, transactional and auditable RPCs for creation, editing, progress, status transition, logical deletion and restoration, while preserving the current UI and compatibility until later cycles expose the complete experience.

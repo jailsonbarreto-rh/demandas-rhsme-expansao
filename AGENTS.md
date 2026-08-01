@@ -33,6 +33,8 @@ O `Plano_Remanescente_Execucao_CTRH_v2.1.md`, o `ADENDO_GOVERNANCA_POR_ETAPA_CTR
 - Decisões expressas mais recentes registradas prevalecem sobre planos, especificações ou relatórios anteriores.
 - A próxima atividade autorizada deve ser confirmada em `docs/HANDOFF.md`.
 - Adotar um plano não aprova nenhuma decisão `OP-Dxx` nele descrita.
+- Após GOV-013, buscar completude operacional em vez de exaustão documental: confronte código, Supabase, interface e testes antes de propor trabalho e classifique cada item como materializado, essencial ou evolução condicionada.
+- A presença de uma possibilidade em plano, checklist ou recomendação não basta para incluí-la no lançamento; a função deve resolver um trabalho central, risco ou limite comprovado.
 - Uma nova descoberta interrompe somente o item materialmente afetado; o restante prossegue apenas quando independente, seguro e sem antecipar a decisão pendente.
 
 ## Regras vigentes consolidadas após o R3
@@ -82,6 +84,9 @@ Para cada decisão, apresente:
 
 Classifique cada item como:
 
+- capacidade materializada;
+- lacuna essencial do produto inicial;
+- evolução condicionada a evidência;
 - necessidade técnica;
 - preservação do que já existe;
 - decisão anteriormente confirmada;

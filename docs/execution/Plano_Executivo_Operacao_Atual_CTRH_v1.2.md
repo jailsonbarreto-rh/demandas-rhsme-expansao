@@ -12,6 +12,8 @@
 
 **Arquitetura vigente após GOV-012:** a execução ocorre em pacotes pequenos, publicáveis e reversíveis. Depois da linha de base e do E4, conclui-se somente o A1-Core residual em releases separados; em seguida ocorre o debate itemizado do R4 e, após autorização, a evolução funcional de R4/R5. Somente recortes de R2 que forem dependência técnica direta de função aprovada podem ser antecipados; as demais otimizações de escala ficam depois das funções prioritárias. R1-1 e R1-4 autônomo são adiados; R1-2 integra a fundação do R4-1.
 
+**Controle de mudança vigente após GOV-013 e V1-E-A01:** este plano continua sendo o inventário técnico do Trilho A, mas seus pacotes remanescentes não formam uma fila obrigatória para o lançamento. O estado material deve ser verificado antes de cada proposta. Estão autorizados somente o R5 Essencial e a recuperação de senha descritos em `ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`; R1 residual, R2, R5 avançado, alertas avançados, relatórios adicionais, novos painéis e preferências são evoluções condicionadas. Os ciclos 6 a 13 do Plano Mestre histórico também não definem sequência. Capacidades já materializadas permanecem protegidas; segurança, release proporcional, E2 e a homologação final continuam obrigatórios.
+
 **Stack:** React 19, TypeScript 5.9, Vite 8, React Router 8, TanStack Table 8, Zod 4, Supabase/PostgreSQL, RLS, Realtime, Vitest, Testing Library, Playwright, ExcelJS, GitHub Actions e Vercel.
 
 ---
@@ -325,7 +327,9 @@ A situação autorizativa vem exclusivamente do Registro de Decisões. Recomenda
 | OP-D15 | Aprovada | retirar contratos antigos do cliente e revogar as duas RPCs obsoletas sem grant novo a `service_role` | R1-3 |
 | OP-D17 | Implementada | somente administrador ativo consulta demandas e históricos excluídos | E4 |
 
-### 6.2 Decisões ainda pendentes
+### 6.2 Catálogo original de decisões então pendentes
+
+Esta tabela preserva as questões identificadas na elaboração do plano. Ela não representa o estado autorizativo atual. Decisões e implementações posteriores prevalecem, especialmente GOV-013 e o R5 Essencial.
 
 | ID | Decisão | Recomendação técnica | Pacote dependente |
 |---|---|---|---|
@@ -334,7 +338,7 @@ A situação autorizativa vem exclusivamente do Registro de Decisões. Recomenda
 | OP-D05 | Apresentação da próxima providência | uma coluna/bloco consolidado com ação e data | R4-3 |
 | OP-D06 | Superfície de qualidade | rota administrativa própria `/admin/qualidade` | R4-4 |
 | OP-D07 | Reabertura | transição explícita de `Encerrado` para novo status, com motivo, próxima ação e data | R5-2 |
-| OP-D08 | Superfície canônica do prontuário | página completa em `/demandas/:id` e `/minhas-demandas/:id`; drawer apenas transitório | R5-3 |
+| OP-D08 | Superfície canônica do prontuário | recomendação original superada: página completa e drawer transitório | R5-3 |
 | OP-D09 | Identidade legível do autor | gravar snapshot de nome e setor em novos eventos; backfill somente quando comprovável | R5-4 |
 | OP-D10 | Contexto do evento | adicionar `operacional`, `administrativo`, `migracao`, `legado`, `nao_classificado` | R5-4 |
 | OP-D11 | Restauração | restaurar o registro preservando estado anterior e exigir revisão consciente das lacunas | R5-1 |
@@ -348,6 +352,22 @@ A situação autorizativa vem exclusivamente do Registro de Decisões. Recomenda
 | OP-D21 | Fuso operacional do CTRH | usar `America/Sao_Paulo` para “hoje”, vencimento, agregações, Excel e horários exibidos; prazos continuam `date` de calendário | R2-4, R2-6, R4, R5 |
 | OP-D22 | Próxima providência já vencida no salvamento | aceitar com aviso e confirmação explícita; não alterar automaticamente nem criar `CHECK >= current_date` | R4-1, R4-2 |
 | OP-D23 | Correção de número, tipo e classificação | ação administrativa separada e auditável para número/tipo; classificação permanece na edição normal, sujeita à decisão final | R1-4, R4-2 |
+
+### 6.3 Reclassificação vigente após GOV-013
+
+| Grupo | Estado atual |
+|---|---|
+| OP-D03, OP-D04, OP-D05, OP-D11 e OP-D22 | Tratados ou superados pelas decisões e implementações homologadas de R4 e R5-1 |
+| OP-D07 | Aprovada: reabertura usa a transição de status existente |
+| OP-D08 | Aprovada com simplificação: drawer e rotas profundas são o prontuário inicial |
+| OP-D09 e OP-D10 | Adiadas como evolução condicionada; nenhuma inferência ou backfill |
+| OP-D12 | Adiada; `link_origem` permanece armazenado e não obrigatório |
+| OP-D19 | Capacidade básica já materializada pelas rotas profundas; refinamentos adiados |
+| OP-D21 e OP-D22 | Tratadas pelas regras temporais do R4 e pelo ADR-002 |
+| OP-D01, OP-D06, OP-D13, OP-D14, OP-D16, OP-D20 e OP-D23 | Fora do caminho crítico; reavaliar somente por risco ou necessidade comprovada |
+| OP-D18 e Trilho B | Preservados para decisão quando a fonte real do legado estiver disponível |
+
+As seções detalhadas abaixo continuam úteis como especificações de alternativas. Checklists não marcados e recomendações de arquivos não constituem trabalho obrigatório nem autorização atual.
 
 ---
 
@@ -1248,7 +1268,7 @@ export interface VersionedMutation {
 }
 ```
 
-**Sequência obrigatória:** cada release abaixo usa branch, PR, gate, evidência e rollback próprios. A autorização guarda-chuva do A1-Core não permite juntá-los no mesmo SHA final.
+**Especificação original, hoje condicionada:** se R1-5 voltar ao caminho de implementação por conflito comprovado, cada release usará branch, PR, gate, evidência e rollback próprios. Não há autorização atual. A decisão posterior de R5-1 também impede reintroduzir restauração de produto.
 
 ### Release R1-5A — Banco aditivo
 
@@ -1259,7 +1279,6 @@ export interface VersionedMutation {
   registrar_andamento_sme_demanda_v2
   transicionar_status_sme_demanda_v2
   excluir_sme_demanda_v2
-  restaurar_sme_demanda_v2
   ```
 
 - [ ] Após `SELECT ... FOR UPDATE`, comparar `updated_at`.

@@ -1,5 +1,7 @@
 # R4 — Prazos e Próxima Providência Implementation Plan
 
+> **Nota posterior (01/08/2026):** plano executado e preservado como histórico. GOV-013 retirou a obrigatoriedade de evolução do `Atenção agora` em um ciclo predeterminado.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implementar as regras aprovadas de prazo interno, prazo final e próxima providência em todas as camadas do SITE CTRH, preservando integralmente os dados legados e a organização atual da carteira.
@@ -25,7 +27,7 @@
 - Cartões atuais passam a dizer `Prazo final hoje` e `Prazo final vencido`; sua lógica continua baseada no prazo final.
 - A carteira atual não será reorganizada e o banco não receberá campo genérico de urgência.
 - Faixa de proximidade: sete dias corridos.
-- O bloco `Atenção agora` permanece no R4 e será reavaliado obrigatoriamente no R6.
+- O bloco `Atenção agora` permanece; GOV-013 condiciona qualquer evolução a evidência de limitação operacional.
 - Testes e documentação usam somente dados sintéticos.
 - Nenhuma migration já aplicada será editada; toda mudança de banco é aditiva.
 

@@ -125,7 +125,7 @@ A faixa `Próximos 7 dias` é informação temporal e não transforma automatica
 
 O componente atual `Atenção agora` é preservado no R4. Somente correções técnicas, acessíveis ou de estilo são permitidas neste pacote.
 
-O R4 não cria motor automático que combine prazo interno, prazo final, próxima providência e status. A reformulação do componente é item obrigatório de debate no R6, quando existirem dados operacionais com cobertura suficiente.
+O R4 não cria motor automático que combine prazo interno, prazo final, próxima providência e status. GOV-013 reclassificou a reformulação do componente como evolução condicionada a dados e limitação operacional comprovada, sem calendário obrigatório no R6.
 
 ## R4-A01 — Autorização consolidada
 

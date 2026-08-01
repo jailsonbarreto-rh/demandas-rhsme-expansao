@@ -1,7 +1,7 @@
 # Supabase e operação multiusuário
 
-**Atualizado em:** 29 de julho de 2026  
-**Estado:** vigente após R3, E0, E1, reconciliação histórica E1A e E4.
+**Atualizado em:** 1º de agosto de 2026
+**Estado:** vigente após R4, R5-1 e a implementação da conclusão funcional inicial; homologação e release em execução.
 
 O projeto Supabase da Central de Demandas é o **CTRH PROCESSOS**, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`.
 
@@ -100,12 +100,11 @@ restauracao
 
 O frontend utiliza ou possui contratos para:
 
-- `criar_sme_demanda_v2`;
-- `editar_sme_demanda`;
-- `registrar_andamento_sme_demanda`;
-- `transicionar_status_sme_demanda`;
+- `criar_sme_demanda_r4`;
+- `editar_sme_demanda_r4`;
+- `registrar_andamento_sme_demanda_r4`;
+- `transicionar_status_sme_demanda_r4`;
 - `excluir_sme_demanda`;
-- `restaurar_sme_demanda`;
 - `listar_perfis_minimos`.
 
 As RPCs obsoletas `criar_sme_demanda` e `atualizar_status_sme_demanda` permanecem definidas apenas para rastreabilidade do schema, sem `EXECUTE` para `public`, `anon`, `authenticated` ou `service_role`, conforme migration `20260729180927_r1_retire_legacy_operational_rpcs.sql`. O frontend não expõe tipos, adaptadores nem chamadas para esses contratos.
@@ -117,7 +116,7 @@ As mutações autenticadas obtêm autoria por `auth.uid()`, validam papel no ban
 - usuário ativo consulta demandas ativas e seus históricos;
 - somente administrador ativo consulta demandas logicamente excluídas e seus históricos;
 - administrador e editor executam mutações autorizadas em qualquer demanda ativa, independentemente do responsável cadastrado;
-- somente administrador exclui e restaura;
+- somente administrador exclui; nenhum papel da API executa restauração;
 - leitor não executa mutações;
 - perfil pendente ou inativo não acessa dados operacionais;
 - `anon` não consulta tabelas nem executa RPCs;
@@ -128,17 +127,25 @@ As mutações autenticadas obtêm autoria por `auth.uid()`, validam papel no ban
 
 Na verificação pós-E4 de 29/07/2026 havia 379 demandas, nenhuma logicamente excluída, 378 vínculos oficiais por UUID, uma informação textual legada sem UUID, 764 históricos e 13 perfis ativos. Permaneceram 378 `sme_demandas.updated_by` nulos e 378 `sme_historico.created_by` nulos, sem backfill ou autoria inferida. Essas quantidades não são constantes da aplicação e devem ser consultadas novamente antes de operações materiais.
 
-## 8. Pendências posteriores
+## 8. Conclusão funcional inicial e pendências posteriores
+
+O R5 Essencial reutiliza `registrar_andamento_sme_demanda_r4` e `transicionar_status_sme_demanda_r4`. A auditoria confirmou que andamento preserva o status e que a transição de `Encerrado` para outro status já é aceita com comentário, próxima providência, data e justificativa temporal quando necessária. O pacote não exige nova tabela, coluna, regra RLS ou alteração de dados.
+
+A recuperação de senha usa exclusivamente `auth.resetPasswordForEmail`, o evento `PASSWORD_RECOVERY` e `auth.updateUser`; não exige migration SQL. Em 1º de agosto de 2026, o destino exato `https://demandas-rhsme-expansao.vercel.app/redefinir-senha` foi adicionado e confirmado na configuração de redirects permitidos do Supabase Auth. Fora do desenvolvimento local, o frontend sempre envia esse destino canônico e recusa host externo, HTTP, query string ou fragmento. A interface não consulta a existência da conta e encerra a sessão temporária após a troca.
+
+Na mesma verificação, a política do provedor de e-mail foi alinhada à validação da aplicação: mínimo de oito caracteres e exigência de ao menos uma letra minúscula, uma maiúscula e um dígito. `Prevent use of leaked passwords` permanece desativado porque o projeto está no plano Free e o recurso é restrito ao plano Pro ou superior; não houve alteração de plano. Essa limitação conhecida não reduz as validações fortes aplicadas no cliente e no Supabase Auth.
+
+A mesma auditoria identificou que os nomes anteriores ao R4 ainda possuíam corpos próprios e `EXECUTE` para `authenticated` e `service_role`, permitindo contornar a justificativa de data passada por chamada direta. A migration `20260801044712_r5_essential_harden_pre_r4_progress_status.sql`, já registrada em Production na versão `20260801044712`, os transforma em wrappers das funções R4 e restringe a execução a `authenticated`. Isso preserva compatibilidade sem manter duas implementações das regras.
 
 Permanecem nos pacotes próprios do Plano Executivo:
 
 - E2: retirada de dados reais da árvore corrente, adiada para o pacote final de segurança;
-- A1-Core: R1-0 e R1-3 implementados no PR #99; concorrência R1-5 permanece nos releases aditivos próprios já autorizados;
+- A1-Core: R1-0 e R1-3 implementados no PR #99; concorrência R1-5 não foi entregue e permanece evolução condicionada;
 - R1-1 e R1-4 autônomo: adiados conforme GOV-012;
-- R2: paginação, consulta e histórico sob demanda, antecipado somente quando for dependência direta de função aprovada;
-- R4 e R5: prazos, próxima providência, andamento e prontuário, ainda dependentes de debate e autorização itemizados.
+- R5 avançado: página completa, snapshots, categorias históricas e refinamentos de consulta, todos como evolução condicionada e sem autorização atual;
+- R2 e concorrência otimista completa: evolução condicionada a volume, desempenho ou conflito comprovado.
 
-O E4 está concluído. O A1-Core está autorizado nos limites registrados e não pré-autoriza R4, R5 ou R2.
+E4, A1-Core, R4 e R5-1 estão concluídos. A conclusão funcional inicial de V1-E-A01 foi implementada nos limites registrados e segue pelos gates de homologação e release; sua conclusão não pré-autoriza outro pacote.
 
 ## 9. Vercel
 

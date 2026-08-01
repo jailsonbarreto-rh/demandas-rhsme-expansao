@@ -1,5 +1,7 @@
 # Encerramento do R5-1 — Lixeira Administrativa e Auditoria
 
+> **Documento histórico:** as evidências e o encerramento do R5-1 permanecem válidos. Somente a indicação de continuidade pelo debate do R5-2 foi superada por GOV-013 e R5-E-A01; consulte `ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md` e `../HANDOFF.md`.
+
 **Data:** 30 de julho de 2026  
 **Estado:** concluído em Production  
 **Próxima atividade:** debate pré-implementação do R5-2

@@ -1,9 +1,9 @@
 # REGISTRO DE DECISÕES DE PRODUTO — CTRH
 
-<!-- IMPLEMENTATION_AUTHORIZATION: NONE -->
+<!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
 **Status:** vigente  
-**Atualizado em:** 30 de julho de 2026  
+**Atualizado em:** 1º de agosto de 2026
 **Finalidade:** registrar somente decisões expressamente aprovadas pelo responsável pelo produto antes da implementação de cada pacote.
 
 ## 1. Regra de uso
@@ -577,7 +577,7 @@ A organização atual da carteira, do banco e das rotas é preservada. A impleme
 
 A faixa de sete dias informa proximidade e não transforma automaticamente a demanda em urgente.
 
-### R4-D07 — Reavaliações futuras obrigatórias
+### R4-D07 — Reavaliações futuras, reclassificadas por GOV-013
 
 **Data:** 30 de julho de 2026  
 **Classificação:** compromisso de reavaliação, sem autorização automática  
@@ -588,10 +588,10 @@ Devem permanecer registradas para avaliação futura:
 1. representação conjunta de prazo interno, prazo final e próxima providência quando houver cobertura real suficiente;
 2. eventual maior destaque dos filtros operacionais depois do início do uso pelos usuários;
 3. revisão da apresentação da próxima providência em tabela, detalhe e mobile com dados reais;
-4. evolução obrigatória do bloco `Atenção agora` no R6;
+4. possível evolução do bloco `Atenção agora`, condicionada a evidência de limitação do componente atual;
 5. novos indicadores do Radar somente após cobertura e uso consistentes dos novos campos.
 
-Esses itens não autorizam implementação futura sem novo debate e aprovação.
+Esses itens não autorizam implementação futura sem novo debate e aprovação. GOV-013 superou a obrigação de implementá-los em ciclo predeterminado; a lista permanece como referência de observação do uso real.
 
 ### R4-A01 — Autorização consolidada
 
@@ -683,7 +683,97 @@ Está autorizada a implementação integral e isolada do R5-1 em todas as camada
 
 A autorização não abrange andamento, reabertura, prontuário, autoria futura, busca histórica, links, exclusão física ou qualquer outro pacote do R5.
 
-## 10. Modelo de registro de decisão do ciclo
+## 10. Direção de completude operacional e conclusão funcional inicial
+
+### GOV-013 — Completude operacional em lugar de exaustão documental
+
+**Data:** 1º de agosto de 2026
+**Classificação:** governança de produto e priorização transversal
+**Decisão:** APROVADA.
+
+Os planos permanecem como inventário de possibilidades, riscos e dependências, mas não como lista obrigatória de funcionalidades do lançamento. Toda nova implementação deve confrontar primeiro código, Supabase, interface e testes atuais e ser classificada como `materializada`, `essencial` ou `evolução condicionada`.
+
+O caminho crítico do produto inicial limita-se às capacidades necessárias para localizar demandas, organizar a carteira por prazos e próxima providência e compreender ou registrar status, andamento, anotações e mudanças principais. Integridade, segurança, preservação informacional, acessibilidade, correções de defeito e compatibilidade com o legado continuam obrigatórias.
+
+### R5-E-D01 — Andamento simples exposto na interface
+
+**Data:** 1º de agosto de 2026
+**Classificação:** fluxo operacional
+**Decisão:** APROVADA.
+
+Administrador ou editor ativo pode registrar andamento em demanda não encerrada sem alterar seu status. O formulário usa o contrato já existente e exige comentário do trabalho realizado, próxima providência e data; data passada exige justificativa. Leitor não recebe a ação. Demandas encerradas devem ser reabertas antes de novo andamento.
+
+### OP-D07 — Reabertura como transição explícita existente
+
+**Data:** 1º de agosto de 2026
+**Classificação:** transição de status e auditabilidade
+**Decisão:** APROVADA.
+
+Reabrir significa transicionar explicitamente uma demanda `Encerrado` para qualquer outro status oficial usando a mesma RPC auditável de status. A interface não oferece o status atual como destino, usa rótulo contextual de reabertura e exige comentário, próxima providência e data. Se a data estiver no passado, permanece obrigatória a justificativa temporal adicional prevista no R4; o comentário comum não a substitui. Não haverá tabela, estado intermediário, RPC ou máquina de estados adicional.
+
+### OP-D08 — Drawer como prontuário operacional do produto inicial
+
+**Data:** 1º de agosto de 2026
+**Classificação:** superfície canônica e simplificação
+**Decisão:** APROVADA.
+
+O `DemandDetailDrawer`, aberto pelas rotas `/demandas/:id` e `/minhas-demandas/:id`, é o prontuário operacional canônico do produto inicial. Ele preserva identificação, responsabilidade, prazos, próxima providência, situação e histórico e passa a oferecer as ações essenciais. O modal histórico existente pode permanecer como atalho de leitura compatível, mas não recebe evolução concorrente. Uma página completa separada e a remoção desse atalho ficam condicionadas a limitação ou redundância comprovada no uso.
+
+### R5-E-D02 — Capacidades atuais de busca, link e retorno suficientes para o lançamento
+
+**Data:** 1º de agosto de 2026
+**Classificação:** reconhecimento de capacidade materializada
+**Decisão:** APROVADA.
+
+A busca em campos atuais e históricos, a explicação da correspondência, as rotas profundas e a preservação de carteira e filtros atendem ao produto inicial. Cópia dedicada de link, retorno exato de scroll, foco ou página, paginação remota, consulta individual com cursor e especialização de `link_origem` ficam como evolução condicionada.
+
+OP-D09 e OP-D10 permanecem adiadas: não serão criados snapshots de autoria, taxonomia de contexto ou backfill sem evidência e decisão específica. OP-D12 permanece adiada, mantendo `link_origem` armazenado e não obrigatório enquanto não houver fonte institucional definida. OP-D19 não exige implementação adicional no lançamento porque as rotas internas compartilháveis já existem; refinamentos de cópia ou contexto ficam condicionados a uso comprovado.
+
+### R5-E-A01 — Autorização consolidada do R5 Essencial
+
+**Data:** 1º de agosto de 2026
+**Classificação:** autorização de implementação
+**Decisão:** APROVADA.
+
+Está autorizada a menor implementação completa para:
+
+1. expor `Registrar andamento` na tabela e no prontuário atual, respeitando papel e estado da demanda;
+2. conectar o formulário ao contrato `registerProgress` já existente;
+3. remover o status atual das opções de transição e apresentar reabertura contextual;
+4. reconhecer e ajustar o drawer atual como prontuário inicial, sem criar nova página;
+5. transformar as duas RPCs anteriores ao R4 em wrappers das regras atuais e retirar `EXECUTE` de `service_role`, sem alterar dados;
+6. criar testes comportamentais, atualizar a documentação vigente e homologar sem nova tabela, coluna ou backfill.
+
+Ficam fora desta autorização R1 residual, R2, página completa, snapshots ou categorias históricas, backfill, restauração, novas permissões, refinamentos avançados de navegação, extensões funcionais de R6 a R11 e qualquer mudança no Trilho B. A recuperação de senha autorizada separadamente por AUTH-E-D01 não amplia esses limites. Segurança, release e a homologação final do R12 continuam gates obrigatórios. A classificação transversal e os detalhes estão em `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`.
+
+### AUTH-E-D01 — Recuperação de senha como complemento operacional essencial
+
+**Data:** 1º de agosto de 2026
+**Classificação:** acesso e continuidade operacional
+**Decisão:** APROVADA.
+
+A autenticação, o primeiro acesso, a aprovação administrativa e os papéis atuais atendem ao produto inicial. A ausência de recuperação de senha, porém, cria dependência técnica previsível e integra o caminho crítico.
+
+O login deve oferecer `Esqueci minha senha`. Para e-mail institucional válido, a solicitação usa `resetPasswordForEmail` e apresenta sempre a mesma confirmação neutra, sem revelar se existe conta. O destino é `/redefinir-senha`, e a alteração somente é permitida após o Supabase emitir `PASSWORD_RECOVERY`. Nova senha e confirmação devem coincidir e obedecer à política forte já usada no primeiro acesso. Link ausente, inválido ou expirado não abre o formulário. Após sucesso, a sessão de recuperação é encerrada e o usuário volta ao login.
+
+Não haverá tabela, RPC, consulta prévia de conta, ação administrativa, senha em log ou persistência local. A lista de redirects autorizados do Supabase deve conter o destino exato de produção antes da publicação.
+
+### V1-E-A01 — Autorização consolidada da conclusão funcional inicial
+
+**Data:** 1º de agosto de 2026
+**Classificação:** autorização de implementação
+**Decisão:** APROVADA.
+
+Fica autorizada, na mesma linha de completude operacional, a implementação e homologação conjunta de:
+
+1. todo o escopo delimitado por R5-E-A01;
+2. todo o fluxo mínimo delimitado por AUTH-E-D01;
+3. rebaseline explícito dos ciclos históricos 6 a 13, sem transformá-los em fila;
+4. testes unitários, integração, desktop e mobile, documentação e verificação remota necessárias aos dois complementos.
+
+Não estão autorizados motor avançado de alertas, Central de Relatórios, novos painéis, visões salvas, métricas temporais imaturas, R1 residual, R2 antecipado ou execução do Trilho B sem fonte real. A ampliação simples de `Atenção agora` permanece recomendável, mas separável e condicionada à evidência de uso.
+
+## 11. Modelo de registro de decisão do ciclo
 
 | Campo | Conteúdo |
 |---|---|
@@ -702,7 +792,7 @@ A autorização não abrange andamento, reabertura, prontuário, autoria futura,
 | Decisão | Aprovada, alterada, adiada, rejeitada ou pendente |
 | Redação final | Regra objetiva autorizada para implementação |
 
-## 11. Controle por ciclo
+## 12. Controle por ciclo
 
 | Ciclo | Debate prévio | Decisões registradas | Implementação autorizada | Estado |
 |---|---|---|---|---|
@@ -714,17 +804,19 @@ A autorização não abrange andamento, reabertura, prontuário, autoria futura,
 | UX-RADAR-001 | Concluído | UX-RADAR-001 | Concluída | PR #88, publicação #89 e bloqueio #90 |
 | UX-RADAR-002 | Concluído | UX-RADAR-002 | Concluída | PR #91, publicação #92 e bloqueio #93 |
 | E4 | Concluído | OP-D17, E4-D01, E4-A01 e E4-C01 | Concluída | PR #96 integrado; migration `20260729133230` verificada em Production |
-| A1-Core | Concluído | GOV-012, OP-D15, OP-D01 e A1-CORE-A01 | Concluída | Núcleo residual concluído antes do R4 |
+| A1-Core | Parcial conforme GOV-012 | GOV-012, OP-D15 e A1-CORE-A01 | Concluída para R1-0/R1-3 | R1-5 não foi entregue e permanece evolução condicionada |
 | R1 residual fora do Core | Parcial | GOV-012 | Não no momento | R1-1 e R1-4 adiados; R1-2 incorporado ao R4-1 |
-| R2 | Não iniciado | Não | Não | Futuro |
+| R2 | Reclassificado | GOV-013 | Não no momento | Evolução condicionada a volume ou desempenho comprovado |
 | R3 | Concluído | R3-D01 a R3-D10 | Concluída | Implementado e preservado |
 | R4 | Concluído | R4-D01 a R4-D07, R4-A01 e R4-C01 | Concluída | Banco homologado; frontend no PR #103 |
-| R5-1 | Concluído o debate | R5-1-D01 e R5-1-A01 | Sim, somente R5-1 | Em implementação e homologação |
-| R5-2 a R5-5 | Não iniciados | Não | Não | Aguardar conclusão do R5-1 e novo debate |
-| R6 | Não iniciado | Não | Não | Reavaliação de `Atenção agora` registrada, sem autorização automática |
-| R7 | Não iniciado | Não | Não | Futuro |
-| R8 | Não iniciado | Não | Não | Futuro |
-| R9 | Não iniciado | Não | Não | Futuro |
-| R10 | Não iniciado | Não | Não | Futuro |
-| R11 | Não iniciado | Não | Não | Futuro |
-| R12 | Não iniciado | Não | Não | Futuro |
+| R5-1 | Concluído | R5-1-D01 e R5-1-A01 | Concluída | Publicado em Production |
+| R5 Essencial | Concluído o debate | GOV-013, R5-E-D01, OP-D07, OP-D08, R5-E-D02 e R5-E-A01 | Sim, somente o escopo essencial | Implementado na branch funcional; homologação e release em execução |
+| Conclusão funcional inicial | Concluído o debate | AUTH-E-D01 e V1-E-A01 | Sim, R5 Essencial e recuperação de senha | Implementada na branch funcional e configurada no Supabase; homologação e release em execução |
+| R5 avançado | Reclassificado | GOV-013 | Não | Evolução condicionada; sem continuidade automática |
+| R6 | Parcialmente materializado | GOV-013 | Não para extensões | Radar, carteiras e alertas atuais preservados; motor adicional condicionado a evidência |
+| R7 | Parcialmente materializado | GOV-013 | Não para extensões | Exportação Excel vigente; Central adicional condicionada a necessidade |
+| R8 | Parcialmente materializado | GOV-013 | Não para extensões | leituras gerenciais atuais preservadas; painéis adicionais condicionados |
+| R9 | Parcialmente materializado | GOV-013 | Não para extensões | filtros na URL e buscas recentes preservados; visões salvas condicionadas |
+| R10 | Parcialmente materializado | GOV-013 e AUTH-E-D01 | Sim, somente recuperação de senha | autenticação e controle de acesso vigentes; recuperação implementada como complemento essencial; demais extensões condicionadas |
+| R11 | Parcialmente materializado | GOV-013 | Não para extensões | controles de release vigentes; observabilidade proporcional e correções continuam obrigatórias |
+| R12 | Gate final | GOV-013 | Obrigatório na entrega | contrato, segurança e homologação final não são backlog opcional |

@@ -19,6 +19,7 @@ import { DeleteDemandaDialog } from './DeleteDemandaDialog';
 interface DemandasTableProps {
   demandas: Demanda[];
   onOpenEditar: (demanda: Demanda) => void;
+  onOpenProgress: (demanda: Demanda) => void;
   onOpenStatus: (demanda: Demanda) => void;
   onOpenHistorico: (demanda: Demanda) => void;
   onExcluir: (id: number, input: DeleteDemandaInput) => void | Promise<void>;
@@ -104,6 +105,7 @@ function SearchMatchContext({ match, query }: { match?: DemandSearchMatch; query
 export const DemandasTable: React.FC<DemandasTableProps> = ({
   demandas,
   onOpenEditar,
+  onOpenProgress,
   onOpenStatus,
   onOpenHistorico,
   onExcluir,
@@ -287,9 +289,14 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content className="dropdown-menu radix-dropdown-content" sideOffset={6} align="end">
+                  {canEdit && !isClosed(demanda) && (
+                    <DropdownMenu.Item className="dropdown-item" onSelect={() => onOpenProgress(demanda)}>
+                      <i className="fa-solid fa-list-check" aria-hidden="true" /><span>Registrar andamento</span>
+                    </DropdownMenu.Item>
+                  )}
                   {canEdit && (
                     <DropdownMenu.Item className="dropdown-item" onSelect={() => onOpenStatus(demanda)}>
-                      <i className="fa-solid fa-rotate-left" aria-hidden="true" /><span>Alterar status</span>
+                      <i className="fa-solid fa-rotate-left" aria-hidden="true" /><span>{isClosed(demanda) ? 'Reabrir demanda' : 'Alterar status'}</span>
                     </DropdownMenu.Item>
                   )}
                   <DropdownMenu.Item className="dropdown-item" onSelect={() => onOpenHistorico(demanda)}>
@@ -311,7 +318,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
       },
       size: 100,
     }),
-  ], [canDelete, canEdit, columnHelper, onOpenEditar, onOpenHistorico, onOpenStatus, searchMatches, searchQuery]);
+  ], [canDelete, canEdit, columnHelper, onOpenEditar, onOpenHistorico, onOpenProgress, onOpenStatus, searchMatches, searchQuery]);
 
   const table = useReactTable({
     data: demandas,

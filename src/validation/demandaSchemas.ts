@@ -218,7 +218,7 @@ export function createEditarDemandaSchema(demanda: Demanda) {
 }
 
 export const statusDemandaSchema = z.object({
-  status: z.enum(statusValues),
+  status: z.enum(statusValues, { error: 'Selecione o novo status da demanda.' }),
   comentario: z.string().trim().min(1, 'Registre um comentário para justificar a alteração.'),
   proximaAcao: z.string().trim(),
   proximaAcaoEm: optionalDate,

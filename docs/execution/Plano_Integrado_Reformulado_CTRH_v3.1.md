@@ -17,6 +17,8 @@
 
 > **Controle de mudança vigente — GOV-012 (29/07/2026):** a execução atual não depende da chegada do legado futuro. O caminho crítico passa por A1-Core residual, R4 e R5; R2 e otimizações de escala vêm depois das funções prioritárias. R1-1 e R1-4 autônomo ficam adiados, e a ordem dos prazos integra o R4-1. Esta decisão registrada prevalece sobre a sequência recomendada originalmente nesta minuta.
 
+> **Controle de mudança vigente — GOV-013 (01/08/2026):** o produto inicial busca completude operacional, não a implementação exaustiva de todas as possibilidades deste plano. Código, Supabase, interface e testes atuais devem ser confrontados antes de classificar qualquer lacuna. R5 limita-se ao pacote Essencial autorizado; R1 residual, R2, R5 avançado e extensões de R6 a R11 tornam-se evoluções condicionadas a evidência de uso, risco ou escala. Capacidades já materializadas são preservadas; segurança, release proporcional, E2 e a homologação final do R12 continuam obrigatórios. O Trilho B permanece preservado para decisão com a fonte real do legado. A classificação completa está em `ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md` e prevalece sobre sequências ou gates mais amplos descritos originalmente nesta minuta.
+
 ---
 
 # 1. FINALIDADE E CORREÇÃO DE EIXO

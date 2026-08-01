@@ -14,7 +14,7 @@ describe('compatibilidade aditiva das RPCs R4', () => {
     expect(migration.match(/select public\.criar_sme_demanda_r4\(/g)).toHaveLength(1);
     expect(migration.match(/select public\.registrar_andamento_sme_demanda_r4\(/g)).toHaveLength(1);
     expect(migration.match(/select public\.transicionar_status_sme_demanda_r4\(/g)).toHaveLength(1);
-    expect(migration.match(/\n\s*'',\n/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
+    expect(migration.match(/\r?\n\s*'',\r?\n/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
   });
 
   it('mantém grants restritos ao authenticated', () => {

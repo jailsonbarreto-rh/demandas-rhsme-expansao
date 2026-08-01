@@ -1667,6 +1667,112 @@ h1, h2, h3, h4 {
   box-shadow: 0 7px 16px rgba(23, 50, 77, 0.23);
 }
 
+.auth-full-width {
+  width: 100%;
+  padding: 12px;
+  font-weight: 600;
+}
+
+.auth-forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: -15px 0 16px;
+}
+
+.auth-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 7px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  font: inherit;
+  font-size: 0.813rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.auth-link-button:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.auth-back-button {
+  margin: 16px auto 0;
+}
+
+.auth-flow-content {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.auth-flow-heading {
+  margin-bottom: 24px;
+}
+
+.auth-flow-heading h3,
+.auth-flow-heading h4 {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 1.3rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.auth-flow-heading p {
+  margin: 7px 0 0;
+  color: var(--text-muted);
+  font-size: 0.813rem;
+  line-height: 1.55;
+}
+
+.auth-flow-centered {
+  text-align: center;
+}
+
+.auth-flow-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: #e8f1f8;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.auth-flow-icon-error {
+  background: #fce8e8;
+  color: #b42318;
+}
+
+.auth-feedback {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid #bdd8c9;
+  border-radius: var(--radius-md);
+  background: #f0f8f3;
+  color: #24563a;
+  font-size: 0.813rem;
+  line-height: 1.5;
+}
+
+.auth-feedback i {
+  margin-top: 2px;
+  color: #287a4c;
+  font-size: 1rem;
+}
+
+.auth-feedback p {
+  margin: 0;
+}
+
 .login-mobile-brand {
   display: none; /* Escondido por padrão no desktop */
 }
@@ -1684,6 +1790,10 @@ h1, h2, h3, h4 {
   .modal-close,
   .password-visibility-toggle {
     min-width: 44px;
+    min-height: 44px;
+  }
+
+  .auth-link-button {
     min-height: 44px;
   }
 

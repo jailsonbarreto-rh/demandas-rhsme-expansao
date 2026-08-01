@@ -73,7 +73,7 @@ O dia operacional é calculado em `America/Sao_Paulo`.
 - a faixa de proximidade é de sete dias corridos;
 - a tabela preserva sua organização e acrescenta coluna consolidada de próxima providência;
 - o detalhe apresenta a próxima providência antes dos prazos;
-- o componente `Atenção agora` é preservado no R4 e será obrigatoriamente reavaliado no R6.
+- o componente `Atenção agora` é preservado no R4; a obrigação de reavaliá-lo no R6 foi superada por GOV-013, e nova evolução depende de necessidade operacional comprovada.
 
 ## Consequências
 

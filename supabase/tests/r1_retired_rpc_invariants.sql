@@ -135,4 +135,18 @@ select pg_temp.assert_true(
   'uma RPC auditável moderna perdeu execução durante a retirada do legado'
 );
 
+select pg_temp.assert_true(
+  not has_function_privilege(
+    'service_role',
+    'public.registrar_andamento_sme_demanda(bigint,text,text,date)',
+    'EXECUTE'
+  )
+  and not has_function_privilege(
+    'service_role',
+    'public.transicionar_status_sme_demanda(bigint,text,text,text,date)',
+    'EXECUTE'
+  ),
+  'service_role manteve execução nas RPCs operacionais anteriores ao R4'
+);
+
 select 'A1-Core homologado: RPCs obsoletas inertes e contratos modernos preservados' as resultado;

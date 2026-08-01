@@ -41,6 +41,7 @@ describe('DemandasTable — resultados próximos', () => {
         searchMatches={new Map([[1, match]])}
         searchResultMode="approximate"
         onOpenEditar={vi.fn()}
+        onOpenProgress={vi.fn()}
         onOpenStatus={vi.fn()}
         onOpenHistorico={vi.fn()}
         onExcluir={vi.fn()}

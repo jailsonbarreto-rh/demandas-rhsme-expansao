@@ -41,6 +41,7 @@ describe('DemandasTable — resultado da busca', () => {
         searchQuery="cessao ricardo 2025"
         searchMatches={new Map([[42, match]])}
         onOpenEditar={vi.fn()}
+        onOpenProgress={vi.fn()}
         onOpenStatus={vi.fn()}
         onOpenHistorico={vi.fn()}
         onExcluir={vi.fn()}

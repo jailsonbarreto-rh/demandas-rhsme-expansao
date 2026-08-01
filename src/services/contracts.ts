@@ -31,8 +31,13 @@ export interface AuthService {
   restore(): Promise<AppUser | null>;
   signIn(email: string, password: string): Promise<AppUser>;
   requestAccess(email: string, password: string): Promise<void>;
+  requestPasswordReset(email: string, redirectTo: string): Promise<void>;
+  completePasswordReset(password: string): Promise<void>;
   signOut(): Promise<void>;
-  subscribe(onChange: (user: AppUser | null) => void): () => void;
+  subscribe(
+    onChange: (user: AppUser | null) => void,
+    onPasswordRecovery?: () => void,
+  ): () => void;
 }
 
 export interface ProfilesService {

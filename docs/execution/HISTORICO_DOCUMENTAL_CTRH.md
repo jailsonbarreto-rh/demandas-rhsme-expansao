@@ -1,6 +1,6 @@
 # Histórico documental — Central de Demandas CTRH
 
-**Atualizado em:** 26 de julho de 2026
+**Atualizado em:** 1º de agosto de 2026
 
 Este índice separa documentos vigentes de registros históricos. Ele preserva a memória do projeto sem permitir que regras superadas sejam usadas como instrução atual.
 
@@ -21,6 +21,7 @@ Os marcadores acima são metadados do gate documental. Cada papel deve possuir e
 | Semântica atual do produto | `docs/PRODUCT_CONTEXT.md` |
 | Estratégia geral | `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md` |
 | Roteiro do Trilho A | `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md` |
+| Controle de mudança por completude operacional | `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md` |
 | Estado material e continuidade | `docs/HANDOFF.md` |
 
 Os planos organizam o trabalho possível. Nenhuma recomendação ou decisão `OP-Dxx` é aprovada automaticamente; somente o Registro de Decisões possui essa autoridade.
@@ -51,6 +52,7 @@ Os quatro primeiros arquivos receberam nota inicial de superação no E0. Sua í
 | 23/07/2026 | Plano Remanescente v2.0 e Adendo de suspensão | histórico |
 | 25/07/2026 | Plano Remanescente v2.1, Adendo v2.0.3, Protocolo v1.2 e Política v1.0 | histórico após o E0 |
 | 26/07/2026 | Plano Integrado v3.1, Plano Executivo v1.2, Adendo v2.0.4, Protocolo v1.3 e Política v1.1 | cadeia vigente após merge e homologação do E0 |
+| 01/08/2026 | GOV-013 e atualização de completude operacional | planos preservados como inventário; roteiro remanescente reclassificado por valor e evidência |
 
 ## Recuperação da íntegra anterior
 

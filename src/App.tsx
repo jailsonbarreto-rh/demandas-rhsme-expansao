@@ -8,6 +8,7 @@ import type {
   EditDemandaInput,
   PerfilMinimo,
   PerfilUsuario,
+  ProgressInput,
   StatusTransitionInput,
 } from './types';
 import type { DemandaFormValues, EditarDemandaValues } from './validation/demandaSchemas';
@@ -38,11 +39,13 @@ import { parseDemandFilters, serializeDemandFilters } from './filters/filterUrl'
 const DemandasTable = lazy(() => import('./components/DemandasTable').then((module) => ({ default: module.DemandasTable })));
 const ModalNovo = lazy(() => import('./components/ModalNovo').then((module) => ({ default: module.ModalNovo })));
 const ModalEditar = lazy(() => import('./components/ModalEditar').then((module) => ({ default: module.ModalEditar })));
+const ModalAndamento = lazy(() => import('./components/ModalAndamento').then((module) => ({ default: module.ModalAndamento })));
 const ModalStatus = lazy(() => import('./components/ModalStatus').then((module) => ({ default: module.ModalStatus })));
 const ModalHistorico = lazy(() => import('./components/ModalHistorico').then((module) => ({ default: module.ModalHistorico })));
 const AdminPanel = lazy(() => import('./components/AdminPanel').then((module) => ({ default: module.AdminPanel })));
 const DemandDetailDrawer = lazy(() => import('./components/DemandDetailDrawer').then((module) => ({ default: module.DemandDetailDrawer })));
 const AuthPanel = lazy(() => import('./components/AuthPanel').then((module) => ({ default: module.AuthPanel })));
+const PasswordResetPanel = lazy(() => import('./components/PasswordResetPanel').then((module) => ({ default: module.PasswordResetPanel })));
 
 type ActiveTab = 'visao-geral' | 'demandas' | 'minhas-demandas' | 'admin';
 
@@ -59,6 +62,27 @@ const QUICK_FILTER_QUERY_KEYS: Record<keyof QuickFilters, string> = {
   providenciaHoje: 'providenciaHoje',
   providenciaVencida: 'providenciaVencida',
 };
+
+interface PasswordRecoveryNavigation {
+  hasCallback: boolean;
+  hasError: boolean;
+}
+
+function readPasswordRecoveryNavigation(pathname: string): PasswordRecoveryNavigation {
+  if (pathname !== '/redefinir-senha') return { hasCallback: false, hasError: false };
+  const query = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  return {
+    hasCallback: query.has('code')
+      || query.has('token_hash')
+      || hash.get('type') === 'recovery'
+      || hash.has('access_token'),
+    hasError: query.has('error')
+      || query.has('error_code')
+      || hash.has('error')
+      || hash.has('error_code'),
+  };
+}
 
 function parseQuickFilters(params: URLSearchParams): QuickFilters {
   return Object.fromEntries(
@@ -77,9 +101,18 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isPasswordRecoveryRoute = location.pathname === '/redefinir-senha';
+  const [passwordRecoveryNavigation] = useState(
+    () => readPasswordRecoveryNavigation(location.pathname),
+  );
   const [appServices] = useState(() => services ?? createAppServices(resolveAppConfig(import.meta.env)));
   const session = useAppSession(appServices.auth);
-  const data = useDemandasData(appServices.demandas, session.user, appServices.mode === 'supabase');
+  const data = useDemandasData(
+    appServices.demandas,
+    isPasswordRecoveryRoute ? null : session.user,
+    appServices.mode === 'supabase',
+  );
+  const [passwordRecoveryTimedOut, setPasswordRecoveryTimedOut] = useState(false);
   const userEmail = session.user?.email ?? '';
   const [perfis, setPerfis] = useState<PerfilUsuario[]>([]);
   const [responsaveisDisponiveis, setResponsaveisDisponiveis] = useState<PerfilMinimo[]>([]);
@@ -209,10 +242,27 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
   const [modalNovoAberto, setModalNovoAberto] = useState(false);
   const [demandaSelecionada, setDemandaSelecionada] = useState<Demanda | null>(null);
   const [modalEditarAberto, setModalEditarAberto] = useState(false);
+  const [modalAndamentoAberto, setModalAndamentoAberto] = useState(false);
   const [modalStatusAberto, setModalStatusAberto] = useState(false);
   const [modalHistoricoAberto, setModalHistoricoAberto] = useState(false);
   const [exportandoExcel, setExportandoExcel] = useState(false);
-  const drawerBloqueadoPorModal = modalEditarAberto || modalStatusAberto || modalHistoricoAberto;
+  const drawerBloqueadoPorModal = modalEditarAberto || modalAndamentoAberto || modalStatusAberto || modalHistoricoAberto;
+
+  useEffect(() => {
+    if (
+      !isPasswordRecoveryRoute
+      || !passwordRecoveryNavigation.hasCallback
+      || passwordRecoveryNavigation.hasError
+      || session.passwordRecoveryReady
+    ) return;
+    const timeout = window.setTimeout(() => setPasswordRecoveryTimedOut(true), 8000);
+    return () => window.clearTimeout(timeout);
+  }, [
+    isPasswordRecoveryRoute,
+    passwordRecoveryNavigation.hasCallback,
+    passwordRecoveryNavigation.hasError,
+    session.passwordRecoveryReady,
+  ]);
 
   useEffect(() => {
     if (!isDemandWorkspace || legacyPersonalUrl) return;
@@ -300,12 +350,33 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     setDemandaSelecionada(null);
     setModalNovoAberto(false);
     setModalEditarAberto(false);
+    setModalAndamentoAberto(false);
     setModalStatusAberto(false);
     setModalHistoricoAberto(false);
     setPerfis([]);
     setResponsaveisDisponiveis([]);
     setFiltros({ ...DEFAULT_DEMAND_FILTERS });
     setQuickFilters({ ...DEFAULT_QUICK_FILTERS });
+  };
+
+  const handleRequestPasswordReset = async (email: string) => {
+    const localDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const recoveryOrigin = localDevelopment
+      ? window.location.origin
+      : 'https://demandas-rhsme-expansao.vercel.app';
+    const redirectTo = new URL('/redefinir-senha', recoveryOrigin).toString();
+    await session.requestPasswordReset(email, redirectTo);
+  };
+
+  const handleCompletePasswordReset = async (password: string) => {
+    await session.completePasswordReset(password);
+    toast.success('Senha redefinida com segurança. Entre novamente com a nova senha.');
+    void navigate({ pathname: '/', search: '' }, { replace: true });
+  };
+
+  const handleLeavePasswordRecovery = async () => {
+    await session.signOut();
+    void navigate({ pathname: '/', search: '' }, { replace: true });
   };
 
   const findResponsavel = (responsavelId: string) => responsaveisDisponiveis
@@ -385,6 +456,17 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
       return true;
     } catch (reason) {
       toast.error(reason instanceof Error ? reason.message : 'Não foi possível atualizar o status.');
+      return false;
+    }
+  };
+
+  const handleRegistrarAndamento = async (demandaId: number, input: ProgressInput) => {
+    try {
+      await data.registerProgress(demandaId, input);
+      toast.success('Andamento registrado sem alterar o status.');
+      return true;
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : 'Não foi possível registrar o andamento.');
       return false;
     }
   };
@@ -481,6 +563,27 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
     }
   };
 
+  if (isPasswordRecoveryRoute) {
+    let recoveryState: 'checking' | 'ready' | 'invalid' = 'checking';
+    if (session.passwordRecoveryReady) recoveryState = 'ready';
+    else if (
+      passwordRecoveryNavigation.hasError
+      || (!passwordRecoveryNavigation.hasCallback && !session.loading)
+      || passwordRecoveryTimedOut
+    ) recoveryState = 'invalid';
+
+    return (
+      <Suspense fallback={<AuthSkeleton />}>
+        <PasswordResetPanel
+          state={recoveryState}
+          loading={session.loading}
+          onUpdatePassword={handleCompletePasswordReset}
+          onBackToLogin={() => { void handleLeavePasswordRecovery(); }}
+        />
+      </Suspense>
+    );
+  }
+
   if (!userEmail) {
     return (
       <Suspense fallback={<AuthSkeleton />}>
@@ -489,6 +592,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
           loading={session.loading}
           onSignIn={session.signIn}
           onRequestAccess={session.requestAccess}
+          onRequestPasswordReset={handleRequestPasswordReset}
         />
       </Suspense>
     );
@@ -636,6 +740,10 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   canEdit={canEdit}
                   canDelete={canDelete}
                   onOpenEditar={openDemand}
+                  onOpenProgress={(demanda) => {
+                    setDemandaSelecionada(demanda);
+                    setModalAndamentoAberto(true);
+                  }}
                   onOpenStatus={(demanda) => {
                     setDemandaSelecionada(demanda);
                     setModalStatusAberto(true);
@@ -718,6 +826,27 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
           />
         )}
 
+        {modalAndamentoAberto && demandaSelecionada && (
+          <ModalAndamento
+            demanda={demandaSelecionada}
+            onClose={() => {
+              setModalAndamentoAberto(false);
+              if (!drawerAberto) setDemandaSelecionada(null);
+            }}
+            onRegistrar={async (id, input) => {
+              if (!await handleRegistrarAndamento(id, input)) return;
+              setModalAndamentoAberto(false);
+              if (drawerAberto) {
+                setDemandaSelecionada((previous) => previous ? {
+                  ...previous,
+                  proximaAcao: input.proximaAcao,
+                  proximaAcaoEm: input.proximaAcaoEm,
+                } : null);
+              } else setDemandaSelecionada(null);
+            }}
+          />
+        )}
+
         {modalHistoricoAberto && demandaSelecionada && (
           <ModalHistorico
             demanda={demandaSelecionada}
@@ -740,6 +869,7 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
             setDemandaSelecionada(null);
           }}
           onEdit={() => setModalEditarAberto(true)}
+          onProgress={() => setModalAndamentoAberto(true)}
           onStatus={() => setModalStatusAberto(true)}
         />
       </div>

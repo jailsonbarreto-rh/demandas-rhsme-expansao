@@ -121,3 +121,5 @@ jobs:
           git add src/App.tsx .github/workflows/apply-tanstack-app-integration.yml
           git commit -m "feat: provide TanStack Query and query recovery"
           git push
+
+# trigger integration

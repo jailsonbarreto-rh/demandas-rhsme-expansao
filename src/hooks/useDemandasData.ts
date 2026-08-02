@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
 import type {
   AppUser,
   CreateDemandaInput,
@@ -10,7 +10,11 @@ import type {
 } from '../types';
 import type { AppData, DemandasRepository } from '../services/contracts';
 import { getUserFacingError } from '../domain/userFacingErrors';
-import { createAppQueryClient, demandasQueryKeys } from '../query/queryClient';
+import {
+  createAppQueryClient,
+  DemandasQueryClientContext,
+  demandasQueryKeys,
+} from '../query/queryClient';
 
 const EMPTY_DATA: AppData = { demandas: [], historico: [] };
 const REALTIME_INVALIDATION_DELAY_MS = 100;
@@ -25,20 +29,13 @@ function getRepositoryQueryClient(repository: DemandasRepository) {
   return client;
 }
 
-function useAvailableQueryClient(repository: DemandasRepository) {
-  try {
-    return useQueryClient();
-  } catch {
-    return getRepositoryQueryClient(repository);
-  }
-}
-
 export function useDemandasData(
   repository: DemandasRepository,
   user: AppUser | null,
   enableRealtime: boolean,
 ) {
-  const queryClient = useAvailableQueryClient(repository);
+  const providedQueryClient = useContext(DemandasQueryClientContext);
+  const queryClient = providedQueryClient ?? getRepositoryQueryClient(repository);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const previousUserIdRef = useRef<string | null>(null);
   const realtimeTimerRef = useRef<number | null>(null);

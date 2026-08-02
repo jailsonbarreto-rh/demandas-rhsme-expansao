@@ -13,6 +13,16 @@ async function openAllDemands(page: Page) {
   await expect(page.getByRole('heading', { name: 'Todas as demandas' })).toBeVisible();
 }
 
+async function waitForActionsMenu(page: Page) {
+  const menu = page.locator('.radix-dropdown-content');
+  await expect(menu).toBeVisible();
+  await menu.evaluate(async (element) => {
+    await Promise.all(
+      element.getAnimations().map((animation) => animation.finished.catch(() => undefined)),
+    );
+  });
+}
+
 function demandRow(page: Page, demandNumber: string) {
   return page.getByRole('row').filter({
     has: page.getByRole('button', { name: demandNumber, exact: true }),
@@ -28,6 +38,7 @@ test('registra andamento sem alterar o status e o preserva no prontuario', async
   await openAllDemands(page);
 
   await page.getByRole('button', { name: `Mais ações da demanda ${demandNumber}` }).click();
+  await waitForActionsMenu(page);
   await page.getByRole('menuitem', { name: /^registrar andamento$/i }).click();
 
   await expect(page.getByRole('heading', { name: /^registrar andamento$/i })).toBeVisible();
@@ -60,6 +71,7 @@ test('reabre demanda encerrada e registra a retomada no prontuario', async ({ pa
   await expect.poll(() => new URL(page.url()).searchParams.get('status')).toBe('todos');
 
   await page.getByRole('button', { name: `Mais ações da demanda ${demandNumber}` }).click();
+  await waitForActionsMenu(page);
   await page.getByRole('menuitem', { name: /^reabrir demanda$/i }).click();
 
   await expect(page.getByRole('heading', { name: /^reabrir demanda$/i })).toBeVisible();

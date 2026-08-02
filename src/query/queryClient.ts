@@ -1,4 +1,7 @@
+import { createContext } from 'react';
 import { QueryClient } from '@tanstack/react-query';
+
+export const DemandasQueryClientContext = createContext<QueryClient | null>(null);
 
 export const demandasQueryKeys = {
   root: ['demandas'] as const,

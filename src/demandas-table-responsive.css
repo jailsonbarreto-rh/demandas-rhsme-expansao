@@ -1,0 +1,77 @@
+/* Carteira de demandas: usa o espaço real da tela e preserva acesso às ações. */
+.app-container:has(.demandas-table) {
+  max-width: 1760px;
+  padding-inline: clamp(16px, 2vw, 32px);
+}
+
+.table-scrollbar-top {
+  display: none;
+  width: 100%;
+  height: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 4px;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+.table-scrollbar-spacer {
+  height: 1px;
+}
+
+@media (min-width: 769px) {
+  .app-container:has(.demandas-table) .demandas-table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .app-container:has(.demandas-table) .demandas-table th,
+  .app-container:has(.demandas-table) .demandas-table td {
+    box-sizing: border-box;
+    padding-inline: 10px;
+  }
+
+  .app-container:has(.demandas-table) .demandas-table .column-actions {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    padding-inline: 6px;
+    background: #ffffff;
+    box-shadow: -10px 0 14px -14px rgba(11, 29, 52, 0.75);
+  }
+
+  .app-container:has(.demandas-table) .demandas-table thead .column-actions {
+    z-index: 4;
+    background: #e5e8ed;
+  }
+
+  .app-container:has(.demandas-table) .demandas-table tbody tr:hover .column-actions {
+    background: #f8fafc;
+  }
+
+  .app-container:has(.demandas-table) .demandas-table .column-status .badge {
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.2;
+    text-align: center;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1279px) {
+  .table-scrollbar-top {
+    display: block;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1400px) {
+  .app-container:has(.demandas-table) {
+    max-width: none;
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container:has(.demandas-table) {
+    max-width: 100%;
+  }
+}

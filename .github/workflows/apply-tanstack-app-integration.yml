@@ -1,0 +1,123 @@
+name: Apply TanStack Query App integration
+
+on:
+  push:
+    branches:
+      - feat/rodada-3-tanstack-query
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/rodada-3-tanstack-query
+      - name: Patch App provider and recovery action
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/App.tsx')
+          text = path.read_text()
+
+          text = text.replace(
+              "import { Toaster, toast } from 'sonner';\n",
+              "import { Toaster, toast } from 'sonner';\nimport { QueryClientProvider } from '@tanstack/react-query';\n",
+              1,
+          )
+          text = text.replace(
+              "import { parseDemandFilters, serializeDemandFilters } from './filters/filterUrl';\n",
+              "import { parseDemandFilters, serializeDemandFilters } from './filters/filterUrl';\nimport { createAppQueryClient } from './query/queryClient';\n",
+              1,
+          )
+
+          old_banner = '''        {data.error && (
+          <div style={{ padding: '0 24px', marginTop: '20px' }}>
+            <div className="alert-error-banner">
+              <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
+              <div><strong>Erro de conectividade:</strong> {data.error}</div>
+            </div>
+          </div>
+        )}
+'''
+          new_banner = '''        {data.error && (
+          <div style={{ padding: '0 24px', marginTop: '20px' }}>
+            <div className="alert-error-banner">
+              <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
+              <div><strong>Erro de conectividade:</strong> {data.error}</div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                aria-busy={data.refreshing}
+                onClick={() => { void data.reload().catch(() => undefined); }}
+              >
+                <i className="fa-solid fa-rotate" aria-hidden="true" />
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
+'''
+          if old_banner not in text:
+              raise SystemExit('Error banner block not found')
+          text = text.replace(old_banner, new_banner, 1)
+
+          old_app = '''export const App: React.FC<AppProps> = (props) => {
+  const inRouter = useInRouterContext();
+  const app = inRouter ? <AppContent {...props} /> : <BrowserRouter><AppContent {...props} /></BrowserRouter>;
+  return (
+    <>
+      <ErrorBoundary
+        variant="global"
+        title="Não foi possível carregar o sistema"
+        message="Tente iniciar a aplicação novamente. Caso a falha continue, recarregue a página para restabelecer a sessão."
+        secondaryAction={{
+          label: 'Recarregar página',
+          onClick: () => window.location.reload(),
+        }}
+      >
+        {app}
+      </ErrorBoundary>
+      <Toaster richColors position="top-right" closeButton duration={4200} />
+    </>
+  );
+};
+'''
+          new_app = '''export const App: React.FC<AppProps> = (props) => {
+  const inRouter = useInRouterContext();
+  const [queryClient] = useState(createAppQueryClient);
+  const app = inRouter ? <AppContent {...props} /> : <BrowserRouter><AppContent {...props} /></BrowserRouter>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary
+        variant="global"
+        title="Não foi possível carregar o sistema"
+        message="Tente iniciar a aplicação novamente. Caso a falha continue, recarregue a página para restabelecer a sessão."
+        secondaryAction={{
+          label: 'Recarregar página',
+          onClick: () => window.location.reload(),
+        }}
+      >
+        {app}
+      </ErrorBoundary>
+      <Toaster richColors position="top-right" closeButton duration={4200} />
+    </QueryClientProvider>
+  );
+};
+'''
+          if old_app not in text:
+              raise SystemExit('App export block not found')
+          path.write_text(text.replace(old_app, new_app, 1))
+          PY
+      - name: Commit App integration
+        run: |
+          rm .github/workflows/apply-tanstack-app-integration.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx .github/workflows/apply-tanstack-app-integration.yml
+          git commit -m "feat: provide TanStack Query and query recovery"
+          git push

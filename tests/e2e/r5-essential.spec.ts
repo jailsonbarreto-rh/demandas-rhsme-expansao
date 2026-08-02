@@ -19,6 +19,16 @@ function demandRow(page: Page, demandNumber: string) {
   });
 }
 
+async function selectDemandAction(page: Page, demandNumber: string, actionName: RegExp) {
+  const row = demandRow(page, demandNumber);
+  await expect(row).toBeVisible();
+  await row.getByRole('button', { name: `Mais ações da demanda ${demandNumber}` }).click();
+
+  const action = page.getByRole('menuitem', { name: actionName });
+  await expect(action).toBeVisible();
+  await action.press('Enter');
+}
+
 test('registra andamento sem alterar o status e o preserva no prontuario', async ({ page }) => {
   const demandNumber = 'DEMO-PRO-2026-001';
   const progressComment = 'Contato registrado com a unidade responsavel.';
@@ -27,8 +37,7 @@ test('registra andamento sem alterar o status e o preserva no prontuario', async
   await login(page);
   await openAllDemands(page);
 
-  await page.getByRole('button', { name: `Mais ações da demanda ${demandNumber}` }).click();
-  await page.getByRole('menuitem', { name: /^registrar andamento$/i }).click();
+  await selectDemandAction(page, demandNumber, /^registrar andamento$/i);
 
   await expect(page.getByRole('heading', { name: /^registrar andamento$/i })).toBeVisible();
   await page.getByLabel(/o que foi realizado/i).fill(progressComment);
@@ -57,9 +66,11 @@ test('reabre demanda encerrada e registra a retomada no prontuario', async ({ pa
   await login(page);
   await openAllDemands(page);
   await page.getByLabel(/^status$/i).selectOption('todos');
+  await expect.poll(() => new URL(page.url()).searchParams.get('status')).toBe('todos');
 
-  await page.getByRole('button', { name: `Mais ações da demanda ${demandNumber}` }).click();
-  await page.getByRole('menuitem', { name: /^reabrir demanda$/i }).click();
+  const closedRow = demandRow(page, demandNumber);
+  await expect(closedRow).toContainText('Encerrado');
+  await selectDemandAction(page, demandNumber, /^reabrir demanda$/i);
 
   await expect(page.getByRole('heading', { name: /^reabrir demanda$/i })).toBeVisible();
   const status = page.getByLabel(/novo status da demanda/i);

@@ -6,13 +6,14 @@
 
 .table-scrollbar-top {
   display: none;
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
   height: 16px;
   overflow-x: auto;
   overflow-y: hidden;
   margin-bottom: 4px;
   overscroll-behavior-inline: contain;
-  scrollbar-gutter: stable;
 }
 
 .table-scrollbar-spacer {

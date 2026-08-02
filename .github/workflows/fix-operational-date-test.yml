@@ -1,0 +1,80 @@
+name: Fix operational date test
+
+on:
+  push:
+    branches:
+      - fix/estabilizar-teste-fuso-operacional
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: fix/estabilizar-teste-fuso-operacional
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Reproduce the timezone failure
+        env:
+          TZ: UTC
+        shell: bash
+        run: |
+          set +e
+          npm test -- src/App.supabase.test.tsx -t "atualiza os indicadores e seus filtros conforme a carteira ativa"
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "A falha de calendário não foi reproduzida em UTC."
+            exit 1
+          fi
+
+      - name: Use the operational timezone for both relative dates
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path('src/App.supabase.test.tsx')
+          content = path.read_text(encoding='utf-8')
+          old = '''function formatDate(date: Date) {\n  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;\n}\n\nfunction createContextualDashboardData() {\n  const yesterday = new Date();\n  yesterday.setDate(yesterday.getDate() - 1);\n  const yesterdayString = formatDate(yesterday);\n  const todayString = getTodayString();\n'''
+          new = '''function createContextualDashboardData() {\n  const yesterdayString = getTodayString(new Date(Date.now() - 24 * 60 * 60 * 1000));\n  const todayString = getTodayString();\n'''
+          if content.count(old) != 1:
+              raise SystemExit('Bloco temporal esperado não foi localizado exatamente uma vez.')
+          path.write_text(content.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Verify the focused test in UTC
+        env:
+          TZ: UTC
+        run: npm test -- src/App.supabase.test.tsx -t "atualiza os indicadores e seus filtros conforme a carteira ativa"
+
+      - name: Run complete unit and coverage suite
+        env:
+          TZ: UTC
+        run: npm run test:coverage
+
+      - name: Commit the focused correction and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/fix-operational-date-test.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.supabase.test.tsx .github/workflows/fix-operational-date-test.yml
+          git commit -m "test: estabilizar datas no fuso operacional"
+          git push origin HEAD:fix/estabilizar-teste-fuso-operacional

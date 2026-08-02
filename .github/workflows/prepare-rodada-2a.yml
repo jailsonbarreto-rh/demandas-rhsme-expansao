@@ -42,3 +42,5 @@ jobs:
           git add .github/workflows/dependency-health.yml .github/workflows/supabase-local-migrations.yml .github/workflows/prepare-rodada-2a.yml
           git commit -m "ci: use package.json as Node version source"
           git push
+
+# retrigger preparation

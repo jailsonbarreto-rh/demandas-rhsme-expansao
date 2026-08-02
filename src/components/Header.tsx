@@ -7,6 +7,8 @@ import { BrandLogo } from './BrandLogo';
 
 type ConnectionStatus = 'online' | 'connecting' | 'offline' | 'local';
 
+const QUERY_RETRY_EVENT = 'demandas:retry';
+
 const CONNECTION_STATUS_PRESENTATION: Record<ConnectionStatus, { label: string; icon: string }> = {
   online: { label: 'Sistema online', icon: 'fa-circle-check' },
   connecting: { label: 'Sincronizando…', icon: 'fa-arrows-rotate fa-spin' },
@@ -120,6 +122,18 @@ export const Header: React.FC<HeaderProps> = ({
             <i className={`fa-solid ${connectionPresentation.icon}`} aria-hidden="true" />
             <span>{connectionPresentation.label}</span>
           </div>
+
+          {connectionStatus === 'offline' && (
+            <button
+              type="button"
+              className="btn-logout-link"
+              onClick={() => window.dispatchEvent(new Event(QUERY_RETRY_EVENT))}
+              title="Tentar carregar os dados novamente"
+            >
+              <i className="fa-solid fa-rotate" aria-hidden="true" />
+              <span>Tentar novamente</span>
+            </button>
+          )}
 
           <button
             type="button"

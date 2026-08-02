@@ -13,6 +13,7 @@ import './radar-governanca-accessibility.css';
 import './r4-prazos-providencias.css';
 import './form-field-polish.css';
 import './error-boundary.css';
+import './demandas-table-responsive.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   createColumnHelper,
@@ -118,6 +118,8 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
   const [deleteTarget, setDeleteTarget] = useState<Demanda | null>(null);
+  const topScrollbarRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
   const columnHelper = createColumnHelper<Demanda>();
 
   useEffect(() => {
@@ -160,7 +162,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           </div>
         );
       },
-      size: 220,
+      size: 190,
     }),
     columnHelper.accessor('assunto', {
       header: 'Assunto',
@@ -176,7 +178,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         );
       },
       enableSorting: false,
-      size: 300,
+      size: 250,
     }),
     columnHelper.accessor('responsavel', {
       header: ({ column }) => (
@@ -211,7 +213,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         />
       ),
       sortingFn: (a, b) => sortableDate(a.original.limite1) - sortableDate(b.original.limite1),
-      size: 130,
+      size: 115,
     }),
     columnHelper.accessor('limite2', {
       header: ({ column }) => (
@@ -228,7 +230,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         />
       ),
       sortingFn: (a, b) => sortableDate(a.original.limite2) - sortableDate(b.original.limite2),
-      size: 130,
+      size: 115,
     }),
     columnHelper.accessor('proximaAcaoEm', {
       header: ({ column }) => (
@@ -256,7 +258,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         );
       },
       sortingFn: (a, b) => sortableDate(a.original.proximaAcaoEm) - sortableDate(b.original.proximaAcaoEm),
-      size: 230,
+      size: 195,
     }),
     columnHelper.accessor('status', {
       header: ({ column }) => (
@@ -266,7 +268,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
       ),
       cell: ({ getValue }) => <span className={getStatusBadgeClass(getValue())}><HighlightedText text={getValue()} query={searchQuery} /></span>,
       sortingFn: 'alphanumeric',
-      size: 130,
+      size: 115,
     }),
     columnHelper.display({
       id: 'actions',
@@ -316,7 +318,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           </div>
         );
       },
-      size: 100,
+      size: 96,
     }),
   ], [canDelete, canEdit, columnHelper, onOpenEditar, onOpenHistorico, onOpenProgress, onOpenStatus, searchMatches, searchQuery]);
 
@@ -330,6 +332,16 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  const tableWidth = table.getTotalSize();
+  const synchronizeHorizontalScroll = (
+    source: HTMLDivElement,
+    target: HTMLDivElement | null,
+  ) => {
+    if (target && target.scrollLeft !== source.scrollLeft) {
+      target.scrollLeft = source.scrollLeft;
+    }
+  };
 
   const total = table.getRowCount();
   const start = total === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
@@ -349,13 +361,35 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
             </div>
           </div>
         )}
-        <div className="table-responsive" role="region" aria-label={searchResultMode === 'approximate' ? 'Tabela de resultados próximos' : 'Tabela de demandas'} tabIndex={0}>
-          <table className="demandas-table">
+        <div
+          ref={topScrollbarRef}
+          className="table-scrollbar-top"
+          role="region"
+          aria-label="Rolagem horizontal da tabela"
+          aria-hidden="false"
+          tabIndex={0}
+          onScroll={(event) => synchronizeHorizontalScroll(event.currentTarget, tableScrollRef.current)}
+        >
+          <div className="table-scrollbar-spacer" style={{ width: tableWidth }} />
+        </div>
+        <div
+          ref={tableScrollRef}
+          className="table-responsive"
+          role="region"
+          aria-label={searchResultMode === 'approximate' ? 'Tabela de resultados próximos' : 'Tabela de demandas'}
+          tabIndex={0}
+          onScroll={(event) => synchronizeHorizontalScroll(event.currentTarget, topScrollbarRef.current)}
+        >
+          <table className="demandas-table" style={{ minWidth: tableWidth }}>
             <thead>
               {table.getHeaderGroups().map((group) => (
                 <tr key={group.id}>
                   {group.headers.map((header) => (
-                    <th key={header.id} style={{ width: header.getSize(), textAlign: leftAlignedColumns.includes(header.column.id) ? 'left' : 'center' }}>
+                    <th
+                      key={header.id}
+                      className={`column-${header.column.id}`}
+                      style={{ width: header.getSize(), textAlign: leftAlignedColumns.includes(header.column.id) ? 'left' : 'center' }}
+                    >
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -366,7 +400,14 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
               {table.getRowModel().rows.length > 0 ? table.getRowModel().rows.map((row) => (
                 <tr key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className={['assunto', 'proximaAcaoEm'].includes(cell.column.id) ? 'text-start-cell' : ''} style={{ textAlign: leftAlignedColumns.includes(cell.column.id) ? 'left' : 'center' }}>
+                    <td
+                      key={cell.id}
+                      className={[
+                        ['assunto', 'proximaAcaoEm'].includes(cell.column.id) ? 'text-start-cell' : '',
+                        `column-${cell.column.id}`,
+                      ].filter(Boolean).join(' ')}
+                      style={{ textAlign: leftAlignedColumns.includes(cell.column.id) ? 'left' : 'center' }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

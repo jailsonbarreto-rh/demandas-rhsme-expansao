@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
 async function loginAndOpenDemandas(page: Page) {
   await page.goto('/');
@@ -10,6 +10,13 @@ async function loginAndOpenDemandas(page: Page) {
   await expect(page.getByRole('region', { name: /tabela de demandas/i })).toBeVisible();
 }
 
+async function attachLayoutEvidence(page: Page, testInfo: TestInfo, name: string) {
+  await testInfo.attach(name, {
+    body: await page.screenshot({ fullPage: true }),
+    contentType: 'image/png',
+  });
+}
+
 async function tableGeometry(page: Page) {
   return page.locator('.table-responsive').evaluate((element) => ({
     clientWidth: element.clientWidth,
@@ -19,7 +26,7 @@ async function tableGeometry(page: Page) {
   }));
 }
 
-test('carteira usa o espaço disponível e exibe todas as colunas em monitor amplo', async ({ page }) => {
+test('carteira usa o espaço disponível e exibe todas as colunas em monitor amplo', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await loginAndOpenDemandas(page);
 
@@ -34,9 +41,10 @@ test('carteira usa o espaço disponível e exibe todas as colunas em monitor amp
   const actionsBox = await page.getByRole('columnheader', { name: /^ações$/i }).boundingBox();
   expect(actionsBox).not.toBeNull();
   expect((actionsBox?.x ?? 0) + (actionsBox?.width ?? 0)).toBeLessThanOrEqual(geometry.right + 1);
+  await attachLayoutEvidence(page, testInfo, 'carteira-1920.png');
 });
 
-test('carteira mantém todas as colunas acessíveis em notebook de 1366 px', async ({ page }) => {
+test('carteira mantém todas as colunas acessíveis em notebook de 1366 px', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await loginAndOpenDemandas(page);
 
@@ -46,9 +54,10 @@ test('carteira mantém todas as colunas acessíveis em notebook de 1366 px', asy
   const actionsBox = await page.getByRole('columnheader', { name: /^ações$/i }).boundingBox();
   expect(actionsBox).not.toBeNull();
   expect((actionsBox?.x ?? 0) + (actionsBox?.width ?? 0)).toBeLessThanOrEqual(geometry.right + 1);
+  await attachLayoutEvidence(page, testInfo, 'carteira-1366.png');
 });
 
-test('viewport estreito oferece rolagem horizontal no topo e mantém ações visíveis', async ({ page }) => {
+test('viewport estreito oferece rolagem horizontal no topo e mantém ações visíveis', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 960, height: 768 });
   await loginAndOpenDemandas(page);
 
@@ -71,4 +80,5 @@ test('viewport estreito oferece rolagem horizontal no topo e mantém ações vis
   expect(actionsBox).not.toBeNull();
   expect(actionsBox?.x ?? 0).toBeGreaterThanOrEqual(geometry.left - 1);
   expect((actionsBox?.x ?? 0) + (actionsBox?.width ?? 0)).toBeLessThanOrEqual(geometry.right + 1);
+  await attachLayoutEvidence(page, testInfo, 'carteira-960.png');
 });

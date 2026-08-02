@@ -22,6 +22,7 @@ import { FilterPanel } from './components/FilterPanel';
 import { AtencaoImediata } from './components/AtencaoImediata';
 import { VisaoGeral } from './components/VisaoGeral';
 import { AdminSkeleton, AuthSkeleton, DashboardSkeleton, TableSkeleton } from './components/LoadingSkeletons';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { matchDemandSearch } from './search/demandSearch';
 import { rankApproximateDemandSearch } from './search/approximateSearch';
 import { getPeriodValidationError } from './search/periodFilter';
@@ -699,16 +700,26 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
         ) : (
           <>
             {activeTab === 'visao-geral' && (
-              <div key="visao-geral" className="route-transition">
-                <VisaoGeral
-                  demandas={demandas}
-                  historico={historico}
-                  onOpenEditar={openDemand}
-                  renderAtencaoImediata={() => (
-                    <AtencaoImediata demandas={demandas} historico={historico} onOpenEditar={openDemand} />
-                  )}
-                />
-              </div>
+              <ErrorBoundary
+                title="Não foi possível exibir o Radar de Governança"
+                message="As demais áreas continuam disponíveis. Tente carregar o Radar novamente ou abra a carteira de demandas."
+                resetKeys={[activeTab, demandas, historico]}
+                secondaryAction={{
+                  label: 'Abrir todas as demandas',
+                  onClick: () => setActiveTab('demandas'),
+                }}
+              >
+                <div key="visao-geral" className="route-transition">
+                  <VisaoGeral
+                    demandas={demandas}
+                    historico={historico}
+                    onOpenEditar={openDemand}
+                    renderAtencaoImediata={() => (
+                      <AtencaoImediata demandas={demandas} historico={historico} onOpenEditar={openDemand} />
+                    )}
+                  />
+                </div>
+              </ErrorBoundary>
             )}
 
             {isDemandWorkspace && (
@@ -732,35 +743,55 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
                   onClearRecentSearches={handleClearRecentSearches}
                   periodError={periodError}
                 />
-                <DemandasTable
-                  demandas={demandasFiltradas}
-                  searchQuery={filtros.query}
-                  searchMatches={searchMatches}
-                  searchResultMode={searchResultMode}
-                  canEdit={canEdit}
-                  canDelete={canDelete}
-                  onOpenEditar={openDemand}
-                  onOpenProgress={(demanda) => {
-                    setDemandaSelecionada(demanda);
-                    setModalAndamentoAberto(true);
+                <ErrorBoundary
+                  title="Não foi possível exibir a lista de demandas"
+                  message="Os filtros e o restante do sistema foram preservados. Tente carregar a lista novamente ou retorne ao Radar."
+                  resetKeys={[activeTab, filtros, quickFilters, demandasFiltradas]}
+                  secondaryAction={{
+                    label: 'Voltar ao Radar',
+                    onClick: () => setActiveTab('visao-geral'),
                   }}
-                  onOpenStatus={(demanda) => {
-                    setDemandaSelecionada(demanda);
-                    setModalStatusAberto(true);
-                  }}
-                  onOpenHistorico={(demanda) => {
-                    setDemandaSelecionada(demanda);
-                    setModalHistoricoAberto(true);
-                  }}
-                  onExcluir={handleExcluirDemanda}
-                />
+                >
+                  <DemandasTable
+                    demandas={demandasFiltradas}
+                    searchQuery={filtros.query}
+                    searchMatches={searchMatches}
+                    searchResultMode={searchResultMode}
+                    canEdit={canEdit}
+                    canDelete={canDelete}
+                    onOpenEditar={openDemand}
+                    onOpenProgress={(demanda) => {
+                      setDemandaSelecionada(demanda);
+                      setModalAndamentoAberto(true);
+                    }}
+                    onOpenStatus={(demanda) => {
+                      setDemandaSelecionada(demanda);
+                      setModalStatusAberto(true);
+                    }}
+                    onOpenHistorico={(demanda) => {
+                      setDemandaSelecionada(demanda);
+                      setModalHistoricoAberto(true);
+                    }}
+                    onExcluir={handleExcluirDemanda}
+                  />
+                </ErrorBoundary>
               </div>
             )}
 
             {activeTab === 'admin' && canAccessAdmin && (
-              appServices.mode === 'supabase'
-                ? <AdminPanel perfis={perfis} onUpdatePerfil={handleUpdatePerfil} />
-                : <AdminPanel />
+              <ErrorBoundary
+                title="Não foi possível exibir a Administração"
+                message="Nenhuma configuração foi alterada. Tente carregar a área novamente ou volte ao Radar."
+                resetKeys={[activeTab, perfis]}
+                secondaryAction={{
+                  label: 'Voltar ao Radar',
+                  onClick: () => setActiveTab('visao-geral'),
+                }}
+              >
+                {appServices.mode === 'supabase'
+                  ? <AdminPanel perfis={perfis} onUpdatePerfil={handleUpdatePerfil} />
+                  : <AdminPanel />}
+              </ErrorBoundary>
             )}
           </>
         )}
@@ -858,20 +889,33 @@ const AppContent: React.FC<AppProps> = ({ services }) => {
           />
         )}
 
-        <DemandDetailDrawer
-          demanda={demandaSelecionada}
-          historico={historico}
-          open={drawerAberto}
-          nestedDialogOpen={drawerBloqueadoPorModal}
-          canEdit={canEdit}
-          onClose={() => {
-            setDrawerAberto(false);
-            setDemandaSelecionada(null);
+        <ErrorBoundary
+          title="Não foi possível abrir o prontuário"
+          message="A carteira continua disponível. Tente novamente ou feche o prontuário para continuar a consulta."
+          resetKeys={[demandaSelecionada?.id, drawerAberto]}
+          secondaryAction={{
+            label: 'Fechar prontuário',
+            onClick: () => {
+              setDrawerAberto(false);
+              setDemandaSelecionada(null);
+            },
           }}
-          onEdit={() => setModalEditarAberto(true)}
-          onProgress={() => setModalAndamentoAberto(true)}
-          onStatus={() => setModalStatusAberto(true)}
-        />
+        >
+          <DemandDetailDrawer
+            demanda={demandaSelecionada}
+            historico={historico}
+            open={drawerAberto}
+            nestedDialogOpen={drawerBloqueadoPorModal}
+            canEdit={canEdit}
+            onClose={() => {
+              setDrawerAberto(false);
+              setDemandaSelecionada(null);
+            }}
+            onEdit={() => setModalEditarAberto(true)}
+            onProgress={() => setModalAndamentoAberto(true)}
+            onStatus={() => setModalStatusAberto(true)}
+          />
+        </ErrorBoundary>
       </div>
     </Suspense>
   );
@@ -882,7 +926,17 @@ export const App: React.FC<AppProps> = (props) => {
   const app = inRouter ? <AppContent {...props} /> : <BrowserRouter><AppContent {...props} /></BrowserRouter>;
   return (
     <>
-      {app}
+      <ErrorBoundary
+        variant="global"
+        title="Não foi possível carregar o sistema"
+        message="Tente iniciar a aplicação novamente. Caso a falha continue, recarregue a página para restabelecer a sessão."
+        secondaryAction={{
+          label: 'Recarregar página',
+          onClick: () => window.location.reload(),
+        }}
+      >
+        {app}
+      </ErrorBoundary>
       <Toaster richColors position="top-right" closeButton duration={4200} />
     </>
   );

@@ -8,27 +8,29 @@
 
 A Rodada 0 foi expressamente autorizada para organizar a manutenção técnica e a modernização do produto antes da seleção final das rodadas seguintes.
 
+A finalidade documental é registrar o que foi decidido e manter rastreabilidade. A documentação não substitui a autoridade do responsável pelo produto e deve ser atualizada quando houver nova orientação.
+
 ## 2. Escopo executado
 
 - criação do plano consolidado de manutenção e modernização;
 - criação da política de manutenção de dependências;
 - criação do registro de oportunidades adiadas e alternativas rejeitadas;
-- desativação da abertura automática de PRs de versão pelo Dependabot;
+- desativação exclusiva da abertura automática de PRs de atualização de versão configurada por `.github/dependabot.yml`;
 - inventário e encerramento dos PRs automatizados antigos, sem merge;
-- preservação dos alertas de vulnerabilidade, auditorias e gates existentes;
+- preservação, sem alteração nesta rodada, dos alertas, notificações, configurações de segurança, auditorias e gates existentes;
 - confirmação de que nenhuma dependência ou funcionalidade foi alterada.
 
-## 3. PRs automatizados a encerrar
+## 3. PRs automatizados encerrados
 
 | PR | Conteúdo | Tratamento |
 |---:|---|---|
-| #64 | `@types/node` 25 | encerrar; runtime atual permanece Node 24 |
-| #65 | ESLint 10 | encerrar; incompatibilidade atual de peer dependency |
-| #66 | JSDOM 30 | encerrar; será reavaliado junto com a padronização do Node |
-| #67 | `actions/checkout` 7 | encerrar; será recriado sobre a `main` atual |
-| #68 | Supabase Setup CLI 3 | encerrar; atualização exige remoção de entrada obsoleta e configuração própria |
-| #80 | Supabase JS 2.110.9 | encerrar; será recriado em PR controlado e isolado |
-| #81 | Playwright, plugin React e `globals` | encerrar; será recriado sobre a `main` atual |
+| #64 | `@types/node` 25 | encerrado; runtime atual permanece Node 24 |
+| #65 | ESLint 10 | encerrado; incompatibilidade atual de peer dependency |
+| #66 | JSDOM 30 | encerrado; será reavaliado junto com a padronização do Node |
+| #67 | `actions/checkout` 7 | encerrado; poderá ser recriado sobre a `main` atual |
+| #68 | Supabase Setup CLI 3 | encerrado; atualização exige remoção de entrada obsoleta e configuração própria |
+| #80 | Supabase JS 2.110.9 | encerrado; poderá ser recriado em PR controlado e isolado |
+| #81 | Playwright, plugin React e `globals` | encerrado; poderá ser recriado sobre a `main` atual |
 
 O encerramento não promove nenhum código e não representa rejeição definitiva das atualizações tecnicamente recomendadas.
 
@@ -41,6 +43,7 @@ Esta rodada não altera:
 - código de aplicação;
 - testes;
 - workflows de CI;
+- alertas, notificações ou configurações de segurança;
 - Supabase;
 - migrations;
 - dados;
@@ -58,6 +61,8 @@ Esta rodada não altera:
 ## 6. Estado das rodadas seguintes
 
 Nenhuma Rodada 1 a 4 está autorizada automaticamente. A composição final será decidida pelo responsável pelo produto antes de qualquer atualização de pacote ou melhoria funcional.
+
+A divisão em rodadas é um instrumento de organização por risco e complexidade. Ela pode ser revista, combinada ou reorganizada conforme as decisões futuras, com atualização correspondente da documentação.
 
 ## 7. Rollback
 

@@ -57,6 +57,7 @@ test('reabre demanda encerrada e registra a retomada no prontuario', async ({ pa
   await login(page);
   await openAllDemands(page);
   await page.getByLabel(/^status$/i).selectOption('todos');
+  await expect.poll(() => new URL(page.url()).searchParams.get('status')).toBe('todos');
 
   await page.getByRole('button', { name: `Mais ações da demanda ${demandNumber}` }).click();
   await page.getByRole('menuitem', { name: /^reabrir demanda$/i }).click();

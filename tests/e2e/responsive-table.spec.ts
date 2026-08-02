@@ -59,6 +59,13 @@ test('viewport estreito oferece rolagem horizontal no topo e mantém ações vis
   await expect(topScrollbar).toBeVisible();
   await expect(topScrollbar).toHaveAttribute('aria-hidden', 'false');
 
+  await topScrollbar.evaluate((element) => {
+    element.scrollLeft = 180;
+    element.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
+  await expect.poll(() => page.locator('.table-responsive').evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(0);
+
   const firstActionsCell = page.locator('tbody .column-actions').first();
   const actionsBox = await firstActionsCell.boundingBox();
   expect(actionsBox).not.toBeNull();

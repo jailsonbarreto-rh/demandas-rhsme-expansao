@@ -1,0 +1,40 @@
+name: Apply Rodada 1B
+
+on:
+  push:
+    branches:
+      - chore/rodada-1b-supabase-js
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: chore/rodada-1b-supabase-js
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Update Supabase JavaScript and lockfile
+        run: npm install @supabase/supabase-js@2.110.9 --save-exact
+
+      - name: Remove temporary workflow
+        run: rm .github/workflows/apply-rodada-1b.yml
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json .github/workflows/apply-rodada-1b.yml
+          git commit -m "chore: atualizar Supabase JavaScript para 2.110.9"
+          git push origin HEAD:chore/rodada-1b-supabase-js

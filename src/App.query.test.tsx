@@ -27,6 +27,7 @@ function createServices() {
     responsavel: 'Usuário Query',
     responsavelId: activeUser.id,
     setor: 'CTRH',
+    status: 'Aguardando Andamento',
   });
   const load = vi.fn()
     .mockRejectedValueOnce(new Error('conexão temporariamente indisponível'))

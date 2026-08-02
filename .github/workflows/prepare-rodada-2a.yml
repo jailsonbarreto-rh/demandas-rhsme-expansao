@@ -15,9 +15,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: chore/rodada-2a-node24-fonte-unica
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: package.json
       - name: Use package.json as the Node version source
         run: |
           python - <<'PY'
@@ -42,5 +39,3 @@ jobs:
           git add .github/workflows/dependency-health.yml .github/workflows/supabase-local-migrations.yml .github/workflows/prepare-rodada-2a.yml
           git commit -m "ci: use package.json as Node version source"
           git push
-
-# retrigger preparation

@@ -10,6 +10,8 @@ Organizar atualizações técnicas e melhorias perceptíveis do produto em uma s
 
 Este plano não autoriza automaticamente nenhuma atualização posterior. Cada rodada ou PR continua sujeito a escopo registrado, branch própria, validação integral e autorização expressa.
 
+O plano serve para registrar decisões, organizar a execução e preservar oportunidades futuras. Ele não substitui a autoridade do responsável pelo produto, não cria impedimento autônomo para mudança de direção e deve ser atualizado quando novas decisões forem tomadas.
+
 ## 2. Princípios
 
 1. Manutenção técnica e modernização funcional não competem entre si.
@@ -19,6 +21,7 @@ Este plano não autoriza automaticamente nenhuma atualização posterior. Cada r
 5. Dependências arquiteturais reais podem alterar a ordem para evitar retrabalho.
 6. Nenhuma atualização será forçada por `--force`, `--legacy-peer-deps` ou mecanismo equivalente.
 7. O encerramento de uma oportunidade não significa rejeição definitiva quando houver condição futura explícita para reavaliação.
+8. O responsável pelo produto pode rever prioridades, incluir, retirar, adiar ou reorganizar rodadas; a documentação deve registrar a decisão nova, e não funcionar como obstáculo a ela.
 
 ## 3. Critérios de classificação
 
@@ -38,8 +41,9 @@ Este plano não autoriza automaticamente nenhuma atualização posterior. Cada r
 Escopo autorizado:
 
 - encerrar PRs antigos do Dependabot sem merge;
-- desativar a abertura automática de PRs de atualização;
-- preservar alertas de vulnerabilidade e auditorias existentes;
+- desativar exclusivamente a abertura automática de PRs de atualização de versão configurada por `.github/dependabot.yml`;
+- não alterar alertas, notificações ou configurações de segurança;
+- preservar auditorias e gates existentes;
 - registrar política de manutenção de dependências;
 - registrar oportunidades adiadas e alternativas rejeitadas;
 - estabelecer a linha de base documental e técnica;
@@ -108,3 +112,5 @@ Mudanças de CI, Supabase CLI, runtime, cache, Realtime ou interface exigem tamb
 ## 7. Estado da autorização
 
 Somente a Rodada 0 está autorizada nesta data. As Rodadas 1 a 4 permanecem como planejamento e serão ajustadas após a seleção final das modernizações funcionais.
+
+A autorização futura não depende de nomenclatura rígida, sequência imutável ou manutenção deste agrupamento exato. O registro documental será atualizado para refletir as decisões efetivamente tomadas pelo responsável pelo produto.

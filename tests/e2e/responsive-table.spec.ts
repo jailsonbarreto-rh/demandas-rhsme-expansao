@@ -17,6 +17,14 @@ async function attachLayoutEvidence(page: Page, testInfo: TestInfo, name: string
   });
 }
 
+async function expectNoPageOverflow(page: Page) {
+  const geometry = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(geometry.content).toBeLessThanOrEqual(geometry.viewport + 1);
+}
+
 async function tableGeometry(page: Page) {
   return page.locator('.table-responsive').evaluate((element) => ({
     clientWidth: element.clientWidth,
@@ -41,6 +49,7 @@ test('carteira usa o espaço disponível e exibe todas as colunas em monitor amp
   const actionsBox = await page.getByRole('columnheader', { name: /^ações$/i }).boundingBox();
   expect(actionsBox).not.toBeNull();
   expect((actionsBox?.x ?? 0) + (actionsBox?.width ?? 0)).toBeLessThanOrEqual(geometry.right + 1);
+  await expectNoPageOverflow(page);
   await attachLayoutEvidence(page, testInfo, 'carteira-1920.png');
 });
 
@@ -54,6 +63,7 @@ test('carteira mantém todas as colunas acessíveis em notebook de 1366 px', asy
   const actionsBox = await page.getByRole('columnheader', { name: /^ações$/i }).boundingBox();
   expect(actionsBox).not.toBeNull();
   expect((actionsBox?.x ?? 0) + (actionsBox?.width ?? 0)).toBeLessThanOrEqual(geometry.right + 1);
+  await expectNoPageOverflow(page);
   await attachLayoutEvidence(page, testInfo, 'carteira-1366.png');
 });
 
@@ -80,5 +90,6 @@ test('viewport estreito oferece rolagem horizontal no topo e mantém ações vis
   expect(actionsBox).not.toBeNull();
   expect(actionsBox?.x ?? 0).toBeGreaterThanOrEqual(geometry.left - 1);
   expect((actionsBox?.x ?? 0) + (actionsBox?.width ?? 0)).toBeLessThanOrEqual(geometry.right + 1);
+  await expectNoPageOverflow(page);
   await attachLayoutEvidence(page, testInfo, 'carteira-960.png');
 });

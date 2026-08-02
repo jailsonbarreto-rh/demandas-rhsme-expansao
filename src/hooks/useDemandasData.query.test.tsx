@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppUser, CreateDemandaInput, Demanda } from '../types';
 import type { AppData, DemandasRepository } from '../services/contracts';
+import { DemandasQueryClientContext } from '../query/queryClient';
 import { createMinimalDemandFixture } from '../test/expandedFixtures';
 import { useDemandasData } from './useDemandasData';
 
@@ -55,7 +56,11 @@ function createQueryClient() {
 
 function createWrapper(queryClient: QueryClient) {
   return function Wrapper({ children }: PropsWithChildren) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    return (
+      <DemandasQueryClientContext.Provider value={queryClient}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </DemandasQueryClientContext.Provider>
+    );
   };
 }
 

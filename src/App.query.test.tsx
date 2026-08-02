@@ -24,6 +24,9 @@ function createServices() {
     id: 91,
     numero: 'SME-RECUPERADA-091',
     assunto: 'Demanda carregada após nova tentativa',
+    responsavel: 'Usuário Query',
+    responsavelId: activeUser.id,
+    setor: 'CTRH',
   });
   const load = vi.fn()
     .mockRejectedValueOnce(new Error('conexão temporariamente indisponível'))
@@ -77,8 +80,11 @@ describe('recuperação de consultas no App', () => {
     const retryButton = screen.getByRole('button', { name: /tentar novamente/i });
     await user.click(retryButton);
 
-    expect(await screen.findByText('SME-RECUPERADA-091')).toBeVisible();
     await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
     expect(screen.queryByText(/erro de conectividade/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Sistema online')).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: /todas as demandas/i }));
+    expect(await screen.findByText('SME-RECUPERADA-091')).toBeVisible();
   });
 });

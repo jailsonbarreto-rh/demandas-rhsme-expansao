@@ -37,12 +37,16 @@ const initialDemand = createMinimalDemandFixture({
   id: 1,
   numero: 'SME-CACHE-001',
   assunto: 'Demanda inicial do cache',
+  responsavel: 'Usuário 1',
+  status: 'Aguardando Andamento',
 });
 
 const refreshedDemand = createMinimalDemandFixture({
   id: 2,
   numero: 'SME-CACHE-002',
   assunto: 'Demanda atualizada em segundo plano',
+  responsavel: 'Usuário 1',
+  status: 'Aguardando Andamento',
 });
 
 function createQueryClient() {

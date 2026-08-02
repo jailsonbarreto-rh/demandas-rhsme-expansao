@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AppUser,
   CreateDemandaInput,
@@ -10,17 +10,35 @@ import type {
 } from '../types';
 import type { AppData, DemandasRepository } from '../services/contracts';
 import { getUserFacingError } from '../domain/userFacingErrors';
-import { demandasQueryKeys } from '../query/queryClient';
+import { createAppQueryClient, demandasQueryKeys } from '../query/queryClient';
 
 const EMPTY_DATA: AppData = { demandas: [], historico: [] };
 const REALTIME_INVALIDATION_DELAY_MS = 100;
+const QUERY_RETRY_EVENT = 'demandas:retry';
+const repositoryQueryClients = new WeakMap<DemandasRepository, QueryClient>();
+
+function getRepositoryQueryClient(repository: DemandasRepository) {
+  const existing = repositoryQueryClients.get(repository);
+  if (existing) return existing;
+  const client = createAppQueryClient();
+  repositoryQueryClients.set(repository, client);
+  return client;
+}
+
+function useAvailableQueryClient(repository: DemandasRepository) {
+  try {
+    return useQueryClient();
+  } catch {
+    return getRepositoryQueryClient(repository);
+  }
+}
 
 export function useDemandasData(
   repository: DemandasRepository,
   user: AppUser | null,
   enableRealtime: boolean,
 ) {
-  const queryClient = useQueryClient();
+  const queryClient = useAvailableQueryClient(repository);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const previousUserIdRef = useRef<string | null>(null);
   const realtimeTimerRef = useRef<number | null>(null);
@@ -39,7 +57,7 @@ export function useDemandasData(
         throw new Error(getUserFacingError(reason, 'Não foi possível carregar as demandas.'));
       }
     },
-  });
+  }, queryClient);
 
   const clearPendingRealtimeInvalidation = useCallback(() => {
     if (realtimeTimerRef.current === null) return;
@@ -99,19 +117,19 @@ export function useDemandasData(
   const createMutation = useMutation({
     mutationFn: (input: CreateDemandaInput) => repository.create(input),
     onSuccess: invalidateSessionData,
-  });
+  }, queryClient);
   const editMutation = useMutation({
     mutationFn: ({ id, input }: { id: number; input: EditDemandaInput }) => repository.edit(id, input),
     onSuccess: invalidateSessionData,
-  });
+  }, queryClient);
   const progressMutation = useMutation({
     mutationFn: ({ id, input }: { id: number; input: ProgressInput }) => repository.registerProgress(id, input),
     onSuccess: invalidateSessionData,
-  });
+  }, queryClient);
   const statusMutation = useMutation({
     mutationFn: ({ id, input }: { id: number; input: StatusTransitionInput }) => repository.transitionStatus(id, input),
     onSuccess: invalidateSessionData,
-  });
+  }, queryClient);
   const deleteMutation = useMutation({
     mutationFn: ({ id, input }: { id: number; input: DeleteDemandaInput }) => repository.deleteLogically(id, input),
     onSuccess: async () => {
@@ -122,7 +140,7 @@ export function useDemandasData(
         exact: true,
       });
     },
-  });
+  }, queryClient);
 
   const executeMutation = useCallback(async (operation: () => Promise<void>) => {
     setMutationError(null);
@@ -144,6 +162,12 @@ export function useDemandasData(
       throw new Error(getUserFacingError(reason, 'Não foi possível carregar as demandas.'));
     }
   }, [query, userId]);
+
+  useEffect(() => {
+    const handleRetry = () => { void reload().catch(() => undefined); };
+    window.addEventListener(QUERY_RETRY_EVENT, handleRetry);
+    return () => window.removeEventListener(QUERY_RETRY_EVENT, handleRetry);
+  }, [reload]);
 
   const loadTrash = useCallback(async () => {
     if (!userId) return [];

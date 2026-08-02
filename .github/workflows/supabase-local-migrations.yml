@@ -40,10 +40,12 @@ jobs:
           cache: npm
 
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v2
+        uses: supabase/setup-cli@v2.1.1
         with:
-          version: latest
-          github-token: ${{ github.token }}
+          version: 2.111.0
+
+      - name: Verify Supabase CLI version
+        run: test "$(supabase --version)" = "2.111.0"
 
       - name: Ensure PostgreSQL client is available
         shell: bash

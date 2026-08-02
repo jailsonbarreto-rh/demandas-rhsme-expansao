@@ -1,98 +1,178 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AppUser,
-  ComentarioHistorico,
   CreateDemandaInput,
   DeleteDemandaInput,
-  Demanda,
   EditDemandaInput,
   ProgressInput,
   StatusTransitionInput,
 } from '../types';
-import type { DemandasRepository } from '../services/contracts';
+import type { AppData, DemandasRepository } from '../services/contracts';
 import { getUserFacingError } from '../domain/userFacingErrors';
+import { demandasQueryKeys } from '../query/queryClient';
+
+const EMPTY_DATA: AppData = { demandas: [], historico: [] };
+const REALTIME_INVALIDATION_DELAY_MS = 100;
 
 export function useDemandasData(
   repository: DemandasRepository,
   user: AppUser | null,
   enableRealtime: boolean,
 ) {
-  const [demandas, setDemandas] = useState<Demanda[]>([]);
-  const [historico, setHistorico] = useState<ComentarioHistorico[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const previousUserIdRef = useRef<string | null>(null);
+  const realtimeTimerRef = useRef<number | null>(null);
+  const userId = user?.id ?? null;
+  const queryKey = userId
+    ? demandasQueryKeys.session(userId)
+    : (['demandas', 'session', 'anonymous'] as const);
 
-  const reload = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const data = await repository.load();
-      setDemandas(data.demandas);
-      setHistorico(data.historico);
-      setError(null);
-    } catch (reason) {
-      const message = getUserFacingError(reason, 'Não foi possível carregar as demandas.');
-      setError(message);
-      throw new Error(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [repository, user]);
+  const query = useQuery<AppData>({
+    queryKey,
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      try {
+        return await repository.load();
+      } catch (reason) {
+        throw new Error(getUserFacingError(reason, 'Não foi possível carregar as demandas.'));
+      }
+    },
+  });
+
+  const clearPendingRealtimeInvalidation = useCallback(() => {
+    if (realtimeTimerRef.current === null) return;
+    window.clearTimeout(realtimeTimerRef.current);
+    realtimeTimerRef.current = null;
+  }, []);
+
+  const invalidateSessionData = useCallback(async () => {
+    if (!userId) return;
+    clearPendingRealtimeInvalidation();
+    await queryClient.invalidateQueries({
+      queryKey: demandasQueryKeys.session(userId),
+      exact: true,
+    });
+  }, [clearPendingRealtimeInvalidation, queryClient, userId]);
 
   useEffect(() => {
-    if (!user) {
-      setDemandas([]);
-      setHistorico([]);
-      setError(null);
-      return;
+    const previousUserId = previousUserIdRef.current;
+    if (previousUserId && previousUserId !== userId) {
+      void queryClient.cancelQueries({
+        queryKey: demandasQueryKeys.session(previousUserId),
+        exact: true,
+      });
+      queryClient.removeQueries({
+        queryKey: demandasQueryKeys.session(previousUserId),
+        exact: true,
+      });
+      queryClient.removeQueries({
+        queryKey: demandasQueryKeys.trash(previousUserId),
+        exact: true,
+      });
     }
-    let active = true;
-    const load = async () => {
-      try {
-        const data = await repository.load();
-        if (active) {
-          setDemandas(data.demandas);
-          setHistorico(data.historico);
-          setError(null);
-        }
-      } catch (reason) {
-        if (active) setError(getUserFacingError(reason, 'Não foi possível carregar as demandas.'));
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    setLoading(true);
-    void load();
-    const cleanup = enableRealtime ? repository.subscribe(() => { void load(); }) : () => undefined;
-    return () => { active = false; cleanup(); };
-  }, [enableRealtime, repository, user]);
+    previousUserIdRef.current = userId;
+    setMutationError(null);
+  }, [queryClient, userId]);
 
-  const mutate = useCallback(async (operation: () => Promise<void>) => {
-    setError(null);
+  useEffect(() => {
+    if (!userId || !enableRealtime) return undefined;
+
+    const cleanup = repository.subscribe(() => {
+      clearPendingRealtimeInvalidation();
+      realtimeTimerRef.current = window.setTimeout(() => {
+        realtimeTimerRef.current = null;
+        void queryClient.invalidateQueries({
+          queryKey: demandasQueryKeys.session(userId),
+          exact: true,
+        });
+      }, REALTIME_INVALIDATION_DELAY_MS);
+    });
+
+    return () => {
+      clearPendingRealtimeInvalidation();
+      cleanup();
+    };
+  }, [clearPendingRealtimeInvalidation, enableRealtime, queryClient, repository, userId]);
+
+  const createMutation = useMutation({
+    mutationFn: (input: CreateDemandaInput) => repository.create(input),
+    onSuccess: invalidateSessionData,
+  });
+  const editMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: EditDemandaInput }) => repository.edit(id, input),
+    onSuccess: invalidateSessionData,
+  });
+  const progressMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: ProgressInput }) => repository.registerProgress(id, input),
+    onSuccess: invalidateSessionData,
+  });
+  const statusMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: StatusTransitionInput }) => repository.transitionStatus(id, input),
+    onSuccess: invalidateSessionData,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: DeleteDemandaInput }) => repository.deleteLogically(id, input),
+    onSuccess: async () => {
+      await invalidateSessionData();
+      if (!userId) return;
+      await queryClient.invalidateQueries({
+        queryKey: demandasQueryKeys.trash(userId),
+        exact: true,
+      });
+    },
+  });
+
+  const executeMutation = useCallback(async (operation: () => Promise<void>) => {
+    setMutationError(null);
     try {
       await operation();
-      await reload();
     } catch (reason) {
       const message = getUserFacingError(reason, 'Não foi possível salvar a alteração.');
-      setError(message);
+      setMutationError(message);
       throw new Error(message);
     }
-  }, [reload]);
+  }, []);
+
+  const reload = useCallback(async () => {
+    if (!userId) return;
+    setMutationError(null);
+    try {
+      await query.refetch({ throwOnError: true });
+    } catch (reason) {
+      throw new Error(getUserFacingError(reason, 'Não foi possível carregar as demandas.'));
+    }
+  }, [query, userId]);
+
+  const loadTrash = useCallback(async () => {
+    if (!userId) return [];
+    return queryClient.fetchQuery({
+      queryKey: demandasQueryKeys.trash(userId),
+      queryFn: () => repository.loadTrash(),
+      staleTime: 30_000,
+    });
+  }, [queryClient, repository, userId]);
+
+  const data = query.data ?? EMPTY_DATA;
+  const queryError = query.error instanceof Error ? query.error.message : null;
 
   return {
-    demandas,
-    historico,
-    loading,
-    error,
+    demandas: data.demandas,
+    historico: data.historico,
+    loading: Boolean(userId) && query.isPending,
+    refreshing: Boolean(userId) && query.isFetching && !query.isPending,
+    error: mutationError ?? queryError,
     reload,
-    loadTrash: () => repository.loadTrash(),
-    create: (input: CreateDemandaInput) => mutate(() => repository.create(input)),
-    edit: (id: number, input: EditDemandaInput) => mutate(() => repository.edit(id, input)),
+    loadTrash,
+    create: (input: CreateDemandaInput) => executeMutation(() => createMutation.mutateAsync(input)),
+    edit: (id: number, input: EditDemandaInput) =>
+      executeMutation(() => editMutation.mutateAsync({ id, input })),
     registerProgress: (id: number, input: ProgressInput) =>
-      mutate(() => repository.registerProgress(id, input)),
+      executeMutation(() => progressMutation.mutateAsync({ id, input })),
     transitionStatus: (id: number, input: StatusTransitionInput) =>
-      mutate(() => repository.transitionStatus(id, input)),
+      executeMutation(() => statusMutation.mutateAsync({ id, input })),
     deleteLogically: (id: number, input: DeleteDemandaInput) =>
-      mutate(() => repository.deleteLogically(id, input)),
+      executeMutation(() => deleteMutation.mutateAsync({ id, input })),
   };
 }

@@ -19,10 +19,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Node.js 24
+      - name: Set up Node.js from package.json
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version-file: package.json
           cache: npm
 
       - name: Install locked dependencies

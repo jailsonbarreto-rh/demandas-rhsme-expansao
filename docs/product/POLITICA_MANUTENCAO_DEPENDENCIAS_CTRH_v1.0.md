@@ -5,21 +5,25 @@
 
 ## 1. Objetivo
 
-Garantir que atualizações de bibliotecas, ferramentas, runtime e GitHub Actions sejam deliberadas, compatíveis, rastreáveis e testadas, sem produção automática de filas de PRs não acompanhadas.
+Garantir que atualizações de bibliotecas, ferramentas, runtime e GitHub Actions sejam deliberadas, compatíveis, rastreáveis e testadas, sem produção automática de filas de PRs de versão que permaneçam sem análise.
 
 ## 2. Modelo adotado
 
 O projeto não utilizará Dependabot para abrir PRs automáticos de atualização de versão.
 
-Permanecem preservados:
+Esta decisão alcança exclusivamente a abertura automática de PRs de versão configurada por `.github/dependabot.yml`.
+
+A Rodada 0 não altera configurações de segurança, alertas, notificações ou mecanismos de detecção de vulnerabilidades. Permanecem preservados, sem modificação por este plano:
 
 - Dependency Graph;
 - Dependabot Alerts ou mecanismo equivalente de alerta de vulnerabilidade;
+- notificações relacionadas à segurança;
+- eventuais recursos de correção de segurança configurados fora de `.github/dependabot.yml`;
 - `npm audit --audit-level=high`;
 - `npm audit signatures`;
 - workflows e gates de validação existentes.
 
-PRs automáticos de segurança também não serão usados como substitutos da análise técnica. Um alerta de vulnerabilidade inicia uma avaliação controlada, mas não autoriza automaticamente alteração de versão.
+Qualquer mudança futura em alertas, notificações ou automações específicas de segurança exigirá avaliação e decisão próprias. Esta política não autoriza nem determina essa alteração.
 
 ## 3. Gatilhos para revisão
 
@@ -80,10 +84,10 @@ Não é permitido:
 
 ## 7. Notificações e responsabilidade
 
-Os alertas de vulnerabilidade devem permanecer habilitados e com canal de notificação verificável. A ausência de notificação não elimina a necessidade de revisão deliberada antes de releases relevantes.
+Os alertas e notificações existentes não são alterados pela Rodada 0. O problema tratado nesta etapa é a criação automática de PRs de versão que permaneciam sem análise, e não a existência de alertas.
 
 O responsável pelo produto decide quais atualizações entram no plano. A análise técnica deve apresentar benefício, risco, compatibilidade, impacto perceptível e custo de reversão.
 
 ## 8. Histórico da decisão
 
-A configuração automática anterior abriu múltiplos PRs sem integração, alguns obsoletos ou incompatíveis com a base atual. A Rodada 0 encerra essa fila sem merge e substitui o modelo por manutenção controlada.
+A configuração automática anterior abriu múltiplos PRs de atualização de versão sem integração, alguns obsoletos ou incompatíveis com a base atual. A Rodada 0 encerra essa fila sem merge e substitui esse mecanismo por manutenção controlada, preservando os mecanismos atuais de alerta e segurança.

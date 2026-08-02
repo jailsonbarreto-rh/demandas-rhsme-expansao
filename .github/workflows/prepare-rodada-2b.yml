@@ -1,0 +1,38 @@
+name: Prepare Round 2B
+
+on:
+  push:
+    branches:
+      - chore/rodada-2b-jsdom-30
+
+permissions:
+  contents: write
+
+env:
+  TZ: America/Sao_Paulo
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: chore/rodada-2b-jsdom-30
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Update JSDOM and regenerate lockfile
+        run: |
+          npm pkg set 'devDependencies.jsdom=30.0.0'
+          npm install --package-lock-only --ignore-scripts
+          npm ci
+          npm run test:coverage
+      - name: Commit prepared change
+        run: |
+          rm .github/workflows/prepare-rodada-2b.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json .github/workflows/prepare-rodada-2b.yml
+          git commit -m "test: update JSDOM to 30.0.0"
+          git push

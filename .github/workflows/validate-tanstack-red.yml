@@ -1,0 +1,23 @@
+name: Validate TanStack Query RED
+
+on:
+  push:
+    branches:
+      - feat/rodada-3-tanstack-query
+
+permissions:
+  contents: read
+
+jobs:
+  red:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - name: Run focused RED tests
+        run: npx vitest run src/hooks/useDemandasData.query.test.tsx src/App.query.test.tsx

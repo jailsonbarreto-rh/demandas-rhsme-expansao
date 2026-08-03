@@ -1,6 +1,6 @@
 import type { ComentarioHistorico, Demanda } from '../types';
 
-export type PeriodField = 'limite1' | 'limite2' | 'historico' | 'proxima_acao';
+type PeriodField = 'limite1' | 'limite2' | 'historico' | 'proxima_acao';
 
 export interface PeriodFilter {
   field: PeriodField;

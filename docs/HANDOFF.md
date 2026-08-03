@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **3 de agosto de 2026 — Rodada 3.1 concluída; documentação, constante compartilhada e diagnóstico Knip consolidados**
+Atualizado em: **3 de agosto de 2026 — Rodada 3.2 concluída; preparação anterior ao TypeScript 6 consolidada**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -9,7 +9,7 @@ Atualizado em: **3 de agosto de 2026 — Rodada 3.1 concluída; documentação, 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| `main` de base da Rodada 3.1 | `343871ffa32cf30f6cddded6b49d83ec05e2d64a` |
+| `main` anterior à Rodada 3.2 | `9be47339bafa6e44cc8a0fb4eaae9f43f90fb21d` |
 | R4 | concluído e publicado |
 | R5-1 | concluído, homologado e publicado |
 | Auditoria transversal de layout | concluída, homologada e publicada |
@@ -22,6 +22,7 @@ Atualizado em: **3 de agosto de 2026 — Rodada 3.1 concluída; documentação, 
 | Consolidação documental da Rodada 3.1 | concluída pelo PR #135, merge `343871ffa32cf30f6cddded6b49d83ec05e2d64a` |
 | PR documental anterior | #115 encerrado sem merge por substituição e obsolescência temporal |
 | Consolidação técnica da Rodada 3.1 | concluída pelo PR #136: constante compartilhada e diagnóstico Knip |
+| Preparação anterior ao TypeScript 6 — Rodada 3.2 | concluída pelo PR #137: atualizações de desenvolvimento, redução de exports e auditoria do `tsconfig` |
 | PR funcional TanStack Query | #132, merge `e7ca96fa2f1474d27703967db641fd91a4e619c6` |
 | PR de release TanStack Query | #133, merge `f9424b34ec9efd02d00f2e989d15816f52c5e480` |
 | Encerramento da release | PR #134, merge `15aa5c049c3c7122db365eec6a2e9f629e3c38ea` |
@@ -32,7 +33,7 @@ Atualizado em: **3 de agosto de 2026 — Rodada 3.1 concluída; documentação, 
 | Deploy automático | `deploymentEnabled: false`, restaurado pelo PR #134 |
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
-| Atividade técnica atual | Rodada 3.1 encerrada; nenhuma atualização seguinte autorizada automaticamente |
+| Atividade técnica atual | Rodada 3.2 encerrada; TypeScript 6 permanece próxima experiência candidata |
 | Próxima atualização candidata | TypeScript 6 em branch experimental, somente após autorização específica |
 
 ## Rodadas técnicas concluídas
@@ -139,6 +140,48 @@ A Rodada 3.1 não alterou:
 - cache, Realtime, mutations ou sessão;
 - regras de negócio;
 - deployment de Production.
+
+## Preparação anterior ao TypeScript 6 — Rodada 3.2
+
+A Rodada 3.2 foi executada pelo PR #137 como preparação de baixo risco, sem atualizar o compilador.
+
+### Atualizações integradas
+
+- `@playwright/test` 1.62.1;
+- `@types/react` 19.2.18;
+- `@types/react-dom` 19.2.4;
+- `@vitejs/plugin-react` 6.0.5;
+- `csv-parse` 7.0.2;
+- `globals` 17.9.0;
+- JSDOM 30.0.1;
+- Knip 6.31.0.
+
+O lockfile foi regenerado pelo npm no GitHub Actions e gravado na branch pelo commit `2a1e3260640c39a2668564cfd163c2913f4b733e`, sem edição manual.
+
+### Limpeza conservadora
+
+Dez símbolos usados internamente deixaram de ser exportados. Nenhum símbolo, arquivo ou comportamento foi removido.
+
+O diagnóstico final do Knip passou de 18 para oito símbolos preservados:
+
+- `isLegacyDeadlineCompletion`;
+- `canPreserveMissingDeadline`;
+- `canUseDeadlineStateAfterRegistration`;
+- `getPrazoFinalSemantics`;
+- `PrazoSemantics`;
+- `DatabaseR4`;
+- `DeadlineValue`;
+- `Json`, como contrato intencional do banco.
+
+Não foram encontrados arquivos ou dependências não utilizadas, dependências ausentes, imports não resolvidos ou problemas de configuração.
+
+### Auditoria do compilador
+
+O `tsconfig.json` atual foi auditado contra a preparação do TypeScript 6. A configuração já usa opções modernas, estritas e compatíveis; nenhuma alteração preventiva ou relaxamento de regra foi necessário.
+
+Permanecem adiadas para PRs isolados, somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. Atualizações major de ESLint, Testing Library, tipos do Node e TypeScript 7 também ficaram fora do escopo.
+
+A Rodada 3.2 não altera banco, migrations, RLS, dados, regras de negócio, cache, Realtime, autenticação ou comportamento funcional.
 
 ## Regra permanente de modernização proativa
 
@@ -332,17 +375,17 @@ Os 22 cenários regressivos existentes também permaneceram aprovados em desktop
 
 ## Supabase remoto
 
-As Rodadas técnicas 1, 2 e 3, a correção responsiva e a Rodada 3.1 não alteraram o banco remoto, dados, migrations, RLS ou regras.
+As Rodadas técnicas 1, 2 e 3, a correção responsiva e as Rodadas 3.1 e 3.2 não alteraram o banco remoto, dados, migrations, RLS ou regras.
 
 Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_harden_pre_r4_progress_status` permanece registrada remotamente. Ela não altera dados: apenas converte os dois contratos anteriores ao R4 em wrappers e deixa `EXECUTE` somente para `authenticated`. A verificação posterior confirmou 379 demandas ativas, zero excluídas, 764 históricos, `search_path` vazio e ausência de execução por `anon` ou `service_role` nesses wrappers.
 
 ## Próxima etapa
 
-A Rodada 3.1 está concluída.
+A Rodada 3.2 está concluída.
 
 A próxima atualização estrutural candidata é o TypeScript 6. Ela não está autorizada automaticamente: exige proposta de escopo, branch exclusiva, versão exata, gate integral e decisão específica.
 
-As limpezas indicadas pelo Knip também não estão automaticamente autorizadas e não bloqueiam a avaliação do TypeScript 6. Devem ser tratadas em PRs pequenos somente quando aprovadas.
+Permanecem adiadas, em PRs isolados e somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. Os sete símbolos sensíveis apontados pelo Knip e o contrato `Json` permanecem preservados.
 
 Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posteriores é autorizada por inferência. A atividade funcional seguinte continua sujeita a valor, risco ou limite comprovado; E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
 
@@ -362,16 +405,18 @@ Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posterior
 12. `docs/architecture/ARQUITETURA_TANSTACK_QUERY_CTRH_v1.0.md`;
 13. `docs/execution/RODADA_3_1_CONSOLIDACAO_DOCUMENTAL_2026-08-03.md`;
 14. `docs/execution/RODADA_3_1_DIAGNOSTICO_KNIP_2026-08-03.md`;
-15. `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
-16. `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
-17. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`, como histórico de sequência;
-18. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`, como pauta reconciliada;
-19. `docs/adr/ADR-003-historico-e-exclusao-logica.md`;
-20. `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`;
-21. `docs/execution/ENCERRAMENTO_R5_1_2026-07-30.md`;
-22. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
-23. `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
-24. este Handoff.
+15. `docs/execution/RODADA_3_2_PREPARACAO_TYPESCRIPT_2026-08-03.md`;
+16. `docs/execution/RODADA_3_2_RESULTADO_FINAL_KNIP_2026-08-03.md`;
+17. `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
+18. `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
+19. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`, como histórico de sequência;
+20. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`, como pauta reconciliada;
+21. `docs/adr/ADR-003-historico-e-exclusao-logica.md`;
+22. `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`;
+23. `docs/execution/ENCERRAMENTO_R5_1_2026-07-30.md`;
+24. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
+25. `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
+26. este Handoff.
 
 ## Regra de continuidade
 
@@ -379,4 +424,4 @@ O projeto segue a sequência discutir, decidir, registrar, implementar e homolog
 
 Além disso, toda tarefa deve incluir avaliação de limites tecnológicos: quando uma atualização ou instalação puder produzir solução substantivamente superior, ela deve ser apresentada como proposta, sem instalação silenciosa e sem transformar recomendação em autorização.
 
-Depois da Rodada 3.1, nenhuma fila funcional se abre automaticamente. O próximo trabalho será escolhido por valor, risco ou limite comprovado, conforme GOV-013 e a política de manutenção v1.1.
+Depois da Rodada 3.2, nenhuma fila funcional se abre automaticamente. O próximo trabalho será escolhido por valor, risco ou limite comprovado, conforme GOV-013 e a política de manutenção v1.1.

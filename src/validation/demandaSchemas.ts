@@ -28,7 +28,7 @@ export const statusValues = [
   'Sobrestado',
   'Ajustar',
 ] as const;
-export const deadlineStateValues = ['definido', 'nao_informado', 'nao_se_aplica'] as const;
+const deadlineStateValues = ['definido', 'nao_informado', 'nao_se_aplica'] as const;
 
 function deadlineSnapshot(state: DeadlineState, date: string): DeadlineSnapshot {
   return { state, date: date.trim() };

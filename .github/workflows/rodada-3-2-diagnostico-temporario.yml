@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - chore/rodada-3-2-preparacao-typescript
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read

@@ -3,6 +3,7 @@
 **Data:** 3 de agosto de 2026  
 **Status:** VIGENTE  
 **Implementação de referência:** PR #132  
+**Consolidação técnica:** PR #136  
 **Versão:** `@tanstack/react-query` 5.101.4
 
 ## 1. Finalidade
@@ -206,11 +207,17 @@ Quando a consulta falha, a interface apresenta estado de conexão indisponível 
 
 O Header emite um evento de janela. `useDemandasData` escuta o mesmo evento e executa `reload()`.
 
-Na Rodada 3.1, o nome do evento deve ser extraído para constante compartilhada, evitando duplicação literal entre emissor e receptor. A mudança não altera o valor nem o comportamento:
+A Rodada 3.1 extraiu o nome do evento para uma constante compartilhada, evitando divergência literal entre emissor e receptor:
 
 ```ts
-'demandas:retry'
+export const DEMANDAS_QUERY_RETRY_EVENT = 'demandas:retry';
 ```
+
+A constante está em `src/query/queryEvents.ts`.
+
+- `src/components/Header.tsx` utiliza a constante para emitir o evento;
+- `src/hooks/useDemandasData.ts` utiliza a mesma constante para registrar e remover o listener;
+- o valor do evento e o comportamento de recuperação não foram alterados.
 
 ## 13. Tratamento de erros
 
@@ -259,6 +266,7 @@ Não estão autorizados por esta arquitetura:
 ## 16. Arquivos de referência
 
 - `src/query/queryClient.ts`;
+- `src/query/queryEvents.ts`;
 - `src/main.tsx`;
 - `src/hooks/useDemandasData.ts`;
 - `src/components/Header.tsx`;
@@ -271,4 +279,4 @@ Não estão autorizados por esta arquitetura:
 
 O rollback funcional integral corresponde à reversão do PR #132 e do lockfile associado.
 
-Mudanças pequenas posteriores, como compartilhamento da constante do evento, devem possuir PR próprio e reversão independente.
+A constante compartilhada foi isolada no PR #136. Seu rollback consiste em reverter esse PR, restaurando as duas declarações locais anteriores sem alterar o valor do evento.

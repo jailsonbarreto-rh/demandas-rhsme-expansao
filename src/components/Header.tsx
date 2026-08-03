@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Demanda } from '../types';
 import { isInFollowUp } from '../domain/workSemantics';
 import type { DemandFilters } from '../filters/filterTypes';
+import { DEMANDAS_QUERY_RETRY_EVENT } from '../query/queryEvents';
 import { getTodayString, isBeforeToday } from '../utils/date';
 import { BrandLogo } from './BrandLogo';
 
 type ConnectionStatus = 'online' | 'connecting' | 'offline' | 'local';
-
-const QUERY_RETRY_EVENT = 'demandas:retry';
 
 const CONNECTION_STATUS_PRESENTATION: Record<ConnectionStatus, { label: string; icon: string }> = {
   online: { label: 'Sistema online', icon: 'fa-circle-check' },
@@ -127,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               className="btn-logout-link"
-              onClick={() => window.dispatchEvent(new Event(QUERY_RETRY_EVENT))}
+              onClick={() => window.dispatchEvent(new Event(DEMANDAS_QUERY_RETRY_EVENT))}
               title="Tentar carregar os dados novamente"
             >
               <i className="fa-solid fa-rotate" aria-hidden="true" />

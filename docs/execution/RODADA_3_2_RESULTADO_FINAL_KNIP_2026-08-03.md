@@ -2,6 +2,7 @@
 
 **Data:** 3 de agosto de 2026  
 **PR:** #137  
+**Estado:** resultado consolidado para o gate final  
 **Comando:** `npm run analyze:unused`  
 **Modo:** diagnóstico, sem autofix e fora do gate obrigatório
 

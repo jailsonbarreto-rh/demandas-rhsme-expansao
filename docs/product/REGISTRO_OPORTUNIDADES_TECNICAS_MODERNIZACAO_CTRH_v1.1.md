@@ -1,0 +1,110 @@
+# Registro de Oportunidades Técnicas e de Modernização — CTRH v1.1
+
+**Data:** 3 de agosto de 2026  
+**Status:** VIGENTE como inventário técnico; não autoriza implementação  
+**Finalidade:** registrar capacidades concluídas, oportunidades futuras, limites conhecidos e alternativas rejeitadas sem transformar o inventário em fila automática.
+
+## 1. Capacidades concluídas
+
+| Capacidade | Estado material | Evidência principal |
+|---|---|---|
+| Error Boundaries | concluída e publicada | PR #119; release #121–#122 |
+| Playwright 1.62.0 | concluída e publicada | PR #117 |
+| Plugin React para Vite 6.0.4 | concluída e publicada | PR #117 |
+| `globals` 17.8.0 | concluída e publicada | PR #117 |
+| Supabase JavaScript 2.110.9 | concluída e publicada | PR #118 |
+| GitHub Actions básicas v7 | concluída | PR #116 |
+| Node 24 como fonte única | concluída e publicada | PR #125; release #127–#128 |
+| JSDOM 30.0.0 | concluída e publicada | PR #124 |
+| Supabase Action e CLI fixadas | Action 2.1.1 e CLI 2.111.0 concluídas | PR #126 |
+| Knip 6.29.0 | instalado e disponível em modo diagnóstico | PR #123 |
+| TanStack Query 5.101.4 | integrado e publicado | PR #132; release #133–#134 |
+| Tabela responsiva em largura ampla | concluída e publicada | PR #129; release #130–#131 |
+
+Itens concluídos não devem permanecer descritos como candidatos futuros.
+
+## 2. Consolidação em andamento
+
+### Rodada 3.1 — pós-TanStack Query
+
+- atualizar documentação de manutenção;
+- registrar a arquitetura de cache e mutações;
+- instituir regra de modernização proativa;
+- compartilhar a constante do evento de nova tentativa;
+- executar o Knip;
+- revisar achados manualmente;
+- não realizar exclusões automáticas.
+
+A consolidação não altera banco, RLS, dados, migrations ou regras de negócio.
+
+## 3. Próxima atualização estrutural candidata
+
+| Oportunidade | Benefício esperado | Condição de retomada | Situação |
+|---|---|---|---|
+| TypeScript 6 | avaliar compatibilidade, diagnósticos e preparação para evolução do compilador | autorização expressa, branch isolada e gate integral | próxima experiência candidata |
+
+O experimento não possui compromisso antecipado de merge. Não pode ser combinado com refatoração funcional, alteração de regras ou outra atualização major.
+
+## 4. Oportunidades funcionais condicionadas
+
+| Possibilidade | Benefício potencial | Condição de retomada |
+|---|---|---|
+| Observabilidade de erros | detectar falhas reais de produção e regressões não cobertas | definir ferramenta, minimização de dados, retenção, ambientes e sanitização |
+| Métricas reais de desempenho | orientar otimizações por evidência | definir métricas, privacidade e orçamento de desempenho |
+| Radar interativo com drill-down | permitir análise e acesso operacional a partir dos indicadores | definir indicadores clicáveis e comportamento de filtro |
+| Agenda de prazos e providências | organizar trabalho por dia ou semana | confirmar aderência à rotina da equipe |
+| PWA instalável | acesso por ícone e janela própria | definir atualização e cache sem persistir conteúdo operacional sensível |
+| Prontuário em PDF | produzir documento institucional para impressão ou compartilhamento | definir necessidade, conteúdo, autoria e segurança |
+| Virtualização da tabela | manter fluidez com volume elevado | crescimento de base ou métrica de lentidão comprovada |
+| Paginação e busca remotas | reduzir carga no cliente e suportar acervo ampliado | volume, latência ou memória justificarem mudança arquitetural |
+| Central de comandos | acesso rápido a rotas e ações | quantidade real de ações globais justificar o recurso |
+
+## 5. Regra de modernização proativa
+
+O inventário não é a única fonte de propostas.
+
+Durante qualquer tarefa, o executor deve avaliar se uma atualização, instalação ou capacidade não listada pode produzir solução materialmente superior. Quando houver benefício concreto, deve apresentar a proposta antes de implementar, conforme `POLITICA_MANUTENCAO_DEPENDENCIAS_CTRH_v1.1.md`.
+
+Uma nova proposta deve ser adicionada a este registro quando:
+
+- possuir relevância além da tarefa imediata;
+- criar capacidade reutilizável;
+- representar mudança estrutural;
+- permanecer adiada após avaliação;
+- alterar fundamento de alternativa anteriormente rejeitada.
+
+## 6. Alternativas não recomendadas no estado atual
+
+| Alternativa | Decisão atual | Motivo |
+|---|---|---|
+| Redux ou Zustand | não recomendado | não há necessidade demonstrada de estado global adicional |
+| Reescrita em Tailwind ou shadcn | não recomendada | alto custo e risco sem benefício funcional comprovado |
+| Fuse.js | não recomendado | busca existente já atende aos comportamentos atuais |
+| Kanban com mudança direta por arraste | não recomendado | pode contornar justificativas, auditoria e regras de transição |
+| Nova biblioteca de formulários | não recomendada | React Hook Form e Zod atendem ao produto |
+| Nova biblioteca de notificações | não recomendada | Sonner atende ao produto |
+| Nova biblioteca de modais | não recomendada | Radix atende ao produto |
+| TanStack Query Devtools em Production | não recomendado | não agrega valor ao usuário e amplia superfície desnecessária |
+| Virtualização sem evidência de lentidão | adiada | complexidade sem problema comprovado |
+| PWA sem política de cache | adiada | risco de persistência indevida de dados e atualização descontrolada |
+| `--force` ou `--legacy-peer-deps` | proibido | mascara incompatibilidades reais |
+
+Essas decisões podem ser reavaliadas apenas quando nova evidência alterar o fundamento técnico ou funcional.
+
+## 7. Oportunidades históricas substituídas
+
+A versão proposta no PR #115 listava como futuras várias capacidades já concluídas nas Rodadas 1, 2 e 3. Essa classificação foi superada por este registro v1.1.
+
+O PR #115 permanece útil somente como memória da preparação inicial. Não deve ser usado para determinar o estado atual ou a próxima atualização.
+
+## 8. Regra de uso
+
+Este registro:
+
+- preserva oportunidades;
+- impede que itens concluídos voltem a ser propostos como ausentes;
+- evita repetição de alternativas já avaliadas sem nova evidência;
+- apoia decisões futuras;
+- não autoriza implementação;
+- não substitui o Registro de Decisões de Produto;
+- deve ser atualizado quando a realidade técnica mudar.

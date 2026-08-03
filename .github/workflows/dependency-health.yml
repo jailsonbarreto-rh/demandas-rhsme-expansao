@@ -28,21 +28,6 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Run Knip diagnostic for Rodada 3.1
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run analyze:unused 2>&1 | tee knip-report.txt
-
-      - name: Upload Knip diagnostic report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: rodada-3-1-knip-report
-          path: knip-report.txt
-          if-no-files-found: error
-          retention-days: 14
-
       - name: Run documentation consistency gate
         run: npm run check:docs
 

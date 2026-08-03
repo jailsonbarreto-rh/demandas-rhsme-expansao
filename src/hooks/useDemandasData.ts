@@ -15,10 +15,10 @@ import {
   DemandasQueryClientContext,
   demandasQueryKeys,
 } from '../query/queryClient';
+import { DEMANDAS_QUERY_RETRY_EVENT } from '../query/queryEvents';
 
 const EMPTY_DATA: AppData = { demandas: [], historico: [] };
 const REALTIME_INVALIDATION_DELAY_MS = 100;
-const QUERY_RETRY_EVENT = 'demandas:retry';
 const repositoryQueryClients = new WeakMap<DemandasRepository, QueryClient>();
 
 function getRepositoryQueryClient(repository: DemandasRepository) {
@@ -162,8 +162,8 @@ export function useDemandasData(
 
   useEffect(() => {
     const handleRetry = () => { void reload().catch(() => undefined); };
-    window.addEventListener(QUERY_RETRY_EVENT, handleRetry);
-    return () => window.removeEventListener(QUERY_RETRY_EVENT, handleRetry);
+    window.addEventListener(DEMANDAS_QUERY_RETRY_EVENT, handleRetry);
+    return () => window.removeEventListener(DEMANDAS_QUERY_RETRY_EVENT, handleRetry);
   }, [reload]);
 
   const loadTrash = useCallback(async () => {

@@ -15,14 +15,18 @@ Antes de interpretar ou alterar qualquer ciclo, leia integralmente, nesta ordem:
 3. `docs/product/REGISTRO_DECISOES_PRODUTO_CTRH.md`;
 4. `docs/product/PRINCIPIO_PRESERVACAO_INFORMACIONAL_CTRH_v1.0.md`;
 5. `docs/product/POLITICA_SINCRONIZACAO_DOCUMENTAL_CTRH_v1.1.md`;
-6. `docs/PRODUCT_CONTEXT.md`;
-7. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`, como estratégia geral;
-8. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`, como roteiro do Trilho A;
-9. os ADRs de `docs/adr/` e a documentação técnica aplicáveis ao pacote;
-10. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
-11. o Plano Remanescente v2.1, versões anteriores dos planos e `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente como registros históricos.
+6. `docs/product/POLITICA_MANUTENCAO_DEPENDENCIAS_CTRH_v1.1.md`;
+7. `docs/PRODUCT_CONTEXT.md`;
+8. `docs/execution/Plano_Integrado_Reformulado_CTRH_v3.1.md`, como estratégia geral;
+9. `docs/execution/Plano_Executivo_Operacao_Atual_CTRH_v1.2.md`, como roteiro do Trilho A;
+10. `docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md`, quando a tarefa envolver dependências, runtime, ferramentas, arquitetura ou modernização;
+11. os ADRs de `docs/adr/`, a documentação de `docs/architecture/` e a documentação técnica aplicáveis ao pacote;
+12. `docs/HANDOFF.md` e a documentação específica dos arquivos afetados;
+13. o Plano Remanescente v2.1, versões anteriores dos planos e `docs/execution/Plano_Mestre_Execucao_CTRH_v1.0.md` somente como registros históricos.
 
 O `Plano_Remanescente_Execucao_CTRH_v2.1.md`, o `ADENDO_GOVERNANCA_POR_ETAPA_CTRH_v2.0.3.md`, o Protocolo v1.2, a Política v1.0, o `ADENDO_SUSPENSAO_PLANO_CTRH_v2.0.1.md`, o Plano Remanescente v2.0 e o Plano Mestre v1.0 são históricos e foram superados para execução atual. Não podem restaurar uma regra posteriormente alterada e registrada.
+
+O conteúdo proposto no PR #115 também é histórico de preparação: permaneceu aberto sobre base antiga e foi substituído pelos documentos de manutenção v1.1. Não pode ser usado para descrever o estado atual das Rodadas 1, 2 e 3.
 
 ## Autoridade e sequência
 
@@ -36,6 +40,37 @@ O `Plano_Remanescente_Execucao_CTRH_v2.1.md`, o `ADENDO_GOVERNANCA_POR_ETAPA_CTR
 - Após GOV-013, buscar completude operacional em vez de exaustão documental: confronte código, Supabase, interface e testes antes de propor trabalho e classifique cada item como materializado, essencial ou evolução condicionada.
 - A presença de uma possibilidade em plano, checklist ou recomendação não basta para incluí-la no lançamento; a função deve resolver um trabalho central, risco ou limite comprovado.
 - Uma nova descoberta interrompe somente o item materialmente afetado; o restante prossegue apenas quando independente, seguro e sem antecipar a decisão pendente.
+
+## Modernização proativa e limites tecnológicos
+
+A avaliação de atualizações e novas dependências não ocorre apenas em rodadas específicas de manutenção.
+
+Em toda correção, melhoria de layout, alteração funcional, investigação de erro ou proposta de nova capacidade, verifique se a tecnologia atual:
+
+- causa ou agrava o problema;
+- permite apenas correção paliativa;
+- exige contorno frágil, duplicação excessiva ou complexidade desproporcional;
+- limita acessibilidade, responsividade, desempenho, segurança, confiabilidade, testes, observabilidade ou manutenção;
+- impede alcançar a qualidade esperada;
+- deixou de oferecer suporte adequado enquanto existe alternativa madura e compatível.
+
+Quando uma atualização, instalação ou ampliação tecnológica puder produzir solução materialmente melhor ou mais definitiva, apresente a proposta ao responsável pelo produto antes da implementação. A proposta deve explicar:
+
+1. o problema e o limite concreto da abordagem atual;
+2. a tecnologia sugerida e o benefício funcional e técnico;
+3. a alternativa sem nova dependência;
+4. compatibilidade com a pilha atual;
+5. impacto em bundle, runtime, segurança, privacidade e dados;
+6. esforço de configuração, testes e manutenção;
+7. rollback;
+8. escopo excluído;
+9. recomendação técnica claramente identificada como recomendação.
+
+Não instale ou atualize silenciosamente. A obrigação é **identificar e apresentar** a alternativa superior, não convertê-la em decisão automática.
+
+Também não mantenha solução inferior apenas por apego à pilha atual quando existir caminho moderno, maduro e proporcional. Se uma correção imediata segura puder prosseguir independentemente da modernização, apresente as duas camadas — correção imediata e solução estrutural — e não bloqueie o item urgente sem necessidade.
+
+Consulte `docs/product/POLITICA_MANUTENCAO_DEPENDENCIAS_CTRH_v1.1.md` e `docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md`.
 
 ## Regras vigentes consolidadas após o R3
 
@@ -123,6 +158,7 @@ Toda mudança de lógica, regra de negócio, permissão, obrigatoriedade, dado, 
 - o `PRODUCT_CONTEXT`;
 - o Plano Integrado e o Plano Executivo quando afetados;
 - este `AGENTS.md`, quando houver regra permanente para agentes;
+- a política de manutenção e o plano técnico complementar, quando houver atualização, dependência, runtime, ferramenta ou nova arquitetura;
 - o princípio de preservação informacional, quando a mudança alcançar legado, histórico, transformação ou apresentação de dados;
 - ADRs e documentação técnica afetados;
 - `docs/HANDOFF.md`;
@@ -144,7 +180,8 @@ Não:
 - antecipe decisões de outro ciclo;
 - modifique permissões, obrigatoriedades, padrões, cálculos, telas ou tratamento de dados não debatidos;
 - use documento histórico como justificativa para desfazer regra posterior;
-- deixe atualização documental para outro ciclo.
+- deixe atualização documental para outro ciclo;
+- instale pacote ou atualização apenas por conveniência do executor.
 
 Se surgir uma nova decisão durante a implementação, pare o item afetado, explique a questão e aguarde decisão expressa. O restante poderá prosseguir apenas se for independente, seguro e não antecipar a decisão pendente.
 
@@ -179,6 +216,8 @@ npm run test:e2e
 
 `npm run check:full` consolida o gate atual. Execute também gates específicos do pacote. Nenhum teste pode ser removido, omitido ou ignorado para obter aprovação.
 
+Quando a tarefa envolver limpeza de código ou dependências, execute também `npm run analyze:unused`, trate o Knip apenas como diagnóstico, revise cada achado manualmente e não use autofix.
+
 ## Regras permanentes de produto e dados
 
 - Supabase é a fonte de verdade em produção. O modo local existe apenas para desenvolvimento e testes com dados sintéticos.
@@ -203,6 +242,7 @@ Pare quando:
 - código, banco e documentação não puderem ser reconciliados com segurança;
 - a implementação exigir restaurar comportamento descrito apenas em documento histórico;
 - uma transformação puder apagar, omitir, reduzir, ocultar ou sobrescrever informação oficial;
-- auditoria técnica estiver sendo usada como substituta de conteúdo operacional compreensível.
+- auditoria técnica estiver sendo usada como substituta de conteúdo operacional compreensível;
+- uma instalação proposta tiver impacto material não avaliado em segurança, privacidade, dados, bundle, compatibilidade ou manutenção.
 
 Ao concluir cada pacote, registre: decisões aprovadas, escopo implementado e excluído, branch, commits, PR, Preview e SHA quando aplicável, testes, migrations, impacto nos Trilhos A e B, impacto em dados, acessibilidade, homologação, documentos sincronizados, documentos históricos preservados, rollback, riscos e próxima atividade autorizada.

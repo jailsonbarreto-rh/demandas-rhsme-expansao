@@ -24,6 +24,11 @@
 | Redução de dez exports internos | concluída sem apagar símbolos | PR #137 |
 | Auditoria pré-TypeScript 6 do `tsconfig` | concluída; nenhuma alteração necessária | PR #137 |
 | TypeScript 6.0.3 | atualização concluída, compatível e sem ajuste de código ou `tsconfig` | PR #138 |
+| Supabase JavaScript 2.112.0 | atualização compatível concluída | PR #143 |
+| React Hook Form 7.84.0 e resolvers 5.7.1 | atualização conjunta concluída | PR #143 |
+| Motion 12.43.0 | atualização compatível concluída | PR #143 |
+| Vite 8.2.0 | atualização de build concluída | PR #143 |
+| jest-dom 7.0.0 | atualização de testes concluída | PR #143 |
 
 Itens concluídos não devem permanecer descritos como candidatos futuros.
 
@@ -64,13 +69,7 @@ Nenhuma oportunidade possui compromisso antecipado de implementação ou merge. 
 
 | Possibilidade | Versão identificada | Razão do adiamento |
 |---|---:|---|
-| `@supabase/supabase-js` | 2.111.0 | SDK de produção; exige PR isolado e benefício aplicável |
-| `react-hook-form` | 7.84.0 | fluxo de formulários; exige PR isolado |
-| `@hookform/resolvers` | 5.7.1 | deve ser analisado junto do React Hook Form |
-| `motion` | 12.43.0 | executa na interface; exige avaliação visual e PR próprio |
-| `vite` | 8.2.0 | ferramenta estrutural de build; deve ser avaliada separadamente |
-| ESLint 10 | linha major | fora do escopo da preparação atual |
-| `@testing-library/jest-dom` 7 | linha major | fora do escopo da preparação atual |
+| ESLint 10 | linha major | bloqueado até `eslint-plugin-jsx-a11y` publicar suporte oficial estável; ESLint 9.39.5 preservado |
 | `@types/node` 26 | runtime divergente | o projeto utiliza Node 24 |
 | TypeScript 7 | linha major nativa | TypeScript 6 concluído; ainda exige experiência própria e compatibilidade integral |
 

@@ -151,7 +151,15 @@ A atualização compilou o projeto sem mudança em código ou `tsconfig.json`, p
 
 O TypeScript 7 não é continuação automática. Exige experiência própria após análise integral do compilador nativo e do ecossistema. A próxima investigação técnica recomendada é observabilidade de erros com minimização de dados, sem autorização automática de instalação.
 
-## 7. Oportunidades funcionais condicionadas
+## 7. Rodada 5 — Atualizações compatíveis de pacotes — CONCLUÍDA
+
+O PR #143 integrou Supabase JavaScript 2.112.0, React Hook Form 7.84.0, resolvers 5.7.1, Motion 12.43.0, Vite 8.2.0 e jest-dom 7.0.0. O lockfile foi regenerado pelo npm em Node 24 e o gate integral aprovou segurança, lint, 365 testes, cobertura, build, bundle, inspeção pública, Knip e 42 cenários Playwright.
+
+A atualização do ESLint 10 foi tentada e interrompida corretamente porque `eslint-plugin-jsx-a11y` 6.10.2 ainda declara suporte somente até ESLint 9. A manutenção preservou ESLint 9.39.5, todas as regras de acessibilidade e uma árvore reproduzível, sem flags de contorno. O ESLint 10 será retomado após suporte oficial estável do plugin.
+
+Node 24, `@types/node` 24.13.3 e TypeScript 6.0.3 permaneceram inalterados. Não houve mudança de código, banco, migrations, RLS, dados, regras de negócio ou Production.
+
+## 8. Oportunidades funcionais condicionadas
 
 Permanecem sujeitas a necessidade comprovada e desenho específico:
 
@@ -167,7 +175,7 @@ Permanecem sujeitas a necessidade comprovada e desenho específico:
 
 Nenhuma dessas possibilidades deve ser instalada ou implementada apenas por disponibilidade tecnológica. Da mesma forma, nenhuma deve ser descartada quando resolver de maneira substancial uma necessidade real do produto.
 
-## 8. Validação por PR
+## 9. Validação por PR
 
 Conforme aplicável:
 
@@ -186,7 +194,7 @@ npm run test:e2e
 
 Mudanças de dependência, CI, runtime, cache, Realtime, Supabase ou interface exigem testes específicos adicionais.
 
-## 9. Rollback
+## 10. Rollback
 
 - cada PR deve ser independente e reversível;
 - dependências e lockfile devem ser revertidos juntos;
@@ -195,7 +203,7 @@ Mudanças de dependência, CI, runtime, cache, Realtime, Supabase ou interface e
 - nenhuma atualização será promovida para produção sem confirmação do mesmo SHA;
 - documentação temporalmente superada será preservada como histórico, não usada como orientação atual.
 
-## 10. Autoridade
+## 11. Autoridade
 
 Este documento organiza manutenção e modernização. Não substitui decisões de produto, não autoriza novas funcionalidades por inferência e não cria uma sequência imutável.
 

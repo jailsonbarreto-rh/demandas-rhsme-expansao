@@ -9,33 +9,46 @@
 | Capacidade | Estado material | Evidência principal |
 |---|---|---|
 | Error Boundaries | concluída e publicada | PR #119; release #121–#122 |
-| Playwright 1.62.0 | concluída e publicada | PR #117 |
-| Plugin React para Vite 6.0.4 | concluída e publicada | PR #117 |
-| `globals` 17.8.0 | concluída e publicada | PR #117 |
+| Playwright 1.62.1 | atualização de patch concluída na preparação pré-TypeScript 6 | PR #137 |
+| Plugin React para Vite 6.0.5 | atualização de patch concluída | PR #137 |
+| `globals` 17.9.0 | atualização minor concluída | PR #137 |
 | Supabase JavaScript 2.110.9 | concluída e publicada | PR #118 |
 | GitHub Actions básicas v7 | concluída | PR #116 |
 | Node 24 como fonte única | concluída e publicada | PR #125; release #127–#128 |
-| JSDOM 30.0.0 | concluída e publicada | PR #124 |
+| JSDOM 30.0.1 | atualização de patch concluída e usada pelo Vitest | PR #137 |
 | Supabase Action e CLI fixadas | Action 2.1.1 e CLI 2.111.0 concluídas | PR #126 |
-| Knip 6.29.0 | instalado e disponível em modo diagnóstico | PR #123 |
+| Knip 6.31.0 | atualizado e disponível em modo diagnóstico | PR #137 |
 | TanStack Query 5.101.4 | integrado e publicado | PR #132; release #133–#134 |
 | Tabela responsiva em largura ampla | concluída e publicada | PR #129; release #130–#131 |
+| Constante compartilhada de retry | concluída | PR #136 |
+| Redução de dez exports internos | concluída sem apagar símbolos | PR #137 |
+| Auditoria pré-TypeScript 6 do `tsconfig` | concluída; nenhuma alteração necessária | PR #137 |
 
 Itens concluídos não devem permanecer descritos como candidatos futuros.
 
-## 2. Consolidação em andamento
+## 2. Consolidações concluídas
 
 ### Rodada 3.1 — pós-TanStack Query
 
-- atualizar documentação de manutenção;
-- registrar a arquitetura de cache e mutações;
-- instituir regra de modernização proativa;
-- compartilhar a constante do evento de nova tentativa;
-- executar o Knip;
-- revisar achados manualmente;
-- não realizar exclusões automáticas.
+- documentação de manutenção atualizada;
+- arquitetura de cache e mutações registrada;
+- política de modernização proativa instituída;
+- constante do evento de nova tentativa compartilhada;
+- Knip executado e achados classificados manualmente;
+- nenhuma exclusão automática realizada.
 
-A consolidação não altera banco, RLS, dados, migrations ou regras de negócio.
+### Rodada 3.2 — preparação anterior ao TypeScript 6
+
+- `npm outdated` executado no GitHub Actions;
+- oito atualizações de desenvolvimento e tipos selecionadas;
+- lockfile regenerado pelo npm, sem edição manual;
+- dez exports internos tiveram apenas a visibilidade reduzida;
+- sete símbolos sensíveis sem uso atual permaneceram preservados;
+- o tipo `Json` permaneceu como contrato intencional do banco;
+- `tsconfig.json` auditado contra a transição do TypeScript 6;
+- nenhuma alteração preventiva ou relaxamento de regra foi necessário.
+
+As Rodadas 3.1 e 3.2 não alteram banco, RLS, dados, migrations ou regras de negócio.
 
 ## 3. Próxima atualização estrutural candidata
 
@@ -45,7 +58,23 @@ A consolidação não altera banco, RLS, dados, migrations ou regras de negócio
 
 O experimento não possui compromisso antecipado de merge. Não pode ser combinado com refatoração funcional, alteração de regras ou outra atualização major.
 
-## 4. Oportunidades funcionais condicionadas
+## 4. Atualizações identificadas e adiadas
+
+| Possibilidade | Versão identificada | Razão do adiamento |
+|---|---:|---|
+| `@supabase/supabase-js` | 2.111.0 | SDK de produção; exige PR isolado e benefício aplicável |
+| `react-hook-form` | 7.84.0 | fluxo de formulários; exige PR isolado |
+| `@hookform/resolvers` | 5.7.1 | deve ser analisado junto do React Hook Form |
+| `motion` | 12.43.0 | executa na interface; exige avaliação visual e PR próprio |
+| `vite` | 8.2.0 | ferramenta estrutural de build; deve ser avaliada separadamente |
+| ESLint 10 | linha major | fora do escopo da preparação atual |
+| `@testing-library/jest-dom` 7 | linha major | fora do escopo da preparação atual |
+| `@types/node` 26 | runtime divergente | o projeto utiliza Node 24 |
+| TypeScript 7 | linha major nativa | somente após a ponte e avaliação do TypeScript 6 |
+
+A existência dessas versões não autoriza atualização. Cada retomada deve cumprir a política de manutenção e demonstrar benefício concreto.
+
+## 5. Oportunidades funcionais condicionadas
 
 | Possibilidade | Benefício potencial | Condição de retomada |
 |---|---|---|
@@ -59,7 +88,7 @@ O experimento não possui compromisso antecipado de merge. Não pode ser combina
 | Paginação e busca remotas | reduzir carga no cliente e suportar acervo ampliado | volume, latência ou memória justificarem mudança arquitetural |
 | Central de comandos | acesso rápido a rotas e ações | quantidade real de ações globais justificar o recurso |
 
-## 5. Regra de modernização proativa
+## 6. Regra de modernização proativa
 
 O inventário não é a única fonte de propostas.
 
@@ -73,7 +102,7 @@ Uma nova proposta deve ser adicionada a este registro quando:
 - permanecer adiada após avaliação;
 - alterar fundamento de alternativa anteriormente rejeitada.
 
-## 6. Alternativas não recomendadas no estado atual
+## 7. Alternativas não recomendadas no estado atual
 
 | Alternativa | Decisão atual | Motivo |
 |---|---|---|
@@ -91,13 +120,13 @@ Uma nova proposta deve ser adicionada a este registro quando:
 
 Essas decisões podem ser reavaliadas apenas quando nova evidência alterar o fundamento técnico ou funcional.
 
-## 7. Oportunidades históricas substituídas
+## 8. Alternativas históricas substituídas
 
-A versão proposta no PR #115 listava como futuras várias capacidades já concluídas nas Rodadas 1, 2 e 3. Essa classificação foi superada por este registro v1.1.
+A versão proposta no PR #115 listava como futuras várias capacidades já concluídas nas Rodadas 1, 2, 3, 3.1 e 3.2. Essa classificação foi superada por este registro v1.1.
 
 O PR #115 permanece útil somente como memória da preparação inicial. Não deve ser usado para determinar o estado atual ou a próxima atualização.
 
-## 8. Regra de uso
+## 9. Regra de uso
 
 Este registro:
 

@@ -28,6 +28,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Run documentation consistency gate
+        run: npm run check:docs
+
       - name: Audit dependency vulnerabilities
         shell: bash
         run: |

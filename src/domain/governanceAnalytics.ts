@@ -20,7 +20,7 @@ export interface DefinedFinalDeadlineSituation {
   inconsistente: number;
 }
 
-export type ResponsibleLinkState = 'oficial' | 'legado_pendente' | 'nao_atribuido';
+type ResponsibleLinkState = 'oficial' | 'legado_pendente' | 'nao_atribuido';
 
 export interface ResponsibleDistributionItem {
   key: string;

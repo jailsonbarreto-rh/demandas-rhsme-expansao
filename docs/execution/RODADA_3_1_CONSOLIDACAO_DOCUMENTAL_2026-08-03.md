@@ -21,7 +21,8 @@ A Rodada 3.1 corrige essa divergência sem reabrir decisões funcionais e sem al
 - atualização do Handoff;
 - atualização do Histórico Documental;
 - formalização da regra de modernização proativa;
-- registro da substituição documental do conteúdo proposto no PR #115.
+- registro da substituição documental do conteúdo proposto no PR #115;
+- alinhamento do workflow principal de PRs para executar `npm run check:docs` após `npm ci`.
 
 ## 3. Regra de modernização proativa
 
@@ -69,7 +70,32 @@ A nova referência arquitetural registra:
 - testes obrigatórios;
 - limites não autorizados, como optimistic updates e persistência de cache.
 
-## 6. PR técnico separado
+## 6. Correção do gate documental no CI
+
+A inspeção do workflow `.github/workflows/dependency-health.yml` identificou uma divergência entre a governança declarada e a automação efetiva:
+
+- `npm run check:docs` já fazia parte do comando consolidado `npm run check`;
+- `AGENTS.md` e a Política de Sincronização Documental já o definiam como validação obrigatória;
+- o workflow principal dos pull requests executava instalação, auditoria, lint, testes, build, bundle e navegador, mas não executava o gate documental.
+
+A Rodada 3.1 acrescenta ao workflow, imediatamente após `npm ci`:
+
+```yaml
+- name: Run documentation consistency gate
+  run: npm run check:docs
+```
+
+Essa mudança:
+
+- não cria uma nova regra de governança;
+- apenas automatiza uma obrigação já vigente;
+- não altera pacote, runtime, banco ou comportamento do produto;
+- impede que PRs futuros sejam aprovados com cadeia documental incoerente;
+- falha cedo, antes dos gates mais caros, quando existir divergência documental.
+
+O gate foi executado no próprio PR e aprovado.
+
+## 7. PR técnico separado
 
 Para preservar isolamento e rollback, os itens abaixo não integram este PR documental:
 
@@ -81,7 +107,7 @@ Para preservar isolamento e rollback, os itens abaixo não integram este PR docu
 
 Esses itens serão tratados em branch e PR separados depois da aprovação da consolidação documental.
 
-## 7. Fora do escopo
+## 8. Fora do escopo
 
 - nova dependência;
 - atualização de versão;
@@ -93,7 +119,7 @@ Esses itens serão tratados em branch e PR separados depois da aprovação da co
 - publicação em Production;
 - TypeScript 6.
 
-## 8. Documentos criados
+## 9. Documentos criados
 
 - `docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md`;
 - `docs/product/POLITICA_MANUTENCAO_DEPENDENCIAS_CTRH_v1.1.md`;
@@ -101,17 +127,18 @@ Esses itens serão tratados em branch e PR separados depois da aprovação da co
 - `docs/architecture/ARQUITETURA_TANSTACK_QUERY_CTRH_v1.0.md`;
 - este relatório.
 
-## 9. Documentos atualizados
+## 10. Arquivos atualizados
 
+- `.github/workflows/dependency-health.yml`;
 - `AGENTS.md`;
 - `docs/HANDOFF.md`;
 - `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`.
 
-## 10. Rollback
+## 11. Rollback
 
 O rollback consiste em reverter este PR. Não existe rollback de banco, dados, interface ou deployment porque este pacote não os altera.
 
-## 11. Continuidade
+## 12. Continuidade
 
 Após a integração deste PR:
 

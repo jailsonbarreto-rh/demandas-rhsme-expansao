@@ -9,7 +9,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   dependency-and-tsconfig-diagnostic:
@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref_name || github.event.pull_request.head.sha }}
 
       - name: Set up Node.js from package.json
         uses: actions/setup-node@v7
@@ -26,6 +28,20 @@ jobs:
 
       - name: Regenerate lockfile for selected updates
         run: npm install --package-lock-only --ignore-scripts
+
+      - name: Commit regenerated lockfile on branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "Lockfile already synchronized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: regenerar lockfile da Rodada 3.2"
+          git push origin HEAD:${GITHUB_REF_NAME}
 
       - name: Install regenerated dependency tree
         run: npm ci

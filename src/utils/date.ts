@@ -4,7 +4,7 @@ import {
   parseBrazilianDateOnly,
 } from '../domain/temporalSignals';
 
-export const OPERATIONAL_TIME_ZONE = 'America/Sao_Paulo';
+const OPERATIONAL_TIME_ZONE = 'America/Sao_Paulo';
 
 export const getTodayString = (now = new Date()): string => {
   const parts = new Intl.DateTimeFormat('en-CA', {

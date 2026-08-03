@@ -1,6 +1,6 @@
 const DAY_IN_MS = 86_400_000;
 
-export type TemporalSignalKind = 'overdue' | 'today' | 'next_7_days' | 'future' | 'missing';
+type TemporalSignalKind = 'overdue' | 'today' | 'next_7_days' | 'future' | 'missing';
 
 export interface TemporalSignal {
   kind: TemporalSignalKind;

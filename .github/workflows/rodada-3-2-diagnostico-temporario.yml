@@ -1,0 +1,54 @@
+name: Rodada 3.2 diagnostic
+
+on:
+  push:
+    branches:
+      - chore/rodada-3-2-preparacao-typescript
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-and-tsconfig-diagnostic:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js from package.json
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Report patch and minor updates
+        shell: bash
+        run: |
+          set +e
+          npm outdated --json > npm-outdated.json
+          status=$?
+          cat npm-outdated.json
+          if [ "$status" -ne 0 ] && [ "$status" -ne 1 ]; then
+            exit "$status"
+          fi
+
+      - name: Show effective TypeScript configuration
+        run: npx tsc --showConfig > tsconfig-effective.json
+
+      - name: Run current compiler gate
+        run: npx tsc --noEmit
+
+      - name: Run Knip baseline
+        run: npm run analyze:unused
+
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v7
+        with:
+          name: rodada-3-2-diagnosticos
+          path: |
+            npm-outdated.json
+            tsconfig-effective.json
+          retention-days: 14

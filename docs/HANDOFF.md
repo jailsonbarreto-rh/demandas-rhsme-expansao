@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **3 de agosto de 2026 — Rodada 4 concluída; TypeScript 6.0.3 integrado à base técnica**
+Atualizado em: **3 de agosto de 2026 — Rodada 5 concluída; pacotes compatíveis atualizados e ESLint 10 adiado por incompatibilidade oficial**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -34,8 +34,8 @@ Atualizado em: **3 de agosto de 2026 — Rodada 4 concluída; TypeScript 6.0.3 i
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
-| Atividade técnica atual | Rodada 4 encerrada; nenhuma atualização estrutural seguinte autorizada automaticamente |
-| Próxima atualização candidata | estudo de observabilidade de erros; TypeScript 7 permanece adiado para experiência própria |
+| Atividade técnica atual | Rodada 5 encerrada; seis atualizações compatíveis integradas e validadas |
+| Próxima atualização candidata | estudo de observabilidade de erros; ESLint 10 aguarda suporte estável do JSX A11y; TypeScript 7 permanece adiado |
 
 ## Rodadas técnicas concluídas
 
@@ -217,6 +217,41 @@ A Rodada 4 foi concluída pelo PR #138.
 A Rodada 4 não altera comportamento, layout, regras de negócio, Supabase, banco, migrations, RLS, dados, cache, Realtime, autenticação, mutations ou Production. Os workflows temporários de geração e diagnóstico foram removidos antes do gate final.
 
 A evidência completa está em `docs/execution/RODADA_4_TYPESCRIPT_6_RELATORIO_FINAL_2026-08-03.md`.
+
+## Rodada 5 — Atualizações compatíveis de pacotes
+
+A Rodada 5 foi executada pelo PR #143.
+
+### Atualizações integradas
+
+- `@supabase/supabase-js` 2.112.0;
+- `react-hook-form` 7.84.0;
+- `@hookform/resolvers` 5.7.1;
+- `motion` 12.43.0;
+- Vite 8.2.0;
+- `@testing-library/jest-dom` 7.0.0.
+
+O lockfile foi regenerado pelo npm em Node 24. Node `24.x`, `@types/node` 24.13.3 e TypeScript 6.0.3 foram preservados. Nenhum código-fonte, `tsconfig`, banco, migration, RLS, dado, regra de negócio, Supabase remoto ou Production foi alterado.
+
+### ESLint 10
+
+A instalação limpa do ESLint 10 foi bloqueada pelo peer dependency oficial de `eslint-plugin-jsx-a11y` 6.10.2, que admite somente ESLint até a linha 9. Não foram usados `--force`, `--legacy-peer-deps`, código não publicado nem retirada da fiscalização de acessibilidade. ESLint e `@eslint/js` permanecem em 9.39.5 até uma versão estável compatível do plugin.
+
+### Validação
+
+- zero vulnerabilidades;
+- 576 assinaturas e 159 attestations verificadas;
+- documentação 9/9;
+- lint aprovado;
+- 80 arquivos e 365 testes aprovados;
+- cobertura global de linhas de 82,54%;
+- TypeScript 6.0.3 e Vite 8.2.0 aprovados;
+- bundle inicial de 220.300 bytes, 54,79% abaixo da linha de base;
+- inspeção pública aprovada;
+- Knip sem novos achados;
+- 42 cenários Playwright aprovados em desktop e mobile.
+
+A evidência completa está em `docs/execution/RODADA_5_ATUALIZACOES_PACOTES_RELATORIO_FINAL_2026-08-03.md`.
 
 ## Regra permanente de modernização proativa
 

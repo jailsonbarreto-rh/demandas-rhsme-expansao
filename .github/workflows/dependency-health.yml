@@ -19,6 +19,109 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Generate synchronized Handoff artifact
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path('docs/HANDOFF.md')
+          text = source.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  'Atualizado em: **3 de agosto de 2026 — Rodada 3.1 concluída; documentação, constante compartilhada e diagnóstico Knip consolidados**',
+                  'Atualizado em: **3 de agosto de 2026 — Rodada 3.2 concluída; preparação anterior ao TypeScript 6 consolidada**',
+              ),
+              (
+                  '| `main` de base da Rodada 3.1 | `343871ffa32cf30f6cddded6b49d83ec05e2d64a` |',
+                  '| `main` anterior à Rodada 3.2 | `9be47339bafa6e44cc8a0fb4eaae9f43f90fb21d` |',
+              ),
+              (
+                  '| Consolidação técnica da Rodada 3.1 | concluída pelo PR #136: constante compartilhada e diagnóstico Knip |',
+                  '| Consolidação técnica da Rodada 3.1 | concluída pelo PR #136: constante compartilhada e diagnóstico Knip |\n| Preparação anterior ao TypeScript 6 — Rodada 3.2 | concluída pelo PR #137: atualizações de desenvolvimento, redução de exports e auditoria do `tsconfig` |',
+              ),
+              (
+                  '| Atividade técnica atual | Rodada 3.1 encerrada; nenhuma atualização seguinte autorizada automaticamente |',
+                  '| Atividade técnica atual | Rodada 3.2 encerrada; TypeScript 6 permanece próxima experiência candidata |',
+              ),
+              (
+                  'As Rodadas técnicas 1, 2 e 3, a correção responsiva e a Rodada 3.1 não alteraram o banco remoto, dados, migrations, RLS ou regras.',
+                  'As Rodadas técnicas 1, 2 e 3, a correção responsiva e as Rodadas 3.1 e 3.2 não alteraram o banco remoto, dados, migrations, RLS ou regras.',
+              ),
+              (
+                  'A Rodada 3.1 está concluída.\n\nA próxima atualização estrutural candidata é o TypeScript 6. Ela não está autorizada automaticamente: exige proposta de escopo, branch exclusiva, versão exata, gate integral e decisão específica.\n\nAs limpezas indicadas pelo Knip também não estão automaticamente autorizadas e não bloqueiam a avaliação do TypeScript 6. Devem ser tratadas em PRs pequenos somente quando aprovadas.',
+                  'A Rodada 3.2 está concluída.\n\nA próxima atualização estrutural candidata é o TypeScript 6. Ela não está autorizada automaticamente: exige proposta de escopo, branch exclusiva, versão exata, gate integral e decisão específica.\n\nPermanecem adiadas, em PRs isolados e somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. Os sete símbolos sensíveis apontados pelo Knip e o contrato `Json` permanecem preservados.',
+              ),
+              (
+                  '14. `docs/execution/RODADA_3_1_DIAGNOSTICO_KNIP_2026-08-03.md`;',
+                  '14. `docs/execution/RODADA_3_1_DIAGNOSTICO_KNIP_2026-08-03.md`;\n15. `docs/execution/RODADA_3_2_PREPARACAO_TYPESCRIPT_2026-08-03.md`;\n16. `docs/execution/RODADA_3_2_RESULTADO_FINAL_KNIP_2026-08-03.md`;',
+              ),
+              (
+                  'Depois da Rodada 3.1, nenhuma fila funcional se abre automaticamente.',
+                  'Depois da Rodada 3.2, nenhuma fila funcional se abre automaticamente.',
+              ),
+          ]
+
+          for old, new in replacements:
+              if new in text:
+                  continue
+              if old not in text:
+                  raise SystemExit(f'Marcador não encontrado: {old[:100]}')
+              text = text.replace(old, new, 1)
+
+          section = '''## Preparação anterior ao TypeScript 6 — Rodada 3.2
+
+A Rodada 3.2 foi executada pelo PR #137 como preparação de baixo risco, sem atualizar o compilador.
+
+### Atualizações integradas
+
+- `@playwright/test` 1.62.1;
+- `@types/react` 19.2.18;
+- `@types/react-dom` 19.2.4;
+- `@vitejs/plugin-react` 6.0.5;
+- `csv-parse` 7.0.2;
+- `globals` 17.9.0;
+- JSDOM 30.0.1;
+- Knip 6.31.0.
+
+O lockfile foi regenerado pelo npm no GitHub Actions e gravado na branch pelo commit `2a1e3260640c39a2668564cfd163c2913f4b733e`, sem edição manual.
+
+### Limpeza conservadora
+
+Dez símbolos usados internamente deixaram de ser exportados. Nenhum símbolo, arquivo ou comportamento foi removido.
+
+O diagnóstico final do Knip passou de 18 para oito símbolos preservados: `isLegacyDeadlineCompletion`, `canPreserveMissingDeadline`, `canUseDeadlineStateAfterRegistration`, `getPrazoFinalSemantics`, `PrazoSemantics`, `DatabaseR4`, `DeadlineValue` e `Json`.
+
+Não foram encontrados arquivos ou dependências não utilizadas, dependências ausentes, imports não resolvidos ou problemas de configuração.
+
+### Auditoria do compilador
+
+O `tsconfig.json` atual foi auditado contra a preparação do TypeScript 6. A configuração já usa opções modernas, estritas e compatíveis; nenhuma alteração preventiva ou relaxamento de regra foi necessário.
+
+Permanecem adiadas para PRs isolados, somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. Atualizações major de ESLint, Testing Library, tipos do Node e TypeScript 7 também ficaram fora do escopo.
+
+A Rodada 3.2 não altera banco, migrations, RLS, dados, regras de negócio, cache, Realtime, autenticação ou comportamento funcional.
+
+'''
+          marker = '## Regra permanente de modernização proativa'
+          if '## Preparação anterior ao TypeScript 6 — Rodada 3.2' not in text:
+              if marker not in text:
+                  raise SystemExit('Marcador de inserção não encontrado')
+              text = text.replace(marker, section + marker, 1)
+
+          output = Path('handoff-artifact/HANDOFF.md')
+          output.parent.mkdir(parents=True, exist_ok=True)
+          output.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Upload synchronized Handoff artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rodada-3-2-handoff
+          path: handoff-artifact/HANDOFF.md
+          retention-days: 14
+
       - name: Set up Node.js from package.json
         uses: actions/setup-node@v7
         with:

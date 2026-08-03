@@ -1,0 +1,70 @@
+name: TypeScript 6 diagnostics
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostics:
+    name: Compiler, compatibility and Knip diagnostics
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js from package.json
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Record compiler and parser compatibility
+        shell: bash
+        run: |
+          set -o pipefail
+          npx tsc --version | tee typescript-version.txt
+          npm ls typescript typescript-eslint --depth=1 | tee typescript-tree.txt
+
+      - name: Verify dependency compatibility
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:dependency-compat 2>&1 | tee dependency-compat-report.txt
+
+      - name: Build for public bundle inspection
+        run: npm run build
+
+      - name: Inspect public bundle
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run check:public-bundle 2>&1 | tee public-bundle-report.txt
+
+      - name: Run Knip without autofix
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run analyze:unused 2>&1 | tee knip-report.txt
+
+      - name: Upload TypeScript 6 diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: typescript6-diagnostics
+          path: |
+            typescript-version.txt
+            typescript-tree.txt
+            dependency-compat-report.txt
+            public-bundle-report.txt
+            knip-report.txt
+          if-no-files-found: error
+          retention-days: 14

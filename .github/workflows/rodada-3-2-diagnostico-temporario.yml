@@ -24,10 +24,13 @@ jobs:
           node-version-file: package.json
           cache: npm
 
-      - name: Install locked dependencies
+      - name: Regenerate lockfile for selected updates
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Install regenerated dependency tree
         run: npm ci
 
-      - name: Report patch and minor updates
+      - name: Report remaining updates
         shell: bash
         run: |
           set +e
@@ -44,14 +47,15 @@ jobs:
       - name: Run current compiler gate
         run: npx tsc --noEmit
 
-      - name: Run Knip baseline
+      - name: Run Knip diagnostic
         run: npm run analyze:unused
 
-      - name: Upload diagnostics
+      - name: Upload diagnostics and regenerated lockfile
         uses: actions/upload-artifact@v7
         with:
           name: rodada-3-2-diagnosticos
           path: |
+            package-lock.json
             npm-outdated.json
             tsconfig-effective.json
           retention-days: 14

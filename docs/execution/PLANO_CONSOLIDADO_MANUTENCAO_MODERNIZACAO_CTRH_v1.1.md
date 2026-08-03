@@ -143,22 +143,13 @@ A arquitetura está detalhada em `docs/architecture/ARQUITETURA_TANSTACK_QUERY_C
 - mudança visual;
 - publicação funcional automática.
 
-## 6. Próxima atualização estrutural candidata
+## 6. Rodada 4 — TypeScript 6 — CONCLUÍDA
 
-### Rodada 4 — TypeScript 6 experimental
+O TypeScript 6.0.3 foi integrado pelo PR #138 em branch exclusiva. A versão foi fixada exatamente, o lockfile foi regenerado pelo npm em Node 24 e nenhuma outra dependência direta foi alterada.
 
-O TypeScript 6 permanece como próximo experimento estrutural candidato, em branch exclusiva e sem compromisso antecipado de integração.
+A atualização compilou o projeto sem mudança em código ou `tsconfig.json`, preservou todas as opções estritas e não exigiu supressão de erro ou depreciação. Segurança, lint, 365 testes, cobertura, build, bundle, inspeção pública, compatibilidade transitiva, Knip e 42 cenários Playwright foram aprovados.
 
-Condições mínimas:
-
-- versão exata;
-- lockfile regenerado pelo npm;
-- nenhuma combinação com refatoração funcional;
-- preservação das opções estritas;
-- nenhuma supressão permanente criada apenas para obter build verde;
-- lint, testes, cobertura, build, bundle, Playwright e demais gates aprovados;
-- documentação e rollback registrados;
-- autorização expressa antes da execução.
+O TypeScript 7 não é continuação automática. Exige experiência própria após análise integral do compilador nativo e do ecossistema. A próxima investigação técnica recomendada é observabilidade de erros com minimização de dados, sem autorização automática de instalação.
 
 ## 7. Oportunidades funcionais condicionadas
 

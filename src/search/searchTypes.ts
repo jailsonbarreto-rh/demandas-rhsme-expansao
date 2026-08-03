@@ -8,7 +8,7 @@ export type DemandSearchField =
   | 'status'
   | 'historico';
 
-export type DemandSearchMatchKind = 'exact' | 'approximate';
+type DemandSearchMatchKind = 'exact' | 'approximate';
 
 export interface DemandSearchMatch {
   matches: boolean;

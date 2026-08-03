@@ -40,10 +40,12 @@
 
 ## Tarefa 1 — Instalação reproduzível
 
-- [ ] Instalar as versões exatas autorizadas sem flags de contorno.
-- [ ] Regenerar `package-lock.json` pelo npm em Node 24.
-- [ ] Confirmar que Node, `@types/node` e TypeScript permaneceram inalterados.
-- [ ] Confirmar a árvore com `npm ls`.
+- [x] Instalar as versões exatas autorizadas sem flags de contorno.
+- [x] Regenerar `package-lock.json` pelo npm em Node 24.
+- [x] Confirmar que Node, `@types/node` e TypeScript permaneceram inalterados.
+- [ ] Confirmar a árvore com `npm ls` no gate de compatibilidade.
+
+O npm concluiu a instalação e gerou o lockfile no commit `8257e2d5bf214a9987e1f1c9adc27b459f3552e1`. Node `24.x`, `@types/node` `24.13.3` e TypeScript `6.0.3` foram preservados.
 
 ## Tarefa 2 — Compatibilidade de lint e build
 

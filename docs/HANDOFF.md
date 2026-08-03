@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **3 de agosto de 2026 — Rodada 3.2 concluída; preparação anterior ao TypeScript 6 consolidada**
+Atualizado em: **3 de agosto de 2026 — Rodada 4 concluída; TypeScript 6.0.3 integrado à base técnica**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -33,8 +33,9 @@ Atualizado em: **3 de agosto de 2026 — Rodada 3.2 concluída; preparação ant
 | Deploy automático | `deploymentEnabled: false`, restaurado pelo PR #134 |
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
-| Atividade técnica atual | Rodada 3.2 encerrada; TypeScript 6 permanece próxima experiência candidata |
-| Próxima atualização candidata | TypeScript 6 em branch experimental, somente após autorização específica |
+| Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
+| Atividade técnica atual | Rodada 4 encerrada; nenhuma atualização estrutural seguinte autorizada automaticamente |
+| Próxima atualização candidata | estudo de observabilidade de erros; TypeScript 7 permanece adiado para experiência própria |
 
 ## Rodadas técnicas concluídas
 
@@ -182,6 +183,40 @@ O `tsconfig.json` atual foi auditado contra a preparação do TypeScript 6. A co
 Permanecem adiadas para PRs isolados, somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. Atualizações major de ESLint, Testing Library, tipos do Node e TypeScript 7 também ficaram fora do escopo.
 
 A Rodada 3.2 não altera banco, migrations, RLS, dados, regras de negócio, cache, Realtime, autenticação ou comportamento funcional.
+
+## Rodada 4 — TypeScript 6
+
+A Rodada 4 foi concluída pelo PR #138.
+
+### Alteração integrada
+
+- TypeScript 5.9.3 atualizado para TypeScript 6.0.3;
+- versão exata registrada em `package.json`;
+- lockfile regenerado pelo npm em Node 24;
+- typescript-eslint 8.65.0 confirmado com a mesma instalação deduplicada do compilador;
+- nenhuma outra dependência direta atualizada;
+- código-fonte e `tsconfig.json` preservados sem alterações.
+
+### Validação
+
+- zero vulnerabilidades;
+- 578 assinaturas e 159 attestations verificadas;
+- documentação 9/9;
+- lint aprovado;
+- 80 arquivos e 365 testes aprovados;
+- cobertura global de linhas de 82,54%;
+- build TypeScript/Vite aprovado;
+- bundle inicial de 219.506 bytes, 54,95% abaixo da linha de base;
+- inspeção do bundle público aprovada;
+- três testes de compatibilidade transitiva aprovados;
+- 42 cenários Playwright aprovados em desktop e mobile;
+- Knip sem novos achados.
+
+### Limites preservados
+
+A Rodada 4 não altera comportamento, layout, regras de negócio, Supabase, banco, migrations, RLS, dados, cache, Realtime, autenticação, mutations ou Production. Os workflows temporários de geração e diagnóstico foram removidos antes do gate final.
+
+A evidência completa está em `docs/execution/RODADA_4_TYPESCRIPT_6_RELATORIO_FINAL_2026-08-03.md`.
 
 ## Regra permanente de modernização proativa
 
@@ -375,17 +410,17 @@ Os 22 cenários regressivos existentes também permaneceram aprovados em desktop
 
 ## Supabase remoto
 
-As Rodadas técnicas 1, 2 e 3, a correção responsiva e as Rodadas 3.1 e 3.2 não alteraram o banco remoto, dados, migrations, RLS ou regras.
+As Rodadas técnicas 1, 2, 3 e 4, a correção responsiva e as Rodadas 3.1 e 3.2 não alteraram o banco remoto, dados, migrations, RLS ou regras.
 
 Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_harden_pre_r4_progress_status` permanece registrada remotamente. Ela não altera dados: apenas converte os dois contratos anteriores ao R4 em wrappers e deixa `EXECUTE` somente para `authenticated`. A verificação posterior confirmou 379 demandas ativas, zero excluídas, 764 históricos, `search_path` vazio e ausência de execução por `anon` ou `service_role` nesses wrappers.
 
 ## Próxima etapa
 
-A Rodada 3.2 está concluída.
+A Rodada 4 está concluída e o TypeScript 6.0.3 passa a ser a versão oficial do compilador.
 
-A próxima atualização estrutural candidata é o TypeScript 6. Ela não está autorizada automaticamente: exige proposta de escopo, branch exclusiva, versão exata, gate integral e decisão específica.
+Nenhuma atualização estrutural seguinte está autorizada automaticamente. O próximo estudo técnico de maior valor é a observabilidade de erros com minimização de dados; sua eventual instalação exige decisão própria sobre ferramenta, privacidade, retenção, sanitização e ambientes.
 
-Permanecem adiadas, em PRs isolados e somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. Os sete símbolos sensíveis apontados pelo Knip e o contrato `Json` permanecem preservados.
+Permanecem adiadas, em PRs isolados e somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. O TypeScript 7 exige experiência separada. Os sete símbolos sensíveis apontados pelo Knip e o contrato `Json` permanecem preservados.
 
 Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posteriores é autorizada por inferência. A atividade funcional seguinte continua sujeita a valor, risco ou limite comprovado; E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
 

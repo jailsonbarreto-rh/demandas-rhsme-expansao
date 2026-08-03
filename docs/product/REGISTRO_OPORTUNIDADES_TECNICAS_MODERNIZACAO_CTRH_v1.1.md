@@ -23,6 +23,7 @@
 | Constante compartilhada de retry | concluída | PR #136 |
 | Redução de dez exports internos | concluída sem apagar símbolos | PR #137 |
 | Auditoria pré-TypeScript 6 do `tsconfig` | concluída; nenhuma alteração necessária | PR #137 |
+| TypeScript 6.0.3 | atualização concluída, compatível e sem ajuste de código ou `tsconfig` | PR #138 |
 
 Itens concluídos não devem permanecer descritos como candidatos futuros.
 
@@ -50,13 +51,14 @@ Itens concluídos não devem permanecer descritos como candidatos futuros.
 
 As Rodadas 3.1 e 3.2 não alteram banco, RLS, dados, migrations ou regras de negócio.
 
-## 3. Próxima atualização estrutural candidata
+## 3. Próximas oportunidades estruturais
 
 | Oportunidade | Benefício esperado | Condição de retomada | Situação |
 |---|---|---|---|
-| TypeScript 6 | avaliar compatibilidade, diagnósticos e preparação para evolução do compilador | autorização expressa, branch isolada e gate integral | próxima experiência candidata |
+| Observabilidade de erros | detectar falhas reais de Production com contexto técnico sanitizado | definir ferramenta, dados proibidos, retenção, amostragem, ambientes e source maps privados | próximo estudo técnico recomendado |
+| TypeScript 7 | avaliar o compilador nativo e a nova arquitetura da ferramenta | compatibilidade comprovada de todo o ecossistema e experiência isolada posterior ao TypeScript 6 | adiado |
 
-O experimento não possui compromisso antecipado de merge. Não pode ser combinado com refatoração funcional, alteração de regras ou outra atualização major.
+Nenhuma oportunidade possui compromisso antecipado de implementação ou merge. Cada estudo deve permanecer separado de refatoração funcional, alteração de regras ou outra atualização major.
 
 ## 4. Atualizações identificadas e adiadas
 
@@ -70,7 +72,7 @@ O experimento não possui compromisso antecipado de merge. Não pode ser combina
 | ESLint 10 | linha major | fora do escopo da preparação atual |
 | `@testing-library/jest-dom` 7 | linha major | fora do escopo da preparação atual |
 | `@types/node` 26 | runtime divergente | o projeto utiliza Node 24 |
-| TypeScript 7 | linha major nativa | somente após a ponte e avaliação do TypeScript 6 |
+| TypeScript 7 | linha major nativa | TypeScript 6 concluído; ainda exige experiência própria e compatibilidade integral |
 
 A existência dessas versões não autoriza atualização. Cada retomada deve cumprir a política de manutenção e demonstrar benefício concreto.
 
@@ -122,7 +124,7 @@ Essas decisões podem ser reavaliadas apenas quando nova evidência alterar o fu
 
 ## 8. Alternativas históricas substituídas
 
-A versão proposta no PR #115 listava como futuras várias capacidades já concluídas nas Rodadas 1, 2, 3, 3.1 e 3.2. Essa classificação foi superada por este registro v1.1.
+A versão proposta no PR #115 listava como futuras várias capacidades já concluídas nas Rodadas 1, 2, 3, 3.1, 3.2 e 4. Essa classificação foi superada por este registro v1.1.
 
 O PR #115 permanece útil somente como memória da preparação inicial. Não deve ser usado para determinar o estado atual ou a próxima atualização.
 

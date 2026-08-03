@@ -1,9 +1,10 @@
 # Rodada 4 — Plano de Implementação do TypeScript 6
 
 **Data:** 3 de agosto de 2026  
-**Status:** EM EXECUÇÃO  
+**Status:** CONCLUÍDO  
 **Base:** `d0e0f0a40f5eaa1019cf879bd083adc5a3742910`  
-**Branch:** `chore/rodada-4-typescript-6`
+**Branch:** `chore/rodada-4-typescript-6`  
+**Pull request:** #138
 
 ## Objetivo
 
@@ -11,77 +12,80 @@ Atualizar o compilador do projeto de TypeScript 5.9.3 para TypeScript 6.0.3, pre
 
 ## Arquitetura da mudança
 
-A atualização será isolada em um único PR técnico. O `package.json` e o `package-lock.json` serão regenerados pelo npm com versão exata. Ajustes no `tsconfig.json` ou no código somente serão admitidos quando uma incompatibilidade concreta do TypeScript 6 for reproduzida pelo compilador, sem relaxamento permanente de regras.
+A atualização foi isolada em um único PR técnico. O `package.json` e o `package-lock.json` foram regenerados pelo npm com versão exata. Como nenhuma incompatibilidade concreta foi reproduzida pelo compilador, o `tsconfig.json` e o código permaneceram inalterados.
 
 ## Stack e compatibilidade
 
 - Node.js 24.x;
 - npm do runner oficial do GitHub Actions;
 - TypeScript 6.0.3;
-- typescript-eslint 8.65.0, cuja faixa oficial inclui TypeScript `<6.1.0`;
+- typescript-eslint 8.65.0, usando a mesma instalação deduplicada do TypeScript 6.0.3;
 - Vite 8.1.5;
 - React 19.2.8;
 - Vitest 4.1.10;
 - Playwright 1.62.1.
 
-## Restrições globais
+## Restrições globais preservadas
 
-- Não instalar TypeScript 7.
-- Não atualizar outras dependências no mesmo PR.
-- Não alterar banco, migrations, RLS, dados ou Supabase remoto.
-- Não alterar layout, comportamento, regras de negócio, cache, Realtime, autenticação ou mutations.
-- Não usar `ignoreDeprecations` para ocultar problemas.
-- Não ampliar `skipLibCheck` nem relaxar `strict`, `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns` ou `noFallthroughCasesInSwitch`.
-- Não editar manualmente a árvore transitiva do lockfile.
-- Não publicar em Production por inferência; o deploy automático permanece bloqueado.
+- TypeScript 7 não foi instalado.
+- Nenhuma outra dependência foi atualizada no mesmo PR.
+- Banco, migrations, RLS, dados e Supabase remoto permaneceram inalterados.
+- Layout, comportamento, regras de negócio, cache, Realtime, autenticação e mutations permaneceram inalterados.
+- Não foi adicionado `ignoreDeprecations`.
+- `skipLibCheck` não foi ampliado e nenhuma regra estrita foi relaxada.
+- A árvore transitiva do lockfile não foi editada manualmente.
+- Nenhuma publicação em Production foi inferida.
 
 ## Tarefa 1 — Gerar manifesto e lockfile
 
-- [ ] Executar `npm install --save-dev --save-exact typescript@6.0.3` em ambiente Node 24 do GitHub Actions.
-- [ ] Registrar `typescript: 6.0.3` no `package.json`.
-- [ ] Regenerar `package-lock.json` exclusivamente pelo npm.
-- [ ] Confirmar que nenhuma outra dependência direta mudou.
-- [ ] Retirar o mecanismo temporário usado para gerar o lockfile antes do gate final.
+- [x] Executar `npm install --save-dev --save-exact typescript@6.0.3 --package-lock-only --ignore-scripts` em Node 24 no GitHub Actions.
+- [x] Registrar `typescript: 6.0.3` no `package.json`.
+- [x] Regenerar `package-lock.json` exclusivamente pelo npm.
+- [x] Confirmar que nenhuma outra dependência direta mudou.
+- [x] Retirar o mecanismo temporário usado para gerar o lockfile antes do gate final.
 
 ## Tarefa 2 — Validar o compilador
 
-- [ ] Executar `npx tsc --version` e confirmar `Version 6.0.3`.
-- [ ] Executar `npx tsc --noEmit` com o `tsconfig.json` vigente.
-- [ ] Corrigir somente erros concretos introduzidos pelo TypeScript 6.
-- [ ] Preservar `module: ESNext`, `moduleResolution: bundler`, `target: ES2022` e `noEmit: true`, salvo incompatibilidade comprovada.
+- [x] Executar `npx tsc --version` e confirmar `Version 6.0.3`.
+- [x] Executar a compilação com o `tsconfig.json` vigente.
+- [x] Confirmar que nenhum erro introduzido pelo TypeScript 6 exigiu correção.
+- [x] Preservar `module: ESNext`, `moduleResolution: bundler`, `target: ES2022` e `noEmit: true`.
 
 ## Tarefa 3 — Validar a cadeia técnica completa
 
-- [ ] `npm ci`.
-- [ ] `npm run check:docs`.
-- [ ] `npm audit --audit-level=high`.
-- [ ] `npm audit signatures`.
-- [ ] `npm run test:dependency-compat`.
-- [ ] `npm run lint`.
-- [ ] `npm run test:coverage`.
-- [ ] `npm run build`.
-- [ ] `npm run check:bundle`.
-- [ ] `npm run check:public-bundle`.
-- [ ] `npm run analyze:unused`, somente diagnóstico.
-- [ ] `npm run test:e2e` em desktop e mobile.
+- [x] `npm ci`.
+- [x] `npm run check:docs`.
+- [x] `npm audit --audit-level=high`.
+- [x] `npm audit signatures`.
+- [x] `npm run test:dependency-compat`.
+- [x] `npm run lint`.
+- [x] `npm run test:coverage`.
+- [x] `npm run build`.
+- [x] `npm run check:bundle`.
+- [x] `npm run check:public-bundle`.
+- [x] `npm run analyze:unused`, somente diagnóstico.
+- [x] `npm run test:e2e` em desktop e mobile.
 
 ## Tarefa 4 — Documentação e integração
 
-- [ ] Criar relatório final com versão, compatibilidade, ajustes, testes e rollback.
-- [ ] Atualizar o Handoff e o registro de oportunidades técnicas.
-- [ ] Confirmar diff restrito ao compilador, lockfile e documentação necessária.
-- [ ] Integrar somente após o gate integral aprovado.
+- [x] Criar relatório final com versão, compatibilidade, testes e rollback.
+- [x] Atualizar o Handoff e o registro de oportunidades técnicas.
+- [x] Confirmar diff restrito ao compilador, lockfile e documentação necessária.
+- [ ] Integrar após o gate integral do commit documental final.
 
-## Critérios de aprovação
+## Resultados de aprovação
 
-A Rodada 4 será aprovada quando:
+1. `typescript@6.0.3` está fixado e reproduzível pelo lockfile.
+2. O projeto compila sem supressão nova de erro ou depreciação.
+3. Lint, 365 testes, cobertura, build, bundle, segurança e 42 cenários Playwright foram aprovados.
+4. Nenhuma alteração funcional, visual ou de banco está presente.
+5. Os mecanismos temporários de geração e diagnóstico foram removidos.
+6. O TypeScript 6 não criou novos achados no Knip.
 
-1. `typescript@6.0.3` estiver fixado e reproduzível pelo lockfile;
-2. o projeto compilar sem supressão nova de erro ou depreciação;
-3. lint, testes, cobertura, build, bundle, segurança e Playwright estiverem aprovados;
-4. nenhuma alteração funcional, visual ou de banco estiver presente;
-5. o mecanismo temporário de geração do lockfile não permanecer na `main`.
+## Evidência consolidada
+
+Consulte `docs/execution/RODADA_4_TYPESCRIPT_6_RELATORIO_FINAL_2026-08-03.md`.
 
 ## Rollback
 
-Reverter o PR da Rodada 4 restaura `typescript@5.9.3`, o lockfile anterior e a documentação correspondente. Como a mudança não envolve banco, dados ou publicação funcional, não existe rollback de Supabase ou migração.
+Reverter o PR #138 restaura `typescript@5.9.3`, o lockfile anterior e a documentação correspondente. Como a mudança não envolve banco, dados ou publicação funcional, não existe rollback de Supabase ou migration.

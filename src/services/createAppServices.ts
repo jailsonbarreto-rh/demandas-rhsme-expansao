@@ -15,7 +15,7 @@ export interface AppServices {
   profiles: ProfilesService;
 }
 
-export class ConfigurationError extends Error {
+class ConfigurationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ConfigurationError';

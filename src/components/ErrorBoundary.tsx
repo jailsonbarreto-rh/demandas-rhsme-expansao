@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from 'react';
 
-export interface ErrorBoundaryAction {
+interface ErrorBoundaryAction {
   label: string;
   onClick: () => void;
 }

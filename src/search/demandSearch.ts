@@ -39,7 +39,7 @@ function buildHistorySnippet(item: ComentarioHistorico) {
   return `${comment.slice(0, 177).trimEnd()}…`;
 }
 
-export function buildDemandSearchDocument(demanda: Demanda): SearchFieldDocument[] {
+function buildDemandSearchDocument(demanda: Demanda): SearchFieldDocument[] {
   return [
     {
       field: 'numero',

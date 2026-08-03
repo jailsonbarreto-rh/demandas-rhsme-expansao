@@ -10,7 +10,7 @@ function normalizeDate(value: string): string {
   return value.trim();
 }
 
-export function deadlineEquals(before: DeadlineSnapshot, after: DeadlineSnapshot): boolean {
+function deadlineEquals(before: DeadlineSnapshot, after: DeadlineSnapshot): boolean {
   return before.state === after.state && normalizeDate(before.date) === normalizeDate(after.date);
 }
 

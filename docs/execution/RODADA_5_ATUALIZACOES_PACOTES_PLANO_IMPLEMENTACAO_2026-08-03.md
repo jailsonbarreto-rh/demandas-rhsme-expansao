@@ -18,39 +18,40 @@
 - Preservar os 365 testes existentes e os 42 cenários Playwright, acrescentando correções de teste apenas quando exigidas por mudança legítima da ferramenta.
 - Regenerar o lockfile somente pelo npm em Node 24.
 
-## Versões autorizadas
+## Resultado da avaliação de compatibilidade
 
-### Dependências de produção
+### Atualizações incorporadas à instalação
 
 - `@supabase/supabase-js`: `2.110.9` → `2.112.0`;
 - `react-hook-form`: `7.83.0` → `7.84.0`;
 - `@hookform/resolvers`: `5.5.7` → `5.7.1`;
-- `motion`: `12.42.2` → `12.43.0`.
-
-### Dependências de desenvolvimento
-
+- `motion`: `12.42.2` → `12.43.0`;
 - `vite`: `8.1.5` → `8.2.0`;
-- `eslint`: `9.39.5` → `10.8.0`;
-- `@eslint/js`: `9.39.5` → `10.8.0`;
 - `@testing-library/jest-dom`: `6.9.1` → `7.0.0`.
 
-`typescript-eslint` permanece em `8.65.0`, cuja faixa oficial inclui ESLint 10 e TypeScript 6.0.3. Plugins auxiliares somente poderão ser atualizados se o npm ou o gate comprovar incompatibilidade real e existir versão estável compatível.
+### ESLint 10 — bloqueado por incompatibilidade oficial do ecossistema
+
+A tentativa limpa de instalar `eslint` e `@eslint/js` `10.8.0` foi recusada pelo npm com `ERESOLVE`. O pacote `eslint-plugin-jsx-a11y` `6.10.2`, responsável pela fiscalização de acessibilidade JSX do CTRH, declara suporte apenas até ESLint 9. O repositório oficial ainda não publicou versão estável com suporte ao ESLint 10; existem somente propostas abertas não lançadas.
+
+A rodada não utilizará `--force`, `--legacy-peer-deps`, pacote não publicado, remoção do plugin nem redução da cobertura de acessibilidade. Por isso, `eslint` e `@eslint/js` permanecem em `9.39.5`. A atualização major será retomada quando o plugin de acessibilidade publicar suporte oficial estável.
+
+`typescript-eslint` permanece em `8.65.0`, TypeScript em `6.0.3`, Node em `24.x` e `@types/node` em `24.13.3`.
 
 ---
 
 ## Tarefa 1 — Instalação reproduzível
 
-- [x] Instalar as versões exatas autorizadas sem flags de contorno.
+- [x] Instalar as versões compatíveis exatas sem flags de contorno.
 - [x] Regenerar `package-lock.json` pelo npm em Node 24.
+- [x] Restaurar ESLint `9.39.5` após a incompatibilidade oficial comprovada.
 - [x] Confirmar que Node, `@types/node` e TypeScript permaneceram inalterados.
 - [ ] Confirmar a árvore com `npm ls` no gate de compatibilidade.
 
-O npm concluiu a instalação e gerou o lockfile no commit `8257e2d5bf214a9987e1f1c9adc27b459f3552e1`. Node `24.x`, `@types/node` `24.13.3` e TypeScript `6.0.3` foram preservados.
+O lockfile reproduzível foi gerado pelo npm no commit `b656e391be6015f6eac6e3a349394d9dd2efd5a6`.
 
 ## Tarefa 2 — Compatibilidade de lint e build
 
-- [ ] Executar ESLint 10 com a configuração plana atual.
-- [ ] Corrigir apenas incompatibilidades objetivas de configuração ou API.
+- [ ] Executar ESLint 9.39.5 com a configuração plana atual e plugins preservados.
 - [ ] Executar TypeScript 6 e Vite 8.2.0.
 - [ ] Comparar o bundle com a linha de base existente.
 

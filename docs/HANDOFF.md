@@ -256,6 +256,47 @@ O pacote não altera:
 - exportação analítica;
 - qualquer decisão ou código do R5-2.
 
+## Auditoria transversal já publicada — validação
+
+### Gate combinado final
+
+Deployment: `dpl_8vU2o1ojgQDsjck7twsaaYUbJwGd` — `READY`.
+
+- auditoria de dependências: zero vulnerabilidades;
+- assinaturas verificadas: 560 pacotes;
+- atestações verificadas: 147 pacotes;
+- compatibilidade transitiva: 3/3;
+- documentação: 9/9;
+- lint: aprovado;
+- 71 arquivos e 328 testes aprovados;
+- cobertura global de linhas: 81,74%;
+- TypeScript e build Vite: aprovados;
+- bundle inicial: 194.126 bytes, 60,16% abaixo da linha de base;
+- inspeção pública: aprovada.
+
+### Navegador
+
+Foram aprovados quatro cenários focais:
+
+- edição em desktop;
+- nova demanda em desktop;
+- edição em mobile de 320 px;
+- nova demanda em mobile de 320 px.
+
+As provas confirmaram preservação dos campos, mensagens ao salvar, qualidade visual dos controles e ausência de overflow horizontal.
+
+Os 22 cenários regressivos existentes também permaneceram aprovados em desktop e mobile, incluindo acessibilidade, navegação, filtros, modais, exportação e console.
+
+## Auditoria transversal já publicada — Production
+
+- deployment `dpl_7G72xFXcQUKtYELrGhXha1xi7UPE` em estado `READY`;
+- target `production`;
+- domínio principal: HTTP 200;
+- `/demandas`: HTTP 200;
+- `/admin`: HTTP 200;
+- rewrites SPA preservados;
+- assets da versão publicada carregados corretamente.
+
 ## Supabase remoto
 
 As Rodadas técnicas 1, 2 e 3 e a correção responsiva não alteraram o banco remoto, dados, migrations, RLS ou regras.

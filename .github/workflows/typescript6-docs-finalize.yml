@@ -1,0 +1,123 @@
+name: TypeScript 6 documentation finalization
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  finalize-docs:
+    name: Finalize TypeScript 6 documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: Detect whether finalization is required
+        id: state
+        shell: bash
+        run: |
+          if grep -q 'Rodada 4 concluída; TypeScript 6.0.3 integrado à base técnica' docs/HANDOFF.md; then
+            echo "needs_update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply verified documentation updates
+        if: steps.state.outputs.needs_update == 'true'
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          handoff_path = Path('docs/HANDOFF.md')
+          handoff = handoff_path.read_text(encoding='utf-8')
+          handoff = replace_once(
+              handoff,
+              'Atualizado em: **3 de agosto de 2026 — Rodada 3.2 concluída; preparação anterior ao TypeScript 6 consolidada**',
+              'Atualizado em: **3 de agosto de 2026 — Rodada 4 concluída; TypeScript 6.0.3 integrado à base técnica**',
+              'handoff header',
+          )
+          handoff = replace_once(
+              handoff,
+              '| Atividade técnica atual | Rodada 3.2 encerrada; TypeScript 6 permanece próxima experiência candidata |\n| Próxima atualização candidata | TypeScript 6 em branch experimental, somente após autorização específica |',
+              '| Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |\n| Atividade técnica atual | Rodada 4 encerrada; nenhuma atualização estrutural seguinte autorizada automaticamente |\n| Próxima atualização candidata | estudo de observabilidade de erros; TypeScript 7 permanece adiado para experiência própria |',
+              'handoff state table',
+          )
+          marker = '## Regra permanente de modernização proativa\n'
+          section = '''## Rodada 4 — TypeScript 6\n\nA Rodada 4 foi concluída pelo PR #138.\n\n### Alteração integrada\n\n- TypeScript 5.9.3 atualizado para TypeScript 6.0.3;\n- versão exata registrada em `package.json`;\n- lockfile regenerado pelo npm em Node 24;\n- typescript-eslint 8.65.0 confirmado com a mesma instalação deduplicada do compilador;\n- nenhuma outra dependência direta atualizada;\n- código-fonte e `tsconfig.json` preservados sem alterações.\n\n### Validação\n\n- zero vulnerabilidades;\n- 578 assinaturas e 159 attestations verificadas;\n- documentação 9/9;\n- lint aprovado;\n- 80 arquivos e 365 testes aprovados;\n- cobertura global de linhas de 82,54%;\n- build TypeScript/Vite aprovado;\n- bundle inicial de 219.506 bytes, 54,95% abaixo da linha de base;\n- inspeção do bundle público aprovada;\n- três testes de compatibilidade transitiva aprovados;\n- 42 cenários Playwright aprovados em desktop e mobile;\n- Knip sem novos achados.\n\n### Limites preservados\n\nA Rodada 4 não altera comportamento, layout, regras de negócio, Supabase, banco, migrations, RLS, dados, cache, Realtime, autenticação, mutations ou Production. Os workflows temporários de geração e diagnóstico foram removidos antes do gate final.\n\nA evidência completa está em `docs/execution/RODADA_4_TYPESCRIPT_6_RELATORIO_FINAL_2026-08-03.md`.\n\n'''
+          handoff = replace_once(handoff, marker, section + marker, 'handoff TypeScript 6 section')
+          handoff = handoff.replace(
+              'As Rodadas técnicas 1, 2 e 3, a correção responsiva e as Rodadas 3.1 e 3.2 não alteraram o banco remoto, dados, migrations, RLS ou regras.',
+              'As Rodadas técnicas 1, 2, 3 e 4, a correção responsiva e as Rodadas 3.1 e 3.2 não alteraram o banco remoto, dados, migrations, RLS ou regras.',
+          )
+          handoff = replace_once(
+              handoff,
+              'A Rodada 3.2 está concluída.\n\nA próxima atualização estrutural candidata é o TypeScript 6. Ela não está autorizada automaticamente: exige proposta de escopo, branch exclusiva, versão exata, gate integral e decisão específica.\n\nPermanecem adiadas, em PRs isolados e somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. Os sete símbolos sensíveis apontados pelo Knip e o contrato `Json` permanecem preservados.',
+              'A Rodada 4 está concluída e o TypeScript 6.0.3 passa a ser a versão oficial do compilador.\n\nNenhuma atualização estrutural seguinte está autorizada automaticamente. O próximo estudo técnico de maior valor é a observabilidade de erros com minimização de dados; sua eventual instalação exige decisão própria sobre ferramenta, privacidade, retenção, sanitização e ambientes.\n\nPermanecem adiadas, em PRs isolados e somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. O TypeScript 7 exige experiência separada. Os sete símbolos sensíveis apontados pelo Knip e o contrato `Json` permanecem preservados.',
+              'handoff next step',
+          )
+          handoff_path.write_text(handoff, encoding='utf-8')
+
+          registry_path = Path('docs/product/REGISTRO_OPORTUNIDADES_TECNICAS_MODERNIZACAO_CTRH_v1.1.md')
+          registry = registry_path.read_text(encoding='utf-8')
+          registry = replace_once(
+              registry,
+              '| Auditoria pré-TypeScript 6 do `tsconfig` | concluída; nenhuma alteração necessária | PR #137 |',
+              '| Auditoria pré-TypeScript 6 do `tsconfig` | concluída; nenhuma alteração necessária | PR #137 |\n| TypeScript 6.0.3 | atualização concluída, compatível e sem ajuste de código ou `tsconfig` | PR #138 |',
+              'registry capability',
+          )
+          registry = replace_once(
+              registry,
+              '## 3. Próxima atualização estrutural candidata\n\n| Oportunidade | Benefício esperado | Condição de retomada | Situação |\n|---|---|---|---|\n| TypeScript 6 | avaliar compatibilidade, diagnósticos e preparação para evolução do compilador | autorização expressa, branch isolada e gate integral | próxima experiência candidata |\n\nO experimento não possui compromisso antecipado de merge. Não pode ser combinado com refatoração funcional, alteração de regras ou outra atualização major.',
+              '## 3. Próximas oportunidades estruturais\n\n| Oportunidade | Benefício esperado | Condição de retomada | Situação |\n|---|---|---|---|\n| Observabilidade de erros | detectar falhas reais de Production com contexto técnico sanitizado | definir ferramenta, dados proibidos, retenção, amostragem, ambientes e source maps privados | próximo estudo técnico recomendado |\n| TypeScript 7 | avaliar o compilador nativo e a nova arquitetura da ferramenta | compatibilidade comprovada de todo o ecossistema e experiência isolada posterior ao TypeScript 6 | adiado |\n\nNenhuma oportunidade possui compromisso antecipado de implementação ou merge. Cada estudo deve permanecer separado de refatoração funcional, alteração de regras ou outra atualização major.',
+              'registry next opportunities',
+          )
+          registry = replace_once(
+              registry,
+              '| TypeScript 7 | linha major nativa | somente após a ponte e avaliação do TypeScript 6 |',
+              '| TypeScript 7 | linha major nativa | TypeScript 6 concluído; ainda exige experiência própria e compatibilidade integral |',
+              'registry TS7 row',
+          )
+          registry = registry.replace(
+              'várias capacidades já concluídas nas Rodadas 1, 2, 3, 3.1 e 3.2.',
+              'várias capacidades já concluídas nas Rodadas 1, 2, 3, 3.1, 3.2 e 4.',
+          )
+          registry_path.write_text(registry, encoding='utf-8')
+
+          consolidated_path = Path('docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md')
+          consolidated = consolidated_path.read_text(encoding='utf-8')
+          consolidated = replace_once(
+              consolidated,
+              '## 6. Próxima atualização estrutural candidata\n\n### Rodada 4 — TypeScript 6 experimental\n\nO TypeScript 6 permanece como próximo experimento estrutural candidato, em branch exclusiva e sem compromisso antecipado de integração.\n\nCondições mínimas:\n\n- versão exata;\n- lockfile regenerado pelo npm;\n- nenhuma combinação com refatoração funcional;\n- preservação das opções estritas;\n- nenhuma supressão permanente criada apenas para obter build verde;\n- lint, testes, cobertura, build, bundle, Playwright e demais gates aprovados;\n- documentação e rollback registrados;\n- autorização expressa antes da execução.',
+              '## 6. Rodada 4 — TypeScript 6 — CONCLUÍDA\n\nO TypeScript 6.0.3 foi integrado pelo PR #138 em branch exclusiva. A versão foi fixada exatamente, o lockfile foi regenerado pelo npm em Node 24 e nenhuma outra dependência direta foi alterada.\n\nA atualização compilou o projeto sem mudança em código ou `tsconfig.json`, preservou todas as opções estritas e não exigiu supressão de erro ou depreciação. Segurança, lint, 365 testes, cobertura, build, bundle, inspeção pública, compatibilidade transitiva, Knip e 42 cenários Playwright foram aprovados.\n\nO TypeScript 7 não é continuação automática. Exige experiência própria após análise integral do compilador nativo e do ecossistema. A próxima investigação técnica recomendada é observabilidade de erros com minimização de dados, sem autorização automática de instalação.',
+              'consolidated TypeScript 6 section',
+          )
+          consolidated_path.write_text(consolidated, encoding='utf-8')
+
+      - name: Verify documentation
+        if: steps.state.outputs.needs_update == 'true'
+        run: npm run check:docs
+
+      - name: Commit documentation
+        if: steps.state.outputs.needs_update == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/HANDOFF.md docs/product/REGISTRO_OPORTUNIDADES_TECNICAS_MODERNIZACAO_CTRH_v1.1.md docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md
+          git commit -m "docs: encerrar Rodada 4 do TypeScript 6"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"

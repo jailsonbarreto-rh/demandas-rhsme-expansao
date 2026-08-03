@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **3 de agosto de 2026 — Rodadas técnicas 1, 2 e 3 publicadas; consolidação documental pós-TanStack Query em andamento**
+Atualizado em: **3 de agosto de 2026 — Rodada 3.1 concluída; documentação, constante compartilhada e diagnóstico Knip consolidados**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -9,7 +9,7 @@ Atualizado em: **3 de agosto de 2026 — Rodadas técnicas 1, 2 e 3 publicadas; 
 | Item | Estado |
 |---|---|
 | Repositório | `WilsonMPeixoto-2/demandas-rhsme-expansao` |
-| `main` atual | `15aa5c049c3c7122db365eec6a2e9f629e3c38ea` |
+| `main` de base da Rodada 3.1 | `343871ffa32cf30f6cddded6b49d83ec05e2d64a` |
 | R4 | concluído e publicado |
 | R5-1 | concluído, homologado e publicado |
 | Auditoria transversal de layout | concluída, homologada e publicada |
@@ -19,6 +19,9 @@ Atualizado em: **3 de agosto de 2026 — Rodadas técnicas 1, 2 e 3 publicadas; 
 | Rodada técnica 2 | concluída e publicada pelos PRs #123–#128 |
 | Correção responsiva da tabela | concluída e publicada pelos PRs #129–#131 |
 | Rodada técnica 3 — TanStack Query | concluída e publicada pelos PRs #132–#134 |
+| Consolidação documental da Rodada 3.1 | concluída pelo PR #135, merge `343871ffa32cf30f6cddded6b49d83ec05e2d64a` |
+| PR documental anterior | #115 encerrado sem merge por substituição e obsolescência temporal |
+| Consolidação técnica da Rodada 3.1 | concluída pelo PR #136: constante compartilhada e diagnóstico Knip |
 | PR funcional TanStack Query | #132, merge `e7ca96fa2f1474d27703967db641fd91a4e619c6` |
 | PR de release TanStack Query | #133, merge `f9424b34ec9efd02d00f2e989d15816f52c5e480` |
 | Encerramento da release | PR #134, merge `15aa5c049c3c7122db365eec6a2e9f629e3c38ea` |
@@ -29,7 +32,7 @@ Atualizado em: **3 de agosto de 2026 — Rodadas técnicas 1, 2 e 3 publicadas; 
 | Deploy automático | `deploymentEnabled: false`, restaurado pelo PR #134 |
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
-| Atividade técnica atual | Rodada 3.1: consolidação documental, constante compartilhada e diagnóstico Knip |
+| Atividade técnica atual | Rodada 3.1 encerrada; nenhuma atualização seguinte autorizada automaticamente |
 | Próxima atualização candidata | TypeScript 6 em branch experimental, somente após autorização específica |
 
 ## Rodadas técnicas concluídas
@@ -81,31 +84,61 @@ A arquitetura vigente está descrita em `docs/architecture/ARQUITETURA_TANSTACK_
 
 ## Consolidação pós-TanStack Query — Rodada 3.1
 
-A Rodada 3.1 é uma consolidação documental e técnica de baixo risco.
+A Rodada 3.1 foi concluída em dois PRs independentes e reversíveis.
 
-### Escopo autorizado nesta etapa
+### Consolidação documental — PR #135
 
-- substituir o plano desatualizado do PR #115;
-- registrar que as Rodadas 1, 2 e 3 foram concluídas;
-- instituir política de modernização proativa;
-- atualizar o registro de oportunidades técnicas;
-- documentar a arquitetura TanStack Query;
-- extrair `demandas:retry` para constante compartilhada em PR próprio;
-- executar e analisar manualmente o Knip;
-- não excluir automaticamente arquivo, export ou dependência.
+- substituiu o plano desatualizado do PR #115;
+- registrou que as Rodadas 1, 2 e 3 foram concluídas;
+- instituiu a política de modernização proativa;
+- atualizou o registro de oportunidades técnicas;
+- documentou a arquitetura TanStack Query;
+- sincronizou `AGENTS.md`, Handoff e Histórico Documental;
+- adicionou `npm run check:docs` ao workflow principal de PRs, automatizando uma obrigação já vigente.
 
-### Limites
+O PR #115 foi encerrado sem merge e preservado como histórico da preparação inicial.
 
-A consolidação não autoriza:
+### Consolidação técnica — PR #136
 
-- pacote novo;
-- mudança de comportamento funcional;
-- alteração visual;
-- banco, migration, RLS ou dados;
-- optimistic update;
-- alteração de cache, Realtime ou sessão;
-- TypeScript 6 por inferência;
-- publicação funcional automática.
+- criou `src/query/queryEvents.ts`;
+- centralizou `demandas:retry` em `DEMANDAS_QUERY_RETRY_EVENT`;
+- fez o Header emitir e `useDemandasData` escutar a mesma constante;
+- preservou integralmente o valor e o comportamento de recuperação;
+- executou `npm run analyze:unused` sem autofix;
+- retirou o passo temporário do Knip antes do gate final;
+- manteve o Knip fora do gate obrigatório.
+
+### Resultado do Knip
+
+Não foram encontrados:
+
+- arquivos não utilizados;
+- dependências não utilizadas;
+- dependências ausentes ou não listadas;
+- imports ou executáveis não resolvidos;
+- problemas de configuração.
+
+Foram identificados 18 símbolos exportados sem consumidor externo detectado:
+
+- 10 são usados internamente e possuem apenas visibilidade pública maior do que a necessária;
+- 7 não participam do runtime atual, mas exigem revisão específica antes de remoção por alcançarem prazos legados, tipos de domínio ou contratos Supabase;
+- `Json`, de `database.types.ts`, deve ser preservado como contrato tipado do banco.
+
+Nenhum arquivo, dependência, export ou contrato foi removido na Rodada 3.1. As limpezas possíveis permanecem recomendações separadas e não autorizadas automaticamente.
+
+A análise integral está em `docs/execution/RODADA_3_1_DIAGNOSTICO_KNIP_2026-08-03.md`.
+
+### Limites preservados
+
+A Rodada 3.1 não alterou:
+
+- pacote ou versão;
+- comportamento funcional;
+- interface;
+- banco, migrations, RLS ou dados;
+- cache, Realtime, mutations ou sessão;
+- regras de negócio;
+- deployment de Production.
 
 ## Regra permanente de modernização proativa
 
@@ -299,15 +332,17 @@ Os 22 cenários regressivos existentes também permaneceram aprovados em desktop
 
 ## Supabase remoto
 
-As Rodadas técnicas 1, 2 e 3 e a correção responsiva não alteraram o banco remoto, dados, migrations, RLS ou regras.
+As Rodadas técnicas 1, 2 e 3, a correção responsiva e a Rodada 3.1 não alteraram o banco remoto, dados, migrations, RLS ou regras.
 
 Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_harden_pre_r4_progress_status` permanece registrada remotamente. Ela não altera dados: apenas converte os dois contratos anteriores ao R4 em wrappers e deixa `EXECUTE` somente para `authenticated`. A verificação posterior confirmou 379 demandas ativas, zero excluídas, 764 históricos, `search_path` vazio e ausência de execução por `anon` ou `service_role` nesses wrappers.
 
 ## Próxima etapa
 
-A atividade atual é a **Rodada 3.1 — consolidação pós-TanStack Query**.
+A Rodada 3.1 está concluída.
 
-Depois de concluir a sincronização documental, a constante compartilhada e o diagnóstico Knip, a próxima atualização estrutural candidata é o TypeScript 6. Ela não está autorizada automaticamente: exige proposta de escopo, branch exclusiva, versão exata, gate integral e decisão específica.
+A próxima atualização estrutural candidata é o TypeScript 6. Ela não está autorizada automaticamente: exige proposta de escopo, branch exclusiva, versão exata, gate integral e decisão específica.
+
+As limpezas indicadas pelo Knip também não estão automaticamente autorizadas e não bloqueiam a avaliação do TypeScript 6. Devem ser tratadas em PRs pequenos somente quando aprovadas.
 
 Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posteriores é autorizada por inferência. A atividade funcional seguinte continua sujeita a valor, risco ou limite comprovado; E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
 
@@ -325,16 +360,18 @@ Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posterior
 10. `docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md`;
 11. `docs/product/REGISTRO_OPORTUNIDADES_TECNICAS_MODERNIZACAO_CTRH_v1.1.md`;
 12. `docs/architecture/ARQUITETURA_TANSTACK_QUERY_CTRH_v1.0.md`;
-13. `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
-14. `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
-15. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`, como histórico de sequência;
-16. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`, como pauta reconciliada;
-17. `docs/adr/ADR-003-historico-e-exclusao-logica.md`;
-18. `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`;
-19. `docs/execution/ENCERRAMENTO_R5_1_2026-07-30.md`;
-20. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
-21. `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
-22. este Handoff.
+13. `docs/execution/RODADA_3_1_CONSOLIDACAO_DOCUMENTAL_2026-08-03.md`;
+14. `docs/execution/RODADA_3_1_DIAGNOSTICO_KNIP_2026-08-03.md`;
+15. `docs/execution/ATUALIZACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
+16. `docs/execution/RELATORIO_VALIDACAO_COMPLETUDE_OPERACIONAL_2026-08-01.md`;
+17. `docs/execution/ATUALIZACAO_POS_R4_PRE_R5_2026-07-30.md`, como histórico de sequência;
+18. `docs/product/PAUTA_DECISOES_R5_2026-07-30.md`, como pauta reconciliada;
+19. `docs/adr/ADR-003-historico-e-exclusao-logica.md`;
+20. `docs/execution/RELATORIO_VALIDACAO_R5_1_2026-07-30.md`;
+21. `docs/execution/ENCERRAMENTO_R5_1_2026-07-30.md`;
+22. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
+23. `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
+24. este Handoff.
 
 ## Regra de continuidade
 

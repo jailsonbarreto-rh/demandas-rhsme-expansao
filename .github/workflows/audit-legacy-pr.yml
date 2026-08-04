@@ -25,8 +25,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p legacy-audit/http legacy-audit/browser legacy-audit/assets
-          cat > /tmp/audit.mjs <<'JS'
-          import { chromium } from 'playwright';
+          cat > legacy-audit-runner.mjs <<'JS'
+          import { chromium } from '@playwright/test';
           import fs from 'node:fs/promises';
           import path from 'node:path';
           import crypto from 'node:crypto';
@@ -77,7 +77,7 @@ jobs:
           await fs.writeFile(`${root}/inventory.json`,JSON.stringify(inventory,null,2));
           await browser.close();
           JS
-          node /tmp/audit.mjs
+          node legacy-audit-runner.mjs
 
       - name: Analyze JavaScript signatures
         shell: bash

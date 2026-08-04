@@ -58,6 +58,7 @@ jobs:
           const projectId=process.env.FIREBASE_PROJECT_ID;
           const email=process.env.LEGACY_EMAIL;
           const password=process.env.LEGACY_PASSWORD;
+          const appOrigin='https://rh-sme.web.app';
 
           async function jsonFetch(url, options={}) {
             const response=await fetch(url, options);
@@ -76,7 +77,11 @@ jobs:
 
           const auth=await jsonFetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`,{
             method:'POST',
-            headers:{'content-type':'application/json'},
+            headers:{
+              'content-type':'application/json',
+              'Origin':appOrigin,
+              'Referer':`${appOrigin}/`
+            },
             body:JSON.stringify({email,password,returnSecureToken:true})
           });
           const token=auth.idToken;

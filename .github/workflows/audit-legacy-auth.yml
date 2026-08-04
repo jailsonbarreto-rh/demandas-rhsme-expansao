@@ -1,4 +1,4 @@
-name: Export readable legacy demands
+name: Verify deployed legacy RH clone
 
 on:
   pull_request:
@@ -11,165 +11,71 @@ permissions:
   contents: read
 
 jobs:
-  export-demands:
+  browser-verification:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      CREDENTIAL_BLOB_SHA: 4fced64e21215d0e4bdc53f7b3f0c59977754a5a
-      FIREBASE_API_KEY: AIzaSyBfRFHI4Zt_E0vuO0qZCvju6X6JJH_D-9s
-      FIREBASE_PROJECT_ID: contratos-sme
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
-      - name: Load temporary credentials from unreferenced private blob
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Install browser
         run: |
-          set -euo pipefail
-          curl -fsSL \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/blobs/${CREDENTIAL_BLOB_SHA}" \
-            | jq -r '.content' | tr -d '\n' | base64 --decode > /tmp/legacy-credentials.json
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          data=json.loads(Path('/tmp/legacy-credentials.json').read_text())
-          email=data['email']; password=data['password']
-          print(f'::add-mask::{email}')
-          print(f'::add-mask::{password}')
-          with open(os.environ['GITHUB_ENV'],'a') as f:
-              f.write(f'LEGACY_EMAIL={email}\n')
-              f.write(f'LEGACY_PASSWORD={password}\n')
-          PY
-          rm -f /tmp/legacy-credentials.json
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
 
-      - name: Export Firestore documents in read-only mode
+      - name: Verify clone interface and data loading
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p legacy-demand-export
-          cat > legacy-demand-export/export.mjs <<'JS'
+          mkdir -p clone-verification
+          cat > clone-verification/verify.mjs <<'JS'
+          import { chromium } from '@playwright/test';
           import fs from 'node:fs/promises';
-          import crypto from 'node:crypto';
 
-          const apiKey=process.env.FIREBASE_API_KEY;
-          const projectId=process.env.FIREBASE_PROJECT_ID;
-          const email=process.env.LEGACY_EMAIL;
-          const password=process.env.LEGACY_PASSWORD;
-          const appOrigin='https://rh-sme.web.app';
+          const base='https://demandas-rhsme-nine.vercel.app';
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:1440,height:1000},locale:'pt-BR'});
+          const page=await context.newPage();
+          const consoleEvents=[]; const pageErrors=[]; const requests=[]; const responses=[];
+          page.on('console',m=>consoleEvents.push({type:m.type(),text:m.text()}));
+          page.on('pageerror',e=>pageErrors.push(String(e.stack||e)));
+          page.on('request',r=>requests.push({url:r.url(),method:r.method(),resourceType:r.resourceType()}));
+          page.on('response',r=>responses.push({url:r.url(),status:r.status()}));
 
-          async function jsonFetch(url, options={}) {
-            const response=await fetch(url, options);
-            const text=await response.text();
-            let body;
-            try { body=text ? JSON.parse(text) : {}; }
-            catch { body={raw:text}; }
-            if(!response.ok) {
-              const err=new Error(`HTTP ${response.status} ${response.statusText}`);
-              err.status=response.status;
-              err.body=body;
-              throw err;
-            }
-            return body;
-          }
+          await page.goto(`${base}/#/home`,{waitUntil:'networkidle',timeout:90000});
+          await page.waitForFunction(()=>document.body.innerText.includes('Sistema de RH'),null,{timeout:30000});
+          const homeText=await page.locator('body').innerText();
+          if(!homeText.includes('Demandas')||!homeText.includes('Avaliação')||!homeText.includes('Eventos e Cursos')) throw new Error('Módulos esperados ausentes da página inicial');
+          await page.screenshot({path:'clone-verification/home.png',fullPage:true});
 
-          const auth=await jsonFetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`,{
-            method:'POST',
-            headers:{
-              'content-type':'application/json',
-              'Origin':appOrigin,
-              'Referer':`${appOrigin}/`
-            },
-            body:JSON.stringify({email,password,returnSecureToken:true})
-          });
-          const token=auth.idToken;
-          const headers={Authorization:`Bearer ${token}`,'content-type':'application/json'};
+          await page.goto(`${base}/#/demandas`,{waitUntil:'networkidle',timeout:90000});
+          await page.waitForFunction(()=>document.querySelectorAll('tbody tr').length===50,null,{timeout:60000});
+          const demandsText=await page.locator('body').innerText();
+          const rowCount=await page.locator('tbody tr').count();
+          if(!demandsText.includes('Controle de Demandas')) throw new Error('Tela de demandas não carregou');
+          await page.screenshot({path:'clone-verification/demandas.png',fullPage:true});
 
-          let rawDocuments=[];
-          let extractionMode='listDocuments';
-          let listFailure=null;
-          try {
-            let pageToken='';
-            do {
-              const url=new URL(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/demandas/registros/demandasrj2`);
-              url.searchParams.set('pageSize','1000');
-              if(pageToken) url.searchParams.set('pageToken',pageToken);
-              const page=await jsonFetch(url,{headers:{Authorization:`Bearer ${token}`}});
-              rawDocuments.push(...(page.documents||[]));
-              pageToken=page.nextPageToken||'';
-            } while(pageToken);
-          } catch (error) {
-            listFailure={status:error.status||null,body:error.body||null,message:error.message};
-            extractionMode='runQuery';
-            const statuses=['Aguardando Andamento','Tramitado','Para assinatura','Sobrestado','Ajustar','Encerrado','Aguardando andamento','tramitação','tramitado','sobrestado','ajustar','encerrado'];
-            const queryBody={structuredQuery:{
-              from:[{collectionId:'demandasrj2'}],
-              where:{fieldFilter:{field:{fieldPath:'status'},op:'IN',value:{arrayValue:{values:statuses.map(stringValue=>({stringValue}))}}}}
-            }};
-            const rows=await jsonFetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/demandas/registros:runQuery`,{
-              method:'POST',headers,body:JSON.stringify(queryBody)
-            });
-            rawDocuments=rows.map(row=>row.document).filter(Boolean);
-          }
+          await page.goto(`${base}/#/validacao`,{waitUntil:'networkidle',timeout:90000});
+          await page.waitForFunction(()=>document.body.innerText.includes('3.201 documentos'),null,{timeout:60000});
+          const validationText=await page.locator('body').innerText();
+          if(!validationText.includes('Validação de Migração')) throw new Error('Ferramenta de validação não carregou');
+          await page.screenshot({path:'clone-verification/validacao.png',fullPage:true});
 
-          function decodeValue(value) {
-            if(!value || typeof value!=='object') return value;
-            if('nullValue' in value) return null;
-            if('stringValue' in value) return value.stringValue;
-            if('booleanValue' in value) return value.booleanValue;
-            if('integerValue' in value) {
-              const n=Number(value.integerValue);
-              return Number.isSafeInteger(n) ? n : value.integerValue;
-            }
-            if('doubleValue' in value) return value.doubleValue;
-            if('timestampValue' in value) return value.timestampValue;
-            if('bytesValue' in value) return {$bytes:value.bytesValue};
-            if('referenceValue' in value) return {$reference:value.referenceValue};
-            if('geoPointValue' in value) return {$geoPoint:value.geoPointValue};
-            if('arrayValue' in value) return (value.arrayValue.values||[]).map(decodeValue);
-            if('mapValue' in value) return decodeFields(value.mapValue.fields||{});
-            return value;
-          }
-          function decodeFields(fields) {
-            return Object.fromEntries(Object.entries(fields||{}).map(([key,value])=>[key,decodeValue(value)]));
-          }
-          function documentId(name='') { return name.split('/').pop()||''; }
-          const documents=rawDocuments.map(doc=>({
-            _firestoreDocumentId:documentId(doc.name),
-            _firestoreName:doc.name,
-            _createTime:doc.createTime||null,
-            _updateTime:doc.updateTime||null,
-            ...decodeFields(doc.fields||{})
-          }));
-          documents.sort((a,b)=>String(a._firestoreDocumentId).localeCompare(String(b._firestoreDocumentId),'pt-BR'));
+          const dataResponse=responses.find(r=>r.url.includes('/data/demandas-legado.json'));
+          if(!dataResponse||dataResponse.status!==200) throw new Error('Snapshot de demandas não foi carregado com HTTP 200');
+          const unexpected=requests.filter(r=>!r.url.startsWith(base)&&!r.url.startsWith('data:')&&!r.url.startsWith('blob:'));
+          if(unexpected.length) throw new Error(`Requisições externas inesperadas: ${JSON.stringify(unexpected)}`);
+          if(pageErrors.length) throw new Error(`Erros de página: ${JSON.stringify(pageErrors)}`);
 
-          const fieldFrequency={};
-          for(const doc of documents) for(const key of Object.keys(doc)) fieldFrequency[key]=(fieldFrequency[key]||0)+1;
-          const canonical=JSON.stringify(documents);
-          const manifest={
-            extractedAt:new Date().toISOString(),
-            projectId,
-            collectionPath:'demandas/registros/demandasrj2',
-            extractionMode,
-            listFailure,
-            authenticatedUid:auth.localId,
-            documentCount:documents.length,
-            sha256:crypto.createHash('sha256').update(canonical).digest('hex'),
-            fieldFrequency:Object.fromEntries(Object.entries(fieldFrequency).sort((a,b)=>a[0].localeCompare(b[0],'pt-BR')))
-          };
-          await fs.writeFile('legacy-demand-export/demandas-firestore-raw.json',JSON.stringify(rawDocuments,null,2));
-          await fs.writeFile('legacy-demand-export/demandas-legado.json',JSON.stringify(documents,null,2));
-          await fs.writeFile('legacy-demand-export/manifest.json',JSON.stringify(manifest,null,2));
+          const result={base,rowCount,dataResponse,homeText:homeText.slice(0,3000),demandsText:demandsText.slice(0,5000),validationText:validationText.slice(0,3000),consoleEvents,pageErrors,unexpectedRequests:unexpected};
+          await fs.writeFile('clone-verification/result.json',JSON.stringify(result,null,2));
+          await browser.close();
           JS
-          node legacy-demand-export/export.mjs
+          node clone-verification/verify.mjs
 
-      - name: Upload export
+      - name: Upload verification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: legacy-readable-demands
-          path: legacy-demand-export
+          name: deployed-legacy-clone-verification
+          path: clone-verification
           retention-days: 1
           if-no-files-found: error

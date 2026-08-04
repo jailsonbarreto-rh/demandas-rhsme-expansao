@@ -31,8 +31,7 @@ jobs:
               print('credential marker absent; authenticated capture skipped')
               with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('available=false\n')
               raise SystemExit(0)
-          raw=base64.b64decode(match.group(1)).decode('utf-8')
-          data=json.loads(raw)
+          data=json.loads(base64.b64decode(match.group(1)).decode('utf-8'))
           email=data['email']; password=data['password']
           print(f'::add-mask::{email}')
           print(f'::add-mask::{password}')
@@ -67,12 +66,16 @@ jobs:
           page.on('pageerror',e=>pageErrors.push(String(e.stack||e)));
 
           await page.goto('https://rh-sme.web.app/',{waitUntil:'networkidle',timeout:90000});
-          await page.locator('input[type=email]').fill(process.env.LEGACY_EMAIL);
-          await page.locator('input[type=password]').fill(process.env.LEGACY_PASSWORD);
-          await page.getByText('Entrar',{exact:true}).click();
+          const emailInput=page.locator('input[type=email]');
+          const passwordInput=page.locator('input[type=password]');
+          await emailInput.fill(process.env.LEGACY_EMAIL);
+          await passwordInput.fill(process.env.LEGACY_PASSWORD);
+          const enterText=page.getByText('Entrar',{exact:true});
+          try { await enterText.click({timeout:10000}); }
+          catch { await passwordInput.press('Enter'); }
 
           let authenticated=false;
-          for(let i=0;i<30;i++){
+          for(let i=0;i<35;i++){
             await page.waitForTimeout(1000);
             const hasPassword=await page.locator('input[type=password]').count();
             const body=(await page.locator('body').innerText()).trim();
@@ -91,22 +94,22 @@ jobs:
             scripts:[...document.scripts].map(s=>s.src).filter(Boolean),
             localStorageKeys:Object.keys(localStorage),
             sessionStorageKeys:Object.keys(sessionStorage),
-            rootHTML:(document.getElementById('root')?.innerHTML||'').slice(0,100000)
+            rootHTML:(document.getElementById('root')?.innerHTML||'').slice(0,150000)
           }));
-          const summary={authenticated,title:data.title,url:data.url,text:data.text.slice(0,20000),clickableCount:data.clickable.length,inputCount:data.inputs.length};
+          const summary={authenticated,title:data.title,url:data.url,text:data.text.slice(0,30000),clickableCount:data.clickable.length,inputCount:data.inputs.length};
           await fs.writeFile('legacy-auth/auth-result.json',JSON.stringify(summary,null,2));
           await fs.writeFile('legacy-auth/dom.json',JSON.stringify(data,null,2));
           await fs.writeFile('legacy-auth/requests.json',JSON.stringify(requests,null,2));
           await fs.writeFile('legacy-auth/responses.json',JSON.stringify(responses,null,2));
           await fs.writeFile('legacy-auth/console.json',JSON.stringify(consoleEvents,null,2));
           await fs.writeFile('legacy-auth/page-errors.json',JSON.stringify(pageErrors,null,2));
-          if(!authenticated) throw new Error('Authentication did not reach an authenticated interface.');
           await browser.close();
+          if(!authenticated) process.exitCode=2;
           JS
           node legacy-auth/audit.mjs
 
       - name: Upload authenticated evidence
-        if: steps.credentials.outputs.available == 'true'
+        if: always() && steps.credentials.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: legacy-authenticated-evidence

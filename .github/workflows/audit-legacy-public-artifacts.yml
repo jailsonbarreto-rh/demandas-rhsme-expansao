@@ -1,0 +1,208 @@
+name: Audit legacy public artifacts
+
+on:
+  push:
+    branches:
+      - audit/legacy-public-artifacts-20260804
+    paths:
+      - .github/workflows/audit-legacy-public-artifacts.yml
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare output
+        run: mkdir -p legacy-audit/http legacy-audit/browser legacy-audit/assets
+
+      - name: Fetch public entry points and headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://rh-sme.web.app'
+          for path in / /asset-manifest.json /manifest.json /robots.txt /service-worker.js /firebase-messaging-sw.js /favicon.ico; do
+            safe=$(printf '%s' "$path" | sed 's#^/##; s#[/?&=]#_#g')
+            [ -n "$safe" ] || safe='index'
+            curl --fail-with-body --location --silent --show-error \
+              --dump-header "legacy-audit/http/${safe}.headers.txt" \
+              --output "legacy-audit/http/${safe}.body" \
+              "$base$path" || true
+          done
+
+      - name: Discover and download same-origin assets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urljoin, urlparse
+          import json, re, subprocess
+
+          root = Path('legacy-audit')
+          body = root / 'http/index.body'
+          if not body.exists():
+              raise SystemExit('index body was not captured')
+          html = body.read_text('utf-8', errors='replace')
+
+          class Parser(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.urls=[]
+              def handle_starttag(self, tag, attrs):
+                  d=dict(attrs)
+                  for key in ('src','href'):
+                      if d.get(key): self.urls.append(d[key])
+
+          p=Parser(); p.feed(html)
+          base='https://rh-sme.web.app/'
+          urls=[]
+          for raw in p.urls:
+              u=urljoin(base,raw)
+              if urlparse(u).netloc=='rh-sme.web.app': urls.append(u)
+          urls=sorted(set(urls))
+          (root/'asset-urls.json').write_text(json.dumps(urls, indent=2), encoding='utf-8')
+
+          for i,u in enumerate(urls):
+              parsed=urlparse(u)
+              name=parsed.path.lstrip('/') or 'index'
+              target=root/'assets'/name
+              target.parent.mkdir(parents=True, exist_ok=True)
+              headers=target.with_name(target.name+'.headers.txt')
+              subprocess.run(['curl','--fail-with-body','--location','--silent','--show-error','--dump-header',str(headers),'--output',str(target),u],check=False)
+
+          scripts=[u for u in urls if urlparse(u).path.endswith('.js')]
+          styles=[u for u in urls if urlparse(u).path.endswith('.css')]
+          summary={'scripts':scripts,'styles':styles,'all_same_origin_assets':urls}
+          (root/'asset-summary.json').write_text(json.dumps(summary, indent=2),encoding='utf-8')
+
+          # Lightweight static signatures from all downloaded JS/CSS.
+          signatures={
+            'react':['react','useState','useEffect'],
+            'react_native_web':['react-native-web','createElement$1','r-backgroundColor'],
+            'expo':['expo','Exponent','expo-modules-core'],
+            'metro':['__r(','__d(','metroRequire'],
+            'webpack':['webpackChunk','__webpack_require__'],
+            'firebase':['initializeApp','getFirestore','signInWithEmailAndPassword','firebaseapp.com'],
+            'xlsx':['XLSX','SheetJS','writeFile'],
+            'jspdf':['jsPDF','jspdf'],
+            'html2canvas':['html2canvas'],
+            'emotion':['@emotion','emotion-cache','css-'],
+            'react_navigation':['@react-navigation','NavigationContainer'],
+          }
+          findings={}
+          for f in (root/'assets').rglob('*'):
+              if not f.is_file() or f.name.endswith('.headers.txt'): continue
+              if f.suffix not in ('.js','.css','.map','.json',''): continue
+              text=f.read_text('utf-8',errors='ignore')
+              for family, needles in signatures.items():
+                  hits=[n for n in needles if n in text]
+                  if hits:
+                      findings.setdefault(family,[]).append({'file':str(f.relative_to(root)),'hits':hits})
+              # Source map hints and sourceMappingURL
+              maps=re.findall(r'sourceMappingURL=([^\s*]+)',text)
+              if maps:
+                  findings.setdefault('source_maps',[]).append({'file':str(f.relative_to(root)),'references':maps})
+          (root/'static-signatures.json').write_text(json.dumps(findings, indent=2),encoding='utf-8')
+          PY
+
+      - name: Install browser runtime
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+
+      - name: Inspect rendered login shell and network
+        shell: bash
+        run: |
+          cat > /tmp/legacy-audit.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs/promises';
+
+          const out='legacy-audit/browser';
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:1440,height:1000}, locale:'pt-BR'});
+          const page=await context.newPage();
+          const requests=[]; const responses=[]; const consoleEvents=[]; const pageErrors=[];
+          page.on('request', r=>requests.push({url:r.url(),method:r.method(),resourceType:r.resourceType(),headers:r.headers()}));
+          page.on('response', async r=>responses.push({url:r.url(),status:r.status(),statusText:r.statusText(),headers:await r.allHeaders()}));
+          page.on('console', m=>consoleEvents.push({type:m.type(),text:m.text()}));
+          page.on('pageerror', e=>pageErrors.push(String(e.stack||e)));
+
+          await page.goto('https://rh-sme.web.app/',{waitUntil:'networkidle',timeout:90000});
+          await page.screenshot({path:`${out}/login-full.png`,fullPage:true});
+          await fs.writeFile(`${out}/rendered.html`,await page.content());
+          const data=await page.evaluate(()=>({
+            title:document.title,
+            url:location.href,
+            text:document.body?.innerText||'',
+            scripts:[...document.scripts].map(s=>({src:s.src,type:s.type,async:s.async,defer:s.defer})),
+            stylesheets:[...document.querySelectorAll('link[rel="stylesheet"]')].map(l=>l.href),
+            links:[...document.querySelectorAll('a')].map(a=>({text:(a.innerText||'').trim(),href:a.href,target:a.target})),
+            buttons:[...document.querySelectorAll('button,[role="button"]')].map((b,i)=>({i,text:(b.innerText||b.getAttribute('aria-label')||'').trim(),type:b.getAttribute('type'),disabled:b.disabled,ariaLabel:b.getAttribute('aria-label')})),
+            inputs:[...document.querySelectorAll('input,select,textarea')].map((e,i)=>({i,tag:e.tagName,type:e.type,name:e.name,id:e.id,placeholder:e.placeholder,autocomplete:e.autocomplete,required:e.required,ariaLabel:e.getAttribute('aria-label')})),
+            forms:[...document.forms].map((f,i)=>({i,action:f.action,method:f.method,autocomplete:f.autocomplete})),
+            localStorage:Object.fromEntries(Object.entries(localStorage)),
+            sessionStorage:Object.fromEntries(Object.entries(sessionStorage)),
+            cookies:document.cookie,
+            meta:[...document.querySelectorAll('meta')].map(m=>({name:m.name,httpEquiv:m.httpEquiv,content:m.content})),
+            rootChildren:[...document.querySelectorAll('#root > *')].map(e=>({tag:e.tagName,className:e.className,id:e.id})),
+            globals:Object.keys(window).filter(k=>/firebase|expo|webpack|metro|react/i.test(k)).sort(),
+          }));
+          await fs.writeFile(`${out}/dom-analysis.json`,JSON.stringify(data,null,2));
+          await fs.writeFile(`${out}/requests.json`,JSON.stringify(requests,null,2));
+          await fs.writeFile(`${out}/responses.json`,JSON.stringify(responses,null,2));
+          await fs.writeFile(`${out}/console.json`,JSON.stringify(consoleEvents,null,2));
+          await fs.writeFile(`${out}/page-errors.json`,JSON.stringify(pageErrors,null,2));
+          await fs.writeFile(`${out}/storage-state.json`,JSON.stringify(await context.storageState(),null,2));
+          await browser.close();
+          JS
+          node /tmp/legacy-audit.mjs
+
+      - name: Download dynamically observed same-origin resources
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urlparse
+          import json, subprocess, hashlib
+          root=Path('legacy-audit')
+          responses=json.loads((root/'browser/responses.json').read_text())
+          urls=sorted({r['url'] for r in responses if urlparse(r['url']).netloc=='rh-sme.web.app'})
+          manifest=[]
+          for u in urls:
+              p=urlparse(u)
+              logical=p.path.lstrip('/') or 'index'
+              if p.query:
+                  logical += '__q_' + hashlib.sha256(p.query.encode()).hexdigest()[:12]
+              target=root/'assets-runtime'/logical
+              target.parent.mkdir(parents=True,exist_ok=True)
+              subprocess.run(['curl','--fail-with-body','--location','--silent','--show-error','--output',str(target),u],check=False)
+              if target.exists(): manifest.append({'url':u,'path':str(target.relative_to(root)),'size':target.stat().st_size})
+          (root/'runtime-assets.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          PY
+
+      - name: Inventory hashes and sizes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,mimetypes
+          root=Path('legacy-audit')
+          rows=[]
+          for p in sorted(root.rglob('*')):
+              if p.is_file():
+                  b=p.read_bytes()
+                  rows.append({'path':str(p.relative_to(root)),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'mime':mimetypes.guess_type(p.name)[0]})
+          (root/'inventory.json').write_text(json.dumps(rows,indent=2),encoding='utf-8')
+          PY
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-public-artifacts
+          path: legacy-audit
+          retention-days: 3
+          if-no-files-found: error

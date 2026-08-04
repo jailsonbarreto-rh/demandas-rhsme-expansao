@@ -31,6 +31,7 @@ jobs:
           import fs from 'node:fs/promises';
 
           const base='https://demandas-rhsme-nine.vercel.app';
+          const access='https://demandas-rhsme-nine.vercel.app/?_vercel_share=t7mzXHmoccQMnHMO9EGO78xT1kQY4Xzi';
           const browser=await chromium.launch({headless:true});
           const context=await browser.newContext({viewport:{width:1440,height:1000},locale:'pt-BR'});
           const page=await context.newPage();
@@ -40,34 +41,41 @@ jobs:
           page.on('request',r=>requests.push({url:r.url(),method:r.method(),resourceType:r.resourceType()}));
           page.on('response',r=>responses.push({url:r.url(),status:r.status()}));
 
-          await page.goto(`${base}/#/home`,{waitUntil:'networkidle',timeout:90000});
-          await page.waitForFunction(()=>document.body.innerText.includes('Sistema de RH'),null,{timeout:30000});
-          const homeText=await page.locator('body').innerText();
-          if(!homeText.includes('Demandas')||!homeText.includes('Avaliação')||!homeText.includes('Eventos e Cursos')) throw new Error('Módulos esperados ausentes da página inicial');
-          await page.screenshot({path:'clone-verification/home.png',fullPage:true});
+          const result={base,homeText:'',demandsText:'',validationText:'',rowCount:0,dataResponse:null,consoleEvents,pageErrors,unexpectedRequests:[],failure:null};
+          try {
+            await page.goto(`${access}#/home`,{waitUntil:'networkidle',timeout:90000});
+            await page.waitForFunction(()=>document.body.innerText.includes('Sistema de RH'),null,{timeout:30000});
+            result.homeText=(await page.locator('body').innerText()).slice(0,3000);
+            await page.screenshot({path:'clone-verification/home.png',fullPage:true});
+            if(!result.homeText.includes('Demandas')||!result.homeText.includes('Avaliação')||!result.homeText.includes('Eventos e')||!result.homeText.includes('Cursos')) throw new Error(`Módulos esperados ausentes da página inicial. Texto: ${result.homeText}`);
 
-          await page.goto(`${base}/#/demandas`,{waitUntil:'networkidle',timeout:90000});
-          await page.waitForFunction(()=>document.querySelectorAll('tbody tr').length===50,null,{timeout:60000});
-          const demandsText=await page.locator('body').innerText();
-          const rowCount=await page.locator('tbody tr').count();
-          if(!demandsText.includes('Controle de Demandas')) throw new Error('Tela de demandas não carregou');
-          await page.screenshot({path:'clone-verification/demandas.png',fullPage:true});
+            requests.length=0; responses.length=0; consoleEvents.length=0; pageErrors.length=0;
+            await page.goto(`${base}/#/demandas`,{waitUntil:'networkidle',timeout:90000});
+            await page.waitForFunction(()=>document.querySelectorAll('tbody tr').length===50,null,{timeout:60000});
+            result.demandsText=(await page.locator('body').innerText()).slice(0,5000);
+            result.rowCount=await page.locator('tbody tr').count();
+            if(!result.demandsText.includes('Controle de Demandas')) throw new Error('Tela de demandas não carregou');
+            await page.screenshot({path:'clone-verification/demandas.png',fullPage:true});
 
-          await page.goto(`${base}/#/validacao`,{waitUntil:'networkidle',timeout:90000});
-          await page.waitForFunction(()=>document.body.innerText.includes('3.201 documentos'),null,{timeout:60000});
-          const validationText=await page.locator('body').innerText();
-          if(!validationText.includes('Validação de Migração')) throw new Error('Ferramenta de validação não carregou');
-          await page.screenshot({path:'clone-verification/validacao.png',fullPage:true});
+            await page.goto(`${base}/#/validacao`,{waitUntil:'networkidle',timeout:90000});
+            await page.waitForFunction(()=>document.body.innerText.includes('3.201 documentos'),null,{timeout:60000});
+            result.validationText=(await page.locator('body').innerText()).slice(0,3000);
+            if(!result.validationText.includes('Validação de Migração')) throw new Error('Ferramenta de validação não carregou');
+            await page.screenshot({path:'clone-verification/validacao.png',fullPage:true});
 
-          const dataResponse=responses.find(r=>r.url.includes('/data/demandas-legado.json'));
-          if(!dataResponse||dataResponse.status!==200) throw new Error('Snapshot de demandas não foi carregado com HTTP 200');
-          const unexpected=requests.filter(r=>!r.url.startsWith(base)&&!r.url.startsWith('data:')&&!r.url.startsWith('blob:'));
-          if(unexpected.length) throw new Error(`Requisições externas inesperadas: ${JSON.stringify(unexpected)}`);
-          if(pageErrors.length) throw new Error(`Erros de página: ${JSON.stringify(pageErrors)}`);
-
-          const result={base,rowCount,dataResponse,homeText:homeText.slice(0,3000),demandsText:demandsText.slice(0,5000),validationText:validationText.slice(0,3000),consoleEvents,pageErrors,unexpectedRequests:unexpected};
-          await fs.writeFile('clone-verification/result.json',JSON.stringify(result,null,2));
-          await browser.close();
+            result.dataResponse=responses.find(r=>r.url.includes('/data/demandas-legado.json'))||null;
+            if(!result.dataResponse||result.dataResponse.status!==200) throw new Error('Snapshot de demandas não foi carregado com HTTP 200');
+            result.unexpectedRequests=requests.filter(r=>!r.url.startsWith(base)&&!r.url.startsWith('data:')&&!r.url.startsWith('blob:'));
+            if(result.unexpectedRequests.length) throw new Error(`Requisições externas inesperadas: ${JSON.stringify(result.unexpectedRequests)}`);
+            if(pageErrors.length) throw new Error(`Erros de página: ${JSON.stringify(pageErrors)}`);
+          } catch(error) {
+            result.failure=String(error.stack||error);
+            await page.screenshot({path:'clone-verification/failure.png',fullPage:true}).catch(()=>{});
+          } finally {
+            await fs.writeFile('clone-verification/result.json',JSON.stringify(result,null,2));
+            await browser.close();
+          }
+          if(result.failure) throw new Error(result.failure);
           JS
           node clone-verification/verify.mjs
 

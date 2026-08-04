@@ -1,0 +1,115 @@
+name: Audit legacy authenticated shell
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/audit-legacy-auth.yml
+      - .audit/legacy-auth-trigger.txt
+
+permissions:
+  contents: read
+
+jobs:
+  authenticated-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read temporary credentials from event metadata
+        id: credentials
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64, json, os, re
+          from pathlib import Path
+          event=json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          body=(event.get('pull_request') or {}).get('body') or ''
+          match=re.search(r'LEGACY_AUTH_B64=([A-Za-z0-9+/=]+)', body)
+          if not match:
+              print('credential marker absent; authenticated capture skipped')
+              with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('available=false\n')
+              raise SystemExit(0)
+          raw=base64.b64decode(match.group(1)).decode('utf-8')
+          data=json.loads(raw)
+          email=data['email']; password=data['password']
+          print(f'::add-mask::{email}')
+          print(f'::add-mask::{password}')
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write(f'LEGACY_EMAIL={email}\n')
+              f.write(f'LEGACY_PASSWORD={password}\n')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('available=true\n')
+          PY
+
+      - name: Install browser
+        if: steps.credentials.outputs.available == 'true'
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+
+      - name: Login and capture authenticated interface
+        if: steps.credentials.outputs.available == 'true'
+        shell: bash
+        run: |
+          mkdir -p legacy-auth
+          cat > legacy-auth/audit.mjs <<'JS'
+          import { chromium } from '@playwright/test';
+          import fs from 'node:fs/promises';
+
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:1440,height:1000},locale:'pt-BR'});
+          const page=await context.newPage();
+          const requests=[]; const responses=[]; const consoleEvents=[]; const pageErrors=[];
+          page.on('request',r=>requests.push({url:r.url(),method:r.method(),resourceType:r.resourceType()}));
+          page.on('response',r=>responses.push({url:r.url(),status:r.status(),statusText:r.statusText()}));
+          page.on('console',m=>consoleEvents.push({type:m.type(),text:m.text()}));
+          page.on('pageerror',e=>pageErrors.push(String(e.stack||e)));
+
+          await page.goto('https://rh-sme.web.app/',{waitUntil:'networkidle',timeout:90000});
+          await page.locator('input[type=email]').fill(process.env.LEGACY_EMAIL);
+          await page.locator('input[type=password]').fill(process.env.LEGACY_PASSWORD);
+          await page.getByText('Entrar',{exact:true}).click();
+
+          let authenticated=false;
+          for(let i=0;i<30;i++){
+            await page.waitForTimeout(1000);
+            const hasPassword=await page.locator('input[type=password]').count();
+            const body=(await page.locator('body').innerText()).trim();
+            if(!hasPassword && !body.includes('Primeiro acesso?')){authenticated=true;break;}
+          }
+
+          await page.screenshot({path:'legacy-auth/after-login-full.png',fullPage:true});
+          const data=await page.evaluate(()=>({
+            title:document.title,
+            url:location.href,
+            text:document.body?.innerText||'',
+            inputs:[...document.querySelectorAll('input,select,textarea')].map((e,i)=>({i,tag:e.tagName,type:e.type,placeholder:e.placeholder,autocomplete:e.autocomplete,required:e.required,ariaLabel:e.getAttribute('aria-label')})),
+            clickable:[...document.querySelectorAll('[role=button],button,a')].map((e,i)=>({i,tag:e.tagName,role:e.getAttribute('role'),text:(e.innerText||e.getAttribute('aria-label')||'').trim(),href:e.href||null,disabled:Boolean(e.disabled)})),
+            headings:[...document.querySelectorAll('h1,h2,h3,h4,[role=heading]')].map((e,i)=>({i,tag:e.tagName,text:(e.innerText||'').trim(),level:e.getAttribute('aria-level')})),
+            navigation:[...document.querySelectorAll('nav,[role=navigation]')].map((e,i)=>({i,text:(e.innerText||'').trim()})),
+            scripts:[...document.scripts].map(s=>s.src).filter(Boolean),
+            localStorageKeys:Object.keys(localStorage),
+            sessionStorageKeys:Object.keys(sessionStorage),
+            rootHTML:(document.getElementById('root')?.innerHTML||'').slice(0,100000)
+          }));
+          const summary={authenticated,title:data.title,url:data.url,text:data.text.slice(0,20000),clickableCount:data.clickable.length,inputCount:data.inputs.length};
+          await fs.writeFile('legacy-auth/auth-result.json',JSON.stringify(summary,null,2));
+          await fs.writeFile('legacy-auth/dom.json',JSON.stringify(data,null,2));
+          await fs.writeFile('legacy-auth/requests.json',JSON.stringify(requests,null,2));
+          await fs.writeFile('legacy-auth/responses.json',JSON.stringify(responses,null,2));
+          await fs.writeFile('legacy-auth/console.json',JSON.stringify(consoleEvents,null,2));
+          await fs.writeFile('legacy-auth/page-errors.json',JSON.stringify(pageErrors,null,2));
+          if(!authenticated) throw new Error('Authentication did not reach an authenticated interface.');
+          await browser.close();
+          JS
+          node legacy-auth/audit.mjs
+
+      - name: Upload authenticated evidence
+        if: steps.credentials.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-authenticated-evidence
+          path: legacy-auth
+          retention-days: 1
+          if-no-files-found: error

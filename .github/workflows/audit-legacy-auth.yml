@@ -13,7 +13,7 @@ permissions:
 jobs:
   authenticated-capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +28,7 @@ jobs:
           body=(event.get('pull_request') or {}).get('body') or ''
           match=re.search(r'LEGACY_AUTH_B64=([A-Za-z0-9+/=]+)', body)
           if not match:
-              print('credential marker absent; authenticated capture skipped')
+              print('credential marker absent; authenticated crawl skipped')
               with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('available=false\n')
               raise SystemExit(0)
           data=json.loads(base64.b64decode(match.group(1)).decode('utf-8'))
@@ -47,72 +47,127 @@ jobs:
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium
 
-      - name: Login and capture authenticated interface
+      - name: Crawl authenticated modules without mutations
         if: steps.credentials.outputs.available == 'true'
         shell: bash
         run: |
-          mkdir -p legacy-auth
-          cat > legacy-auth/audit.mjs <<'JS'
+          mkdir -p legacy-crawl/screens
+          cat > legacy-crawl/crawl.mjs <<'JS'
           import { chromium } from '@playwright/test';
           import fs from 'node:fs/promises';
 
+          const base='https://rh-sme.web.app/';
           const browser=await chromium.launch({headless:true});
-          const context=await browser.newContext({viewport:{width:1440,height:1000},locale:'pt-BR'});
-          const page=await context.newPage();
-          const requests=[]; const responses=[]; const consoleEvents=[]; const pageErrors=[];
-          page.on('request',r=>requests.push({url:r.url(),method:r.method(),resourceType:r.resourceType()}));
-          page.on('response',r=>responses.push({url:r.url(),status:r.status(),statusText:r.statusText()}));
-          page.on('console',m=>consoleEvents.push({type:m.type(),text:m.text()}));
-          page.on('pageerror',e=>pageErrors.push(String(e.stack||e)));
+          const results=[];
 
-          await page.goto('https://rh-sme.web.app/',{waitUntil:'networkidle',timeout:90000});
-          const emailInput=page.locator('input[type=email]');
-          const passwordInput=page.locator('input[type=password]');
-          await emailInput.fill(process.env.LEGACY_EMAIL);
-          await passwordInput.fill(process.env.LEGACY_PASSWORD);
-          const enterText=page.getByText('Entrar',{exact:true});
-          try { await enterText.click({timeout:10000}); }
-          catch { await passwordInput.press('Enter'); }
-
-          let authenticated=false;
-          for(let i=0;i<35;i++){
-            await page.waitForTimeout(1000);
-            const hasPassword=await page.locator('input[type=password]').count();
-            const body=(await page.locator('body').innerText()).trim();
-            if(!hasPassword && !body.includes('Primeiro acesso?')){authenticated=true;break;}
+          async function waitAuthenticated(page){
+            for(let i=0;i<40;i++){
+              const text=await page.locator('body').innerText().catch(()=> '');
+              if(text.includes('Bem-vindo,')) return true;
+              await page.waitForTimeout(500);
+            }
+            return false;
           }
 
-          await page.screenshot({path:'legacy-auth/after-login-full.png',fullPage:true});
-          const data=await page.evaluate(()=>({
-            title:document.title,
-            url:location.href,
-            text:document.body?.innerText||'',
-            inputs:[...document.querySelectorAll('input,select,textarea')].map((e,i)=>({i,tag:e.tagName,type:e.type,placeholder:e.placeholder,autocomplete:e.autocomplete,required:e.required,ariaLabel:e.getAttribute('aria-label')})),
-            clickable:[...document.querySelectorAll('[role=button],button,a')].map((e,i)=>({i,tag:e.tagName,role:e.getAttribute('role'),text:(e.innerText||e.getAttribute('aria-label')||'').trim(),href:e.href||null,disabled:Boolean(e.disabled)})),
-            headings:[...document.querySelectorAll('h1,h2,h3,h4,[role=heading]')].map((e,i)=>({i,tag:e.tagName,text:(e.innerText||'').trim(),level:e.getAttribute('aria-level')})),
-            navigation:[...document.querySelectorAll('nav,[role=navigation]')].map((e,i)=>({i,text:(e.innerText||'').trim()})),
-            scripts:[...document.scripts].map(s=>s.src).filter(Boolean),
-            localStorageKeys:Object.keys(localStorage),
-            sessionStorageKeys:Object.keys(sessionStorage),
-            rootHTML:(document.getElementById('root')?.innerHTML||'').slice(0,150000)
-          }));
-          const summary={authenticated,title:data.title,url:data.url,text:data.text.slice(0,30000),clickableCount:data.clickable.length,inputCount:data.inputs.length};
-          await fs.writeFile('legacy-auth/auth-result.json',JSON.stringify(summary,null,2));
-          await fs.writeFile('legacy-auth/dom.json',JSON.stringify(data,null,2));
-          await fs.writeFile('legacy-auth/requests.json',JSON.stringify(requests,null,2));
-          await fs.writeFile('legacy-auth/responses.json',JSON.stringify(responses,null,2));
-          await fs.writeFile('legacy-auth/console.json',JSON.stringify(consoleEvents,null,2));
-          await fs.writeFile('legacy-auth/page-errors.json',JSON.stringify(pageErrors,null,2));
-          await browser.close();
-          if(!authenticated) process.exitCode=2;
-          JS
-          node legacy-auth/audit.mjs
+          async function loginAndState(){
+            const context=await browser.newContext({viewport:{width:1440,height:1000},locale:'pt-BR'});
+            const page=await context.newPage();
+            await page.goto(base,{waitUntil:'networkidle',timeout:90000});
+            await page.locator('input[type=email]').fill(process.env.LEGACY_EMAIL);
+            await page.locator('input[type=password]').fill(process.env.LEGACY_PASSWORD);
+            await page.getByText('Entrar',{exact:true}).click();
+            if(!await waitAuthenticated(page)) throw new Error('login failed');
+            const state=await context.storageState({indexedDB:true});
+            await context.close();
+            return state;
+          }
 
-      - name: Upload authenticated evidence
+          const authState=await loginAndState();
+
+          const scenarios=[
+            {slug:'principal',steps:[]},
+            {slug:'demandas',steps:['Demandas']},
+            {slug:'demandas-novo-registro',steps:['Demandas'],extra:'Novo Registro'},
+            {slug:'avaliacao-menu',steps:['Avaliação']},
+            {slug:'avaliacao-matriz',steps:['Avaliação','Matriz']},
+            {slug:'avaliacao-periodos',steps:['Avaliação','Gerenciar Períodos']},
+            {slug:'avaliacao-usuarios',steps:['Avaliação','Usuários']},
+            {slug:'avaliacao-auto',steps:['Avaliação','Autoavaliação']},
+            {slug:'avaliacao-descendente',steps:['Avaliação','Avaliação Descendente']},
+            {slug:'avaliacao-ascendente',steps:['Avaliação','Avaliação Ascendente']},
+            {slug:'avaliacao-relatorio-individual',steps:['Avaliação','Relatório Individual']},
+            {slug:'avaliacao-relatorios',steps:['Avaliação','Relatórios']},
+            {slug:'avaliacao-consolidacao',steps:['Avaliação','Consolidação por Grupo']},
+            {slug:'avaliacao-pdi',steps:['Avaliação','PDI (Plano de Desenvolvimento)']},
+            {slug:'avaliacao-pdi-sugestoes',steps:['Avaliação','Sugestões de PDI']},
+            {slug:'ferramentas-menu',steps:['Ferramentas']},
+            {slug:'divisor-excel',steps:['Ferramentas','Divisor de Excel']},
+            {slug:'eventos-cursos',steps:['Eventos e Cursos']}
+          ];
+
+          async function capture(page,slug,meta,network,consoleEvents,pageErrors){
+            const data=await page.evaluate(()=>{
+              const visible=e=>{
+                const s=getComputedStyle(e),r=e.getBoundingClientRect();
+                return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)!==0&&r.width>0&&r.height>0;
+              };
+              const clean=s=>(s||'').replace(/\s+/g,' ').trim();
+              const tabStops=[...document.querySelectorAll('[tabindex="0"]')].filter(visible).map((e,i)=>({i,text:clean(e.innerText||e.getAttribute('aria-label')),tag:e.tagName,role:e.getAttribute('role')}));
+              const inputs=[...document.querySelectorAll('input,select,textarea')].filter(visible).map((e,i)=>({i,tag:e.tagName,type:e.type||null,placeholder:e.placeholder||null,required:!!e.required,disabled:!!e.disabled,ariaLabel:e.getAttribute('aria-label')}));
+              const links=[...document.querySelectorAll('a')].filter(visible).map((e,i)=>({i,text:clean(e.innerText),href:e.href,target:e.target}));
+              const text=clean(document.body?.innerText||'');
+              return {title:document.title,url:location.href,text,tabStops,inputs,links,bodyDimensions:{scrollWidth:document.body.scrollWidth,scrollHeight:document.body.scrollHeight}};
+            });
+            await page.screenshot({path:`legacy-crawl/screens/${slug}.png`,fullPage:true});
+            const record={slug,...meta,...data,network,consoleEvents,pageErrors};
+            await fs.writeFile(`legacy-crawl/screens/${slug}.json`,JSON.stringify(record,null,2));
+            results.push(record);
+          }
+
+          for(const scenario of scenarios){
+            const context=await browser.newContext({viewport:{width:1440,height:1000},locale:'pt-BR',storageState:authState});
+            const page=await context.newPage();
+            const network=[]; const consoleEvents=[]; const pageErrors=[];
+            page.on('request',r=>{
+              const u=r.url();
+              if(/googleapis|firebase|firestore|rh-sme\.web\.app/.test(u)) network.push({phase:'request',method:r.method(),resourceType:r.resourceType(),url:u,postData:/firestore/.test(u)?(r.postData()||'').slice(0,12000):null});
+            });
+            page.on('response',r=>{
+              const u=r.url();
+              if(/googleapis|firebase|firestore|rh-sme\.web\.app/.test(u)) network.push({phase:'response',status:r.status(),url:u,contentType:r.headers()['content-type']||null});
+            });
+            page.on('console',m=>consoleEvents.push({type:m.type(),text:m.text()}));
+            page.on('pageerror',e=>pageErrors.push(String(e.stack||e)));
+            const meta={steps:scenario.steps,extra:scenario.extra||null,reached:true,failedAt:null,error:null};
+            try{
+              await page.goto(base,{waitUntil:'networkidle',timeout:90000});
+              if(!await waitAuthenticated(page)) throw new Error('stored authenticated session was not restored');
+              for(const step of scenario.steps){
+                const locator=page.getByText(step,{exact:true}).filter({visible:true});
+                if(await locator.count()===0){meta.reached=false;meta.failedAt=step;break;}
+                await locator.first().click({timeout:12000});
+                await page.waitForTimeout(1800);
+              }
+              if(meta.reached&&scenario.extra){
+                const locator=page.getByText(scenario.extra,{exact:true}).filter({visible:true});
+                if(await locator.count()===0){meta.reached=false;meta.failedAt=scenario.extra;}
+                else {await locator.first().click({timeout:12000});await page.waitForTimeout(1000);}
+              }
+            }catch(e){meta.reached=false;meta.error=String(e.stack||e);}
+            await capture(page,scenario.slug,meta,network,consoleEvents,pageErrors);
+            await context.close();
+          }
+
+          await fs.writeFile('legacy-crawl/summary.json',JSON.stringify(results,null,2));
+          await browser.close();
+          JS
+          node legacy-crawl/crawl.mjs
+
+      - name: Upload authenticated crawl evidence
         if: always() && steps.credentials.outputs.available == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: legacy-authenticated-evidence
-          path: legacy-auth
+          name: legacy-authenticated-crawl
+          path: legacy-crawl
           retention-days: 1
           if-no-files-found: error

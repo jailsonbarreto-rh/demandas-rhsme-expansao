@@ -196,7 +196,7 @@ Constraints:
 - hash com 64 caracteres hexadecimais minúsculos;
 - quantidades esperadas positivas;
 - `format_version > 0`;
-- `completed_at` obrigatório para `ingested` e `reconciled`;
+- `completed_at` obrigatório para `ingested`, `reconciled` e `rejected`;
 - `completed_at` nulo para `registered` e `ingesting`.
 
 ### 5.3 `private.legacy_ingestion_batches`
@@ -230,6 +230,7 @@ Estados permitidos:
 Constraints:
 
 - `unique (source_id, batch_number)`;
+- `unique (source_id, id)` para sustentar a FK composta dos documentos;
 - `batch_number > 0`;
 - ordinais positivos e `last_document_ordinal >= first_document_ordinal`;
 - `expected_document_count = last_document_ordinal - first_document_ordinal + 1`;
@@ -247,7 +248,7 @@ Campos:
 
 - `id bigint generated always as identity primary key`;
 - `source_id uuid not null references private.legacy_sources(id) on delete restrict`;
-- `ingestion_batch_id uuid not null references private.legacy_ingestion_batches(id) on delete restrict`;
+- `ingestion_batch_id uuid not null`;
 - `source_document_id text not null`;
 - `source_document_path text not null`;
 - `source_ordinal integer not null`;
@@ -271,12 +272,16 @@ Estados previstos desde a fundação:
 
 Constraints:
 
+- `foreign key (source_id, ingestion_batch_id) references private.legacy_ingestion_batches(source_id, id) on delete restrict`;
 - `unique (source_id, source_document_id)`;
 - `unique (source_id, source_ordinal)`;
 - `source_ordinal > 0`;
 - IDs e caminhos não vazios e sem espaços externos;
 - hash válido;
+- `processing_state` limitado aos estados previstos;
 - `source_update_time >= source_create_time` quando ambas existirem.
+
+Um trigger de integridade verificará que `source_ordinal` está dentro de `first_document_ordinal` e `last_document_ordinal` do lote informado. Assim, um documento não pode ser associado a lote da mesma fonte com intervalo incompatível.
 
 `source_payload_sha256` representa o objeto individual em serialização canônica definida pelo importador. A prova byte a byte do arquivo completo permanece em `legacy_sources.source_file_sha256`.
 
@@ -303,6 +308,7 @@ Constraints:
 - `unique (legacy_document_id, source_event_ordinal)`;
 - `source_event_ordinal > 0`;
 - hash válido;
+- `processing_state` limitado aos estados previstos;
 - comentário textual vazio permitido;
 - status, usuário ou data ausentes permitidos;
 - índice não único por `event_sha256` para auditoria e diagnóstico, sem apagar eventos idênticos repetidos em posições diferentes.
@@ -313,8 +319,8 @@ Nenhum evento é inserido automaticamente em `public.sme_historico` no B1 ou B2.
 
 O B1 criará trigger privada que rejeita alteração dos seguintes campos depois da inserção:
 
-- identidade e metadados da fonte concluída;
-- identidade, caminho, ordinal, datas, payloads e hash do documento;
+- identidade e metadados da fonte após seu registro;
+- identidade, caminho, lote, ordinal, datas, payloads e hash do documento;
 - documento de origem, ordinal, valores históricos, payload e hash do evento.
 
 Campos de controle como `status`, `processing_state`, horários de processamento e `attempt_count` poderão mudar somente por rotinas administrativas futuras. O trigger não permitirá que uma rotina de normalização reescreva a fonte.
@@ -542,19 +548,21 @@ O pacote deverá provar, com dados sintéticos:
 4. rejeição de hash inválido;
 5. rejeição de contagem não positiva;
 6. rejeição de lote com intervalo incoerente;
-7. idempotência da identidade da fonte;
-8. idempotência do documento por ID do Firestore;
-9. preservação de dois documentos cujos payloads contenham o mesmo número operacional;
-10. preservação de eventos idênticos em ordinais diferentes;
-11. preservação de evento com comentário vazio;
-12. preservação de status histórico desconhecido;
-13. rejeição de evento órfão;
-14. imutabilidade do payload e metadados de origem;
-15. impossibilidade de alterar fonte concluída;
-16. ausência de qualquer escrita em `sme_demandas` e `sme_historico`;
-17. replay integral de todas as migrations em ambiente efêmero;
-18. reversão integral dos dados sintéticos;
-19. geração de tipos compatível com o schema resultante.
+7. rejeição de documento associado a lote de outra fonte;
+8. rejeição de documento com ordinal fora do intervalo do lote;
+9. idempotência da identidade da fonte;
+10. idempotência do documento por ID do Firestore;
+11. preservação de dois documentos cujos payloads contenham o mesmo número operacional;
+12. preservação de eventos idênticos em ordinais diferentes;
+13. preservação de evento com comentário vazio;
+14. preservação de status histórico desconhecido;
+15. rejeição de evento órfão;
+16. imutabilidade do payload e metadados de origem;
+17. impossibilidade de alterar fonte concluída;
+18. ausência de qualquer escrita em `sme_demandas` e `sme_historico`;
+19. replay integral de todas as migrations em ambiente efêmero;
+20. reversão integral dos dados sintéticos;
+21. geração de tipos compatível com o schema resultante.
 
 O gate global do repositório permanece obrigatório.
 

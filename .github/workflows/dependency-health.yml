@@ -111,6 +111,12 @@ jobs:
       - name: Enforce initial bundle budget
         run: npm run check:bundle
 
+      - name: Inspect public production bundle
+        run: npm run check:public-bundle
+
+      - name: Verify development-only tools are excluded from production
+        run: npm run check:dev-only-tools
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 

@@ -2,50 +2,48 @@
 
 ## Contexto
 
-Durante a validação do pacote G1, `npm audit --audit-level=high` passou a reprovar a árvore já existente da `main` por uma nova vulnerabilidade de alta severidade em `brace-expansion` que alcança a versão `5.0.8`, anteriormente adotada como override de segurança.
+Durante a validação do pacote G1, `npm audit --audit-level=high` passou a reprovar a árvore já existente da `main` por uma nova vulnerabilidade de alta severidade em `brace-expansion` que alcança a versão `5.0.8`, anteriormente adotada como override global de segurança.
 
 O alerta não foi introduzido pelo TanStack Query. O G1 apenas executou o gate depois da publicação do novo advisory e tornou o problema visível.
 
 ## Causa
 
-O projeto havia elevado globalmente `brace-expansion` para `5.0.8` para corrigir vulnerabilidade anterior. Essa troca exigiu dois patches em consumidores antigos de `minimatch`, pois a API da linha 5 difere da linha CommonJS historicamente esperada por esses consumidores.
+O projeto havia elevado globalmente `brace-expansion` para `5.0.8` para corrigir uma vulnerabilidade anterior. Essa troca exigiu dois patches em consumidores antigos de `minimatch`, pois a API da linha 5 difere da API CommonJS esperada por eles.
 
 O advisory `GHSA-rgw5-rvv9-x895` demonstrou um bypass da mitigação anterior: o limite de comprimento não era acumulado corretamente entre alternativas separadas por vírgula e também não era aplicado cedo o suficiente durante a geração de sequências largas.
 
-## Investigação e hipóteses descartadas
+## Investigação
 
 ### `brace-expansion@2.1.3`
 
-Foi testado inicialmente porque preservava a API CommonJS e parecia estar fora da primeira faixa exibida pelo audit. A validação real no CI mostrou que `2.1.3` também é afetado pelo novo advisory. A hipótese foi descartada sem integração.
+Foi testado inicialmente porque preservava a API CommonJS. O CI confirmou que `2.1.3` também é afetado pelo novo advisory. A hipótese foi descartada sem integração.
+
+### Override global `2.1.4`
+
+O mantenedor publicou backports oficiais do advisory para várias linhas, incluindo `2.1.4`, e o CI confirmou que essa versão passa em `npm audit`. Entretanto, impor `2.1.4` globalmente quebra consumidores modernos de `minimatch`, que dependem da API nomeada das linhas mais recentes.
+
+Essa hipótese também foi descartada. O problema não é apenas escolher uma versão segura: é preservar a linha de API compatível com cada consumidor.
 
 ### `npm audit fix --force`
 
-Rejeitado porque propõe ESLint 10 como mudança quebradora. O projeto mantém ESLint 9 deliberadamente enquanto `eslint-plugin-jsx-a11y` não oferece compatibilidade oficial suficiente com ESLint 10.
+Rejeitado porque propõe ESLint 10 como mudança quebradora e não resolve corretamente a compatibilidade da árvore. O projeto mantém ESLint 9 enquanto `eslint-plugin-jsx-a11y` não oferece suporte oficial suficiente ao ESLint 10.
 
-### Permanecer em `5.0.8`
+## Correção final em validação
 
-Rejeitado porque mantém o gate de alta severidade reprovado.
+O repositório oficial de `brace-expansion` já possui correções específicas do `GHSA-rgw5-rvv9-x895` em múltiplas linhas de manutenção, incluindo `1.1.18`, `2.1.4`, `3.0.6` e `5.0.9`.
 
-## Correção oficial identificada
+A solução adotada é:
 
-O repositório oficial de `brace-expansion` contém o backport específico do `GHSA-rgw5-rvv9-x895` para a linha 2. O commit de correção limita o tamanho total acumulado entre alternativas, aplica `maxLength` durante a geração de sequências e preserva a semântica de alternativas vazias. A versão correspondente foi marcada como `v2.1.4`.
+- remover o override global de `brace-expansion`;
+- permitir que cada consumidor resolva a linha compatível declarada por sua própria faixa semântica;
+- regenerar integralmente o lockfile pelo npm em Node 24;
+- remover os dois patches locais de `minimatch`;
+- remover `patch-package` e o `postinstall` associado, caso o gate final confirme que nenhum outro patch é necessário;
+- testar todos os consumidores relevantes de `minimatch`;
+- inspecionar todas as instâncias de `brace-expansion` presentes no lockfile e executar nelas casos de regressão do advisory;
+- exigir `npm audit` limpo e gate integral antes da integração.
 
-A linha 2 é preferível neste projeto porque:
-
-- possui a correção específica do advisory;
-- mantém a exportação CommonJS esperada pelos consumidores antigos de `minimatch`;
-- permite remover os dois patches criados somente para adaptar esses consumidores à API da linha 5;
-- permite remover `patch-package`, caso o gate integral confirme que não existe outro patch necessário;
-- reduz a quantidade de manutenção local sem trocar ESLint ou consumidores transitivos.
-
-## Solução em validação final
-
-- substituir o override global `brace-expansion: 5.0.8` por `2.1.4`;
-- remover os dois patches de `minimatch`;
-- remover `patch-package` e o `postinstall` associado;
-- ampliar `test:dependency-compat` para validar consumidores antigos e modernos, o caso específico de alternativas acumuladas, sequências largas e ExcelJS;
-- regenerar o lockfile exclusivamente pelo npm em Node 24;
-- exigir audit limpo e gate integral antes de integração.
+Essa abordagem é superior a um override global porque mantém simultaneamente a compatibilidade dos consumidores antigos e modernos e elimina adaptações locais desnecessárias.
 
 ## Validação obrigatória
 

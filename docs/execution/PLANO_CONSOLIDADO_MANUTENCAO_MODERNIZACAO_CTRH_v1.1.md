@@ -169,6 +169,16 @@ O pacote adiciona regressões específicas do advisory e mantém `npm audit --au
 
 A continuidade do G1 TanStack Query permanece independente: o plugin oficial de ESLint e os Devtools de desenvolvimento serão retomados sobre a linha de base já corrigida. A atualização do Supabase Action v3 permanece condicionada ao pacote npm estável do CLI alcançar a versão já validada no CI, evitando downgrade ou adoção beta por conveniência.
 
+## 7.2 Resiliência de CI e G1 TanStack Query — 9 de agosto de 2026
+
+O PR #150 tornou artifacts diagnósticos independentes dos gates reais: uploads ocorrem somente em falha, são não bloqueantes e usam retenção curta. O workflow geral e o gate Supabase comprovaram execução integral sem depender da cota de armazenamento de artifacts.
+
+O PR #151 adiciona `@tanstack/eslint-plugin-query@5.101.4` e `@tanstack/react-query-devtools@5.101.4` como dependências de desenvolvimento. O plugin usa `flat/recommended` sem supressões; a violação real encontrada em `useDemandasData` foi corrigida pela dependência direta de `refetch`.
+
+Os Devtools são carregados somente em desenvolvimento e o novo `check:dev-only-tools` comprova sua ausência do bundle de produção. O workflow principal também passa a executar explicitamente `check:public-bundle`. O pacote não altera banco, migrations, RLS, dados, política de cache, Realtime, autenticação ou Production.
+
+A Action Supabase v3 permanece condicionada à disponibilidade estável via npm de versão igual ou superior à já validada no CI. Observabilidade, Lighthouse CI, MSW, CodeQL e o ferramental específico do Trilho B permanecem pacotes independentes.
+
 ## 8. Oportunidades funcionais condicionadas
 
 Permanecem sujeitas a necessidade comprovada e desenho específico:

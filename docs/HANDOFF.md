@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **9 de agosto de 2026 — correção transitiva de segurança tratada no PR #149; G1 TanStack Query permanece isolado no PR #148**
+Atualizado em: **9 de agosto de 2026 — PRs #149 e #150 concluídos; G1 TanStack Query validado no PR #151**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -34,8 +34,8 @@ Atualizado em: **9 de agosto de 2026 — correção transitiva de segurança tra
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
-| Atividade técnica atual | correção emergencial do `GHSA-rgw5-rvv9-x895` tratada no PR #149, sem mudança funcional, de banco ou Production |
-| Próxima atualização candidata | concluir a correção transitiva; retomar o G1 TanStack Query no PR #148; depois seguir com a fundação do Trilho B e o estudo separado de observabilidade |
+| Atividade técnica atual | G1 TanStack Query validado no PR #151; lint oficial, Devtools somente em desenvolvimento e gates de bundle ampliados |
+| Próxima atualização candidata | fundação B1 do Trilho B; depois observabilidade com minimização de dados em pacote próprio |
 
 ## Rodadas técnicas concluídas
 
@@ -265,6 +265,20 @@ A validação dedicada comprovou instalação limpa, zero vulnerabilidades de au
 
 A investigação e as evidências estão em `docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md`.
 
+## G1 — Ferramental TanStack Query — 9 de agosto de 2026
+
+O PR #150 corrigiu antes do G1 uma fragilidade de infraestrutura: uploads de artifacts diagnósticos podiam bloquear os gates reais quando a cota do GitHub Actions estivesse indisponível. Os uploads agora ocorrem somente em falha, são não bloqueantes e têm retenção de três dias; audit, assinaturas, lint, cobertura, build, bundle, Playwright e replay do Supabase continuam obrigatórios.
+
+O PR #151 adiciona `@tanstack/eslint-plugin-query@5.101.4` com a configuração oficial `flat/recommended` e `@tanstack/react-query-devtools@5.101.4` somente em desenvolvimento. Nenhuma regra do plugin foi desabilitada. A primeira execução detectou uma dependência instável real no callback de recarga de `useDemandasData`; a correção passou a depender diretamente da referência estável `refetch`, sem alterar cache, retries, Realtime ou comportamento funcional.
+
+Os Devtools ficam isolados em `src/dev/QueryDevtools.tsx`, carregados dinamicamente apenas quando `import.meta.env.DEV` é verdadeiro. O gate `check:dev-only-tools` usa sentinela exclusiva e comprovou que o módulo não aparece no build de produção. O workflow principal passou a executar também `check:public-bundle` e `check:dev-only-tools`.
+
+O lockfile foi regenerado oficialmente pelo npm em Node 24. A validação do PR #151 aprovou instalação exata, documentação, zero vulnerabilidades, assinaturas, lint, cobertura, build, orçamento de bundle, inspeção pública, exclusão dos Devtools e Playwright desktop/mobile.
+
+A atualização de `supabase/setup-cli` para v3 permanece adiada: o CI mantém a versão do CLI já validada e não fará downgrade nem adotará beta apenas para trocar a Action.
+
+Evidências: `docs/superpowers/plans/2026-08-09-g1-query-tooling-supabase.md` e `docs/maintenance/G1_QUERY_TOOLING_2026-08-09.md`.
+
 ## Regra permanente de modernização proativa
 
 Atualizações e instalações não ficam restritas a rodadas periódicas.
@@ -463,11 +477,11 @@ Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_ha
 
 ## Próxima etapa
 
-A prioridade imediata é concluir a correção transitiva de segurança do PR #149 e manter a linha de base novamente com auditoria limpa. O problema é independente do G1 e foi tratado em branch própria para preservar causa de falha e rollback.
+Com a correção transitiva do PR #149, a resiliência de CI do PR #150 e o G1 do PR #151 validados, a próxima frente autorizada é retomar o Trilho B pela fundação B1, em branch e PR próprios, sem carregar os 3.201 documentos reais em Production.
 
-Depois dessa integração, o G1 do PR #148 deve ser reaplicado sobre a nova `main` e validado integralmente. O G1 adiciona lint oficial do TanStack Query e Devtools somente em desenvolvimento; a migração de `supabase/setup-cli` para v3 permanece adiada enquanto o pacote npm estável do CLI não alcançar a versão já validada pelo CI.
+O B1 permanece limitado à fundação privada de preservação, constraints, RLS/grants, imutabilidade e testes sintéticos. O pacote de qualidade da migração poderá adotar fast-check e pgTAP conforme o desenho aprovado; json-canonicalize entra no B2, quando os hashes reais forem implementados.
 
-A fundação do Trilho B continua planejada em pacote separado, sem mistura com manutenção geral. Observabilidade de erros permanece próxima investigação geral de alto valor, sujeita a desenho próprio de privacidade, retenção e sanitização. ESLint 10 e TypeScript 7 continuam sem adoção automática.
+Observabilidade de erros permanece próxima modernização geral de alto valor, mas deve ter desenho próprio de privacidade e minimização de dados antes de qualquer SDK. Lighthouse CI, MSW e CodeQL continuam separados por causa, risco e rollback. ESLint 10, TypeScript 7 e Supabase Action v3 continuam sem adoção automática.
 
 Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posteriores é autorizada por inferência. E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
 
@@ -499,7 +513,10 @@ Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posterior
 24. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
 25. `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
 26. `docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md`;
-27. este Handoff.
+27. `docs/maintenance/CI_ARTIFACT_RESILIENCE_2026-08-09.md`;
+28. `docs/superpowers/plans/2026-08-09-g1-query-tooling-supabase.md`;
+29. `docs/maintenance/G1_QUERY_TOOLING_2026-08-09.md`;
+30. este Handoff.
 
 ## Regra de continuidade
 

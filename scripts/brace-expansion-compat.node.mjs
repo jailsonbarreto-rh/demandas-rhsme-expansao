@@ -17,11 +17,11 @@ function getMinimatch(moduleId) {
   return minimatch;
 }
 
-test('override usa a linha de manutenção segura e CommonJS de brace-expansion', () => {
+test('override usa o backport CommonJS corrigido de brace-expansion', () => {
   const bracePackage = require('brace-expansion/package.json');
   const expand = require('brace-expansion');
 
-  assert.equal(bracePackage.version, '2.1.3');
+  assert.equal(bracePackage.version, '2.1.4');
   assert.equal(typeof expand, 'function');
 });
 
@@ -35,13 +35,26 @@ test('consumidores antigos e modernos continuam executando expansão de chaves',
   }
 });
 
-test('brace-expansion aplica limites de quantidade e comprimento sem expansão descontrolada', () => {
+test('brace-expansion limita o total acumulado entre alternativas', () => {
   const expand = require('brace-expansion');
-  const expanded = expand('{a,b}'.repeat(50), { max: 1000, maxLength: 1000 });
+  const alternatives = `{${Array(1_000).fill('{1..5}').join(',')}}`;
+  const expanded = expand(alternatives, { max: 100_000, maxLength: 50 });
   const totalLength = expanded.reduce((sum, item) => sum + item.length, 0);
 
-  assert.ok(expanded.length <= 1000);
-  assert.ok(totalLength <= 1000);
+  assert.ok(expanded.length > 0);
+  assert.ok(totalLength <= 50);
+});
+
+test('brace-expansion aplica maxLength durante sequências largas', () => {
+  const expand = require('brace-expansion');
+  const paddedSequence = `{${'0'.repeat(10_000)}1..100000}`;
+  const startedAt = performance.now();
+  const expanded = expand(paddedSequence, { max: 100_000, maxLength: 20_000 });
+  const elapsed = performance.now() - startedAt;
+  const totalLength = expanded.reduce((sum, item) => sum + item.length, 0);
+
+  assert.ok(totalLength <= 20_000);
+  assert.ok(elapsed < 2_000, `expansão demorou ${elapsed.toFixed(1)}ms`);
 });
 
 test('ExcelJS continua criando e serializando arquivos', async () => {

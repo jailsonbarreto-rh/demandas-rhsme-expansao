@@ -55,6 +55,7 @@ export function useDemandasData(
       }
     },
   }, queryClient);
+  const { refetch } = query;
 
   const clearPendingRealtimeInvalidation = useCallback(() => {
     if (realtimeTimerRef.current === null) return;
@@ -154,11 +155,11 @@ export function useDemandasData(
     if (!userId) return;
     setMutationError(null);
     try {
-      await query.refetch({ throwOnError: true });
+      await refetch({ throwOnError: true });
     } catch (reason) {
       throw new Error(getUserFacingError(reason, 'Não foi possível carregar as demandas.'));
     }
-  }, [query, userId]);
+  }, [refetch, userId]);
 
   useEffect(() => {
     const handleRetry = () => { void reload().catch(() => undefined); };

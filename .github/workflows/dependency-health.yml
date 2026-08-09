@@ -37,14 +37,15 @@ jobs:
           set -o pipefail
           npm audit --audit-level=high 2>&1 | tee npm-audit-report.txt
 
-      - name: Upload dependency audit report
-        if: always()
+      - name: Upload dependency audit report on failure
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: npm-audit-report
           path: npm-audit-report.txt
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
       - name: Verify registry signatures and provenance
         run: npm audit signatures
@@ -55,14 +56,15 @@ jobs:
           set -o pipefail
           npm run lint 2>&1 | tee lint-report.txt
 
-      - name: Upload static analysis report
-        if: always()
+      - name: Upload static analysis report on failure
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: lint-report
           path: lint-report.txt
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
       - name: Run unit, integration and coverage checks
         shell: bash
@@ -70,23 +72,25 @@ jobs:
           set -o pipefail
           npm run test:coverage 2>&1 | tee test-coverage-report.txt
 
-      - name: Upload test execution report
-        if: always()
+      - name: Upload test execution report on failure
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: test-coverage-report
           path: test-coverage-report.txt
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
-      - name: Upload coverage report
-        if: always()
+      - name: Upload coverage report on failure
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
       - name: Build production bundle
         shell: bash
@@ -94,14 +98,15 @@ jobs:
           set -o pipefail
           npm run build 2>&1 | tee build-report.txt
 
-      - name: Upload build report
-        if: always()
+      - name: Upload build report on failure
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: build-report
           path: build-report.txt
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3
 
       - name: Enforce initial bundle budget
         run: npm run check:bundle
@@ -115,8 +120,9 @@ jobs:
           set -o pipefail
           npm run test:e2e 2>&1 | tee browser-test-report.txt
 
-      - name: Upload browser test report
-        if: always()
+      - name: Upload browser test report on failure
+        if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: browser-test-report
@@ -125,4 +131,4 @@ jobs:
             playwright-report
             test-results
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3

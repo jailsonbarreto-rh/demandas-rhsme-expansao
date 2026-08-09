@@ -4,7 +4,10 @@ const tick = '`';
 
 function replaceOnce(content, needle, replacement, label) {
   const first = content.indexOf(needle);
-  if (first < 0) throw new Error(`Âncora não encontrada: ${label}`);
+  if (first < 0) {
+    if (content.includes(replacement)) return content;
+    throw new Error(`Âncora não encontrada: ${label}`);
+  }
   if (content.indexOf(needle, first + needle.length) >= 0) {
     throw new Error(`Âncora duplicada: ${label}`);
   }
@@ -29,14 +32,17 @@ function syncHandoff() {
     'estado técnico atual',
   );
 
-  const securitySection = `## Correção emergencial de segurança — 9 de agosto de 2026\n\nDurante o gate do pacote G1, o ${tick}npm audit --audit-level=high${tick} passou a reprovar a árvore já existente por ${tick}GHSA-rgw5-rvv9-x895${tick}, bypass de DoS em ${tick}brace-expansion${tick} que alcançou a versão ${tick}5.0.8${tick} anteriormente fixada por override global. O alerta não foi introduzido pelo G1.\n\nA investigação no PR #149 comprovou que um único override global é inadequado porque consumidores antigos e modernos de ${tick}minimatch${tick} dependem de linhas de API diferentes. Foram testadas e rejeitadas sem integração as alternativas ${tick}2.1.3${tick} e override global ${tick}2.1.4${tick}. O upstream oficial publicou backports do advisory em múltiplas linhas de manutenção.\n\nA correção adotada remove o override global de ${tick}brace-expansion${tick}, deixa o npm resolver a linha segura compatível com cada consumidor, remove os dois patches locais de ${tick}minimatch${tick} e retira ${tick}patch-package${tick} e seu ${tick}postinstall${tick}, que deixam de ter finalidade. O teste transitivo passa a validar consumidores antigos e modernos e reproduz os casos de regressão do advisory.\n\nA validação dedicada comprovou instalação limpa, zero vulnerabilidades de auditoria, assinaturas válidas, compatibilidade transitiva, lint, testes, build e inspeção de bundle. O gate integral inclui ainda cobertura e Playwright antes da integração. O pacote não altera regra de negócio, banco, migrations, RLS, dados, cache, autenticação, Vercel ou interface.\n\nA investigação e as evidências estão em ${tick}docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md${tick}.\n\n`;
+  const securityHeading = '## Correção emergencial de segurança — 9 de agosto de 2026';
+  const securitySection = `${securityHeading}\n\nDurante o gate do pacote G1, o ${tick}npm audit --audit-level=high${tick} passou a reprovar a árvore já existente por ${tick}GHSA-rgw5-rvv9-x895${tick}, bypass de DoS em ${tick}brace-expansion${tick} que alcançou a versão ${tick}5.0.8${tick} anteriormente fixada por override global. O alerta não foi introduzido pelo G1.\n\nA investigação no PR #149 comprovou que um único override global é inadequado porque consumidores antigos e modernos de ${tick}minimatch${tick} dependem de linhas de API diferentes. Foram testadas e rejeitadas sem integração as alternativas ${tick}2.1.3${tick} e override global ${tick}2.1.4${tick}. O upstream oficial publicou backports do advisory em múltiplas linhas de manutenção.\n\nA correção adotada remove o override global de ${tick}brace-expansion${tick}, deixa o npm resolver a linha segura compatível com cada consumidor, remove os dois patches locais de ${tick}minimatch${tick} e retira ${tick}patch-package${tick} e seu ${tick}postinstall${tick}, que deixam de ter finalidade. O teste transitivo passa a validar consumidores antigos e modernos e reproduz os casos de regressão do advisory.\n\nA validação dedicada comprovou instalação limpa, zero vulnerabilidades de auditoria, assinaturas válidas, compatibilidade transitiva, lint, testes, build e inspeção de bundle. O gate integral inclui ainda cobertura e Playwright antes da integração. O pacote não altera regra de negócio, banco, migrations, RLS, dados, cache, autenticação, Vercel ou interface.\n\nA investigação e as evidências estão em ${tick}docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md${tick}.\n\n`;
 
-  content = replaceOnce(
-    content,
-    '## Regra permanente de modernização proativa\n',
-    `${securitySection}## Regra permanente de modernização proativa\n`,
-    'seção de modernização',
-  );
+  if (!content.includes(securityHeading)) {
+    content = replaceOnce(
+      content,
+      '## Regra permanente de modernização proativa\n',
+      `${securitySection}## Regra permanente de modernização proativa\n`,
+      'seção de modernização',
+    );
+  }
 
   const nextStageStart = content.indexOf('## Próxima etapa\n');
   const docsStart = content.indexOf('## Documentação vigente\n');
@@ -67,14 +73,17 @@ function syncMaintenancePlan() {
   const file = 'docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md';
   let content = readFileSync(file, 'utf8');
 
-  const section = `## 7.1 Correção emergencial de segurança transitiva — 9 de agosto de 2026\n\nDurante a preparação do G1, o gate de auditoria detectou o novo advisory ${tick}GHSA-rgw5-rvv9-x895${tick} em ${tick}brace-expansion@5.0.8${tick}, versão que já fazia parte da linha de base. A correção foi isolada no PR #149 antes da continuidade das modernizações gerais.\n\nA análise mostrou que um override global é inadequado para a árvore atual porque versões antigas e modernas de ${tick}minimatch${tick} esperam APIs diferentes. A solução remove o override global, permite que o npm resolva os backports oficiais compatíveis de cada linha, elimina dois patches locais e retira ${tick}patch-package${tick} quando sua última finalidade desaparece.\n\nO pacote adiciona regressões específicas do advisory e mantém ${tick}npm audit --audit-level=high${tick}, assinaturas, lint, cobertura, build, bundle e Playwright como gates. Não altera comportamento funcional, banco, migrations, RLS, dados ou Production. A evidência detalhada está em ${tick}docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md${tick}.\n\nA continuidade do G1 TanStack Query permanece independente: o plugin oficial de ESLint e os Devtools de desenvolvimento serão retomados sobre a linha de base já corrigida. A atualização do Supabase Action v3 permanece condicionada ao pacote npm estável do CLI alcançar a versão já validada no CI, evitando downgrade ou adoção beta por conveniência.\n\n`;
+  const heading = '## 7.1 Correção emergencial de segurança transitiva — 9 de agosto de 2026';
+  const section = `${heading}\n\nDurante a preparação do G1, o gate de auditoria detectou o novo advisory ${tick}GHSA-rgw5-rvv9-x895${tick} em ${tick}brace-expansion@5.0.8${tick}, versão que já fazia parte da linha de base. A correção foi isolada no PR #149 antes da continuidade das modernizações gerais.\n\nA análise mostrou que um override global é inadequado para a árvore atual porque versões antigas e modernas de ${tick}minimatch${tick} esperam APIs diferentes. A solução remove o override global, permite que o npm resolva os backports oficiais compatíveis de cada linha, elimina dois patches locais e retira ${tick}patch-package${tick} quando sua última finalidade desaparece.\n\nO pacote adiciona regressões específicas do advisory e mantém ${tick}npm audit --audit-level=high${tick}, assinaturas, lint, cobertura, build, bundle e Playwright como gates. Não altera comportamento funcional, banco, migrations, RLS, dados ou Production. A evidência detalhada está em ${tick}docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md${tick}.\n\nA continuidade do G1 TanStack Query permanece independente: o plugin oficial de ESLint e os Devtools de desenvolvimento serão retomados sobre a linha de base já corrigida. A atualização do Supabase Action v3 permanece condicionada ao pacote npm estável do CLI alcançar a versão já validada no CI, evitando downgrade ou adoção beta por conveniência.\n\n`;
 
-  content = replaceOnce(
-    content,
-    '## 8. Oportunidades funcionais condicionadas\n',
-    `${section}## 8. Oportunidades funcionais condicionadas\n`,
-    'seção de oportunidades',
-  );
+  if (!content.includes(heading)) {
+    content = replaceOnce(
+      content,
+      '## 8. Oportunidades funcionais condicionadas\n',
+      `${section}## 8. Oportunidades funcionais condicionadas\n`,
+      'seção de oportunidades',
+    );
+  }
 
   writeFileSync(file, content);
 }

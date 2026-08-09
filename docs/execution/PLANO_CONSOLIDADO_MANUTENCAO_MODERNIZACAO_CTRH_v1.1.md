@@ -159,6 +159,16 @@ A atualização do ESLint 10 foi tentada e interrompida corretamente porque `esl
 
 Node 24, `@types/node` 24.13.3 e TypeScript 6.0.3 permaneceram inalterados. Não houve mudança de código, banco, migrations, RLS, dados, regras de negócio ou Production.
 
+## 7.1 Correção emergencial de segurança transitiva — 9 de agosto de 2026
+
+Durante a preparação do G1, o gate de auditoria detectou o novo advisory `GHSA-rgw5-rvv9-x895` em `brace-expansion@5.0.8`, versão que já fazia parte da linha de base. A correção foi isolada no PR #149 antes da continuidade das modernizações gerais.
+
+A análise mostrou que um override global é inadequado para a árvore atual porque versões antigas e modernas de `minimatch` esperam APIs diferentes. A solução remove o override global, permite que o npm resolva os backports oficiais compatíveis de cada linha, elimina dois patches locais e retira `patch-package` quando sua última finalidade desaparece.
+
+O pacote adiciona regressões específicas do advisory e mantém `npm audit --audit-level=high`, assinaturas, lint, cobertura, build, bundle e Playwright como gates. Não altera comportamento funcional, banco, migrations, RLS, dados ou Production. A evidência detalhada está em `docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md`.
+
+A continuidade do G1 TanStack Query permanece independente: o plugin oficial de ESLint e os Devtools de desenvolvimento serão retomados sobre a linha de base já corrigida. A atualização do Supabase Action v3 permanece condicionada ao pacote npm estável do CLI alcançar a versão já validada no CI, evitando downgrade ou adoção beta por conveniência.
+
 ## 8. Oportunidades funcionais condicionadas
 
 Permanecem sujeitas a necessidade comprovada e desenho específico:

@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **3 de agosto de 2026 — Rodada 5 concluída; pacotes compatíveis atualizados e ESLint 10 adiado por incompatibilidade oficial**
+Atualizado em: **9 de agosto de 2026 — correção transitiva de segurança tratada no PR #149; G1 TanStack Query permanece isolado no PR #148**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -34,8 +34,8 @@ Atualizado em: **3 de agosto de 2026 — Rodada 5 concluída; pacotes compatíve
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
-| Atividade técnica atual | Rodada 5 encerrada; seis atualizações compatíveis integradas e validadas |
-| Próxima atualização candidata | estudo de observabilidade de erros; ESLint 10 aguarda suporte estável do JSX A11y; TypeScript 7 permanece adiado |
+| Atividade técnica atual | correção emergencial do `GHSA-rgw5-rvv9-x895` tratada no PR #149, sem mudança funcional, de banco ou Production |
+| Próxima atualização candidata | concluir a correção transitiva; retomar o G1 TanStack Query no PR #148; depois seguir com a fundação do Trilho B e o estudo separado de observabilidade |
 
 ## Rodadas técnicas concluídas
 
@@ -253,6 +253,18 @@ A instalação limpa do ESLint 10 foi bloqueada pelo peer dependency oficial de 
 
 A evidência completa está em `docs/execution/RODADA_5_ATUALIZACOES_PACOTES_RELATORIO_FINAL_2026-08-03.md`.
 
+## Correção emergencial de segurança — 9 de agosto de 2026
+
+Durante o gate do pacote G1, o `npm audit --audit-level=high` passou a reprovar a árvore já existente por `GHSA-rgw5-rvv9-x895`, bypass de DoS em `brace-expansion` que alcançou a versão `5.0.8` anteriormente fixada por override global. O alerta não foi introduzido pelo G1.
+
+A investigação no PR #149 comprovou que um único override global é inadequado porque consumidores antigos e modernos de `minimatch` dependem de linhas de API diferentes. Foram testadas e rejeitadas sem integração as alternativas `2.1.3` e override global `2.1.4`. O upstream oficial publicou backports do advisory em múltiplas linhas de manutenção.
+
+A correção adotada remove o override global de `brace-expansion`, deixa o npm resolver a linha segura compatível com cada consumidor, remove os dois patches locais de `minimatch` e retira `patch-package` e seu `postinstall`, que deixam de ter finalidade. O teste transitivo passa a validar consumidores antigos e modernos e reproduz os casos de regressão do advisory.
+
+A validação dedicada comprovou instalação limpa, zero vulnerabilidades de auditoria, assinaturas válidas, compatibilidade transitiva, lint, testes, build e inspeção de bundle. O gate integral inclui ainda cobertura e Playwright antes da integração. O pacote não altera regra de negócio, banco, migrations, RLS, dados, cache, autenticação, Vercel ou interface.
+
+A investigação e as evidências estão em `docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md`.
+
 ## Regra permanente de modernização proativa
 
 Atualizações e instalações não ficam restritas a rodadas periódicas.
@@ -451,13 +463,13 @@ Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_ha
 
 ## Próxima etapa
 
-A Rodada 4 está concluída e o TypeScript 6.0.3 passa a ser a versão oficial do compilador.
+A prioridade imediata é concluir a correção transitiva de segurança do PR #149 e manter a linha de base novamente com auditoria limpa. O problema é independente do G1 e foi tratado em branch própria para preservar causa de falha e rollback.
 
-Nenhuma atualização estrutural seguinte está autorizada automaticamente. O próximo estudo técnico de maior valor é a observabilidade de erros com minimização de dados; sua eventual instalação exige decisão própria sobre ferramenta, privacidade, retenção, sanitização e ambientes.
+Depois dessa integração, o G1 do PR #148 deve ser reaplicado sobre a nova `main` e validado integralmente. O G1 adiciona lint oficial do TanStack Query e Devtools somente em desenvolvimento; a migração de `supabase/setup-cli` para v3 permanece adiada enquanto o pacote npm estável do CLI não alcançar a versão já validada pelo CI.
 
-Permanecem adiadas, em PRs isolados e somente com benefício aplicável, as atualizações de Supabase JS, React Hook Form e resolvers, Motion e Vite core. O TypeScript 7 exige experiência separada. Os sete símbolos sensíveis apontados pelo Knip e o contrato `Json` permanecem preservados.
+A fundação do Trilho B continua planejada em pacote separado, sem mistura com manutenção geral. Observabilidade de erros permanece próxima investigação geral de alto valor, sujeita a desenho próprio de privacidade, retenção e sanitização. ESLint 10 e TypeScript 7 continuam sem adoção automática.
 
-Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posteriores é autorizada por inferência. A atividade funcional seguinte continua sujeita a valor, risco ou limite comprovado; E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
+Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posteriores é autorizada por inferência. E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
 
 ## Documentação vigente
 
@@ -486,7 +498,8 @@ Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posterior
 23. `docs/execution/ENCERRAMENTO_R5_1_2026-07-30.md`;
 24. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
 25. `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
-26. este Handoff.
+26. `docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md`;
+27. este Handoff.
 
 ## Regra de continuidade
 
@@ -494,4 +507,4 @@ O projeto segue a sequência discutir, decidir, registrar, implementar e homolog
 
 Além disso, toda tarefa deve incluir avaliação de limites tecnológicos: quando uma atualização ou instalação puder produzir solução substantivamente superior, ela deve ser apresentada como proposta, sem instalação silenciosa e sem transformar recomendação em autorização.
 
-Depois da Rodada 3.2, nenhuma fila funcional se abre automaticamente. O próximo trabalho será escolhido por valor, risco ou limite comprovado, conforme GOV-013 e a política de manutenção v1.1.
+Depois da Rodada 5 e da correção transitiva de 9 de agosto, nenhuma fila funcional se abre automaticamente. O próximo trabalho será escolhido por valor, risco ou limite comprovado, conforme GOV-013 e a política de manutenção v1.1.

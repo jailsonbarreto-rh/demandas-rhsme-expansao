@@ -1,0 +1,51 @@
+name: G1 documentation sync
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'scripts/ci/sync-g1-docs.mjs'
+      - '.github/workflows/g1-doc-sync.yml'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  sync-docs:
+    if: github.event.pull_request.head.ref == 'chore/g1-query-tooling-v2-20260809'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout G1 branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Set up Node.js from package.json
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - name: Synchronize current documentation
+        run: node scripts/ci/sync-g1-docs.mjs
+
+      - name: Verify documentation diff
+        run: git diff --check
+
+      - name: Commit synchronized documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/HANDOFF.md docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md; then
+            echo 'Documentation already synchronized.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/HANDOFF.md docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md
+          git commit -m 'docs: sincronizar conclusão do G1'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

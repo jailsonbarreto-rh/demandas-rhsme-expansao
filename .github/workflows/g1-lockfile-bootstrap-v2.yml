@@ -1,0 +1,75 @@
+name: G1 lockfile bootstrap v2
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+      - 'eslint.config.mjs'
+      - 'src/dev/**'
+      - 'src/main.tsx'
+      - 'src/hooks/useDemandasData.ts'
+      - 'scripts/check-dev-only-tools.mjs'
+      - '.github/workflows/g1-lockfile-bootstrap-v2.yml'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  regenerate-lockfile:
+    if: github.event.pull_request.head.ref == 'chore/g1-query-tooling-v2-20260809'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout G1 branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Set up Node.js from package.json
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - name: Regenerate lockfile without lifecycle scripts
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Verify source manifest remains unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- package.json
+          git diff --check
+
+      - name: Commit regenerated lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- package-lock.json; then
+            echo 'package-lock.json already synchronized.'
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add package-lock.json
+            git commit -m 'chore: sincronizar lockfile do G1'
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
+
+      - name: Install exact dependency tree
+        run: npm ci
+
+      - name: Validate Query lint
+        run: npm run lint
+
+      - name: Validate production build
+        run: npm run build
+
+      - name: Verify public bundle
+        run: npm run check:public-bundle
+
+      - name: Verify dev-only tools exclusion
+        run: npm run check:dev-only-tools

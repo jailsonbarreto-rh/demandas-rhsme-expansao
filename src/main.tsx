@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import '@fontsource-variable/inter';
@@ -19,11 +19,23 @@ import './demandas-table-responsive.css';
 
 const queryClient = createAppQueryClient();
 
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(async () => {
+      const module = await import('@tanstack/react-query-devtools');
+      return { default: module.ReactQueryDevtools };
+    })
+  : null;
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <DemandasQueryClientContext.Provider value={queryClient}>
       <QueryClientProvider client={queryClient}>
         <AppBootstrap />
+        {ReactQueryDevtools ? (
+          <Suspense fallback={null}>
+            <ReactQueryDevtools initialIsOpen={false} />
+          </Suspense>
+        ) : null}
       </QueryClientProvider>
     </DemandasQueryClientContext.Provider>
   </StrictMode>,

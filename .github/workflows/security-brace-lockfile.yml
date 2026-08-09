@@ -6,7 +6,9 @@ on:
       - main
     paths:
       - 'package.json'
+      - 'package-lock.json'
       - 'scripts/brace-expansion-compat.node.mjs'
+      - 'docs/**'
       - '.github/workflows/security-brace-lockfile.yml'
 
 permissions:
@@ -17,7 +19,7 @@ jobs:
   regenerate-and-validate:
     if: github.event.pull_request.head.ref == 'security/brace-expansion-20260809'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
 
     steps:
       - name: Checkout security branch
@@ -58,6 +60,9 @@ jobs:
       - name: Install exact dependency tree
         run: npm ci
 
+      - name: Validate documentation consistency
+        run: npm run check:docs
+
       - name: Reject high severity vulnerabilities
         run: npm audit --audit-level=high
 
@@ -70,8 +75,8 @@ jobs:
       - name: Validate lint
         run: npm run lint
 
-      - name: Validate unit and integration tests
-        run: npm test
+      - name: Validate unit, integration and coverage tests
+        run: npm run test:coverage
 
       - name: Validate production build
         run: npm run build
@@ -81,3 +86,9 @@ jobs:
 
       - name: Validate public bundle
         run: npm run check:public-bundle
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate browser regression suite
+        run: npm run test:e2e

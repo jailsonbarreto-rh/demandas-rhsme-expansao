@@ -4,16 +4,20 @@ import test from 'node:test';
 import ExcelJS from 'exceljs';
 
 const require = createRequire(import.meta.url);
-const minimatchModulePaths = [
-  'minimatch',
-  'readdir-glob/node_modules/minimatch',
-  '@typescript-eslint/typescript-estree/node_modules/minimatch',
+const minimatchConsumers = [
+  { label: 'top-level minimatch', requireFrom: import.meta.url },
+  { label: 'readdir-glob', requireFrom: require.resolve('readdir-glob') },
+  {
+    label: '@typescript-eslint/typescript-estree',
+    requireFrom: require.resolve('@typescript-eslint/typescript-estree'),
+  },
 ];
 
-function getMinimatch(moduleId) {
-  const loaded = require(moduleId);
+function getMinimatch({ label, requireFrom }) {
+  const requireFromConsumer = createRequire(requireFrom);
+  const loaded = requireFromConsumer('minimatch');
   const minimatch = typeof loaded === 'function' ? loaded : loaded.minimatch;
-  assert.equal(typeof minimatch, 'function', `${moduleId} deve expor função minimatch`);
+  assert.equal(typeof minimatch, 'function', `${label} deve resolver uma função minimatch`);
   return minimatch;
 }
 
@@ -28,10 +32,10 @@ test('override usa o backport CommonJS corrigido de brace-expansion', () => {
 test('consumidores antigos e modernos continuam executando expansão de chaves', () => {
   const pattern = 'relatorio-{2025,2026}.xlsx';
 
-  for (const moduleId of minimatchModulePaths) {
-    const minimatch = getMinimatch(moduleId);
-    assert.equal(minimatch('relatorio-2026.xlsx', pattern), true, moduleId);
-    assert.equal(minimatch('relatorio-2027.xlsx', pattern), false, moduleId);
+  for (const consumer of minimatchConsumers) {
+    const minimatch = getMinimatch(consumer);
+    assert.equal(minimatch('relatorio-2026.xlsx', pattern), true, consumer.label);
+    assert.equal(minimatch('relatorio-2027.xlsx', pattern), false, consumer.label);
   }
 });
 

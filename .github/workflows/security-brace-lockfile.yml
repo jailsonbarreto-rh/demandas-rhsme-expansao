@@ -8,6 +8,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'scripts/brace-expansion-compat.node.mjs'
+      - 'scripts/ci/sync-brace-security-docs.mjs'
       - 'docs/**'
       - '.github/workflows/security-brace-lockfile.yml'
 
@@ -54,6 +55,24 @@ jobs:
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add package-lock.json
             git commit -m 'chore: sincronizar lockfile da correção de segurança'
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
+
+      - name: Synchronize current maintenance documentation
+        run: node scripts/ci/sync-brace-security-docs.mjs
+
+      - name: Commit synchronized documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- docs/HANDOFF.md docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md; then
+            echo 'Current documentation already synchronized.'
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add docs/HANDOFF.md docs/execution/PLANO_CONSOLIDADO_MANUTENCAO_MODERNIZACAO_CTRH_v1.1.md
+            git commit -m 'docs: sincronizar correção transitiva de segurança'
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
           fi
 

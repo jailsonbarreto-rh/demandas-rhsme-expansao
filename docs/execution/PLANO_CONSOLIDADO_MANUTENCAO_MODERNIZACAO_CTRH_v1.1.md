@@ -2,7 +2,9 @@
 
 **Data:** 30 de agosto de 2026  
 **Status:** VIGENTE como plano técnico complementar; não autoriza automaticamente nenhuma implementação  
-**Linha de base documental:** `main` em `eb741e173231d891492314d975d9ea447c045acd`
+**Linha de base técnica da rodada:** `eb741e173231d891492314d975d9ea447c045acd`  
+**Publicação em Production:** PR #169, SHA funcional `706570480288e60cf7070c3a4648fa6d37d9f8fb`, deployment `dpl_EqrEWJ4B9RVjSbbrSuuWNKe45YBN` em `READY`  
+**Encerramento operacional:** PR #170, com `git.deploymentEnabled: false` restaurado
 
 ## 1. Finalidade
 
@@ -179,7 +181,9 @@ A rodada autorizada foi concluída em unidades independentes:
 - PR #166: `supabase/setup-cli@v3.0.0` e Supabase CLI 2.116.0, aprovados pelo replay integral do Supabase local;
 - PR #167: Motion 13.1.1, aprovado novamente sobre a base já atualizada.
 
-A rodada preservou banco, migrations, RLS, dados, regras de negócio e Production. Nenhum pacote major incompatível foi forçado. TanStack Table 9 permaneceu fora após quebra funcional comprovada no PR #155; TypeScript 7 e ESLint 10 continuam sujeitos a experimentos próprios.
+A integração técnica preservou banco, migrations, RLS, dados, regras de negócio e Production até a homologação. Nenhum pacote major incompatível foi forçado. TanStack Table 9 permaneceu fora após quebra funcional comprovada no PR #155; TypeScript 7 e ESLint 10 continuam sujeitos a experimentos próprios.
+
+O fechamento da rodada ocorreu em três passos adicionais: o PR #168 sincronizou a documentação autoritativa; o PR #169 promoveu a base validada para Production, gerando o deployment `dpl_EqrEWJ4B9RVjSbbrSuuWNKe45YBN` em estado `READY` no SHA `706570480288e60cf7070c3a4648fa6d37d9f8fb`; e o PR #170 restaurou `git.deploymentEnabled: false`. A publicação não criou nem aplicou migrations, não alterou RLS, dados ou regras de negócio e manteve o Supabase Production saudável.
 
 A próxima modernização não é automática. O foco técnico retorna ao Trilho B de migração. `fast-check` já está disponível para testes gerativos; pgTAP será avaliado na fundação local de banco e `json-canonicalize` permanece reservado ao B2.
 

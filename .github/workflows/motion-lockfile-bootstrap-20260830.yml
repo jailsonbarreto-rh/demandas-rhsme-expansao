@@ -1,0 +1,46 @@
+name: Motion lockfile bootstrap 2026-08-30
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - '.github/workflows/motion-lockfile-bootstrap-20260830.yml'
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  regenerate-lockfile:
+    if: github.event.pull_request.head.ref == 'chore/motion-13-1-1-20260830'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm install --package-lock-only --ignore-scripts
+      - run: git diff --exit-code -- package.json && git diff --check
+      - name: Commit lockfile
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'chore: sincronizar lockfile do Motion 13'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm audit signatures
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run check:bundle
+      - run: npm run check:public-bundle
+      - run: npm run check:dev-only-tools

@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **30 de agosto de 2026 — manutenção geral, G1 TanStack Query, Supabase CLI 2.116.0 e Motion 13.1.1 integrados**
+Atualizado em: **30 de agosto de 2026 — manutenção geral, G1 TanStack Query, Supabase CLI 2.116.0 e Motion 13.1.1 integrados, publicados e encerrados operacionalmente**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -26,15 +26,15 @@ Atualizado em: **30 de agosto de 2026 — manutenção geral, G1 TanStack Query,
 | PR funcional TanStack Query | #132, merge `e7ca96fa2f1474d27703967db641fd91a4e619c6` |
 | PR de release TanStack Query | #133, merge `f9424b34ec9efd02d00f2e989d15816f52c5e480` |
 | Encerramento da release | PR #134, merge `15aa5c049c3c7122db365eec6a2e9f629e3c38ea` |
-| Production atual | `dpl_G15atVQxqsyWLAqNA68P2okxSLBu` — `READY` |
-| SHA funcional publicado | `f9424b34ec9efd02d00f2e989d15816f52c5e480` |
+| Production atual | `dpl_EqrEWJ4B9RVjSbbrSuuWNKe45YBN` — `READY` |
+| SHA funcional publicado | `706570480288e60cf7070c3a4648fa6d37d9f8fb` |
 | Supabase | `CTRH PROCESSOS`, ref `kdhekkzwcokfrpcrsllr`, região `sa-east-1`, `ACTIVE_HEALTHY` |
 | Integridade conhecida | 379 demandas, zero excluídas, 764 históricos, 13 perfis |
-| Deploy automático | `deploymentEnabled: false`, restaurado pelo PR #134 |
+| Deploy automático | `deploymentEnabled: false`, restaurado pelo PR #170 após confirmação da nova Production |
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
-| Atividade técnica atual | rodada de manutenção de 29–30/08 concluída pelos PRs #158, #161, #163, #166 e #167; `main` em `eb741e173231d891492314d975d9ea447c045acd` |
+| Atividade técnica atual | rodada de manutenção de 29–30/08 concluída pelos PRs #158, #161, #163, #166 e #167; documentação sincronizada pelo PR #168; publicação controlada concluída pelo PR #169; bloqueio da Vercel restaurado pelo PR #170 |
 | Próxima atualização candidata | fundação B1 do Trilho B de migração, usando `fast-check` já instalado e avaliando pgTAP em testes locais; observabilidade permanece pacote separado |
 
 ## Rodadas técnicas concluídas
@@ -303,6 +303,16 @@ O PR #167 atualizou `motion` de 12.43.0 para 13.1.1. A major 13 foi reaplicada s
 - observabilidade externa: depende de desenho prévio de privacidade, retenção e sanitização.
 
 Evidências principais: `docs/maintenance/DEPENDENCY_UPDATES_2026-08-29.md`, `docs/maintenance/G1_QUERY_TOOLING_2026-08-29.md` e `docs/maintenance/SUPABASE_CLI_2_116_0_2026-08-30.md`.
+
+### Publicação e encerramento operacional — 30 de agosto de 2026
+
+- PR #168 sincronizou o Handoff e o Plano Consolidado com a manutenção integrada;
+- PR #169 habilitou temporariamente os Git Deployments, passou pelo Preview `dpl_A1FL86oeTNEcyBTzDk1fXUBgGJxV` em estado `READY`, pelo gate `Dependency health` integral e publicou a mesma base em Production;
+- a Production vigente é `dpl_EqrEWJ4B9RVjSbbrSuuWNKe45YBN`, estado `READY`, no SHA funcional `706570480288e60cf7070c3a4648fa6d37d9f8fb`;
+- PR #170 restaurou `git.deploymentEnabled: false` após a confirmação da Production;
+- nenhuma migration, RLS, dado ou regra de negócio foi alterada durante a publicação;
+- o Supabase `CTRH PROCESSOS` permaneceu `ACTIVE_HEALTHY`, com health/readiness em HTTP 200 após a promoção.
+
 
 ## Regra permanente de modernização proativa
 

@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **9 de agosto de 2026 — correção transitiva de segurança tratada no PR #149; G1 TanStack Query permanece isolado no PR #148**
+Atualizado em: **30 de agosto de 2026 — manutenção geral, G1 TanStack Query, Supabase CLI 2.116.0 e Motion 13.1.1 integrados**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -34,8 +34,8 @@ Atualizado em: **9 de agosto de 2026 — correção transitiva de segurança tra
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
-| Atividade técnica atual | correção emergencial do `GHSA-rgw5-rvv9-x895` tratada no PR #149, sem mudança funcional, de banco ou Production |
-| Próxima atualização candidata | concluir a correção transitiva; retomar o G1 TanStack Query no PR #148; depois seguir com a fundação do Trilho B e o estudo separado de observabilidade |
+| Atividade técnica atual | rodada de manutenção de 29–30/08 concluída pelos PRs #158, #161, #163, #166 e #167; `main` em `eb741e173231d891492314d975d9ea447c045acd` |
+| Próxima atualização candidata | fundação B1 do Trilho B de migração, usando `fast-check` já instalado e avaliando pgTAP em testes locais; observabilidade permanece pacote separado |
 
 ## Rodadas técnicas concluídas
 
@@ -265,6 +265,45 @@ A validação dedicada comprovou instalação limpa, zero vulnerabilidades de au
 
 A investigação e as evidências estão em `docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md`.
 
+## Manutenção geral e G1 — 29–30 de agosto de 2026
+
+A rodada autorizada de modernização foi concluída sem alterar dados, migrations, RLS ou Supabase Production.
+
+### Dependências e segurança
+
+- PR #158 integrou o grupo seguro de dependências de desenvolvimento;
+- PR #161 atualizou Supabase JS para 2.112.4, React Hook Form para 7.86.0, resolvers para 5.9.1, React Router para 8.3.1, Sonner para 2.0.8 e demais patches compatíveis;
+- `fast-check@4.9.0` foi adicionado como ferramenta de desenvolvimento para os futuros testes gerativos do Trilho B;
+- o lockfile foi regenerado pelo npm e a vulnerabilidade transitiva então detectada em `nanoid <3.3.18` foi eliminada sem `--force`;
+- audit, assinaturas, lint, testes, cobertura, build, bundle e Playwright permaneceram verdes.
+
+### G1 TanStack Query
+
+O PR #163 concluiu o G1:
+
+- `@tanstack/eslint-plugin-query@5.101.4` com configuração oficial `flat/recommended`;
+- `@tanstack/react-query-devtools@5.101.4` somente em desenvolvimento;
+- correção da dependência instável de `refetch` identificada pelo novo lint;
+- gate `check:dev-only-tools` impedindo Devtools no bundle de produção;
+- inspeção pública do bundle mantida no CI.
+
+### Supabase CLI
+
+O PR #166 atualizou `supabase/setup-cli` para v3.0.0 e fixou o Supabase CLI em 2.116.0. O gate local aprovou a inicialização do Supabase efêmero, todos os invariantes existentes e o replay integral das migrations a partir do zero. Nenhuma migration nova foi criada ou aplicada ao Production.
+
+### Motion
+
+O PR #167 atualizou `motion` de 12.43.0 para 13.1.1. A major 13 foi reaplicada sobre a `main` já atualizada e aprovada novamente por audit, assinaturas, lint, cobertura, build, bundle e Playwright.
+
+### Itens deliberadamente não integrados
+
+- TanStack Table 9: o PR #155 comprovou quebra funcional e foi encerrado; exige migração própria;
+- TypeScript 7 e ESLint 10: continuam dependentes de avaliação específica de compatibilidade;
+- React Compiler/Oxc e Devtools unificados: permanecem experimentais para o nível de risco atual;
+- observabilidade externa: depende de desenho prévio de privacidade, retenção e sanitização.
+
+Evidências principais: `docs/maintenance/DEPENDENCY_UPDATES_2026-08-29.md`, `docs/maintenance/G1_QUERY_TOOLING_2026-08-29.md` e `docs/maintenance/SUPABASE_CLI_2_116_0_2026-08-30.md`.
+
 ## Regra permanente de modernização proativa
 
 Atualizações e instalações não ficam restritas a rodadas periódicas.
@@ -463,11 +502,11 @@ Para a conclusão funcional inicial, a migration `20260801044712_r5_essential_ha
 
 ## Próxima etapa
 
-A prioridade imediata é concluir a correção transitiva de segurança do PR #149 e manter a linha de base novamente com auditoria limpa. O problema é independente do G1 e foi tratado em branch própria para preservar causa de falha e rollback.
+Com a rodada de manutenção concluída, a próxima frente técnica autorizada volta a ser a fundação B1 do Trilho B de migração. O trabalho deve permanecer sem carga dos 3.201 registros reais em Production e com preservação integral dos dados legados, inclusive estados hoje incompatíveis com regras de criação do sistema novo.
 
-Depois dessa integração, o G1 do PR #148 deve ser reaplicado sobre a nova `main` e validado integralmente. O G1 adiciona lint oficial do TanStack Query e Devtools somente em desenvolvimento; a migração de `supabase/setup-cli` para v3 permanece adiada enquanto o pacote npm estável do CLI não alcançar a versão já validada pelo CI.
+O `fast-check` já disponível deve ser empregado nos testes gerativos das transformações quando o B1/B2 chegar a essa camada. pgTAP deve ser avaliado para invariantes locais de banco antes de qualquer adoção definitiva. `json-canonicalize` permanece reservado ao B2, quando os hashes canônicos de proveniência forem implementados.
 
-A fundação do Trilho B continua planejada em pacote separado, sem mistura com manutenção geral. Observabilidade de erros permanece próxima investigação geral de alto valor, sujeita a desenho próprio de privacidade, retenção e sanitização. ESLint 10 e TypeScript 7 continuam sem adoção automática.
+Observabilidade, Lighthouse CI, MSW, CodeQL, TanStack Table 9, ESLint 10 e TypeScript 7 continuam pacotes independentes, sem autorização automática.
 
 Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posteriores é autorizada por inferência. E2, segurança final e homologação consolidada do R12 permanecem gates antes da entrega final do produto.
 
@@ -499,7 +538,10 @@ Nenhuma extensão funcional do R5 avançado, R1 residual, R2 ou ciclos posterior
 24. `docs/execution/AUDITORIA_LAYOUT_INFORMACOES_INTERNAS_2026-07-30.md`;
 25. `docs/execution/HISTORICO_DOCUMENTAL_CTRH.md`;
 26. `docs/maintenance/BRACE_EXPANSION_SECURITY_2026-08-09.md`;
-27. este Handoff.
+27. `docs/maintenance/DEPENDENCY_UPDATES_2026-08-29.md`;
+28. `docs/maintenance/G1_QUERY_TOOLING_2026-08-29.md`;
+29. `docs/maintenance/SUPABASE_CLI_2_116_0_2026-08-30.md`;
+30. este Handoff.
 
 ## Regra de continuidade
 
@@ -507,4 +549,4 @@ O projeto segue a sequência discutir, decidir, registrar, implementar e homolog
 
 Além disso, toda tarefa deve incluir avaliação de limites tecnológicos: quando uma atualização ou instalação puder produzir solução substantivamente superior, ela deve ser apresentada como proposta, sem instalação silenciosa e sem transformar recomendação em autorização.
 
-Depois da Rodada 5 e da correção transitiva de 9 de agosto, nenhuma fila funcional se abre automaticamente. O próximo trabalho será escolhido por valor, risco ou limite comprovado, conforme GOV-013 e a política de manutenção v1.1.
+Depois da manutenção de 29–30 de agosto, nenhuma nova modernização se abre automaticamente. O próximo trabalho técnico retorna ao Trilho B de migração, sem perder a regra de avaliar atualizações por valor, risco e limite comprovado.

@@ -1,8 +1,8 @@
 # Plano Consolidado de Manutenção e Modernização — CTRH v1.1
 
-**Data:** 3 de agosto de 2026  
+**Data:** 30 de agosto de 2026  
 **Status:** VIGENTE como plano técnico complementar; não autoriza automaticamente nenhuma implementação  
-**Linha de base documental:** `main` em `15aa5c049c3c7122db365eec6a2e9f629e3c38ea`
+**Linha de base documental:** `main` em `eb741e173231d891492314d975d9ea447c045acd`
 
 ## 1. Finalidade
 
@@ -169,6 +169,20 @@ O pacote adiciona regressões específicas do advisory e mantém `npm audit --au
 
 A continuidade do G1 TanStack Query permanece independente: o plugin oficial de ESLint e os Devtools de desenvolvimento serão retomados sobre a linha de base já corrigida. A atualização do Supabase Action v3 permanece condicionada ao pacote npm estável do CLI alcançar a versão já validada no CI, evitando downgrade ou adoção beta por conveniência.
 
+## 7.2 Manutenção geral, G1, Supabase CLI e Motion — 29–30 de agosto de 2026
+
+A rodada autorizada foi concluída em unidades independentes:
+
+- PR #158: grupo seguro de dependências de desenvolvimento;
+- PR #161: atualizações patch/minor de runtime e desenvolvimento, correção transitiva de `nanoid` e instalação de `fast-check@4.9.0`;
+- PR #163: G1 TanStack Query com lint oficial, Devtools somente em desenvolvimento e gate contra vazamento no bundle;
+- PR #166: `supabase/setup-cli@v3.0.0` e Supabase CLI 2.116.0, aprovados pelo replay integral do Supabase local;
+- PR #167: Motion 13.1.1, aprovado novamente sobre a base já atualizada.
+
+A rodada preservou banco, migrations, RLS, dados, regras de negócio e Production. Nenhum pacote major incompatível foi forçado. TanStack Table 9 permaneceu fora após quebra funcional comprovada no PR #155; TypeScript 7 e ESLint 10 continuam sujeitos a experimentos próprios.
+
+A próxima modernização não é automática. O foco técnico retorna ao Trilho B de migração. `fast-check` já está disponível para testes gerativos; pgTAP será avaliado na fundação local de banco e `json-canonicalize` permanece reservado ao B2.
+
 ## 8. Oportunidades funcionais condicionadas
 
 Permanecem sujeitas a necessidade comprovada e desenho específico:
@@ -199,6 +213,7 @@ npm run test:coverage
 npm run build
 npm run check:bundle
 npm run check:public-bundle
+npm run check:dev-only-tools
 npm run test:e2e
 ```
 

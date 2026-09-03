@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
+  columnSizingFeature,
   createColumnHelper,
   createPaginatedRowModel,
   createSortedRowModel,
@@ -45,6 +46,7 @@ const SEARCH_FIELD_LABELS: Record<DemandSearchField, string> = {
 };
 
 const demandTableFeatures = tableFeatures({
+  columnSizingFeature,
   rowSortingFeature,
   sortedRowModel: createSortedRowModel(),
   rowPaginationFeature,

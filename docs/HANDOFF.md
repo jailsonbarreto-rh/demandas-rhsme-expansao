@@ -35,7 +35,7 @@ Atualizado em: **3 de setembro de 2026 — janela experimental pré-migração c
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
 | Atividade técnica atual | janela experimental de 03/09 concluída pelos PRs #176 e #178; TanStack Table 9.2.4 migrado integralmente; `main` em `4d9ec654b6feb1acd43329861eedd1ac5c8c12bf`; Production permanece deliberadamente na versão anterior, com deploy automático bloqueado |
-| Próxima atualização candidata | fundação B1 do Trilho B continua como próxima frente de produto; TypeScript 7 e ESLint 10 permanecem bloqueados por compatibilidade upstream comprovada |
+| Próxima atualização candidata | debate B1 do Trilho B, com pré-flight técnico concluído; B2 permanece bloqueado até aprovação expressa das decisões B1 aplicáveis |
 
 ## Rodadas técnicas concluídas
 
@@ -370,6 +370,13 @@ Gate final:
 - nenhuma alteração de banco, migrations, RLS, dados ou regra de negócio.
 
 A Production não foi atualizada. O deploy automático permanece bloqueado.
+
+## Pré-flight B1 do Trilho B — 3 de setembro de 2026
+
+A auditoria do caminho histórico de migração confirmou que ele **não deve ser reutilizado sem revisão** para a futura carga real. O normalizador atual pode inferir tipo, aplicar classificação padrão `Outros` e setor padrão; a RPC `importar_sme_demandas_lote`, no modo apply, insere diretamente em `sme_demandas`. Esses comportamentos não atendem ao contrato recomendado de recepção preservativa do B1.
+
+O diagnóstico completo está em `docs/execution/B1_PREIMPLEMENTACAO_CTRH_2026-09-03.md`. Nenhuma decisão B1 foi inferida ou registrada como aprovada. B2 continua bloqueado até decisão expressa. Nenhuma carga, migration, RLS, dado ou serviço remoto foi alterado.
+
 
 ## Regra permanente de modernização proativa
 

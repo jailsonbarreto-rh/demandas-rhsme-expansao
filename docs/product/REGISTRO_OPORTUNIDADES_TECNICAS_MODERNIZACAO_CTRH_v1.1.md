@@ -35,6 +35,8 @@
 | `typescript-eslint` 8.69.0 | atualização concluída; também comprovou o bloqueio atual ao TypeScript 7 | PR #176 |
 | TanStack Query tooling 5.102.8 | plugin oficial e Devtools atualizados, preservando exclusão do bundle público | PR #176 |
 
+| TanStack Table 9.2.4 | migração estrutural concluída na `main`, com feature set v9 explícita e gate integral aprovado; ainda não publicada | PR #178 |
+
 Itens concluídos não devem permanecer descritos como candidatos futuros.
 
 ## 2. Consolidações concluídas
@@ -65,7 +67,7 @@ As Rodadas 3.1 e 3.2 não alteram banco, RLS, dados, migrations ou regras de neg
 
 - PR #176 atualizou todas as dependências diretas viáveis para as versões `latest` então publicadas;
 - `browserslist` vulnerável foi corrigido transitivamente no lockfile;
-- TanStack Table 9 foi efetivamente testado e reclassificado como migração estrutural após 14 falhas;
+- TanStack Table 9 foi inicialmente reclassificado como migração estrutural após 14 falhas e, em seguida, migrado com sucesso pelo PR #178;
 - TypeScript 7 e ESLint 10 foram efetivamente testados e permanecem bloqueados por peers upstream;
 - nenhum bypass de compatibilidade foi utilizado;
 - o lote final passou o gate integral;
@@ -76,7 +78,6 @@ As Rodadas 3.1 e 3.2 não alteram banco, RLS, dados, migrations ou regras de neg
 | Oportunidade | Benefício esperado | Condição de retomada | Situação |
 |---|---|---|---|
 | Observabilidade de erros | detectar falhas reais de Production com contexto técnico sanitizado | definir ferramenta, dados proibidos, retenção, amostragem, ambientes e source maps privados | próximo estudo técnico recomendado |
-| TanStack Table 9 | migrar para a nova API e avaliar ganhos de desempenho/memória | migração explícita de `DemandasTable.tsx`, row models e features; 14 falhas da tentativa simples já documentadas | migração estrutural opcional |
 | TypeScript 7 | avaliar o compilador nativo e a nova arquitetura da ferramenta | aguardar `typescript-eslint` publicar peer compatível; tentativa com 7.0.2 falhou por ERESOLVE | bloqueado por upstream |
 
 Nenhuma oportunidade possui compromisso antecipado de implementação ou merge. Cada estudo deve permanecer separado de refatoração funcional, alteração de regras ou outra atualização major.

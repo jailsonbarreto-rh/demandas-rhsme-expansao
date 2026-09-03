@@ -1,6 +1,6 @@
 # Registro de Oportunidades Técnicas e de Modernização — CTRH v1.1
 
-**Data:** 3 de agosto de 2026  
+**Data:** 3 de setembro de 2026  
 **Status:** VIGENTE como inventário técnico; não autoriza implementação  
 **Finalidade:** registrar capacidades concluídas, oportunidades futuras, limites conhecidos e alternativas rejeitadas sem transformar o inventário em fila automática.
 
@@ -11,24 +11,29 @@
 | Error Boundaries | concluída e publicada | PR #119; release #121–#122 |
 | Playwright 1.62.1 | atualização de patch concluída na preparação pré-TypeScript 6 | PR #137 |
 | Plugin React para Vite 6.0.5 | atualização de patch concluída | PR #137 |
-| `globals` 17.9.0 | atualização minor concluída | PR #137 |
+| `globals` 17.12.0 | atualização concluída na janela pré-migração | PR #176 |
 | Supabase JavaScript 2.110.9 | concluída e publicada | PR #118 |
 | GitHub Actions básicas v7 | concluída | PR #116 |
 | Node 24 como fonte única | concluída e publicada | PR #125; release #127–#128 |
 | JSDOM 30.0.1 | atualização de patch concluída e usada pelo Vitest | PR #137 |
 | Supabase Action e CLI fixadas | Action 2.1.1 e CLI 2.111.0 concluídas | PR #126 |
-| Knip 6.31.0 | atualizado e disponível em modo diagnóstico | PR #137 |
-| TanStack Query 5.101.4 | integrado e publicado | PR #132; release #133–#134 |
+| Knip 6.34.0 | atualizado e disponível em modo diagnóstico | PR #176 |
+| TanStack Query 5.102.8 | atualizado na `main`; Production permanece na release anterior | PR #176 |
 | Tabela responsiva em largura ampla | concluída e publicada | PR #129; release #130–#131 |
 | Constante compartilhada de retry | concluída | PR #136 |
 | Redução de dez exports internos | concluída sem apagar símbolos | PR #137 |
 | Auditoria pré-TypeScript 6 do `tsconfig` | concluída; nenhuma alteração necessária | PR #137 |
 | TypeScript 6.0.3 | atualização concluída, compatível e sem ajuste de código ou `tsconfig` | PR #138 |
-| Supabase JavaScript 2.112.0 | atualização compatível concluída | PR #143 |
-| React Hook Form 7.84.0 e resolvers 5.7.1 | atualização conjunta concluída | PR #143 |
-| Motion 12.43.0 | atualização compatível concluída | PR #143 |
+| Supabase JavaScript 2.114.0 | atualização concluída e validada na `main`; ainda não publicada | PR #176 |
+| React Hook Form 7.87.0 | atualização concluída e validada na `main`; ainda não publicada | PR #176 |
+| Motion 13.2.0 | atualização concluída e validada na `main`; ainda não publicada | PR #176 |
 | Vite 8.2.0 | atualização de build concluída | PR #143 |
 | jest-dom 7.0.0 | atualização de testes concluída | PR #143 |
+
+| Zod 4.5.4 | atualização concluída e validada na `main`; ainda não publicada | PR #176 |
+| `@types/node` 26.4.1 | atualização experimental aprovada por gate integral, mantendo runtime Node 24 | PR #176 |
+| `typescript-eslint` 8.69.0 | atualização concluída; também comprovou o bloqueio atual ao TypeScript 7 | PR #176 |
+| TanStack Query tooling 5.102.8 | plugin oficial e Devtools atualizados, preservando exclusão do bundle público | PR #176 |
 
 Itens concluídos não devem permanecer descritos como candidatos futuros.
 
@@ -56,12 +61,23 @@ Itens concluídos não devem permanecer descritos como candidatos futuros.
 
 As Rodadas 3.1 e 3.2 não alteram banco, RLS, dados, migrations ou regras de negócio.
 
+### Janela experimental de 3 de setembro
+
+- PR #176 atualizou todas as dependências diretas viáveis para as versões `latest` então publicadas;
+- `browserslist` vulnerável foi corrigido transitivamente no lockfile;
+- TanStack Table 9 foi efetivamente testado e reclassificado como migração estrutural após 14 falhas;
+- TypeScript 7 e ESLint 10 foram efetivamente testados e permanecem bloqueados por peers upstream;
+- nenhum bypass de compatibilidade foi utilizado;
+- o lote final passou o gate integral;
+- a atualização está na `main`, mas ainda não em Production.
+
 ## 3. Próximas oportunidades estruturais
 
 | Oportunidade | Benefício esperado | Condição de retomada | Situação |
 |---|---|---|---|
 | Observabilidade de erros | detectar falhas reais de Production com contexto técnico sanitizado | definir ferramenta, dados proibidos, retenção, amostragem, ambientes e source maps privados | próximo estudo técnico recomendado |
-| TypeScript 7 | avaliar o compilador nativo e a nova arquitetura da ferramenta | compatibilidade comprovada de todo o ecossistema e experiência isolada posterior ao TypeScript 6 | adiado |
+| TanStack Table 9 | migrar para a nova API e avaliar ganhos de desempenho/memória | migração explícita de `DemandasTable.tsx`, row models e features; 14 falhas da tentativa simples já documentadas | migração estrutural opcional |
+| TypeScript 7 | avaliar o compilador nativo e a nova arquitetura da ferramenta | aguardar `typescript-eslint` publicar peer compatível; tentativa com 7.0.2 falhou por ERESOLVE | bloqueado por upstream |
 
 Nenhuma oportunidade possui compromisso antecipado de implementação ou merge. Cada estudo deve permanecer separado de refatoração funcional, alteração de regras ou outra atualização major.
 
@@ -69,9 +85,8 @@ Nenhuma oportunidade possui compromisso antecipado de implementação ou merge. 
 
 | Possibilidade | Versão identificada | Razão do adiamento |
 |---|---:|---|
-| ESLint 10 | linha major | bloqueado até `eslint-plugin-jsx-a11y` publicar suporte oficial estável; ESLint 9.39.5 preservado |
-| `@types/node` 26 | runtime divergente | o projeto utiliza Node 24 |
-| TypeScript 7 | linha major nativa | TypeScript 6 concluído; ainda exige experiência própria e compatibilidade integral |
+| ESLint 10.9.1 | linha major | instalação limpa bloqueada pelo peer de `eslint-plugin-jsx-a11y@6.10.2`; ESLint 9.39.5 preservado |
+| TypeScript 7.0.2 | linha major nativa | instalação bloqueada pelo peer de `typescript-eslint@8.69.0`; TypeScript 6.0.3 preservado |
 
 A existência dessas versões não autoriza atualização. Cada retomada deve cumprir a política de manutenção e demonstrar benefício concreto.
 

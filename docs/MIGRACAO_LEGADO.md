@@ -1,8 +1,8 @@
 # Migração dos dados do sistema legado
 
-> **Situação em 1º de agosto de 2026:** procedimento preservado como referência técnica, mas sua execução está suspensa pela decisão GOV-013. A incorporação do legado (Trilha B) somente será retomada se houver fonte real disponível, necessidade operacional confirmada e autorização específica. Não execute os comandos deste documento como próxima etapa automática.
+> **Situação em 3 de setembro de 2026:** este procedimento é **histórico e não está autorizado para a próxima carga real**. O pré-flight B1 confirmou incompatibilidades entre este fluxo e o contrato de recepção preservativa atualmente recomendado: o normalizador pode inferir tipo e aplicar valores padrão, e a RPC antiga promove diretamente para `sme_demandas`. Consulte `docs/execution/B1_PREIMPLEMENTACAO_CTRH_2026-09-03.md`. Não execute estes comandos com fontes reais nem contra Production até aprovação das decisões B1 e substituição/adequação do caminho técnico.
 
-Este procedimento prepara exportações CSV ou XLSX do sistema legado para a importação atômica já existente no Supabase do SITE CTRH.
+Historicamente, este procedimento preparava exportações CSV ou XLSX do sistema legado para a importação atômica existente no Supabase do SITE CTRH. Ele permanece documentado para rastreabilidade e testes históricos, não como contrato vigente de recepção B1/B2.
 
 A ferramenta foi desenhada para o cenário atual, no qual o sistema legado exporta somente os 50 registros exibidos em cada página. Vários arquivos podem ser informados de uma vez; eles serão consolidados, normalizados e conferidos como um único lote.
 

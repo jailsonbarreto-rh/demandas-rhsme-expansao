@@ -1,0 +1,85 @@
+name: Experimental all dependency updates 2026-09-03
+
+on:
+  push:
+    branches:
+      - experiment/all-dependency-updates-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/all-dependency-updates-20260903
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+
+      - name: Capture baseline
+        run: cp package.json /tmp/package.before.json
+
+      - name: Update every direct dependency to latest
+        run: npx --yes npm-check-updates@latest -u --target latest
+
+      - name: Install updated tree without compatibility bypasses
+        id: install
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm install 2>&1 | tee /tmp/npm-install.log
+
+      - name: Build experiment report
+        env:
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const before = JSON.parse(fs.readFileSync('/tmp/package.before.json','utf8'));
+          const after = JSON.parse(fs.readFileSync('package.json','utf8'));
+          const log = fs.readFileSync('/tmp/npm-install.log','utf8');
+          const rows=[];
+          for (const s of ['dependencies','devDependencies']) {
+            const keys=new Set([...Object.keys(before[s]||{}),...Object.keys(after[s]||{})]);
+            for (const k of [...keys].sort()) {
+              const a=before[s]?.[k], b=after[s]?.[k];
+              if (a!==b) rows.push([s,k,a||'',b||'']);
+            }
+          }
+          const ok=process.env.INSTALL_OUTCOME==='success';
+          let md='# Experimento de atualização integral de dependências — 3 de setembro de 2026\n\n';
+          md+='**Objetivo:** atualizar todas as dependências diretas para a tag npm latest, inclusive majors, durante a janela pré-liberação e pré-migração.\n\n';
+          md+='**Política:** sem --force, sem --legacy-peer-deps e sem supressão artificial de incompatibilidades.\n\n';
+          md+='| Grupo | Pacote | Antes | Candidato |\n|---|---|---:|---:|\n';
+          for (const r of rows) md+='| '+r.map(x=>String(x).replaceAll('|','/')).join(' | ')+' |\n';
+          md+='\n## npm install\n\n**Resultado:** '+(ok?'SUCESSO':'FALHA DE COMPATIBILIDADE')+'\n\n';
+          md+='~~~text\n'+log.slice(-12000)+'\n~~~\n';
+          fs.mkdirSync('docs/maintenance',{recursive:true});
+          fs.writeFileSync('docs/maintenance/EXPERIMENTAL_ALL_DEPENDENCY_UPDATES_2026-09-03.md',md);
+          NODE
+
+      - name: Restore dependency files if install failed
+        if: steps.install.outcome != 'success'
+        run: |
+          cp /tmp/package.before.json package.json
+          git checkout -- package-lock.json || true
+
+      - name: Commit experiment
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json docs/maintenance/EXPERIMENTAL_ALL_DEPENDENCY_UPDATES_2026-09-03.md
+          git diff --cached --quiet && exit 0
+          if [ "${{ steps.install.outcome }}" = "success" ]; then
+            git commit -m "chore: experimentar atualização integral de dependências"
+          else
+            git commit -m "docs: registrar bloqueio da atualização integral"
+          fi
+          git push origin HEAD:experiment/all-dependency-updates-20260903

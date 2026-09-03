@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **30 de agosto de 2026 — manutenção geral, G1 TanStack Query, Supabase CLI 2.116.0 e Motion 13.1.1 integrados, publicados e encerrados operacionalmente**
+Atualizado em: **3 de setembro de 2026 — janela experimental pré-migração concluída; lote viável de dependências integrado à `main`, ainda não publicado em Production**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -34,8 +34,8 @@ Atualizado em: **30 de agosto de 2026 — manutenção geral, G1 TanStack Query,
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
-| Atividade técnica atual | rodada de manutenção de 29–30/08 concluída pelos PRs #158, #161, #163, #166 e #167; documentação sincronizada pelo PR #168; publicação controlada concluída pelo PR #169; bloqueio da Vercel restaurado pelo PR #170 |
-| Próxima atualização candidata | fundação B1 do Trilho B de migração, usando `fast-check` já instalado e avaliando pgTAP em testes locais; observabilidade permanece pacote separado |
+| Atividade técnica atual | janela experimental de 03/09 concluída pelo PR #176; lote viável integrado à `main` em `fbaf9c006e503680787152bd3804404887c2e7d6`; Production permanece deliberadamente na versão anterior, com deploy automático bloqueado |
+| Próxima atualização candidata | fundação B1 do Trilho B continua como próxima frente de produto; TanStack Table 9 passa a ser migração estrutural opcional durante a janela pré-usuários; TypeScript 7 e ESLint 10 aguardam compatibilidade upstream |
 
 ## Rodadas técnicas concluídas
 
@@ -313,6 +313,34 @@ Evidências principais: `docs/maintenance/DEPENDENCY_UPDATES_2026-08-29.md`, `do
 - nenhuma migration, RLS, dado ou regra de negócio foi alterada durante a publicação;
 - o Supabase `CTRH PROCESSOS` permaneceu `ACTIVE_HEALTHY`, com health/readiness em HTTP 200 após a promoção.
 
+
+## Janela experimental pré-migração — 3 de setembro de 2026
+
+O atraso no recebimento dos dados e a inexistência de usuários finais liberados foram usados deliberadamente como janela de experimentação técnica, com autorização para testar versões recém-publicadas e majors de maior risco antes da migração.
+
+O PR #176 integrou à `main`, após gate integral verde:
+
+- `@supabase/supabase-js` 2.114.0;
+- TanStack Query, plugin de ESLint e Devtools 5.102.8;
+- Motion 13.2.0;
+- React Hook Form 7.87.0;
+- Zod 4.5.4;
+- Testing Library React 16.3.3 e user-event 14.6.7;
+- `@types/node` 26.4.1;
+- `globals` 17.12.0;
+- Knip 6.34.0;
+- `typescript-eslint` 8.69.0;
+- correção transitiva de `browserslist` no lockfile.
+
+Três limites foram comprovados por execução, não por cautela abstrata:
+
+1. **TanStack Table 9.2.4:** instalou, mas produziu 14 falhas concentradas na API da tabela (`getCoreRowModel is not a function`). Permanece em 8.21.3 e passa a exigir migração estrutural própria.
+2. **TypeScript 7.0.2:** instalação bloqueada por peer oficial de `typescript-eslint@8.69.0`, que exige TypeScript abaixo de 6.1.
+3. **ESLint 10.9.1:** instalação limpa bloqueada por `eslint-plugin-jsx-a11y@6.10.2`, cujo peer oficial termina na linha ESLint 9.
+
+Nenhum experimento usou `--force`, `--legacy-peer-deps`, retirada de regra de acessibilidade ou supressão artificial de incompatibilidade.
+
+A Production **não foi atualizada nesta rodada**. Continua em `dpl_EqrEWJ4B9RVjSbbrSuuWNKe45YBN`, SHA funcional `706570480288e60cf7070c3a4648fa6d37d9f8fb`, enquanto `git.deploymentEnabled: false` permanece ativo. Nenhuma migration, RLS, dado ou regra de negócio foi alterada.
 
 ## Regra permanente de modernização proativa
 

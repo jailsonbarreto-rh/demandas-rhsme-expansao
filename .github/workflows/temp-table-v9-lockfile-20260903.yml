@@ -1,0 +1,34 @@
+name: Generate Table v9 migration lockfile
+
+on:
+  push:
+    branches:
+      - feat/tanstack-table-v9-migration-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/tanstack-table-v9-migration-20260903
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Regenerate lockfile
+        run: npm install
+      - name: Audit
+        run: npm audit --audit-level=high
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: regenerar lockfile para TanStack Table v9"
+          git push origin HEAD:feat/tanstack-table-v9-migration-20260903

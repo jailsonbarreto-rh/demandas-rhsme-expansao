@@ -187,6 +187,39 @@ O fechamento da rodada ocorreu em três passos adicionais: o PR #168 sincronizou
 
 A próxima modernização não é automática. O foco técnico retorna ao Trilho B de migração. `fast-check` já está disponível para testes gerativos; pgTAP será avaliado na fundação local de banco e `json-canonicalize` permanece reservado ao B2.
 
+## 7.3 Janela experimental pré-migração — 3 de setembro de 2026 — CONCLUÍDA
+
+A ausência de usuários finais liberados e o atraso no recebimento dos dados para migração foram usados como janela deliberada de maior tolerância a risco técnico. A autorização permitiu testar versões recém-publicadas e majors, desde que incompatibilidades não fossem mascaradas com `--force`, `--legacy-peer-deps` ou retirada de gates.
+
+O PR #176 integrou o lote tecnicamente viável:
+
+- `@supabase/supabase-js` 2.114.0;
+- `@tanstack/react-query`, plugin de ESLint e Devtools 5.102.8;
+- Motion 13.2.0;
+- React Hook Form 7.87.0;
+- Zod 4.5.4;
+- Testing Library React 16.3.3 e user-event 14.6.7;
+- `@types/node` 26.4.1;
+- `globals` 17.12.0;
+- Knip 6.34.0;
+- `typescript-eslint` 8.69.0.
+
+O primeiro gate detectou duas vulnerabilidades altas em `browserslist <=4.28.6`. Como o próprio audit oferecia correção transitiva não destrutiva, `npm audit fix` atualizou somente o lockfile; o gate seguinte ficou limpo.
+
+### Majors experimentados e não integrados
+
+**TanStack Table 9.2.4** foi instalado e executado. A suíte apresentou 14 falhas concentradas em `DemandasTable.tsx`, com ruptura da API v8 (`getCoreRowModel is not a function`). A v9 deixa, portanto, de ser tratada como simples atualização e passa a ser uma migração estrutural própria. A aplicação permanece em 8.21.3.
+
+**TypeScript 7.0.2** falhou na resolução limpa da árvore porque `typescript-eslint@8.69.0` declara peer `typescript >=4.8.4 <6.1.0`. TypeScript permanece em 6.0.3 até mudança upstream.
+
+**ESLint 10.9.1 / @eslint/js 10.0.1** falharam em instalação limpa porque `eslint-plugin-jsx-a11y@6.10.2` declara suporte apenas até ESLint 9. A acessibilidade não foi removida nem contornada; ESLint e `@eslint/js` permanecem em 9.39.5.
+
+### Gate final
+
+Depois de retirar somente TanStack Table 9 e corrigir `browserslist` transitivamente, passaram instalação reproduzível, documentação, audit, assinaturas/proveniência, lint, testes e cobertura, build, orçamento e inspeção pública do bundle, exclusão dos Devtools do bundle de Production e smoke tests Playwright/Chromium.
+
+A `main` resultante é `fbaf9c006e503680787152bd3804404887c2e7d6`. Esta rodada **não foi publicada em Production** e não alterou banco, migrations, RLS, dados ou regras de negócio.
+
 ## 8. Oportunidades funcionais condicionadas
 
 Permanecem sujeitas a necessidade comprovada e desenho específico:

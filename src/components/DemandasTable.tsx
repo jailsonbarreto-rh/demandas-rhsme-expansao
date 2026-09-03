@@ -410,7 +410,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
             <tbody>
               {table.getRowModel().rows.length > 0 ? table.getRowModel().rows.map((row) => (
                 <tr key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getAllCells().map((cell) => (
                     <td
                       key={cell.id}
                       className={[

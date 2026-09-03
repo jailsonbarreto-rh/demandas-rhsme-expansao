@@ -1,4 +1,4 @@
-name: Experimental latest except blocked toolchain majors
+name: Fix transitive audit in latest experiment
 
 on:
   push:
@@ -9,35 +9,28 @@ permissions:
   contents: write
 
 jobs:
-  update:
+  fix:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           ref: experiment/latest-except-toolchain-majors-20260903
-          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version-file: package.json
           cache: npm
-      - name: Update all published latest except TypeScript and ESLint major pair
-        run: |
-          npx --yes npm-check-updates@latest -u --target latest --reject typescript,eslint,@eslint/js
-          npm install
-      - name: Record unresolved outdated packages
-        run: |
-          npm outdated --json > /tmp/outdated.json || true
-          node <<'NODE'
-          const fs=require('fs');
-          const o=fs.readFileSync('/tmp/outdated.json','utf8').trim()||'{}';
-          fs.writeFileSync('docs/maintenance/EXPERIMENTAL_LATEST_EXCEPT_TOOLCHAIN_2026-09-03.md',
-          '# Experimento latest sem TypeScript 7 e ESLint 10 — 3 de setembro de 2026\n\nAtualização de todas as dependências diretas publicadas em latest, preservando temporariamente TypeScript 6 e ESLint 9 por incompatibilidades upstream já comprovadas.\n\n## npm outdated após atualização\n\n~~~json\n'+o+'\n~~~\n');
-          NODE
-      - name: Commit dependency tree
+      - name: Install locked tree
+        run: npm ci
+      - name: Apply non-forced transitive audit fix
+        run: npm audit fix
+      - name: Confirm high severity audit is clean
+        run: npm audit --audit-level=high
+      - name: Commit repaired lockfile
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json docs/maintenance/EXPERIMENTAL_LATEST_EXCEPT_TOOLCHAIN_2026-09-03.md
-          git commit -m "chore: atualizar dependências publicadas para latest"
+          git add package-lock.json
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: atualizar browserslist transitivo vulnerável"
           git push origin HEAD:experiment/latest-except-toolchain-majors-20260903

@@ -1,4 +1,4 @@
-name: Generate lockfile for risky latest experiment
+name: Diagnose risky latest experiment
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  lockfile:
+  diagnose:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -21,12 +21,29 @@ jobs:
           node-version-file: package.json
           cache: npm
       - name: Install exact candidate tree
-        run: npm install
-      - name: Commit lockfile
+        id: install
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm install 2>&1 | tee /tmp/install.log
+      - name: Write diagnostic
+        env:
+          RESULT: ${{ steps.install.outcome }}
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const log=fs.readFileSync('/tmp/install.log','utf8');
+          const ok=process.env.RESULT==='success';
+          const md='# Diagnóstico latest arriscado — 3 de setembro de 2026\n\n**npm install:** '+(ok?'SUCESSO':'FALHA')+'\n\n~~~text\n'+log.slice(-14000)+'\n~~~\n';
+          fs.writeFileSync('docs/maintenance/EXPERIMENTAL_RISKY_LATEST_DIAGNOSTIC_2026-09-03.md',md);
+          NODE
+      - name: Preserve coherent lockfile only on success
+        if: steps.install.outcome != 'success'
+        run: git checkout -- package-lock.json || true
+      - name: Commit diagnostic and lockfile
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          git diff --cached --quiet && exit 0
-          git commit -m "chore: regenerar lockfile para latest experimental"
+          git add package-lock.json docs/maintenance/EXPERIMENTAL_RISKY_LATEST_DIAGNOSTIC_2026-09-03.md
+          git commit -m "test: registrar diagnóstico da árvore latest arriscada"
           git push origin HEAD:experiment/risky-latest-runtime-20260903

@@ -26,9 +26,9 @@ O primeiro gate detectou duas vulnerabilidades altas em `browserslist <=4.28.6` 
 
 ## TanStack Table 9.2.4
 
-Foi instalado e testado deliberadamente, mas não foi integrado.
+Foi instalado e testado deliberadamente na primeira passagem, mas o simples bump não pôde ser integrado. A suíte reproduziu 14 falhas concentradas em `DemandasTable.tsx`, com `TypeError: getCoreRowModel is not a function`, comprovando que a v9 exigia migração estrutural.
 
-A suíte reproduziu 14 falhas concentradas em `DemandasTable.tsx`, com `TypeError: getCoreRowModel is not a function`. A versão 9 mudou a API da tabela e exige migração estrutural (`useReactTable` → `useTable`, features explícitas e novos row models). Portanto, `@tanstack/react-table` permanece em 8.21.3 até uma migração própria.
+A migração própria foi executada em seguida pelo PR #178. O componente passou para `useTable`, features explícitas de sorting/pagination/sizing, row models v9, `sortFn` e células core. O gate integral passou com 365 testes e 42 cenários Playwright. Assim, `@tanstack/react-table@9.2.4` está agora integrado à `main`.
 
 ## TypeScript 7.0.2
 
@@ -55,3 +55,7 @@ Após retirar apenas TanStack Table 9 e corrigir `browserslist` transitivo, o ga
 - smoke tests Playwright/Chromium.
 
 Não houve alteração de banco, migrations, RLS, dados ou regras de negócio.
+
+## Evolução posterior do experimento
+
+O PR #178 concluiu a migração estrutural do TanStack Table 9.2.4. A `main` passou a `4d9ec654b6feb1acd43329861eedd1ac5c8c12bf`. O bundle inicial permaneceu em 220.031 bytes, sem redução mensurável em relação ao Table 8, e 42/42 cenários Playwright permaneceram aprovados. Production segue sem essa rodada, com deploy automático bloqueado.

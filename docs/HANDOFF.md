@@ -1,6 +1,6 @@
 # Handoff Operacional — Central de Demandas CTRH
 
-Atualizado em: **3 de setembro de 2026 — janela experimental pré-migração concluída; lote viável de dependências integrado à `main`, ainda não publicado em Production**
+Atualizado em: **3 de setembro de 2026 — janela experimental pré-migração concluída; TanStack Table 9.2.4 migrado estruturalmente e integrado à `main`; ainda não publicado em Production**
 
 <!-- IMPLEMENTATION_AUTHORIZATION: V1-E-A01 -->
 
@@ -34,8 +34,8 @@ Atualizado em: **3 de setembro de 2026 — janela experimental pré-migração c
 | Testes após TanStack Query | 365 testes unitários e de integração; 42 cenários Playwright aprovados |
 | Implementação funcional autorizada | **V1-E-A01 — R5 Essencial e recuperação de senha** |
 | Rodada 4 — TypeScript 6 | concluída pelo PR #138; compilador 6.0.3, lockfile reproduzível e gate integral aprovado |
-| Atividade técnica atual | janela experimental de 03/09 concluída pelo PR #176; lote viável integrado à `main` em `fbaf9c006e503680787152bd3804404887c2e7d6`; Production permanece deliberadamente na versão anterior, com deploy automático bloqueado |
-| Próxima atualização candidata | fundação B1 do Trilho B continua como próxima frente de produto; TanStack Table 9 passa a ser migração estrutural opcional durante a janela pré-usuários; TypeScript 7 e ESLint 10 aguardam compatibilidade upstream |
+| Atividade técnica atual | janela experimental de 03/09 concluída pelos PRs #176 e #178; TanStack Table 9.2.4 migrado integralmente; `main` em `4d9ec654b6feb1acd43329861eedd1ac5c8c12bf`; Production permanece deliberadamente na versão anterior, com deploy automático bloqueado |
+| Próxima atualização candidata | fundação B1 do Trilho B continua como próxima frente de produto; TypeScript 7 e ESLint 10 permanecem bloqueados por compatibilidade upstream comprovada |
 
 ## Rodadas técnicas concluídas
 
@@ -341,6 +341,35 @@ Três limites foram comprovados por execução, não por cautela abstrata:
 Nenhum experimento usou `--force`, `--legacy-peer-deps`, retirada de regra de acessibilidade ou supressão artificial de incompatibilidade.
 
 A Production **não foi atualizada nesta rodada**. Continua em `dpl_EqrEWJ4B9RVjSbbrSuuWNKe45YBN`, SHA funcional `706570480288e60cf7070c3a4648fa6d37d9f8fb`, enquanto `git.deploymentEnabled: false` permanece ativo. Nenhuma migration, RLS, dado ou regra de negócio foi alterada.
+
+## Migração estrutural TanStack Table 9 — 3 de setembro de 2026
+
+O PR #178 concluiu a migração da tabela principal para `@tanstack/react-table@9.2.4`, sem recorrer ao adaptador legado `useLegacyTable`.
+
+A migração substituiu a API v8 por:
+
+- `useTable` no lugar de `useReactTable`;
+- `tableFeatures` com features explícitas;
+- `rowSortingFeature` e `createSortedRowModel()`;
+- `rowPaginationFeature` e `createPaginatedRowModel()`;
+- `columnSizingFeature` para preservar larguras e `getTotalSize()`;
+- `sortFn` no lugar de `sortingFn`;
+- `row.getAllCells()` porque o produto não utiliza column visibility;
+- helper de colunas tipado pela feature set da v9.
+
+A primeira tentativa simples de upgrade havia falhado porque a v8 incluía implicitamente recursos que na v9 são opt-in. A migração corrigiu esses contratos de forma explícita, preservando o comportamento visível da tabela.
+
+Gate final:
+
+- 80 arquivos de teste aprovados;
+- 365 testes unitários e de integração aprovados;
+- build TypeScript/Vite aprovado;
+- bundle inicial de 220.031 bytes, igual à medição imediatamente anterior à migração;
+- inspeção do bundle público aprovada;
+- 42/42 cenários Playwright aprovados em desktop e mobile, incluindo os três cenários específicos de responsividade da tabela;
+- nenhuma alteração de banco, migrations, RLS, dados ou regra de negócio.
+
+A Production não foi atualizada. O deploy automático permanece bloqueado.
 
 ## Regra permanente de modernização proativa
 

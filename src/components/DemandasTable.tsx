@@ -2,12 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   createColumnHelper,
+  createPaginatedRowModel,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
+  rowPaginationFeature,
+  rowSortingFeature,
+  sortFn_alphanumeric,
+  tableFeatures,
   type SortingState,
-  useReactTable,
+  useTable,
 } from '@tanstack/react-table';
 import type { DeleteDemandaInput, Demanda } from '../types';
 import type { DemandSearchField, DemandSearchMatch } from '../search/searchTypes';
@@ -40,6 +43,15 @@ const SEARCH_FIELD_LABELS: Record<DemandSearchField, string> = {
   status: 'status',
   historico: 'histórico',
 };
+
+const demandTableFeatures = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+  rowPaginationFeature,
+  paginatedRowModel: createPaginatedRowModel(),
+});
+
+const columnHelper = createColumnHelper<typeof demandTableFeatures, Demanda>();
 
 function getStatusBadgeClass(status: string) {
   switch (status) {
@@ -120,13 +132,12 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
   const [deleteTarget, setDeleteTarget] = useState<Demanda | null>(null);
   const topScrollbarRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
-  const columnHelper = createColumnHelper<Demanda>();
 
   useEffect(() => {
     setPagination((current) => ({ ...current, pageIndex: 0 }));
   }, [demandas]);
 
-  const columns = useMemo(() => [
+  const columns = useMemo(() => columnHelper.columns([
     columnHelper.accessor('numero', {
       header: ({ column }) => (
         <button
@@ -199,7 +210,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           </div>
         );
       },
-      sortingFn: (a, b) => (a.original.responsavel || '').localeCompare(b.original.responsavel || '', 'pt-BR'),
+      sortFn: (a, b) => (a.original.responsavel || '').localeCompare(b.original.responsavel || '', 'pt-BR'),
       size: 170,
     }),
     columnHelper.accessor('limite1', {
@@ -212,7 +223,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           compact
         />
       ),
-      sortingFn: (a, b) => sortableDate(a.original.limite1) - sortableDate(b.original.limite1),
+      sortFn: (a, b) => sortableDate(a.original.limite1) - sortableDate(b.original.limite1),
       size: 115,
     }),
     columnHelper.accessor('limite2', {
@@ -229,7 +240,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           compact
         />
       ),
-      sortingFn: (a, b) => sortableDate(a.original.limite2) - sortableDate(b.original.limite2),
+      sortFn: (a, b) => sortableDate(a.original.limite2) - sortableDate(b.original.limite2),
       size: 115,
     }),
     columnHelper.accessor('proximaAcaoEm', {
@@ -257,7 +268,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
           </div>
         );
       },
-      sortingFn: (a, b) => sortableDate(a.original.proximaAcaoEm) - sortableDate(b.original.proximaAcaoEm),
+      sortFn: (a, b) => sortableDate(a.original.proximaAcaoEm) - sortableDate(b.original.proximaAcaoEm),
       size: 195,
     }),
     columnHelper.accessor('status', {
@@ -267,7 +278,7 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
         </button>
       ),
       cell: ({ getValue }) => <span className={getStatusBadgeClass(getValue())}><HighlightedText text={getValue()} query={searchQuery} /></span>,
-      sortingFn: 'alphanumeric',
+      sortFn: sortFn_alphanumeric,
       size: 115,
     }),
     columnHelper.display({
@@ -320,17 +331,15 @@ export const DemandasTable: React.FC<DemandasTableProps> = ({
       },
       size: 96,
     }),
-  ], [canDelete, canEdit, columnHelper, onOpenEditar, onOpenHistorico, onOpenProgress, onOpenStatus, searchMatches, searchQuery]);
+  ]), [canDelete, canEdit, onOpenEditar, onOpenHistorico, onOpenProgress, onOpenStatus, searchMatches, searchQuery]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: demandTableFeatures,
     data: demandas,
     columns,
     state: { sorting, pagination },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const tableWidth = table.getTotalSize();

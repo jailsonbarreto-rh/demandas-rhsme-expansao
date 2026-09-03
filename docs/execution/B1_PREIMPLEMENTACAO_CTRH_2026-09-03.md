@@ -13,7 +13,7 @@ Preparar o debate B1 do Trilho B com base no código atual, distinguindo clarame
 - as recomendações do Plano Integrado v3.1;
 - as decisões que ainda precisam ser aprovadas antes de B2.
 
-Este documento não aprova B1-D01 a B1-D09 e não autoriza B2.
+Este documento não aprova B1-D01 a B1-D09 e não autoriza B2. O debate detalhado no formato GOV-003 está preparado em `docs/execution/B1_PACOTE_DECISOES_PARA_APROVACAO_2026-09-03.md`.
 
 ## 2. Estado atual do caminho legado
 

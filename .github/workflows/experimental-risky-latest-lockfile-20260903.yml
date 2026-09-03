@@ -1,0 +1,32 @@
+name: Generate lockfile for risky latest experiment
+
+on:
+  push:
+    branches:
+      - experiment/risky-latest-runtime-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  lockfile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/risky-latest-runtime-20260903
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Install exact candidate tree
+        run: npm install
+      - name: Commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: regenerar lockfile para latest experimental"
+          git push origin HEAD:experiment/risky-latest-runtime-20260903

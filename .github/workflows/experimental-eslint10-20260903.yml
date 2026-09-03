@@ -1,0 +1,48 @@
+name: Diagnose ESLint 10
+
+on:
+  push:
+    branches:
+      - experiment/eslint10-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/eslint10-20260903
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Install ESLint 10 candidate
+        id: install
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm install 2>&1 | tee /tmp/install.log
+      - name: Write diagnostic
+        env:
+          RESULT: ${{ steps.install.outcome }}
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const log=fs.readFileSync('/tmp/install.log','utf8');
+          const md='# Experimento ESLint 10 — 3 de setembro de 2026\n\n**npm install:** '+process.env.RESULT+'\n\n~~~text\n'+log.slice(-14000)+'\n~~~\n';
+          fs.writeFileSync('docs/maintenance/EXPERIMENTAL_ESLINT10_2026-09-03.md',md);
+          NODE
+      - name: Restore incoherent lockfile after failure
+        if: steps.install.outcome != 'success'
+        run: git checkout -- package-lock.json || true
+      - name: Commit diagnostic
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json docs/maintenance/EXPERIMENTAL_ESLINT10_2026-09-03.md
+          git commit -m "test: registrar experimento ESLint 10"
+          git push origin HEAD:experiment/eslint10-20260903

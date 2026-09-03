@@ -206,9 +206,9 @@ O PR #176 integrou o lote tecnicamente viável:
 
 O primeiro gate detectou duas vulnerabilidades altas em `browserslist <=4.28.6`. Como o próprio audit oferecia correção transitiva não destrutiva, `npm audit fix` atualizou somente o lockfile; o gate seguinte ficou limpo.
 
-### Majors experimentados e não integrados
+### Majors experimentados na primeira passagem
 
-**TanStack Table 9.2.4** foi instalado e executado. A suíte apresentou 14 falhas concentradas em `DemandasTable.tsx`, com ruptura da API v8 (`getCoreRowModel is not a function`). A v9 deixa, portanto, de ser tratada como simples atualização e passa a ser uma migração estrutural própria. A aplicação permanece em 8.21.3.
+**TanStack Table 9.2.4** foi instalado e executado inicialmente como simples atualização. A suíte apresentou 14 falhas concentradas em `DemandasTable.tsx`, com ruptura da API v8 (`getCoreRowModel is not a function`). O resultado reclassificou corretamente a mudança como migração estrutural. Essa migração foi posteriormente concluída no PR #178, conforme a seção 7.4.
 
 **TypeScript 7.0.2** falhou na resolução limpa da árvore porque `typescript-eslint@8.69.0` declara peer `typescript >=4.8.4 <6.1.0`. TypeScript permanece em 6.0.3 até mudança upstream.
 
@@ -218,7 +218,28 @@ O primeiro gate detectou duas vulnerabilidades altas em `browserslist <=4.28.6`.
 
 Depois de retirar somente TanStack Table 9 e corrigir `browserslist` transitivamente, passaram instalação reproduzível, documentação, audit, assinaturas/proveniência, lint, testes e cobertura, build, orçamento e inspeção pública do bundle, exclusão dos Devtools do bundle de Production e smoke tests Playwright/Chromium.
 
-A `main` resultante é `fbaf9c006e503680787152bd3804404887c2e7d6`. Esta rodada **não foi publicada em Production** e não alterou banco, migrations, RLS, dados ou regras de negócio.
+A primeira integração da janela resultou em `fbaf9c006e503680787152bd3804404887c2e7d6`. A migração estrutural subsequente do TanStack Table 9 elevou a `main` para `4d9ec654b6feb1acd43329861eedd1ac5c8c12bf`. Nenhuma dessas mudanças foi publicada em Production e nenhuma alterou banco, migrations, RLS, dados ou regras de negócio.
+
+## 7.4 Migração estrutural TanStack Table 9 — 3 de setembro de 2026 — CONCLUÍDA
+
+O PR #178 migrou `DemandasTable.tsx` para a API completa do TanStack Table 9.2.4, sem usar `useLegacyTable`.
+
+Mudanças técnicas:
+
+- `useReactTable` → `useTable`;
+- feature set estática definida com `tableFeatures`;
+- sorting e pagination registrados explicitamente;
+- row models v9 adotados;
+- `columnSizingFeature` habilitado apenas para preservar sizing fixo e `getTotalSize`, sem ativar resizing;
+- `sortingFn` → `sortFn`;
+- `row.getVisibleCells()` substituído por `row.getAllCells()`, já que column visibility não é usada pelo produto;
+- helper de colunas adaptado à nova assinatura tipada por features.
+
+A migração completa passou 80 arquivos/365 testes, build, bundle, inspeção pública e 42 cenários Playwright. Os três cenários dedicados à tabela responsiva permaneceram aprovados em desktop e mobile.
+
+O bundle inicial medido após a migração foi 220.031 bytes, exatamente a mesma medição do lote anterior com Table 8. Portanto, não há redução de bundle comprovada nesta aplicação específica; o benefício atual é a adoção da arquitetura v9, com features explícitas, melhor base para tree-shaking futuro e melhorias internas de desempenho/memória da biblioteca.
+
+A `main` após o merge é `4d9ec654b6feb1acd43329861eedd1ac5c8c12bf`. Production permanece deliberadamente na versão anterior e `git.deploymentEnabled: false` continua vigente.
 
 ## 8. Oportunidades funcionais condicionadas
 
